@@ -1,9 +1,10 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Mountain, Instagram, Youtube } from "lucide-react";
 
-const Footer = () => {
+const Footer = forwardRef<HTMLElement>((_, ref) => {
   return (
-    <footer className="py-12 bg-background border-t border-border">
+    <footer ref={ref} className="py-12 bg-background border-t border-border">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-start gap-8">
           {/* Brand */}
@@ -30,8 +31,8 @@ const Footer = () => {
 
           {/* Social */}
           <div className="flex gap-4">
-            <a href="#" className="text-muted-foreground hover:text-primary"><Instagram className="h-5 w-5" /></a>
-            <a href="#" className="text-muted-foreground hover:text-primary"><Youtube className="h-5 w-5" /></a>
+            <a href="#" aria-label="Instagram" className="text-muted-foreground hover:text-primary"><Instagram className="h-5 w-5" /></a>
+            <a href="#" aria-label="YouTube" className="text-muted-foreground hover:text-primary"><Youtube className="h-5 w-5" /></a>
           </div>
         </div>
 
@@ -41,6 +42,8 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = "Footer";
 
 export default Footer;

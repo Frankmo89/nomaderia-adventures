@@ -37,7 +37,10 @@ const NewsletterSignup = () => {
         >
           Cada Semana Una Aventura Nueva En Tu Inbox
         </motion.h2>
-        <p className="text-muted-foreground mb-6 sm:mb-8 text-sm sm:text-base">
+        <p className="text-muted-foreground mb-2 text-sm sm:text-base">
+          Únete a nuestra comunidad de aventureros 🌎
+        </p>
+        <p className="text-muted-foreground mb-6 sm:mb-8 text-xs sm:text-sm opacity-70">
           Tips, destinos secretos, y ofertas de equipo. Sin spam, lo prometemos.
         </p>
 

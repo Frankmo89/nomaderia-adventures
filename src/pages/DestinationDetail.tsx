@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { MapPin, Clock, DollarSign, Plane, Hotel, Shield, ArrowLeft } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -41,6 +41,18 @@ const DestinationDetail = () => {
         .maybeSingle();
       setDest(data);
       if (data) {
+        document.title = `${data.title} — Nomaderia`;
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute("content", data.short_description || "");
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) ogTitle.setAttribute("content", `${data.title} — Nomaderia`);
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc) ogDesc.setAttribute("content", data.short_description || "");
+        if (data.hero_image_url) {
+          const ogImage = document.querySelector('meta[property="og:image"]');
+          if (ogImage) ogImage.setAttribute("content", data.hero_image_url);
+        }
+
         const { data: rel } = await supabase
           .from("destinations")
           .select("id, title, slug, country, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, short_description")
@@ -53,6 +65,9 @@ const DestinationDetail = () => {
       setLoading(false);
     };
     load();
+    return () => {
+      document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando";
+    };
   }, [slug]);
 
   if (loading) return (
@@ -82,13 +97,14 @@ const DestinationDetail = () => {
       {/* Hero */}
       <section className="pt-20">
         <div className="h-[50vh] flex items-end relative overflow-hidden">
-          {dest.hero_image_url && (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${dest.hero_image_url})` }}
+          {dest.hero_image_url ? (
+            <img
+              src={dest.hero_image_url}
+              alt={`Vista de ${dest.title}`}
+              loading="eager"
+              className="absolute inset-0 w-full h-full object-cover"
             />
-          )}
-          {!dest.hero_image_url && (
+          ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 to-primary/20" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
@@ -99,6 +115,7 @@ const DestinationDetail = () => {
             <motion.h1
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="font-serif text-4xl md:text-6xl font-bold text-foreground mb-3"
+              style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}
             >
               {dest.title}
             </motion.h1>
@@ -130,7 +147,6 @@ const DestinationDetail = () => {
       {/* Content */}
       <section className="py-12">
         <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8">
-          {/* Main content */}
           <div className="flex-1 min-w-0">
             <Tabs defaultValue="can-i" className="w-full">
               <TabsList className="bg-muted mb-6 flex-wrap">
@@ -234,10 +250,20 @@ const DestinationDetail = () => {
                 <Link
                   key={r.id}
                   to={`/destinos/${r.slug}`}
-                  className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg"
+                  className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group"
                 >
-                  <div className="h-40 bg-gradient-to-br from-secondary/30 to-primary/20 flex items-center justify-center">
-                    <MapPin className="h-10 w-10 text-primary/40" />
+                  <div className="h-40 overflow-hidden relative">
+                    {r.hero_image_url ? (
+                      <img
+                        src={r.hero_image_url}
+                        alt={`Vista de ${r.title}`}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
                   </div>
                   <div className="p-4">
                     <Badge className={difficultyColor[r.difficulty_level] + " mb-2"}>
@@ -253,7 +279,7 @@ const DestinationDetail = () => {
         </section>
       )}
 
-      {/* Back to top button */}
+      {/* Back to top */}
       <div className="container mx-auto px-4 py-8 text-center">
         <Button
           variant="outline"
