@@ -150,18 +150,24 @@ const QuizSection = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
             {results.map((d, i) => (
               <motion.div key={d.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }}>
-                <Link to={`/destinos/${d.slug}`} className="block bg-card rounded-xl overflow-hidden text-card-foreground active:scale-[0.98] sm:hover:scale-[1.03] transition-all duration-300 shadow-lg">
-                  {d.hero_image_url && (
-                    <div className="h-40 sm:h-36 overflow-hidden">
-                      <img src={d.hero_image_url} alt={d.title} loading="lazy" className="w-full h-full object-cover" />
+                <Link to={`/destinos/${d.slug}`} className="block bg-card rounded-xl overflow-hidden text-card-foreground active:scale-[0.98] sm:hover:scale-[1.03] transition-all duration-300 shadow-lg group">
+                  <div className="h-44 sm:h-40 overflow-hidden relative">
+                    {d.hero_image_url ? (
+                      <img src={d.hero_image_url} alt={`Vista de ${d.title}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
+                    <div className="absolute top-3 left-3">
+                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${difficultyColor[d.difficulty_level]}`}>
+                        {difficultyLabel[d.difficulty_level]}
+                      </span>
                     </div>
-                  )}
+                  </div>
                   <div className="p-4 sm:p-5">
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium mb-3 ${difficultyColor[d.difficulty_level]}`}>
-                      {difficultyLabel[d.difficulty_level]}
-                    </span>
-                    <h3 className="font-serif text-lg font-bold mb-2">{d.title}</h3>
-                    <p className="text-sm opacity-80">{d.country} · {d.days_needed} · ~${d.estimated_budget_usd} USD</p>
+                    <h3 className="font-serif text-lg font-bold mb-1">{d.title}</h3>
+                    <p className="text-sm opacity-70 mb-3">{d.country} · {d.days_needed} · ~${d.estimated_budget_usd} USD</p>
+                    <span className="text-primary text-sm font-medium group-hover:underline">Ver Guía →</span>
                   </div>
                 </Link>
               </motion.div>

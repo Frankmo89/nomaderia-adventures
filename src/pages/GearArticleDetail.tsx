@@ -39,6 +39,18 @@ const GearArticleDetail = () => {
         .maybeSingle();
       setArticle(data);
       if (data) {
+        document.title = `${data.title} — Nomaderia`;
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute("content", data.short_description || "");
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) ogTitle.setAttribute("content", `${data.title} — Nomaderia`);
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc) ogDesc.setAttribute("content", data.short_description || "");
+        if (data.hero_image_url) {
+          const ogImage = document.querySelector('meta[property="og:image"]');
+          if (ogImage) ogImage.setAttribute("content", data.hero_image_url);
+        }
+
         const { data: rel } = await supabase
           .from("gear_articles")
           .select("*")
@@ -51,6 +63,9 @@ const GearArticleDetail = () => {
       setLoading(false);
     };
     load();
+    return () => {
+      document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando";
+    };
   }, [slug]);
 
   if (loading) return (
@@ -77,13 +92,14 @@ const GearArticleDetail = () => {
       {/* Hero */}
       <section className="pt-20">
         <div className="h-[35vh] flex items-end relative overflow-hidden">
-          {article.hero_image_url && (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${article.hero_image_url})` }}
+          {article.hero_image_url ? (
+            <img
+              src={article.hero_image_url}
+              alt={article.title}
+              loading="eager"
+              className="absolute inset-0 w-full h-full object-cover"
             />
-          )}
-          {!article.hero_image_url && (
+          ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-secondary/20" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
@@ -95,6 +111,7 @@ const GearArticleDetail = () => {
             <motion.h1
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="font-serif text-3xl md:text-5xl font-bold text-foreground"
+              style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}
             >
               {article.title}
             </motion.h1>
@@ -169,9 +186,21 @@ const GearArticleDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {related.map((r) => (
                 <Link key={r.id} to={`/gear/${r.slug}`}
-                  className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg">
-                  <div className="h-32 bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center">
-                    <BookOpen className="h-8 w-8 text-accent/40" />
+                  className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
+                  <div className="h-32 overflow-hidden relative">
+                    {r.hero_image_url ? (
+                      <img
+                        src={r.hero_image_url}
+                        alt={r.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center">
+                        <BookOpen className="h-8 w-8 text-accent/40" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
                   </div>
                   <div className="p-4">
                     <Badge variant="outline" className="mb-2 border-card-foreground/20 text-card-foreground">{r.category}</Badge>
@@ -184,7 +213,7 @@ const GearArticleDetail = () => {
         </section>
       )}
 
-      {/* Back to top button */}
+      {/* Back to top */}
       <div className="container mx-auto px-4 py-8 text-center">
         <Button
           variant="outline"
