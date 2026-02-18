@@ -10,7 +10,7 @@ const navLinks = [
   { label: "Gear Guide", href: "/gear" },
   { label: "Blog", href: "/blog" },
   { label: "Calculadora", href: "/calculadora" },
-  { label: "Sobre Nosotros", href: "#about" },
+  { label: "Sobre Nosotros", href: "/sobre-nosotros" },
 ];
 
 const Navbar = () => {

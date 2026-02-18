@@ -55,6 +55,7 @@ src/
 │   ├── BlogPostDetail.tsx           → /blog/:slug
 │   ├── BudgetCalculator.tsx         → /calculadora  ← lazy loaded
 │   ├── PrivacyPolicy.tsx            → /privacidad (Política de Privacidad LFPDPPP)
+│   ├── SobreNosotros.tsx            → /sobre-nosotros (página Sobre Nosotros + credencial agente de viajes)
 │   ├── NotFound.tsx                 → 404
 │   └── admin/                       ← lazy loaded (React.lazy + Suspense)
 │       ├── AdminLayout.tsx          → Layout con sidebar + guard de auth
@@ -339,6 +340,7 @@ GET /blog                     → BlogListing.tsx
 GET /blog/:slug               → BlogPostDetail.tsx
 GET /calculadora              → BudgetCalculator.tsx
 GET /privacidad               → PrivacyPolicy.tsx
+GET /sobre-nosotros           → SobreNosotros.tsx
 GET /admin/login              → AdminLogin.tsx (pública)
 GET /admin/*                  → AdminLayout.tsx (protegida con Supabase Auth)
 GET /*                        → NotFound.tsx
@@ -561,7 +563,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.3*
+*Versión: 1.4*
 
 ---
 
@@ -641,6 +643,17 @@ const [loading, setLoading] = useState(true);
 
 ### 📝 Contenido
 
+- [ ] **Subir imagen del diploma** — La página `/sobre-nosotros` está lista para mostrar tu diploma de Agente de Viajes. Solo necesitas:
+  1. Tomar una foto o escanear tu diploma
+  2. Guardar el archivo como `diploma.jpg` (también acepta `.png`, pero si cambias la extensión actualiza la ruta en `src/pages/SobreNosotros.tsx` línea 50: `src="/diploma.jpg"`)
+  3. Colocar el archivo en la carpeta `public/` del proyecto:
+     ```
+     nomaderia-adventures/
+       public/
+         diploma.jpg   ← aquí
+     ```
+  4. Listo — la imagen aparece automáticamente en la página.
+
 - [ ] **Agregar destinos reales** desde el panel admin — actualmente el sitio está vacío sin datos en la DB
 - [ ] **Agregar artículos de gear** con productos reales y links de afiliado
 - [ ] **Escribir posts del blog** para SEO inicial
@@ -651,6 +664,8 @@ const [loading, setLoading] = useState(true);
 ### 🛠️ Código — Próximas Mejoras
 
 - [x] **`PrivacyPolicy.tsx` creada** — Página `/privacidad` con política de privacidad completa en español (LFPDPPP). Cubre: recopilación de datos, links de afiliados, servicios de terceros, derechos ARCO, contacto.
+
+- [x] **`SobreNosotros.tsx` creada** — Página `/sobre-nosotros` con: badge de credencial "Agente de Viajes Certificada" (ícono `BadgeCheck`), sección de diploma (imagen dinámica desde `public/diploma.jpg`), sección de misión con valores, y CTA de contacto. Links en Navbar y Footer actualizados de `#about` → `/sobre-nosotros`.
 
 - [x] **Footer actualizado** — Redes sociales reales (Instagram, Facebook, TikTok), link `mailto:` para Contacto, link interno `/privacidad` para Política de Privacidad. Se eliminó YouTube y se agregó Facebook + TikTok (SVG inline).
 

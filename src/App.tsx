@@ -16,6 +16,7 @@ import GearArticleDetail from "./pages/GearArticleDetail";
 import BlogListing from "./pages/BlogListing";
 import BlogPostDetail from "./pages/BlogPostDetail";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import SobreNosotros from "./pages/SobreNosotros";
 
 // Rutas secundarias — lazy load
 const BudgetCalculator = lazy(() => import("./pages/BudgetCalculator"));
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/blog" element={<ErrorBoundary><BlogListing /></ErrorBoundary>} />
               <Route path="/blog/:slug" element={<ErrorBoundary><BlogPostDetail /></ErrorBoundary>} />
               <Route path="/privacidad" element={<ErrorBoundary><PrivacyPolicy /></ErrorBoundary>} />
+              <Route path="/sobre-nosotros" element={<ErrorBoundary><SobreNosotros /></ErrorBoundary>} />
               <Route path="/admin/login" element={<ErrorBoundary><AdminLogin /></ErrorBoundary>} />
               <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
                 <Route index element={<AdminDashboard />} />

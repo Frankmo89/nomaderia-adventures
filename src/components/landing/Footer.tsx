@@ -23,7 +23,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
               <Link to="/gear" className="text-sm text-muted-foreground hover:text-foreground">Gear Guide</Link>
               <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground">Blog</Link>
               <Link to="/calculadora" className="text-sm text-muted-foreground hover:text-foreground">Calculadora</Link>
-              <a href="#about" className="text-sm text-muted-foreground hover:text-foreground">Sobre Nosotros</a>
+              <Link to="/sobre-nosotros" className="text-sm text-muted-foreground hover:text-foreground">Sobre Nosotros</Link>
             </div>
             <div className="flex flex-col gap-2">
               <a href="mailto:nomaderia.travel@gmail.com" className="text-sm text-muted-foreground hover:text-foreground">Contacto</a>
