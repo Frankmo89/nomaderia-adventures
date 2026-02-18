@@ -329,15 +329,22 @@ import { Link } from "react-router-dom";
 ## 8. Autenticación (Admin)
 
 - Supabase Auth con localStorage (persistencia de sesión activada)
-- `AdminLayout.tsx` verifica la sesión en onMount y redirige a `/admin/login` si no hay usuario
+- `AdminLayout.tsx` verifica **dos condiciones** en onMount: session activa + rol `admin` via RPC. Si falla cualquiera → signOut + redirect a `/admin/login`
 - `AdminLogin.tsx` usa `supabase.auth.signInWithPassword()`
 - NO hay auth para usuarios públicos (solo admin interno)
 
 ```typescript
-// Verificar sesión en AdminLayout
+// Guard completo en AdminLayout (session + has_role)
 const { data: { session } } = await supabase.auth.getSession();
-if (!session) navigate("/admin/login");
+if (!session) { navigate("/admin/login"); return; }
+const { data: isAdmin } = await supabase.rpc("has_role", {
+  _user_id: session.user.id,
+  _role: "admin",
+});
+if (!isAdmin) { await supabase.auth.signOut(); navigate("/admin/login"); return; }
 ```
+
+**IMPORTANTE:** Cualquier usuario autenticado en Supabase que NO tenga entrada en `public.user_roles` con `role='admin'` será deslogueado automáticamente del panel.
 
 ---
 
@@ -409,7 +416,7 @@ Acceso en código: `import.meta.env.VITE_SUPABASE_URL`
 - NO crear componentes en `src/pages/` — solo páginas van ahí, componentes van en `src/components/`
 - NO instalar librerías de animación adicionales — Framer Motion ya cubre todo
 - NO instalar librerías UI adicionales — shadcn/ui + Radix ya cubre todo
-- NO hacer fetch directo con `useEffect + useState` — usar los custom hooks de `src/hooks/` o crear uno nuevo con TanStack Query
+- NO hacer fetch directo con `useEffect + useState` en componentes **públicos** — usar los custom hooks de `src/hooks/` o crear uno nuevo con TanStack Query. Los componentes admin sí usan `useEffect + useState` directo (patrón válido para UI autenticada que no necesita caching)
 
 ---
 
@@ -442,11 +449,70 @@ npm run build         # Build de producción (output: dist/)
 npm run lint          # Verificar errores ESLint
 npm run test          # Tests Vitest (una vez)
 npm run test:watch    # Tests Vitest (watch mode)
+node node_modules/typescript/bin/tsc --noEmit  # Verificar tipos sin compilar (0 errores esperados)
 ```
 
 ---
 
-## 15. Contexto de Negocio para Decisiones de Diseño
+## 15. Patrones del Panel Admin
+
+Los archivos admin en `src/pages/admin/` **no** usan TanStack Query — usan `useEffect + useState` directo con `supabase` client. Es válido porque el admin es UI autenticada sin necesidad de caching.
+
+### Patrón estándar de cada lista admin (Destinations, GearArticles, BlogPosts)
+
+```typescript
+// 1. Estado inicial
+const [items, setItems] = useState<T[]>([]);
+const [loading, setLoading] = useState(true);
+
+// 2. Skeleton mientras carga
+{loading ? <SkeletonRows /> : ...}
+
+// 3. Empty state si no hay datos
+{items.length === 0 ? <EmptyState /> : ...}
+
+// 4. Switch inline para publicar/despublicar (sin abrir el editor)
+<Switch
+  checked={item.is_published ?? false}
+  onCheckedChange={() => handleTogglePublish(item.id, item.is_published ?? false)}
+/>
+
+// 5. AlertDialog de shadcn/ui para confirmar eliminación (NO browser confirm())
+<AlertDialog>
+  <AlertDialogTrigger asChild><Button>...</Button></AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>¿Eliminar X?</AlertDialogTitle>
+      <AlertDialogDescription>
+        Esta acción no se puede deshacer. Se eliminará permanentemente <strong>{item.title}</strong>.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDelete(item.id)}>
+        Eliminar
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+```
+
+### AdminDashboard
+
+- 4 stat cards: Destinos, Gear, Blog Posts, Suscriptores
+- Cada card muestra publicados en grande + borradores en pequeño (solo si > 0)
+- Sección "Actividad Reciente": últimos 6 items entre los 3 content types, ordenados por fecha
+- 3 botones de acción rápida: Nuevo Destino, Nuevo Artículo, Nuevo Post
+
+### AdminQuizResponses / AdminSubscribers
+
+- Total count bajo el título
+- Botón "Exportar CSV" que descarga archivo nombrado `{tipo}-{fecha-ISO}.csv`
+- Skeleton de carga + empty state
+
+---
+
+## 16. Contexto de Negocio para Decisiones de Diseño
 
 - El usuario llega principalmente por SEO (Google) buscando guías de trekking en español
 - El funnel es: Landing → Quiz → Destino → Links de afiliados
@@ -458,11 +524,11 @@ npm run test:watch    # Tests Vitest (watch mode)
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.0*
+*Versión: 1.1*
 
 ---
 
-## 16. Tareas Pendientes del Dueño del Proyecto
+## 17. Tareas Pendientes del Dueño del Proyecto
 
 > Esta sección lista cosas que **solo tú puedes hacer** — decisiones de negocio, cuentas externas, o configuración fuera del código. Márcalas con ✅ cuando estén listas, o documenta el estado actual con 🔄.
 >
