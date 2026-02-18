@@ -7,8 +7,11 @@ import GearPreview from "@/components/landing/GearPreview";
 import SocialProof from "@/components/landing/SocialProof";
 import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
+import { useCanonical } from "@/hooks/use-seo";
 
 const Index = () => {
+  useCanonical();
+
   return (
     <main className="bg-background min-h-screen">
       <Navbar />

@@ -5,6 +5,7 @@ import { MapPin, Clock, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 
 interface Destination {
   id: string;
@@ -101,7 +102,9 @@ const DestinationsCatalog = () => {
   if (loading) {
     return (
       <section id="destinos" className="py-16 sm:py-20 bg-background">
-        <div className="container mx-auto px-5 text-center text-muted-foreground">Cargando destinos...</div>
+        <div className="container mx-auto px-5">
+          <CardGridSkeleton count={6} />
+        </div>
       </section>
     );
   }
