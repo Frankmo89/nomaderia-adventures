@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          author: string | null
+          category: string
+          content_markdown: string | null
+          created_at: string
+          featured: boolean | null
+          hero_image_url: string | null
+          id: string
+          is_published: boolean | null
+          short_description: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string
+          content_markdown?: string | null
+          created_at?: string
+          featured?: boolean | null
+          hero_image_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          short_description?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          category?: string
+          content_markdown?: string | null
+          created_at?: string
+          featured?: boolean | null
+          hero_image_url?: string | null
+          id?: string
+          is_published?: boolean | null
+          short_description?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       destinations: {
         Row: {
           affiliate_links: Json | null
