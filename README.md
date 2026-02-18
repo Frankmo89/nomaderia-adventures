@@ -1,73 +1,217 @@
-# Welcome to your Lovable project
+# Nomaderia Adventures
 
-## Project info
+> Plataforma de aventuras y viajes para personas activas que quieren explorar el mundo — sin morir en el intento.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Nomaderia Adventures es una web app completa construida con React + TypeScript que ayuda a viajeros a:
 
-## How can I edit this code?
+- Descubrir destinos de trekking y aventura con guías detalladas
+- Calcular presupuestos de viaje personalizados
+- Encontrar el equipo adecuado con reseñas y links de afiliados
+- Leer el blog de consejos de preparación física y viaje
+- Recibir recomendaciones personalizadas a través de un quiz interactivo
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## Stack Tecnológico
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+| Capa | Tecnología |
+|------|------------|
+| Frontend Framework | React 18 + TypeScript 5 |
+| Build Tool | Vite 5 (SWC) |
+| Estilos | Tailwind CSS 3 |
+| Componentes UI | shadcn/ui + Radix UI |
+| Animaciones | Framer Motion 12 |
+| Routing | React Router DOM 6 |
+| Backend / DB | Supabase (PostgreSQL + Auth) |
+| Data Fetching | TanStack React Query 5 |
+| Formularios | React Hook Form + Zod |
+| Testing | Vitest + Testing Library |
+| Carruseles | Embla Carousel |
+| Charts | Recharts |
+| Markdown | React Markdown |
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## Estructura del Proyecto
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```
+nomaderia-adventures/
+├── src/
+│   ├── pages/
+│   │   ├── Index.tsx                   # Homepage
+│   │   ├── DestinationDetail.tsx       # Página de destino individual
+│   │   ├── GearListing.tsx             # Catálogo de equipo
+│   │   ├── GearArticleDetail.tsx       # Artículo de equipo individual
+│   │   ├── BlogListing.tsx             # Listado del blog
+│   │   ├── BlogPostDetail.tsx          # Post individual del blog
+│   │   ├── BudgetCalculator.tsx        # Calculadora de presupuesto
+│   │   ├── NotFound.tsx
+│   │   └── admin/                      # Panel de administración (protegido)
+│   │       ├── AdminLogin.tsx
+│   │       ├── AdminLayout.tsx
+│   │       ├── AdminDashboard.tsx
+│   │       ├── AdminDestinations.tsx
+│   │       ├── AdminDestinationForm.tsx
+│   │       ├── AdminGearArticles.tsx
+│   │       ├── AdminGearArticleForm.tsx
+│   │       ├── AdminBlogPosts.tsx
+│   │       ├── AdminBlogPostForm.tsx
+│   │       ├── AdminQuizResponses.tsx
+│   │       └── AdminSubscribers.tsx
+│   ├── components/
+│   │   ├── landing/                    # Secciones de la homepage
+│   │   │   ├── Navbar.tsx
+│   │   │   ├── HeroSection.tsx
+│   │   │   ├── DidYouKnowSection.tsx
+│   │   │   ├── QuizSection.tsx
+│   │   │   ├── DestinationsCatalog.tsx
+│   │   │   ├── GearPreview.tsx
+│   │   │   ├── SocialProof.tsx
+│   │   │   ├── NewsletterSignup.tsx
+│   │   │   └── Footer.tsx
+│   │   ├── ui/                         # shadcn/ui components
+│   │   ├── LoadingSkeletons.tsx
+│   │   └── NavLink.tsx
+│   ├── hooks/
+│   │   ├── use-seo.ts                  # Canonical links + JSON-LD
+│   │   ├── use-mobile.tsx
+│   │   └── use-toast.ts
+│   ├── integrations/
+│   │   └── supabase/
+│   │       ├── client.ts               # Cliente Supabase
+│   │       └── types.ts                # Tipos auto-generados
+│   ├── lib/
+│   │   └── utils.ts                    # cn() helper (clsx + tailwind-merge)
+│   ├── App.tsx                         # Router principal
+│   └── main.tsx                        # Entry point
+├── public/
+├── supabase/
+├── index.html
+├── tailwind.config.ts
+├── vite.config.ts
+└── vitest.config.ts
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## Variables de Entorno
+
+Crea un archivo `.env` en la raíz del proyecto con:
+
+```env
+VITE_SUPABASE_URL=tu_supabase_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=tu_supabase_anon_key
+```
+
+Obtén estos valores desde tu [dashboard de Supabase](https://supabase.com/dashboard).
+
+---
+
+## Instalación y Desarrollo Local
+
+Requisitos previos: Node.js 18+ o Bun.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# 1. Clonar el repositorio
+git clone https://github.com/tu-usuario/nomaderia-adventures.git
+cd nomaderia-adventures
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# 2. Instalar dependencias
+npm install
+# o con bun:
+bun install
 
-# Step 3: Install the necessary dependencies.
-npm i
+# 3. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales de Supabase
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 4. Iniciar servidor de desarrollo (puerto 8080)
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Abre `http://localhost:8080` en tu navegador.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## Scripts Disponibles
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+npm run dev          # Servidor de desarrollo con HMR
+npm run build        # Build de producción
+npm run build:dev    # Build en modo development
+npm run preview      # Preview del build de producción
+npm run lint         # Linter ESLint
+npm run test         # Tests (Vitest, una sola ejecución)
+npm run test:watch   # Tests en modo watch
+```
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## Rutas de la Aplicación
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Homepage con hero, quiz, destinos y gear |
+| `/destinos/:slug` | Detalle de destino con itinerario y gear list |
+| `/gear` | Catálogo de equipo por categorías |
+| `/gear/:slug` | Artículo de equipo con recomendaciones |
+| `/blog` | Listado de artículos del blog |
+| `/blog/:slug` | Post individual del blog |
+| `/calculadora` | Calculadora de presupuesto interactiva |
+| `/admin/login` | Login del panel de administración |
+| `/admin` | Dashboard de administración (protegido) |
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Base de Datos (Supabase)
 
-## Can I connect a custom domain to my Lovable project?
+El proyecto usa las siguientes tablas en Supabase:
 
-Yes, you can!
+| Tabla | Descripción |
+|-------|-------------|
+| `destinations` | Guías de destinos de aventura |
+| `gear_articles` | Artículos y reseñas de equipo |
+| `blog_posts` | Artículos del blog |
+| `quiz_responses` | Respuestas del quiz interactivo |
+| `newsletter_subscribers` | Suscriptores del newsletter |
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Todas las tablas tienen campo `is_published` para controlar qué contenido es visible en el sitio público.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+## Paleta de Colores (Nomaderia Campfire Night)
+
+| Token | Color | Hex |
+|-------|-------|-----|
+| `primary` | Sunset Orange | `#E86C3A` |
+| `secondary` | Trail Green | `#4A7C59` |
+| `accent` | Sky Blue | `#6BA3BE` |
+| `background` | Charcoal | `#1C1917` |
+| `foreground` | Light Sand | `#F5F0EB` |
+
+Tipografías: **Playfair Display** (headings) + **Inter** (body).
+
+---
+
+## Despliegue
+
+El proyecto está configurado para desplegarse en **Lovable**. También es compatible con cualquier plataforma estática (Vercel, Netlify, Cloudflare Pages).
+
+```sh
+npm run build
+# Output en dist/
+```
+
+---
+
+## Contribuir
+
+1. Crea una rama desde `main`: `git checkout -b feature/mi-feature`
+2. Haz tus cambios y escribe tests si aplica
+3. Abre un Pull Request hacia `main`
+
+---
+
+## Licencia
+
+Privado — Todos los derechos reservados © Nomaderia Adventures.

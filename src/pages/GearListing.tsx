@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical } from "@/hooks/use-seo";
+import { useGearArticles } from "@/hooks/use-gear-articles";
 import type { Tables } from "@/integrations/supabase/types";
 
 type GearArticle = Tables<"gear_articles">;
@@ -15,23 +15,12 @@ type GearArticle = Tables<"gear_articles">;
 const categories = ["Todo", "Botas", "Bastones", "Mochilas", "Fotografía", "Ropa", "Accesorios"];
 
 const GearListing = () => {
-  const [articles, setArticles] = useState<GearArticle[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: articles = [], isLoading, error } = useGearArticles();
 
   useCanonical();
 
   useEffect(() => {
     document.title = "Gear Guide — Nomaderia";
-    const load = async () => {
-      const { data } = await supabase
-        .from("gear_articles")
-        .select("*")
-        .eq("is_published", true)
-        .order("created_at", { ascending: false });
-      setArticles(data || []);
-      setLoading(false);
-    };
-    load();
     return () => { document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando"; };
   }, []);
 
@@ -53,9 +42,15 @@ const GearListing = () => {
             Todo lo que necesitas para tu aventura, revisado por expertos para principiantes.
           </p>
 
-          {loading ? (
-            <CardGridSkeleton count={3} />
-          ) : (
+          {isLoading && <CardGridSkeleton count={3} />}
+
+          {error && (
+            <p className="text-center text-muted-foreground py-8">
+              No se pudieron cargar los artículos. Intenta recargar la página.
+            </p>
+          )}
+
+          {!isLoading && !error && (
             <Tabs defaultValue="Todo" className="w-full">
               <TabsList className="bg-muted mb-8 flex flex-wrap gap-1 h-auto">
                 {categories.map((cat) => (

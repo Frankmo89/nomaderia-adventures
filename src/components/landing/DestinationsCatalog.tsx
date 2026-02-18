@@ -1,24 +1,10 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { MapPin, Clock, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
-
-interface Destination {
-  id: string;
-  title: string;
-  slug: string;
-  country: string;
-  short_description: string;
-  difficulty_level: string;
-  days_needed: string;
-  estimated_budget_usd: number;
-  hero_image_url: string;
-  tags: string[];
-}
+import { useDestinations } from "@/hooks/use-destinations";
 
 const difficultyColor: Record<string, string> = {
   easy: "bg-secondary text-secondary-foreground",
@@ -32,25 +18,12 @@ const countryFlag: Record<string, string> = {
 };
 
 const DestinationsCatalog = () => {
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("destinations")
-        .select("id, title, slug, country, short_description, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, tags")
-        .eq("is_published", true);
-      setDestinations((data as Destination[]) || []);
-      setLoading(false);
-    };
-    fetch();
-  }, []);
+  const { data: destinations = [], isLoading, error } = useDestinations();
 
   const filterByDifficulty = (level: string) =>
     level === "all" ? destinations : destinations.filter((d) => d.difficulty_level === level);
 
-  const DestCard = ({ d, index }: { d: Destination; index: number }) => (
+  const DestCard = ({ d, index }: { d: (typeof destinations)[0]; index: number }) => (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -99,7 +72,7 @@ const DestinationsCatalog = () => {
     </motion.div>
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <section id="destinos" className="py-16 sm:py-20 bg-background">
         <div className="container mx-auto px-5">
@@ -109,11 +82,19 @@ const DestinationsCatalog = () => {
     );
   }
 
+  if (error) {
+    return (
+      <section id="destinos" className="py-16 sm:py-20 bg-background">
+        <div className="container mx-auto px-5 text-center">
+          <p className="text-muted-foreground">No se pudieron cargar los destinos. Intenta recargar la página.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="destinos" className="py-16 sm:py-20 bg-background relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
-      }} />
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none noise-bg" />
       <div className="container mx-auto px-5 relative z-10">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

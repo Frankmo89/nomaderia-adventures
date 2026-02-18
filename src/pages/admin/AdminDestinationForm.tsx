@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface Fear { question: string; answer: string; }
+type FormState = typeof emptyForm;
 
 const emptyForm = {
   title: "", slug: "", country: "", region: "", short_description: "",
@@ -21,6 +22,96 @@ const emptyForm = {
   full_guide_markdown: "", preparation_plan: "", itinerary_markdown: "",
   gear_list_markdown: "", flights_url: "", hotels_url: "", insurance_url: "",
 };
+
+// --- Sub-components ---
+
+const field = (label: string, input: React.ReactNode) => (
+  <div><Label className="text-card-foreground">{label}</Label>{input}</div>
+);
+
+const inputCls = "bg-background border-border text-foreground";
+
+const GeneralFields = ({ form, set }: { form: FormState; set: (k: string, v: string | boolean) => void }) => (
+  <Card className="bg-card border-border">
+    <CardHeader><CardTitle className="text-card-foreground">Información General</CardTitle></CardHeader>
+    <CardContent className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {field("Título *", <Input value={form.title} onChange={(e) => set("title", e.target.value)} className={inputCls} required />)}
+        {field("Slug *", <Input value={form.slug} onChange={(e) => set("slug", e.target.value)} className={inputCls} required />)}
+        {field("País *", <Input value={form.country} onChange={(e) => set("country", e.target.value)} className={inputCls} required />)}
+        {field("Región", <Input value={form.region} onChange={(e) => set("region", e.target.value)} className={inputCls} />)}
+        <div>
+          <Label className="text-card-foreground">Dificultad</Label>
+          <Select value={form.difficulty_level} onValueChange={(v) => set("difficulty_level", v)}>
+            <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="easy">Fácil</SelectItem>
+              <SelectItem value="moderate">Moderado</SelectItem>
+              <SelectItem value="challenging">Desafiante</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {field("Días necesarios", <Input value={form.days_needed} onChange={(e) => set("days_needed", e.target.value)} className={inputCls} />)}
+        {field("Presupuesto (USD)", <Input type="number" value={form.estimated_budget_usd} onChange={(e) => set("estimated_budget_usd", e.target.value)} className={inputCls} />)}
+        {field("Mejor Temporada", <Input value={form.best_season} onChange={(e) => set("best_season", e.target.value)} className={inputCls} />)}
+      </div>
+      {field("Descripción Corta", <Textarea value={form.short_description} onChange={(e) => set("short_description", e.target.value)} className={inputCls} />)}
+      {field("Descripción de Dificultad", <Textarea value={form.difficulty_description} onChange={(e) => set("difficulty_description", e.target.value)} className={inputCls} />)}
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2"><Switch checked={form.is_published} onCheckedChange={(v) => set("is_published", v)} /><Label className="text-card-foreground">Publicado</Label></div>
+        <div className="flex items-center gap-2"><Switch checked={form.featured} onCheckedChange={(v) => set("featured", v)} /><Label className="text-card-foreground">Destacado</Label></div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const FaqFields = ({ fears, onAdd, onRemove, onUpdate }: {
+  fears: Fear[];
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  onUpdate: (i: number, key: keyof Fear, val: string) => void;
+}) => (
+  <Card className="bg-card border-border">
+    <CardHeader><CardTitle className="text-card-foreground">Miedos Comunes (FAQ)</CardTitle></CardHeader>
+    <CardContent className="space-y-4">
+      {fears.map((f, i) => (
+        <div key={i} className="flex gap-2 items-start">
+          <div className="flex-1 space-y-2">
+            <Input placeholder="Pregunta" value={f.question} onChange={(e) => onUpdate(i, "question", e.target.value)} className={inputCls} />
+            <Textarea placeholder="Respuesta" value={f.answer} onChange={(e) => onUpdate(i, "answer", e.target.value)} className={inputCls} />
+          </div>
+          <Button type="button" variant="ghost" size="icon" onClick={() => onRemove(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+        </div>
+      ))}
+      <Button type="button" variant="outline" size="sm" onClick={onAdd} className="border-border text-foreground"><Plus className="h-4 w-4 mr-1" /> Agregar Pregunta</Button>
+    </CardContent>
+  </Card>
+);
+
+const MarkdownFields = ({ form, set }: { form: FormState; set: (k: string, v: string | boolean) => void }) => (
+  <Card className="bg-card border-border">
+    <CardHeader><CardTitle className="text-card-foreground">Contenido Markdown</CardTitle></CardHeader>
+    <CardContent className="space-y-4">
+      {field("Preparación Física", <Textarea rows={8} value={form.preparation_plan} onChange={(e) => set("preparation_plan", e.target.value)} className={`${inputCls} font-mono text-sm`} />)}
+      {field("Itinerario", <Textarea rows={8} value={form.itinerary_markdown} onChange={(e) => set("itinerary_markdown", e.target.value)} className={`${inputCls} font-mono text-sm`} />)}
+      {field("Qué Llevar", <Textarea rows={8} value={form.gear_list_markdown} onChange={(e) => set("gear_list_markdown", e.target.value)} className={`${inputCls} font-mono text-sm`} />)}
+      {field("Guía Completa", <Textarea rows={8} value={form.full_guide_markdown} onChange={(e) => set("full_guide_markdown", e.target.value)} className={`${inputCls} font-mono text-sm`} />)}
+    </CardContent>
+  </Card>
+);
+
+const AffiliateFields = ({ form, set }: { form: FormState; set: (k: string, v: string | boolean) => void }) => (
+  <Card className="bg-card border-border">
+    <CardHeader><CardTitle className="text-card-foreground">Affiliate Links</CardTitle></CardHeader>
+    <CardContent className="space-y-4">
+      {field("URL Vuelos", <Input value={form.flights_url} onChange={(e) => set("flights_url", e.target.value)} className={inputCls} />)}
+      {field("URL Hoteles", <Input value={form.hotels_url} onChange={(e) => set("hotels_url", e.target.value)} className={inputCls} />)}
+      {field("URL Seguro de Viaje", <Input value={form.insurance_url} onChange={(e) => set("insurance_url", e.target.value)} className={inputCls} />)}
+    </CardContent>
+  </Card>
+);
+
+// --- Main component ---
 
 const AdminDestinationForm = () => {
   const { id } = useParams();
@@ -80,78 +171,19 @@ const AdminDestinationForm = () => {
     else navigate("/admin/destinations");
   };
 
-  const addFear = () => setFears([...fears, { question: "", answer: "" }]);
-  const removeFear = (i: number) => setFears(fears.filter((_, idx) => idx !== i));
-  const updateFear = (i: number, key: keyof Fear, val: string) =>
-    setFears(fears.map((f, idx) => (idx === i ? { ...f, [key]: val } : f)));
-
   return (
     <div className="max-w-3xl">
       <h1 className="font-serif text-3xl text-foreground mb-6">{isEdit ? "Editar Destino" : "Nuevo Destino"}</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="bg-card border-border">
-          <CardHeader><CardTitle className="text-card-foreground">Información General</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label className="text-card-foreground">Título *</Label><Input value={form.title} onChange={(e) => set("title", e.target.value)} className="bg-background border-border text-foreground" required /></div>
-              <div><Label className="text-card-foreground">Slug *</Label><Input value={form.slug} onChange={(e) => set("slug", e.target.value)} className="bg-background border-border text-foreground" required /></div>
-              <div><Label className="text-card-foreground">País *</Label><Input value={form.country} onChange={(e) => set("country", e.target.value)} className="bg-background border-border text-foreground" required /></div>
-              <div><Label className="text-card-foreground">Región</Label><Input value={form.region} onChange={(e) => set("region", e.target.value)} className="bg-background border-border text-foreground" /></div>
-              <div>
-                <Label className="text-card-foreground">Dificultad</Label>
-                <Select value={form.difficulty_level} onValueChange={(v) => set("difficulty_level", v)}>
-                  <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="easy">Fácil</SelectItem><SelectItem value="moderate">Moderado</SelectItem><SelectItem value="challenging">Desafiante</SelectItem></SelectContent>
-                </Select>
-              </div>
-              <div><Label className="text-card-foreground">Días necesarios</Label><Input value={form.days_needed} onChange={(e) => set("days_needed", e.target.value)} className="bg-background border-border text-foreground" /></div>
-              <div><Label className="text-card-foreground">Presupuesto (USD)</Label><Input type="number" value={form.estimated_budget_usd} onChange={(e) => set("estimated_budget_usd", e.target.value)} className="bg-background border-border text-foreground" /></div>
-              <div><Label className="text-card-foreground">Mejor Temporada</Label><Input value={form.best_season} onChange={(e) => set("best_season", e.target.value)} className="bg-background border-border text-foreground" /></div>
-            </div>
-            <div><Label className="text-card-foreground">Descripción Corta</Label><Textarea value={form.short_description} onChange={(e) => set("short_description", e.target.value)} className="bg-background border-border text-foreground" /></div>
-            <div><Label className="text-card-foreground">Descripción de Dificultad</Label><Textarea value={form.difficulty_description} onChange={(e) => set("difficulty_description", e.target.value)} className="bg-background border-border text-foreground" /></div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2"><Switch checked={form.is_published} onCheckedChange={(v) => set("is_published", v)} /><Label className="text-card-foreground">Publicado</Label></div>
-              <div className="flex items-center gap-2"><Switch checked={form.featured} onCheckedChange={(v) => set("featured", v)} /><Label className="text-card-foreground">Destacado</Label></div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader><CardTitle className="text-card-foreground">Miedos Comunes (FAQ)</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            {fears.map((f, i) => (
-              <div key={i} className="flex gap-2 items-start">
-                <div className="flex-1 space-y-2">
-                  <Input placeholder="Pregunta" value={f.question} onChange={(e) => updateFear(i, "question", e.target.value)} className="bg-background border-border text-foreground" />
-                  <Textarea placeholder="Respuesta" value={f.answer} onChange={(e) => updateFear(i, "answer", e.target.value)} className="bg-background border-border text-foreground" />
-                </div>
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeFear(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-              </div>
-            ))}
-            <Button type="button" variant="outline" size="sm" onClick={addFear} className="border-border text-foreground"><Plus className="h-4 w-4 mr-1" /> Agregar Pregunta</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader><CardTitle className="text-card-foreground">Contenido Markdown</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div><Label className="text-card-foreground">Preparación Física</Label><Textarea rows={8} value={form.preparation_plan} onChange={(e) => set("preparation_plan", e.target.value)} className="bg-background border-border text-foreground font-mono text-sm" /></div>
-            <div><Label className="text-card-foreground">Itinerario</Label><Textarea rows={8} value={form.itinerary_markdown} onChange={(e) => set("itinerary_markdown", e.target.value)} className="bg-background border-border text-foreground font-mono text-sm" /></div>
-            <div><Label className="text-card-foreground">Qué Llevar</Label><Textarea rows={8} value={form.gear_list_markdown} onChange={(e) => set("gear_list_markdown", e.target.value)} className="bg-background border-border text-foreground font-mono text-sm" /></div>
-            <div><Label className="text-card-foreground">Guía Completa</Label><Textarea rows={8} value={form.full_guide_markdown} onChange={(e) => set("full_guide_markdown", e.target.value)} className="bg-background border-border text-foreground font-mono text-sm" /></div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader><CardTitle className="text-card-foreground">Affiliate Links</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div><Label className="text-card-foreground">URL Vuelos</Label><Input value={form.flights_url} onChange={(e) => set("flights_url", e.target.value)} className="bg-background border-border text-foreground" /></div>
-            <div><Label className="text-card-foreground">URL Hoteles</Label><Input value={form.hotels_url} onChange={(e) => set("hotels_url", e.target.value)} className="bg-background border-border text-foreground" /></div>
-            <div><Label className="text-card-foreground">URL Seguro de Viaje</Label><Input value={form.insurance_url} onChange={(e) => set("insurance_url", e.target.value)} className="bg-background border-border text-foreground" /></div>
-          </CardContent>
-        </Card>
-
+        <GeneralFields form={form} set={set} />
+        <FaqFields
+          fears={fears}
+          onAdd={() => setFears([...fears, { question: "", answer: "" }])}
+          onRemove={(i) => setFears(fears.filter((_, idx) => idx !== i))}
+          onUpdate={(i, key, val) => setFears(fears.map((f, idx) => (idx === i ? { ...f, [key]: val } : f)))}
+        />
+        <MarkdownFields form={form} set={set} />
+        <AffiliateFields form={form} set={set} />
         <div className="flex gap-4">
           <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             {saving ? "Guardando..." : isEdit ? "Actualizar" : "Crear Destino"}

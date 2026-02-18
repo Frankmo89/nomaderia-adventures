@@ -1,45 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical } from "@/hooks/use-seo";
-
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  category: string;
-  short_description: string | null;
-  hero_image_url: string | null;
-  author: string | null;
-  created_at: string;
-}
+import { useBlogPosts } from "@/hooks/use-blog-posts";
 
 const categories = ["Todo", "Preparación", "Errores", "Inspiración", "Consejos"];
 
 const BlogListing = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: posts = [], isLoading, error } = useBlogPosts();
 
   useCanonical();
 
   useEffect(() => {
     document.title = "Blog — Nomaderia";
-    const load = async () => {
-      const { data } = await supabase
-        .from("blog_posts")
-        .select("id, title, slug, category, short_description, hero_image_url, author, created_at")
-        .eq("is_published", true)
-        .order("created_at", { ascending: false });
-      setPosts((data as BlogPost[]) || []);
-      setLoading(false);
-    };
-    load();
     return () => { document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando"; };
   }, []);
 
@@ -61,9 +39,15 @@ const BlogListing = () => {
             Artículos, consejos y guías para preparar tu primera aventura al aire libre.
           </p>
 
-          {loading ? (
-            <CardGridSkeleton count={3} />
-          ) : (
+          {isLoading && <CardGridSkeleton count={3} />}
+
+          {error && (
+            <p className="text-center text-muted-foreground py-8">
+              No se pudieron cargar los artículos. Intenta recargar la página.
+            </p>
+          )}
+
+          {!isLoading && !error && (
             <Tabs defaultValue="Todo" className="w-full">
               <TabsList className="bg-muted mb-8 flex flex-wrap gap-1 h-auto">
                 {categories.map((cat) => (

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -8,14 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, useJsonLd } from "@/hooks/use-seo";
-import type { Tables } from "@/integrations/supabase/types";
-
-type Destination = Tables<"destinations">;
+import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 
 const difficultyColor: Record<string, string> = {
   easy: "bg-secondary text-secondary-foreground",
@@ -29,49 +26,31 @@ const countryFlag: Record<string, string> = {
 
 const DestinationDetail = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [dest, setDest] = useState<Destination | null>(null);
-  const [related, setRelated] = useState<Destination[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: dest, isLoading, error } = useDestinationBySlug(slug);
+  const { data: related = [] } = useRelatedDestinations(
+    dest?.difficulty_level,
+    dest?.id
+  );
 
   useCanonical();
 
   useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase
-        .from("destinations")
-        .select("*")
-        .eq("slug", slug!)
-        .eq("is_published", true)
-        .maybeSingle();
-      setDest(data);
-      if (data) {
-        document.title = `${data.title} — Nomaderia`;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) metaDesc.setAttribute("content", data.short_description || "");
-        const ogTitle = document.querySelector('meta[property="og:title"]');
-        if (ogTitle) ogTitle.setAttribute("content", `${data.title} — Nomaderia`);
-        const ogDesc = document.querySelector('meta[property="og:description"]');
-        if (ogDesc) ogDesc.setAttribute("content", data.short_description || "");
-        if (data.hero_image_url) {
-          const ogImage = document.querySelector('meta[property="og:image"]');
-          if (ogImage) ogImage.setAttribute("content", data.hero_image_url);
-        }
-        const { data: rel } = await supabase
-          .from("destinations")
-          .select("id, title, slug, country, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, short_description")
-          .eq("is_published", true)
-          .eq("difficulty_level", data.difficulty_level)
-          .neq("id", data.id)
-          .limit(3);
-        setRelated((rel as Destination[]) || []);
-      }
-      setLoading(false);
-    };
-    load();
+    if (!dest) return;
+    document.title = `${dest.title} — Nomaderia`;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute("content", dest.short_description || "");
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute("content", `${dest.title} — Nomaderia`);
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute("content", dest.short_description || "");
+    if (dest.hero_image_url) {
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      if (ogImage) ogImage.setAttribute("content", dest.hero_image_url);
+    }
     return () => {
       document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando";
     };
-  }, [slug]);
+  }, [dest]);
 
   const jsonLd = useMemo(() => {
     if (!dest) return null;
@@ -88,14 +67,14 @@ const DestinationDetail = () => {
 
   useJsonLd(jsonLd);
 
-  if (loading) return (
+  if (isLoading) return (
     <main className="bg-background min-h-screen">
       <Navbar />
       <div className="pt-20"><DestinationDetailSkeleton /></div>
     </main>
   );
 
-  if (!dest) return (
+  if (error || !dest) return (
     <main className="bg-background min-h-screen">
       <Navbar />
       <div className="pt-32 text-center">
