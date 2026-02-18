@@ -459,3 +459,80 @@ npm run test:watch    # Tests Vitest (watch mode)
 
 *Última actualización: Febrero 2026*
 *Versión: 1.0*
+
+---
+
+## 16. Tareas Pendientes del Dueño del Proyecto
+
+> Esta sección lista cosas que **solo tú puedes hacer** — decisiones de negocio, cuentas externas, o configuración fuera del código. Márcalas con ✅ cuando estén listas, o documenta el estado actual con 🔄.
+>
+> **Instrucción para agentes AI:** Si el usuario te pide hacer algo que depende de una tarea pendiente aquí, recuérdale que primero debe completarla.
+
+---
+
+### 🌐 Dominio y Hosting
+
+- [ ] **Comprar y configurar dominio** — El sitio aún no tiene URL de producción.
+  - Opciones sugeridas: Namecheap, Google Domains, GoDaddy
+  - Una vez comprado, actualizar `SITE_URL` en `src/hooks/use-seo.ts` (o mejor, moverlo a variable de entorno `VITE_SITE_URL`)
+
+- [ ] **Configurar hosting** — Dónde se va a desplegar el sitio.
+  - Recomendado: Vercel o Netlify (soportan Vite + SPA routing con `_redirects`)
+  - Al configurar, agregar las variables de entorno: `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+- [ ] **Configurar `VITE_SITE_URL`** en el panel del proveedor de hosting una vez que tengas dominio.
+
+---
+
+### 🗄️ Supabase
+
+- [ ] **Aplicar migración pendiente de RLS** — Archivo creado pero aún no aplicado en Supabase Cloud:
+  ```sh
+  supabase db push
+  ```
+  Archivo: `supabase/migrations/20260218200000_fix_blog_posts_rls_policy.sql`
+
+- [ ] **Crear el usuario admin** — Después de hacer deploy, el usuario que va a usar el admin panel necesita:
+  1. Tener una cuenta en Supabase Auth (creada desde el Dashboard de Supabase → Authentication → Users)
+  2. Tener su UUID insertado en la tabla `user_roles`:
+  ```sql
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES ('<UUID_DEL_ADMIN>', 'admin');
+  ```
+
+- [ ] **Deshabilitar el signup público** en Supabase Dashboard:
+  - Authentication → Settings → desactivar "Enable email signup"
+  - Esto evita que usuarios externos se registren
+
+- [ ] **Configurar SMTP propio (opcional)** para emails transaccionales de Supabase (confirmaciones, reset de password). Por defecto usa el servidor de Supabase con límites bajos.
+
+---
+
+### 📊 Analytics y Monetización
+
+- [ ] **Configurar Google Analytics / Plausible** — No hay tracking instalado actualmente. Pendiente de decidir herramienta.
+
+- [ ] **Registrar cuentas de afiliados** para los links de productos:
+  - Amazon Afiliados (productos de gear)
+  - Booking.com Afiliados (hoteles)
+  - Skyscanner / Kayak Afiliados (vuelos)
+  - iati Seguros / Chapka (seguros de viaje)
+
+- [ ] **Agregar los affiliate links reales** a los destinos desde el panel admin (`/admin/destinations`)
+
+---
+
+### 🔍 SEO Pre-lanzamiento
+
+- [ ] **Verificar el sitio en Google Search Console** una vez que tengas dominio
+- [ ] **Enviar sitemap** — No hay sitemap.xml generado aún. Pendiente de implementar o usar plugin.
+- [ ] **Configurar Open Graph image** específica para cada destino (actualmente usa la hero_image_url pero falta hero image en muchos)
+
+---
+
+### 📝 Contenido
+
+- [ ] **Agregar destinos reales** desde el panel admin — actualmente el sitio está vacío sin datos en la DB
+- [ ] **Agregar artículos de gear** con productos reales y links de afiliado
+- [ ] **Escribir posts del blog** para SEO inicial
+- [ ] **Agregar hero images** a todos los destinos (URLs de Unsplash o imágenes propias en Supabase Storage)

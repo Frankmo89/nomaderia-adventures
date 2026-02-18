@@ -63,7 +63,11 @@ export function useQuiz(totalSteps: number) {
   };
 
   const handleSubmit = async () => {
-    if (!email) return;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      toast({ title: "Email inválido", description: "Por favor ingresa un email válido.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
       const { data: destinations } = await supabase

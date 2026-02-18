@@ -23,6 +23,11 @@ const AdminLayout = () => {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/admin/login"); return; }
+      const { data: isAdmin } = await supabase.rpc("has_role", {
+        _user_id: session.user.id,
+        _role: "admin",
+      });
+      if (!isAdmin) { await supabase.auth.signOut(); navigate("/admin/login"); return; }
       setLoading(false);
     };
     check();
