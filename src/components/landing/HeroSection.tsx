@@ -1,20 +1,44 @@
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
+  const [scrollY, setScrollY] = useState(0);
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background gradient — replace with real hero image */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-forest to-background" />
-      <div className="absolute inset-0 bg-black/30" />
+    <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Parallax background image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center will-change-transform"
+        style={{
+          backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80)`,
+          transform: `translateY(${scrollY * 0.35}px) scale(1.1)`,
+        }}
+      />
+      {/* Cinematic gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-transparent" />
+
+      {/* Grain texture */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
+      }} />
 
       <div className="relative z-10 container mx-auto px-4 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight mb-6"
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-foreground leading-[1.1] mb-6"
+          style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
         >
           Tu Primera Aventura
           <br />
@@ -24,8 +48,9 @@ const HeroSection = () => {
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
           className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-10 font-sans"
+          style={{ textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}
         >
           No necesitas ser atleta. No necesitas experiencia.
           <br className="hidden sm:block" />
@@ -35,13 +60,13 @@ const HeroSection = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6">
+          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-lg shadow-primary/30">
             <a href="#quiz">Descubre A Dónde Ir →</a>
           </Button>
-          <Button asChild variant="outline" size="lg" className="border-foreground/30 text-foreground hover:bg-foreground/10 text-lg px-8 py-6">
+          <Button asChild variant="outline" size="lg" className="border-foreground/30 text-foreground hover:bg-foreground/10 text-lg px-8 py-6 backdrop-blur-sm">
             <a href="#destinos">Explorar Destinos</a>
           </Button>
         </motion.div>

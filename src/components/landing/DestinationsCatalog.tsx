@@ -53,35 +53,55 @@ const DestinationsCatalog = () => {
   const filterByDifficulty = (level: string) =>
     level === "all" ? destinations : destinations.filter((d) => d.difficulty_level === level);
 
-  const DestCard = ({ d }: { d: Destination }) => (
-    <Link
-      to={`/destinos/${d.slug}`}
-      className="block bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform duration-300 shadow-lg group"
+  const DestCard = ({ d, index }: { d: Destination; index: number }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.08, duration: 0.5 }}
     >
-      {/* Image placeholder */}
-      <div className="h-48 bg-gradient-to-br from-secondary/30 to-primary/20 flex items-center justify-center">
-        <MapPin className="h-12 w-12 text-primary/40" />
-      </div>
-      <div className="p-5">
-        <div className="flex gap-2 mb-3">
-          <Badge className={difficultyColor[d.difficulty_level]}>{difficultyLabel[d.difficulty_level]}</Badge>
-          <Badge variant="outline" className="text-card-foreground border-card-foreground/20">
-            <Clock className="h-3 w-3 mr-1" /> {d.days_needed}
-          </Badge>
+      <Link
+        to={`/destinos/${d.slug}`}
+        className="block bg-card rounded-xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-primary/10 hover:scale-[1.02] group"
+      >
+        {/* Image */}
+        <div className="relative h-52 overflow-hidden">
+          {d.hero_image_url ? (
+            <img
+              src={d.hero_image_url}
+              alt={d.title}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20 flex items-center justify-center">
+              <MapPin className="h-12 w-12 text-primary/40" />
+            </div>
+          )}
+          {/* Gradient overlay for badge readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+          <div className="absolute top-3 left-3 flex gap-2">
+            <Badge className={difficultyColor[d.difficulty_level]}>{difficultyLabel[d.difficulty_level]}</Badge>
+          </div>
         </div>
-        <h3 className="font-serif text-lg font-bold text-card-foreground mb-1">{d.title}</h3>
-        <p className="text-sm text-card-foreground/70 mb-2">
-          {countryFlag[d.country] || ""} {d.country}
-        </p>
-        <p className="text-sm text-card-foreground/80 mb-3 line-clamp-2">{d.short_description}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-card-foreground/60 flex items-center gap-1">
-            <DollarSign className="h-3.5 w-3.5" /> ~${d.estimated_budget_usd} USD
-          </span>
-          <span className="text-primary text-sm font-medium group-hover:underline">Ver Guía →</span>
+        <div className="p-5">
+          <h3 className="font-serif text-lg font-bold text-card-foreground mb-1">{d.title}</h3>
+          <p className="text-sm text-card-foreground/70 mb-2">
+            {countryFlag[d.country] || ""} {d.country}
+          </p>
+          <p className="text-sm text-card-foreground/80 mb-3 line-clamp-2">{d.short_description}</p>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-card-foreground/60 flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" /> {d.days_needed}
+            </span>
+            <span className="text-card-foreground/60 flex items-center gap-1">
+              <DollarSign className="h-3.5 w-3.5" /> ~${d.estimated_budget_usd} USD
+            </span>
+            <span className="text-primary font-medium group-hover:underline">Ver Guía →</span>
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </motion.div>
   );
 
   if (loading) {
@@ -93,8 +113,11 @@ const DestinationsCatalog = () => {
   }
 
   return (
-    <section id="destinos" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+    <section id="destinos" className="py-20 bg-background relative overflow-hidden">
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
+      }} />
+      <div className="container mx-auto px-4 relative z-10">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -115,8 +138,8 @@ const DestinationsCatalog = () => {
           {["all", "easy", "moderate", "challenging"].map((level) => (
             <TabsContent key={level} value={level}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filterByDifficulty(level).map((d) => (
-                  <DestCard key={d.id} d={d} />
+                {filterByDifficulty(level).map((d, i) => (
+                  <DestCard key={d.id} d={d} index={i} />
                 ))}
               </div>
             </TabsContent>
