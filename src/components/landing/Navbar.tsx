@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Mountain, Menu, ArrowUp } from "lucide-react";
+import { Mountain, Menu, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -26,6 +25,16 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   return (
     <>
       <header
@@ -36,7 +45,7 @@ const Navbar = () => {
             : "bg-transparent"
         )}
       >
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
+        <div className="container mx-auto flex items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2">
             <Mountain className="h-6 w-6 text-primary" />
             <span className="font-serif text-xl font-bold tracking-wide text-foreground">
@@ -55,38 +64,84 @@ const Navbar = () => {
                 {link.label}
               </a>
             ))}
-            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
+            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
               <a href="#quiz">Descubre Tu Aventura</a>
             </Button>
           </nav>
 
-          {/* Mobile menu */}
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6 text-foreground" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="bg-background border-border">
-              <div className="flex flex-col gap-6 mt-8">
-                {navLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="text-lg font-medium text-foreground hover:text-primary"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-                <Button asChild className="bg-primary text-primary-foreground w-full">
-                  <a href="#quiz" onClick={() => setOpen(false)}>Descubre Tu Aventura</a>
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* Mobile hamburger */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden min-h-[44px] min-w-[44px]"
+            onClick={() => setOpen(true)}
+          >
+            <Menu className="h-6 w-6 text-foreground" />
+          </Button>
         </div>
       </header>
+
+      {/* Full-screen mobile menu overlay */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] bg-background flex flex-col"
+          >
+            {/* Close bar */}
+            <div className="flex items-center justify-between px-5 py-4">
+              <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
+                <Mountain className="h-6 w-6 text-primary" />
+                <span className="font-serif text-xl font-bold tracking-wide text-foreground">
+                  NOMADERIA
+                </span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="min-h-[44px] min-w-[44px]"
+                onClick={() => setOpen(false)}
+              >
+                <X className="h-6 w-6 text-foreground" />
+              </Button>
+            </div>
+
+            {/* Nav links */}
+            <nav className="flex-1 flex flex-col justify-center items-center gap-6 px-8">
+              {navLinks.map((link, i) => (
+                <motion.a
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  className="text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors min-h-[48px] flex items-center"
+                >
+                  {link.label}
+                </motion.a>
+              ))}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="w-full max-w-xs mt-4"
+              >
+                <Button
+                  asChild
+                  className="bg-primary text-primary-foreground w-full h-14 text-lg shadow-lg shadow-primary/20"
+                  onClick={() => setOpen(false)}
+                >
+                  <a href="#quiz">Descubre Tu Aventura</a>
+                </Button>
+              </motion.div>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Scroll to top button */}
       <AnimatePresence>
@@ -96,7 +151,7 @@ const Navbar = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-6 right-6 z-50 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-3 shadow-lg shadow-primary/30 transition-colors"
+            className="fixed bottom-6 right-6 z-50 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-3.5 shadow-lg shadow-primary/30 transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
           >
             <ArrowUp className="h-5 w-5" />
           </motion.button>
