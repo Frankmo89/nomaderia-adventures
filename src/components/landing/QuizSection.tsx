@@ -137,42 +137,114 @@ const QuizSection = () => {
     challenging: "bg-destructive text-destructive-foreground",
   };
   const difficultyLabel: Record<string, string> = { easy: "Fácil", moderate: "Moderado", challenging: "Desafiante" };
+  const countryFlag: Record<string, string> = {
+    México: "🇲🇽", "Estados Unidos": "🇺🇸", España: "🇪🇸", Argentina: "🇦🇷", Nepal: "🇳🇵",
+  };
+  const matchLabels = ["🎯 Mejor Match", "⭐ También Recomendado", "✨ Opción Aventurera"];
 
   if (showResults) {
     return (
-      <section id="quiz" className="py-16 sm:py-20 bg-background">
-        <div className="container mx-auto px-5 max-w-4xl text-center">
-          <motion.h2 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
-            🎉 Tu Aventura Ideal
-          </motion.h2>
-          <p className="text-muted-foreground mb-8 sm:mb-10 text-sm sm:text-base">Basado en tus respuestas, estos destinos son perfectos para ti:</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
+      <section id="quiz" className="py-16 sm:py-24 bg-background relative overflow-hidden">
+        {/* Subtle celebration background */}
+        <div className="absolute inset-0 opacity-[0.04] bg-cover bg-center pointer-events-none"
+          style={{ backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=60)` }} />
+
+        <div className="container mx-auto px-5 max-w-5xl relative z-10">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-center mb-10 sm:mb-14"
+          >
+            <span className="text-5xl sm:text-6xl mb-4 block">🏔️</span>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3">
+              🎉 ¡Tu Aventura Ideal!
+            </h2>
+            <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto">
+              Basado en tus respuestas, estos destinos son perfectos para ti
+            </p>
+          </motion.div>
+
+          {/* Result Cards */}
+          <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-6">
             {results.map((d, i) => (
-              <motion.div key={d.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }}>
-                <Link to={`/destinos/${d.slug}`} className="block bg-card rounded-xl overflow-hidden text-card-foreground active:scale-[0.98] sm:hover:scale-[1.03] transition-all duration-300 shadow-lg group">
-                  <div className="h-44 sm:h-40 overflow-hidden relative">
+              <motion.div
+                key={d.id}
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + i * 0.2, duration: 0.6, ease: "easeOut" }}
+                className={i === 0 ? "sm:col-span-3 sm:max-w-2xl sm:mx-auto" : ""}
+              >
+                <Link
+                  to={`/destinos/${d.slug}`}
+                  className="block rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 active:scale-[0.98] sm:hover:scale-[1.02] group relative"
+                >
+                  {/* Image */}
+                  <div className={`relative overflow-hidden ${i === 0 ? "h-64 sm:h-80" : "h-52 sm:h-56"}`}>
                     {d.hero_image_url ? (
-                      <img src={d.hero_image_url} alt={`Vista de ${d.title}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <img
+                        src={d.hero_image_url}
+                        alt={`Vista de ${d.title}`}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
-                    <div className="absolute top-3 left-3">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${difficultyColor[d.difficulty_level]}`}>
+                    {/* Dark gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+
+                    {/* Match label */}
+                    <div className="absolute top-4 left-4">
+                      <span className="inline-block px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-background/90 backdrop-blur-sm text-foreground shadow-md">
+                        {matchLabels[i] || matchLabels[2]}
+                      </span>
+                    </div>
+
+                    {/* Difficulty badge */}
+                    <div className="absolute top-4 right-4">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${difficultyColor[d.difficulty_level]}`}>
                         {difficultyLabel[d.difficulty_level]}
                       </span>
                     </div>
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <h3 className="font-serif text-lg font-bold mb-1">{d.title}</h3>
-                    <p className="text-sm opacity-70 mb-3">{d.country} · {d.days_needed} · ~${d.estimated_budget_usd} USD</p>
-                    <span className="text-primary text-sm font-medium group-hover:underline">Ver Guía →</span>
+
+                    {/* Content overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+                      <h3 className={`font-serif font-bold text-foreground mb-1 ${i === 0 ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"}`}
+                        style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+                        {d.title}
+                      </h3>
+                      <p className="text-sm text-foreground/80 mb-2" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
+                        {countryFlag[d.country] || ""} {d.country} · {d.days_needed} · ~${d.estimated_budget_usd} USD
+                      </p>
+                      <p className="text-sm text-foreground/70 line-clamp-2 mb-4" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+                        {d.short_description}
+                      </p>
+                      <span className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold shadow-lg shadow-primary/30 transition-colors">
+                        Ver Guía Completa →
+                      </span>
+                    </div>
                   </div>
                 </Link>
               </motion.div>
             ))}
           </div>
+
+          {/* Below results */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+            className="mt-10 sm:mt-14 text-center space-y-3"
+          >
+            <a href="#destinos" className="text-primary hover:underline font-medium text-sm sm:text-base block">
+              ¿Ninguno te convence? Explora todos los destinos →
+            </a>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              Te enviaremos más aventuras personalizadas a tu inbox 📧
+            </p>
+          </motion.div>
         </div>
       </section>
     );
