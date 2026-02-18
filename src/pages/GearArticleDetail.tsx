@@ -76,8 +76,17 @@ const GearArticleDetail = () => {
 
       {/* Hero */}
       <section className="pt-20">
-        <div className="h-[35vh] bg-gradient-to-br from-accent/20 to-secondary/20 flex items-end relative">
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
+        <div className="h-[35vh] flex items-end relative overflow-hidden">
+          {article.hero_image_url && (
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${article.hero_image_url})` }}
+            />
+          )}
+          {!article.hero_image_url && (
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-secondary/20" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           <div className="container mx-auto px-4 pb-8 relative z-10">
             <Link to="/gear" className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 mb-4">
               <ArrowLeft className="h-4 w-4" /> Volver a Gear Guide
@@ -174,6 +183,17 @@ const GearArticleDetail = () => {
           </div>
         </section>
       )}
+
+      {/* Back to top button */}
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Button
+          variant="outline"
+          className="border-border text-foreground hover:bg-muted"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          ↑ Volver arriba
+        </Button>
+      </div>
 
       <Footer />
     </main>

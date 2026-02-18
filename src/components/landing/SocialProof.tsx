@@ -55,11 +55,12 @@ const SocialProof = () => {
               className="bg-card rounded-xl p-8 shadow-lg relative"
             >
               {/* Large decorative quote mark */}
-              <span className="absolute top-4 right-6 font-serif text-6xl text-primary/[0.12] leading-none select-none">"</span>
+              <span className="absolute top-4 right-6 font-serif text-8xl text-primary/20 leading-none select-none pointer-events-none">"</span>
+              <span className="absolute bottom-4 left-6 font-serif text-8xl text-primary/20 leading-none select-none pointer-events-none rotate-180">"</span>
 
-              {/* Avatar */}
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${t.gradient} flex items-center justify-center mb-5 shadow-md`}>
-                <span className="text-sm font-bold text-foreground">{t.initials}</span>
+              {/* Circular gradient avatar */}
+              <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${t.gradient} flex items-center justify-center mb-5 shadow-lg ring-2 ring-background`}>
+                <span className="text-base font-bold text-foreground">{t.initials}</span>
               </div>
 
               <p className="text-card-foreground text-base leading-relaxed mb-6 italic relative z-10">
