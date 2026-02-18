@@ -5,6 +5,7 @@ import QuizSection from "@/components/landing/QuizSection";
 import DestinationsCatalog from "@/components/landing/DestinationsCatalog";
 import GearPreview from "@/components/landing/GearPreview";
 import SocialProof from "@/components/landing/SocialProof";
+import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
 import { useCanonical } from "@/hooks/use-seo";
@@ -21,6 +22,7 @@ const Index = () => {
       <DestinationsCatalog />
       <GearPreview />
       <SocialProof />
+      <PremiumItinerarySection />
       <NewsletterSignup />
       <Footer />
     </main>

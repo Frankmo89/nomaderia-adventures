@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
+import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import { useCanonical, useJsonLd } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 
@@ -200,6 +201,8 @@ const DestinationDetail = () => {
           </div>
         </section>
       )}
+
+      <PremiumItinerarySection destinationName={dest.title} />
 
       <div className="container mx-auto px-4 py-8 text-center">
         <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>↑ Volver arriba</Button>

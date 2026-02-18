@@ -12,6 +12,7 @@
 - Un blog de consejos de viaje y preparación
 - Una calculadora de presupuesto interactiva
 - Un quiz que recomienda destinos según perfil del viajero
+- **Itinerarios personalizados de pago** — el usuario solicita un itinerario a medida vía formulario (`itinerary_requests`)
 - Panel de administración para gestionar todo el contenido
 
 **Audiencia objetivo:** Adultos hispanohablantes de 25-45 años con nivel físico entre principiante y moderado que quieren hacer aventura sin ser expertos.
@@ -65,7 +66,8 @@ src/
 │       ├── AdminBlogPosts.tsx       → CRUD lista posts
 │       ├── AdminBlogPostForm.tsx    → Crear/editar post
 │       ├── AdminQuizResponses.tsx   → Ver respuestas quiz
-│       └── AdminSubscribers.tsx    → Ver suscriptores
+│       ├── AdminSubscribers.tsx    → Ver suscriptores
+│       └── AdminItineraryRequests.tsx → Ver solicitudes de itinerario personalizado
 ├── components/
 │   ├── landing/
 │   │   ├── Navbar.tsx               → Navegación principal (sticky, con scroll effect)
@@ -75,6 +77,7 @@ src/
 │   │   ├── DestinationsCatalog.tsx  → Grid de destinos (usa useDestinations hook)
 │   │   ├── GearPreview.tsx          → Preview de gear destacado (usa useFeaturedGearArticles hook)
 │   │   ├── SocialProof.tsx          → Testimonios
+│   │   ├── PremiumItinerarySection.tsx → Sección de itinerarios personalizados de pago (Dialog con form → itinerary_requests)
 │   │   ├── NewsletterSignup.tsx     → Formulario de email
 │   │   └── Footer.tsx
 │   ├── ui/                          → shadcn/ui — solo los componentes en uso (36 archivos, 12 no usados eliminados)
@@ -102,64 +105,78 @@ src/
 
 ### `destinations`
 ```
-id              uuid PK
-title           text
-slug            text UNIQUE          → usado en URL /destinos/:slug
-country         text
-region          text
-difficulty      text                 → "easy" | "moderate" | "challenging"
-budget          text                 → rango USD string
-season          text
-hero_image_url  text
-description     text                 → markdown
-physical_prep   text                 → markdown
-itinerary       text                 → markdown
-gear_list       text                 → markdown
-common_fears    jsonb                → [{question, answer}]
-affiliate_links jsonb                → [{type, url, label}]
-is_published    boolean              → false = borrador, true = visible en sitio
-created_at      timestamptz
-updated_at      timestamptz
-```
-
-### `gear_articles`
-```
 id                    uuid PK
-title                 text
-slug                  text UNIQUE
-category              text            → "boots"|"poles"|"backpacks"|"photography"|"clothing"|"accessories"
+title                 text NOT NULL
+slug                  text UNIQUE NOT NULL  → usado en URL /destinos/:slug
+country               text NOT NULL
+region                text
+short_description     text
+difficulty_level      text DEFAULT 'easy'  → "easy" | "moderate" | "challenging"
+difficulty_description text
+days_needed           text
+best_season           text
+estimated_budget_usd  integer              → número entero en USD
 hero_image_url        text
-intro                 text            → markdown
-recommended_products  jsonb           → [{name, price, pros[], cons[], affiliate_url, rating}]
-is_published          boolean
+gallery_images        text[]
+full_guide_markdown   text
+preparation_plan      text                 → markdown (tab "Preparación Física")
+gear_list_markdown    text                 → markdown (tab "Qué Llevar")
+common_fears          jsonb DEFAULT '[]'   → [{question, answer}]
+itinerary_markdown    text                 → markdown (tab "Itinerario")
+has_premium_itinerary boolean DEFAULT false
+premium_itinerary_price decimal
+affiliate_links       jsonb DEFAULT '{}'   → {flights_url, hotels_url, insurance_url}
+experience_type       text
+tags                  text[]
+is_published          boolean DEFAULT false
+featured              boolean DEFAULT false
 created_at            timestamptz
 updated_at            timestamptz
 ```
 
+### `gear_articles`
+```
+id                uuid PK
+title             text NOT NULL
+slug              text UNIQUE NOT NULL
+category          text NOT NULL  → "boots"|"poles"|"backpacks"|"photography"|"clothing"|"accessories"
+short_description text
+hero_image_url    text
+content_markdown  text           → markdown
+products          jsonb DEFAULT '[]'  → [{name, price, pros[], cons[], affiliate_url, rating}]
+is_published      boolean DEFAULT false
+featured          boolean DEFAULT false
+created_at        timestamptz
+updated_at        timestamptz
+```
+
 ### `blog_posts`
 ```
-id           uuid PK
-title        text
-slug         text UNIQUE
-category     text           → "prep"|"mistakes"|"inspiration"|"tips"
-hero_image_url text
-excerpt      text
-content      text           → markdown
-author       text
-is_published boolean
-created_at   timestamptz
-updated_at   timestamptz
+id                uuid PK
+title             text NOT NULL
+slug              text UNIQUE NOT NULL
+category          text DEFAULT 'general'  → "prep"|"mistakes"|"inspiration"|"tips"
+short_description text
+content_markdown  text                    → markdown
+hero_image_url    text
+author            text DEFAULT 'Nomaderia'
+is_published      boolean DEFAULT false
+featured          boolean DEFAULT false
+created_at        timestamptz
+updated_at        timestamptz
 ```
 
 ### `quiz_responses`
 ```
-id           uuid PK
-fitness_level text
-interest      text
-trip_duration text
-travel_style  text
-email         text (nullable)
-created_at    timestamptz
+id                      uuid PK
+email                   text (nullable)
+fitness_level           text
+interest                text
+trip_duration           text
+travel_style            text
+budget_range            text
+recommended_destinations text[]
+created_at              timestamptz
 ```
 
 ### `newsletter_subscribers`
@@ -169,6 +186,18 @@ email      text UNIQUE
 source     text        → "newsletter" | "quiz" | etc.
 created_at timestamptz
 ```
+
+### `itinerary_requests`
+```
+id                uuid PK
+name              text NOT NULL
+email             text NOT NULL
+destination       text NOT NULL    → destino de interés (texto libre)
+estimated_budget  text             → rango USD: "menos-de-500" | "500-1000" | "1000-2500" | "2500-5000" | "mas-de-5000"
+message           text             → requerimientos especiales (opcional)
+created_at        timestamptz
+```
+RLS: INSERT público (anon + authenticated) · SELECT solo admin (`has_role`)
 
 ---
 
@@ -373,13 +402,16 @@ useJsonLd({
 ## 10. Variables de Entorno
 
 ```env
-VITE_SUPABASE_URL=           # URL del proyecto Supabase
-VITE_SUPABASE_PUBLISHABLE_KEY=  # Anon key de Supabase (pública, prefijo VITE_)
+VITE_SUPABASE_URL=               # URL del proyecto Supabase  (ej: https://vrixiuvnhvqafmxlcyex.supabase.co)
+VITE_SUPABASE_PUBLISHABLE_KEY=   # Publishable key de Supabase (formato: sb_publishable_*)
+VITE_SUPABASE_PROJECT_ID=        # Project ID (ej: vrixiuvnhvqafmxlcyex) — usado para regenerar tipos
 ```
 
 Acceso en código: `import.meta.env.VITE_SUPABASE_URL`
 
 **Importante:** Todas las variables de entorno de Vite deben tener prefijo `VITE_` para ser accesibles en el cliente.
+
+**Proyecto Supabase activo:** `vrixiuvnhvqafmxlcyex` — las 4 migraciones del schema están aplicadas en este proyecto.
 
 ---
 
@@ -428,8 +460,8 @@ Acceso en código: `import.meta.env.VITE_SUPABASE_URL`
 3. Agregar link en `src/components/landing/Navbar.tsx` y `Footer.tsx`
 
 ### Nueva tabla en Supabase
-1. Crear la tabla en el dashboard de Supabase
-2. Regenerar tipos: `npx supabase gen types typescript --project-id TU_ID > src/integrations/supabase/types.ts`
+1. Crear la tabla en el dashboard de Supabase o agregar un archivo en `supabase/migrations/`
+2. Regenerar tipos: `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`
 3. Usar el cliente en componentes via `supabase.from("nueva_tabla")`
 
 ### Nueva sección en homepage
@@ -499,16 +531,17 @@ const [loading, setLoading] = useState(true);
 
 ### AdminDashboard
 
-- 4 stat cards: Destinos, Gear, Blog Posts, Suscriptores
-- Cada card muestra publicados en grande + borradores en pequeño (solo si > 0)
+- 5 stat cards: Destinos, Gear, Blog Posts, Itinerarios (solicitudes), Suscriptores
+- Cada card content muestra publicados en grande + borradores en pequeño (solo si > 0)
 - Sección "Actividad Reciente": últimos 6 items entre los 3 content types, ordenados por fecha
 - 3 botones de acción rápida: Nuevo Destino, Nuevo Artículo, Nuevo Post
 
-### AdminQuizResponses / AdminSubscribers
+### AdminQuizResponses / AdminSubscribers / AdminItineraryRequests
 
 - Total count bajo el título
 - Botón "Exportar CSV" que descarga archivo nombrado `{tipo}-{fecha-ISO}.csv`
 - Skeleton de carga + empty state
+- `AdminItineraryRequests` usa `supabase as any` por tabla fuera del tipo generado
 
 ---
 
@@ -524,7 +557,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.1*
+*Versión: 1.2*
 
 ---
 
@@ -552,14 +585,20 @@ const [loading, setLoading] = useState(true);
 
 ### 🗄️ Supabase
 
-- [ ] **Aplicar migración pendiente de RLS** — Archivo creado pero aún no aplicado en Supabase Cloud:
-  ```sh
-  supabase db push
-  ```
-  Archivo: `supabase/migrations/20260218200000_fix_blog_posts_rls_policy.sql`
+- [x] **Aplicar migraciones** — Las 4 migraciones están aplicadas en el proyecto `vrixiuvnhvqafmxlcyex` vía SQL Editor:
+  - `20260218064349_...sql` — schema base: user_roles, has_role, destinations, gear_articles, quiz_responses, newsletter_subscribers, RLS, triggers
+  - `20260218162416_...sql` — tabla blog_posts + RLS + trigger
+  - `20260218200000_fix_blog_posts_rls_policy.sql` — fix RLS blog_posts (agrega `TO authenticated`)
+  - `20260218210000_add_itinerary_requests.sql` — tabla itinerary_requests + RLS
 
-- [ ] **Crear el usuario admin** — Después de hacer deploy, el usuario que va a usar el admin panel necesita:
-  1. Tener una cuenta en Supabase Auth (creada desde el Dashboard de Supabase → Authentication → Users)
+- [ ] **Regenerar tipos Supabase** — Después de aplicar las migraciones, regenerar `types.ts` para eliminar los `supabase as any` en el código:
+  ```sh
+  npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts
+  ```
+  Esto elimina los `as any` en `AdminItineraryRequests.tsx` y `AdminDashboard.tsx`.
+
+- [ ] **Crear el usuario admin** — El usuario que va a usar el admin panel necesita:
+  1. Tener una cuenta en Supabase Auth (Dashboard → Authentication → Users → Add user)
   2. Tener su UUID insertado en la tabla `user_roles`:
   ```sql
   INSERT INTO public.user_roles (user_id, role)
@@ -602,3 +641,18 @@ const [loading, setLoading] = useState(true);
 - [ ] **Agregar artículos de gear** con productos reales y links de afiliado
 - [ ] **Escribir posts del blog** para SEO inicial
 - [ ] **Agregar hero images** a todos los destinos (URLs de Unsplash o imágenes propias en Supabase Storage)
+
+---
+
+### 🛠️ Código — Próximas Mejoras
+
+- [x] **`PremiumItinerarySection.tsx` creado** — Sección de itinerarios personalizados con Dialog + formulario (React Hook Form + Zod) → tabla `itinerary_requests`. Aparece en homepage (`Index.tsx`) y en cada destino (`DestinationDetail.tsx`, pre-rellena el campo destino).
+
+- [x] **`AdminItineraryRequests.tsx` creado** — `/admin/itinerary-requests` con tabla, count, CSV export, skeleton, empty state. Link en sidebar de `AdminLayout.tsx`, stat card en `AdminDashboard.tsx`.
+
+- [x] **Schema DB actualizado en contexto** — Los nombres reales de columnas en `destinations`, `gear_articles`, `blog_posts` y `quiz_responses` están corregidos en Sección 4 (diferían del schema real en las migraciones).
+
+- [ ] **Eliminar `supabase as any`** — Dos archivos usan cast temporal hasta que se regeneren los tipos:
+  - `src/pages/admin/AdminItineraryRequests.tsx:56`
+  - `src/pages/admin/AdminDashboard.tsx:50`
+  - Fix: regenerar tipos con `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`

@@ -27,6 +27,7 @@ const AdminGearArticles = lazy(() => import("./pages/admin/AdminGearArticles"));
 const AdminGearArticleForm = lazy(() => import("./pages/admin/AdminGearArticleForm"));
 const AdminQuizResponses = lazy(() => import("./pages/admin/AdminQuizResponses"));
 const AdminSubscribers = lazy(() => import("./pages/admin/AdminSubscribers"));
+const AdminItineraryRequests = lazy(() => import("./pages/admin/AdminItineraryRequests"));
 const AdminBlogPosts = lazy(() => import("./pages/admin/AdminBlogPosts"));
 const AdminBlogPostForm = lazy(() => import("./pages/admin/AdminBlogPostForm"));
 
@@ -73,6 +74,7 @@ const App = () => (
                 <Route path="gear-articles/:id/edit" element={<AdminGearArticleForm />} />
                 <Route path="quiz-responses" element={<AdminQuizResponses />} />
                 <Route path="subscribers" element={<AdminSubscribers />} />
+                <Route path="itinerary-requests" element={<AdminItineraryRequests />} />
                 <Route path="blog-posts" element={<AdminBlogPosts />} />
                 <Route path="blog-posts/new" element={<AdminBlogPostForm />} />
                 <Route path="blog-posts/:id/edit" element={<AdminBlogPostForm />} />
