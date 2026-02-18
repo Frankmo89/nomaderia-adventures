@@ -28,7 +28,7 @@ const SobreNosotros = () => {
           Sobre Nosotros
         </h1>
         <p className="text-lg text-foreground/70 leading-relaxed">
-          Somos Nomaderia: una plataforma creada por una agente de viajes certificado para ayudarte a planear tu primera aventura de trekking o mochilero, sin perderte en la información y sin gastar de más.
+          Somos Nomaderia: una plataforma creada por un agente de viajes certificado para ayudarte a planear tu primera aventura de trekking o mochilero, sin perderte en la información y sin gastar de más.
         </p>
       </section>
 
@@ -43,7 +43,7 @@ const SobreNosotros = () => {
             </div>
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Credencial oficial</p>
-              <h2 className="font-serif text-2xl text-foreground mb-2">Agente de Viajes Certificada</h2>
+              <h2 className="font-serif text-2xl text-foreground mb-2">Agente de Viajes Certificado</h2>
               <p className="text-stone-800 leading-relaxed">
                 Cuento con diploma oficial como Agente de Viajes, lo que me permite orientarte con fundamentos reales: desde cómo conseguir los mejores precios en vuelos hasta qué equipaje llevar según el clima del destino.
               </p>
@@ -86,7 +86,7 @@ const SobreNosotros = () => {
       <section className="container mx-auto px-4 pb-16 max-w-3xl space-y-6">
         <h2 className="font-serif text-2xl text-foreground">Nuestra misión</h2>
         <p className="text-foreground/70 leading-relaxed">
-          Queremos que cualquier persona, sin importar su experiencia previa, pueda planear una aventura segura, significativa y dentro de su presupuesto. Combinamos el conocimiento de una agente de viajes con herramientas digitales —quiz de destinos, guías de gear, calculadora de presupuesto e itinerarios personalizados— para que tú solo te preocupes por disfrutar el camino.
+          Queremos que cualquier persona, sin importar su experiencia previa, pueda planear una aventura segura, significativa y dentro de su presupuesto. Combinamos el conocimiento de un agente de viajes con herramientas digitales —quiz de destinos, guías de gear, calculadora de presupuesto e itinerarios personalizados— para que tú solo te preocupes por disfrutar el camino.
         </p>
 
         <ul className="space-y-3">
