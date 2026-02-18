@@ -21,6 +21,8 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
             <div className="flex flex-col gap-2">
               <a href="#destinos" className="text-sm text-muted-foreground hover:text-foreground">Destinos</a>
               <Link to="/gear" className="text-sm text-muted-foreground hover:text-foreground">Gear Guide</Link>
+              <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground">Blog</Link>
+              <Link to="/calculadora" className="text-sm text-muted-foreground hover:text-foreground">Calculadora</Link>
               <a href="#about" className="text-sm text-muted-foreground hover:text-foreground">Sobre Nosotros</a>
             </div>
             <div className="flex flex-col gap-2">

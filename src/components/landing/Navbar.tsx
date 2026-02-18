@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const navLinks = [
   { label: "Destinos", href: "#destinos" },
   { label: "Gear Guide", href: "/gear" },
+  { label: "Blog", href: "/blog" },
+  { label: "Calculadora", href: "/calculadora" },
   { label: "Sobre Nosotros", href: "#about" },
 ];
 
@@ -55,15 +57,25 @@ const Navbar = () => {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) =>
+              link.href.startsWith("/") ? (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </a>
+              )
+            )}
             <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
               <a href="#quiz">Descubre Tu Aventura</a>
             </Button>
@@ -111,19 +123,26 @@ const Navbar = () => {
 
             {/* Nav links */}
             <nav className="flex-1 flex flex-col justify-center items-center gap-6 px-8">
-              {navLinks.map((link, i) => (
-                <motion.a
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                  className="text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors min-h-[48px] flex items-center"
-                >
-                  {link.label}
-                </motion.a>
-              ))}
+              {navLinks.map((link, i) => {
+                const Component = link.href.startsWith("/") ? Link : "a";
+                const linkProps = link.href.startsWith("/") ? { to: link.href } : { href: link.href };
+                return (
+                  <motion.div
+                    key={link.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08 }}
+                  >
+                    <Component
+                      {...(linkProps as any)}
+                      onClick={() => setOpen(false)}
+                      className="text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors min-h-[48px] flex items-center"
+                    >
+                      {link.label}
+                    </Component>
+                  </motion.div>
+                );
+              })}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
