@@ -143,7 +143,7 @@ const PremiumItinerarySection = ({ destinationName }: Props) => {
                   </div>
                   <div>
                     <p className="font-semibold text-foreground mb-1">{b.title}</p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{b.desc}</p>
+                    <p className="text-sm text-foreground/80 leading-relaxed">{b.desc}</p>
                   </div>
                 </motion.div>
               ))}
@@ -216,7 +216,7 @@ const PremiumItinerarySection = ({ destinationName }: Props) => {
                         <SelectValue placeholder="Selecciona un rango" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-card border-border">
+                    <SelectContent className="bg-card border-border text-foreground">
                       <SelectItem value="menos-de-500">Menos de $500</SelectItem>
                       <SelectItem value="500-1000">$500 – $1,000</SelectItem>
                       <SelectItem value="1000-2500">$1,000 – $2,500</SelectItem>

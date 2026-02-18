@@ -28,11 +28,11 @@ const SobreNosotros = () => {
           Sobre Nosotros
         </h1>
         <p className="text-lg text-foreground/70 leading-relaxed">
-          Somos Nomaderia: una plataforma creada por una agente de viajes certificada para ayudarte a planear tu primera aventura de trekking o mochilero, sin perderte en la información y sin gastar de más.
+          Somos Nomaderia: una plataforma creada por una agente de viajes certificado para ayudarte a planear tu primera aventura de trekking o mochilero, sin perderte en la información y sin gastar de más.
         </p>
       </section>
 
-      {/* Agente certificada */}
+      {/* Agente certificado */}
       <section className="container mx-auto px-4 pb-16 max-w-3xl">
         <div className="bg-card border border-border rounded-2xl p-8 space-y-8">
 
@@ -44,7 +44,7 @@ const SobreNosotros = () => {
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Credencial oficial</p>
               <h2 className="font-serif text-2xl text-foreground mb-2">Agente de Viajes Certificada</h2>
-              <p className="text-foreground/70 leading-relaxed">
+              <p className="text-stone-800 leading-relaxed">
                 Cuento con diploma oficial como Agente de Viajes, lo que me permite orientarte con fundamentos reales: desde cómo conseguir los mejores precios en vuelos hasta qué equipaje llevar según el clima del destino.
               </p>
             </div>
