@@ -18,6 +18,10 @@ import AdminGearArticles from "./pages/admin/AdminGearArticles";
 import AdminGearArticleForm from "./pages/admin/AdminGearArticleForm";
 import AdminQuizResponses from "./pages/admin/AdminQuizResponses";
 import AdminSubscribers from "./pages/admin/AdminSubscribers";
+import BlogListing from "./pages/BlogListing";
+import BlogPostDetail from "./pages/BlogPostDetail";
+import AdminBlogPosts from "./pages/admin/AdminBlogPosts";
+import AdminBlogPostForm from "./pages/admin/AdminBlogPostForm";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +37,8 @@ const App = () => (
           <Route path="/gear" element={<GearListing />} />
           <Route path="/gear/:slug" element={<GearArticleDetail />} />
           <Route path="/calculadora" element={<BudgetCalculator />} />
+          <Route path="/blog" element={<BlogListing />} />
+          <Route path="/blog/:slug" element={<BlogPostDetail />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
@@ -44,6 +50,9 @@ const App = () => (
             <Route path="gear-articles/:id/edit" element={<AdminGearArticleForm />} />
             <Route path="quiz-responses" element={<AdminQuizResponses />} />
             <Route path="subscribers" element={<AdminSubscribers />} />
+            <Route path="blog-posts" element={<AdminBlogPosts />} />
+            <Route path="blog-posts/new" element={<AdminBlogPostForm />} />
+            <Route path="blog-posts/:id/edit" element={<AdminBlogPostForm />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
