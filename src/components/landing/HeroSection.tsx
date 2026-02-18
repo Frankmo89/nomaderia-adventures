@@ -15,7 +15,6 @@ const HeroSection = () => {
 
   return (
     <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Parallax background image */}
       <div
         className="absolute inset-0 bg-cover bg-center will-change-transform"
         style={{
@@ -23,21 +22,18 @@ const HeroSection = () => {
           transform: `translateY(${scrollY * 0.35}px) scale(1.1)`,
         }}
       />
-      {/* Cinematic gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-transparent" />
-
-      {/* Grain texture */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
       }} />
 
-      <div className="relative z-10 container mx-auto px-4 text-center">
+      <div className="relative z-10 container mx-auto px-5 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-foreground leading-[1.1] mb-6"
+          className="font-serif text-[2rem] leading-[1.15] sm:text-5xl md:text-7xl lg:text-8xl font-bold text-foreground mb-5 sm:mb-6"
           style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
         >
           Tu Primera Aventura
@@ -49,7 +45,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-10 font-sans"
+          className="text-base sm:text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-8 sm:mb-10 font-sans"
           style={{ textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}
         >
           No necesitas ser atleta. No necesitas experiencia.
@@ -61,18 +57,17 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
+          className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
         >
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-lg shadow-primary/30">
+          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base sm:text-lg px-8 h-12 sm:h-14 shadow-lg shadow-primary/30 w-full sm:w-auto">
             <a href="#quiz">Descubre A Dónde Ir →</a>
           </Button>
-          <Button asChild variant="outline" size="lg" className="border-foreground/30 text-foreground hover:bg-foreground/10 text-lg px-8 py-6 backdrop-blur-sm">
+          <Button asChild variant="outline" size="lg" className="border-foreground/30 text-foreground hover:bg-foreground/10 text-base sm:text-lg px-8 h-12 sm:h-14 backdrop-blur-sm w-full sm:w-auto">
             <a href="#destinos">Explorar Destinos</a>
           </Button>
         </motion.div>
       </div>
 
-      {/* Scroll indicator */}
       <motion.div
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
         animate={{ y: [0, 10, 0] }}

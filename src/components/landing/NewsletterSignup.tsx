@@ -27,33 +27,33 @@ const NewsletterSignup = () => {
   };
 
   return (
-    <section className="py-20 bg-muted">
-      <div className="container mx-auto px-4 max-w-xl text-center">
+    <section className="py-16 sm:py-20 bg-muted">
+      <div className="container mx-auto px-5 max-w-xl text-center">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-3"
+          className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3"
         >
           Cada Semana Una Aventura Nueva En Tu Inbox
         </motion.h2>
-        <p className="text-muted-foreground mb-8">
+        <p className="text-muted-foreground mb-6 sm:mb-8 text-sm sm:text-base">
           Tips, destinos secretos, y ofertas de equipo. Sin spam, lo prometemos.
         </p>
 
         {done ? (
-          <p className="text-primary font-medium text-lg">¡Gracias! Te mantendremos al tanto 🏔️</p>
+          <p className="text-primary font-medium text-base sm:text-lg">¡Gracias! Te mantendremos al tanto 🏔️</p>
         ) : (
-          <form onSubmit={handleSubmit} className="flex gap-3">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
             <Input
               type="email"
               placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-background text-foreground"
+              className="bg-background text-foreground h-12 text-base"
             />
-            <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground whitespace-nowrap">
+            <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground whitespace-nowrap h-12 text-base">
               {loading ? "..." : "Suscribirme"}
             </Button>
           </form>

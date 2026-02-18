@@ -27,11 +27,7 @@ const difficultyColor: Record<string, string> = {
 const difficultyLabel: Record<string, string> = { easy: "Fácil", moderate: "Moderado", challenging: "Desafiante" };
 
 const countryFlag: Record<string, string> = {
-  México: "🇲🇽",
-  "Estados Unidos": "🇺🇸",
-  España: "🇪🇸",
-  Argentina: "🇦🇷",
-  Nepal: "🇳🇵",
+  México: "🇲🇽", "Estados Unidos": "🇺🇸", España: "🇪🇸", Argentina: "🇦🇷", Nepal: "🇳🇵",
 };
 
 const DestinationsCatalog = () => {
@@ -62,10 +58,9 @@ const DestinationsCatalog = () => {
     >
       <Link
         to={`/destinos/${d.slug}`}
-        className="block bg-card rounded-xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-primary/10 hover:scale-[1.02] group"
+        className="block bg-card rounded-xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-primary/10 active:scale-[0.98] sm:hover:scale-[1.02] group"
       >
-        {/* Image */}
-        <div className="relative h-52 overflow-hidden">
+        <div className="relative h-56 sm:h-52 overflow-hidden">
           {d.hero_image_url ? (
             <img
               src={d.hero_image_url}
@@ -78,13 +73,12 @@ const DestinationsCatalog = () => {
               <MapPin className="h-12 w-12 text-primary/40" />
             </div>
           )}
-          {/* Gradient overlay for badge readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
           <div className="absolute top-3 left-3 flex gap-2">
             <Badge className={difficultyColor[d.difficulty_level]}>{difficultyLabel[d.difficulty_level]}</Badge>
           </div>
         </div>
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           <h3 className="font-serif text-lg font-bold text-card-foreground mb-1">{d.title}</h3>
           <p className="text-sm text-card-foreground/70 mb-2">
             {countryFlag[d.country] || ""} {d.country}
@@ -95,7 +89,7 @@ const DestinationsCatalog = () => {
               <Clock className="h-3.5 w-3.5" /> {d.days_needed}
             </span>
             <span className="text-card-foreground/60 flex items-center gap-1">
-              <DollarSign className="h-3.5 w-3.5" /> ~${d.estimated_budget_usd} USD
+              <DollarSign className="h-3.5 w-3.5" /> ~${d.estimated_budget_usd}
             </span>
             <span className="text-primary font-medium group-hover:underline">Ver Guía →</span>
           </div>
@@ -106,38 +100,38 @@ const DestinationsCatalog = () => {
 
   if (loading) {
     return (
-      <section id="destinos" className="py-20 bg-background">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">Cargando destinos...</div>
+      <section id="destinos" className="py-16 sm:py-20 bg-background">
+        <div className="container mx-auto px-5 text-center text-muted-foreground">Cargando destinos...</div>
       </section>
     );
   }
 
   return (
-    <section id="destinos" className="py-20 bg-background relative overflow-hidden">
+    <section id="destinos" className="py-16 sm:py-20 bg-background relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
       }} />
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-5 relative z-10">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="font-serif text-3xl md:text-5xl font-bold text-foreground text-center mb-4"
+          className="font-serif text-2xl sm:text-3xl md:text-5xl font-bold text-foreground text-center mb-3 sm:mb-4"
         >
           Encuentra Tu Aventura
         </motion.h2>
-        <p className="text-center text-muted-foreground mb-10">Elige tu nivel y descubre lo que es posible</p>
+        <p className="text-center text-muted-foreground mb-8 sm:mb-10 text-sm sm:text-base">Elige tu nivel y descubre lo que es posible</p>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mx-auto flex w-fit bg-muted mb-8">
-            <TabsTrigger value="all">Todos</TabsTrigger>
-            <TabsTrigger value="easy">Fácil</TabsTrigger>
-            <TabsTrigger value="moderate">Moderado</TabsTrigger>
-            <TabsTrigger value="challenging">Desafiante</TabsTrigger>
+          <TabsList className="mx-auto flex w-full sm:w-fit bg-muted mb-6 sm:mb-8 overflow-x-auto">
+            <TabsTrigger value="all" className="min-h-[44px] text-sm flex-1 sm:flex-none">Todos</TabsTrigger>
+            <TabsTrigger value="easy" className="min-h-[44px] text-sm flex-1 sm:flex-none">Fácil</TabsTrigger>
+            <TabsTrigger value="moderate" className="min-h-[44px] text-sm flex-1 sm:flex-none">Moderado</TabsTrigger>
+            <TabsTrigger value="challenging" className="min-h-[44px] text-sm flex-1 sm:flex-none">Desafiante</TabsTrigger>
           </TabsList>
           {["all", "easy", "moderate", "challenging"].map((level) => (
             <TabsContent key={level} value={level}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                 {filterByDifficulty(level).map((d, i) => (
                   <DestCard key={d.id} d={d} index={i} />
                 ))}
