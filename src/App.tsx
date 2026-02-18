@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import DestinationDetail from "./pages/DestinationDetail";
 import GearListing from "./pages/GearListing";
 import GearArticleDetail from "./pages/GearArticleDetail";
+import BudgetCalculator from "./pages/BudgetCalculator";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/destinos/:slug" element={<DestinationDetail />} />
           <Route path="/gear" element={<GearListing />} />
           <Route path="/gear/:slug" element={<GearArticleDetail />} />
+          <Route path="/calculadora" element={<BudgetCalculator />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
