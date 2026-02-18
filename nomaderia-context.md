@@ -54,6 +54,7 @@ src/
 │   ├── BlogListing.tsx              → /blog
 │   ├── BlogPostDetail.tsx           → /blog/:slug
 │   ├── BudgetCalculator.tsx         → /calculadora  ← lazy loaded
+│   ├── PrivacyPolicy.tsx            → /privacidad (Política de Privacidad LFPDPPP)
 │   ├── NotFound.tsx                 → 404
 │   └── admin/                       ← lazy loaded (React.lazy + Suspense)
 │       ├── AdminLayout.tsx          → Layout con sidebar + guard de auth
@@ -79,7 +80,7 @@ src/
 │   │   ├── SocialProof.tsx          → Testimonios
 │   │   ├── PremiumItinerarySection.tsx → Sección de itinerarios personalizados de pago (Dialog con form → itinerary_requests)
 │   │   ├── NewsletterSignup.tsx     → Formulario de email
-│   │   └── Footer.tsx
+│   │   └── Footer.tsx               → Links de navegación + redes sociales (Instagram, Facebook, TikTok) + contacto
 │   ├── ui/                          → shadcn/ui — solo los componentes en uso (36 archivos, 12 no usados eliminados)
 │   ├── ErrorBoundary.tsx            → Error boundary genérico para wrappear rutas
 │   ├── LoadingSkeletons.tsx         → Skeleton loaders: DestinationDetailSkeleton, GearArticleDetailSkeleton, CardGridSkeleton
@@ -337,6 +338,7 @@ GET /gear/:slug               → GearArticleDetail.tsx
 GET /blog                     → BlogListing.tsx
 GET /blog/:slug               → BlogPostDetail.tsx
 GET /calculadora              → BudgetCalculator.tsx
+GET /privacidad               → PrivacyPolicy.tsx
 GET /admin/login              → AdminLogin.tsx (pública)
 GET /admin/*                  → AdminLayout.tsx (protegida con Supabase Auth)
 GET /*                        → NotFound.tsx
@@ -553,11 +555,13 @@ const [loading, setLoading] = useState(true);
 - Los admins son el equipo de Nomaderia (no hay usuarios públicos registrados)
 - Mobile es prioritario — la mayoría del tráfico es móvil
 - El sitio es dark mode nativo (no hay toggle light/dark implementado)
+- Correo de contacto: **nomaderia.travel@gmail.com**
+- Redes sociales: Instagram (@nomaderia.mx), Facebook, TikTok (@nomaderia.mx)
 
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.2*
+*Versión: 1.3*
 
 ---
 
@@ -645,6 +649,10 @@ const [loading, setLoading] = useState(true);
 ---
 
 ### 🛠️ Código — Próximas Mejoras
+
+- [x] **`PrivacyPolicy.tsx` creada** — Página `/privacidad` con política de privacidad completa en español (LFPDPPP). Cubre: recopilación de datos, links de afiliados, servicios de terceros, derechos ARCO, contacto.
+
+- [x] **Footer actualizado** — Redes sociales reales (Instagram, Facebook, TikTok), link `mailto:` para Contacto, link interno `/privacidad` para Política de Privacidad. Se eliminó YouTube y se agregó Facebook + TikTok (SVG inline).
 
 - [x] **`PremiumItinerarySection.tsx` creado** — Sección de itinerarios personalizados con Dialog + formulario (React Hook Form + Zod) → tabla `itinerary_requests`. Aparece en homepage (`Index.tsx`) y en cada destino (`DestinationDetail.tsx`, pre-rellena el campo destino).
 
