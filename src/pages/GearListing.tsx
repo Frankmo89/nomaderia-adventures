@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import { CardGridSkeleton } from "@/components/LoadingSkeletons";
+import { useCanonical } from "@/hooks/use-seo";
 import type { Tables } from "@/integrations/supabase/types";
 
 type GearArticle = Tables<"gear_articles">;
@@ -17,7 +18,10 @@ const GearListing = () => {
   const [articles, setArticles] = useState<GearArticle[]>([]);
   const [loading, setLoading] = useState(true);
 
+  useCanonical();
+
   useEffect(() => {
+    document.title = "Gear Guide — Nomaderia";
     const load = async () => {
       const { data } = await supabase
         .from("gear_articles")
@@ -28,6 +32,7 @@ const GearListing = () => {
       setLoading(false);
     };
     load();
+    return () => { document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando"; };
   }, []);
 
   const filter = (cat: string) =>
@@ -49,7 +54,7 @@ const GearListing = () => {
           </p>
 
           {loading ? (
-            <p className="text-center text-muted-foreground">Cargando artículos...</p>
+            <CardGridSkeleton count={3} />
           ) : (
             <Tabs defaultValue="Todo" className="w-full">
               <TabsList className="bg-muted mb-8 flex flex-wrap gap-1 h-auto">
@@ -66,8 +71,13 @@ const GearListing = () => {
                         to={`/gear/${a.slug}`}
                         className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group"
                       >
-                        <div className="h-44 bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center">
-                          <BookOpen className="h-10 w-10 text-accent/40" />
+                        <div className="h-44 overflow-hidden relative">
+                          {a.hero_image_url ? (
+                            <img src={a.hero_image_url} alt={a.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20" />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
                         </div>
                         <div className="p-5">
                           <Badge variant="outline" className="mb-2 border-card-foreground/20 text-card-foreground">
