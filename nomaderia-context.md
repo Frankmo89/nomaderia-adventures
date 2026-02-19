@@ -29,6 +29,7 @@ Build:       Vite 5.4 (plugin-react-swc)
 Estilos:     Tailwind CSS 3.4 + shadcn/ui + Radix UI
 Animaciones: Framer Motion 12
 Routing:     React Router DOM 6
+SEO:         react-helmet-async (HelmetProvider en App.tsx)
 Backend:     Supabase (PostgreSQL + Auth + Storage)
 Data:        TanStack React Query 5 (configurado en App.tsx, usado en todos los componentes via custom hooks)
 Formularios: React Hook Form + Zod
@@ -43,16 +44,16 @@ Testing:     Vitest + Testing Library
 
 ```
 src/
-├── App.tsx                          → Router central — rutas públicas eager, admin + calculadora lazy
+├── App.tsx                          → Router central + HelmetProvider — rutas públicas eager, admin + calculadora lazy
 ├── main.tsx                         → Entry point, providers globales
 ├── index.css                        → Variables CSS de tema, Tailwind base
 ├── pages/
 │   ├── Index.tsx                    → Homepage (orquesta secciones landing)
-│   ├── DestinationDetail.tsx        → /destinos/:slug — hero carrusel Embla, tabs con markdown, galería + lightbox
+│   ├── DestinationDetail.tsx        → /destinos/:slug — SEOHead, hero carrusel Embla, tabs con markdown, galería + lightbox, ShareButtons
 │   ├── GearListing.tsx              → /gear
-│   ├── GearArticleDetail.tsx        → /gear/:slug
+│   ├── GearArticleDetail.tsx        → /gear/:slug — SEOHead, ShareButtons
 │   ├── BlogListing.tsx              → /blog — tabs por categoría (9), FeaturedBlogPost hero, reading time badges
-│   ├── BlogPostDetail.tsx           → /blog/:slug — hero con reading time, ShareButtons (WhatsApp/X/Facebook/copy)
+│   ├── BlogPostDetail.tsx           → /blog/:slug — SEOHead, hero con reading time, ShareButtons
 │   ├── BudgetCalculator.tsx         → /calculadora  ← lazy loaded
 │   ├── PrivacyPolicy.tsx            → /privacidad (Política de Privacidad LFPDPPP)
 │   ├── SobreNosotros.tsx            → /sobre-nosotros (página Sobre Nosotros + credencial agente de viajes)
@@ -85,7 +86,9 @@ src/
 │   ├── ui/                          → shadcn/ui — solo los componentes en uso (36 archivos, 12 no usados eliminados)
 │   ├── blog/
 │   │   ├── FeaturedBlogPost.tsx     → Hero card full-bleed para post destacado (Framer Motion, hover scale)
-│   │   └── ShareButtons.tsx         → Botones compartir: WhatsApp, X, Facebook, copiar link (con toast)
+│   │   └── ShareButtons.tsx         → [LEGACY, sin importar] Botones compartir originales del blog (reemplazado por src/components/ShareButtons.tsx)
+│   ├── SEOHead.tsx                  → Meta tags dinámicos OG + Twitter Card via react-helmet-async (Helmet)
+│   ├── ShareButtons.tsx             → Botones compartir: Facebook, X, WhatsApp, Telegram, copiar enlace (popup + toast)
 │   ├── ErrorBoundary.tsx            → Error boundary genérico para wrappear rutas
 │   ├── LoadingSkeletons.tsx         → Skeleton loaders: DestinationDetailSkeleton, GearArticleDetailSkeleton, CardGridSkeleton
 │   └── NavLink.tsx                  → Link con estado activo
@@ -390,8 +393,27 @@ if (!isAdmin) { await supabase.auth.signOut(); navigate("/admin/login"); return;
 
 ## 9. SEO
 
-El proyecto usa hooks custom en `src/hooks/use-seo.ts`:
+El proyecto usa **react-helmet-async** para meta tags dinámicos y hooks custom en `src/hooks/use-seo.ts`:
 
+### SEOHead (componente declarativo — preferido)
+```typescript
+// Componente en src/components/SEOHead.tsx — usa Helmet de react-helmet-async
+// HelmetProvider envuelve la app en App.tsx (provider más externo)
+import SEOHead from "@/components/SEOHead";
+
+<SEOHead
+  title="Camino Inca"                    // → "Camino Inca | Nomaderia Adventures"
+  description="Guía completa..."
+  image="https://..."                    // default: Unsplash mountain OG image
+  url="https://nomaderia.com/destinos/x" // default: window.location.href
+  type="article"                         // default: "article"
+/>
+// Genera: title, meta description, og:title/description/image/url/type, twitter:card/title/description/image
+```
+
+Integrado en: `DestinationDetail.tsx`, `BlogPostDetail.tsx`, `GearArticleDetail.tsx`
+
+### Hooks SEO (complementarios)
 ```typescript
 // Canonical URL
 useCanonical(); // Auto-detecta la URL actual
@@ -405,8 +427,8 @@ useJsonLd({
 });
 ```
 
-- El `index.html` tiene meta tags OG y Twitter Card base
-- Cada página de destino/blog/gear debe llamar a `useJsonLd()` con datos específicos
+- El `index.html` tiene meta tags OG y Twitter Card base (fallback si Helmet no los sobreescribe)
+- Cada página de destino/blog/gear usa `<SEOHead>` + `useJsonLd()` con datos específicos
 
 ---
 
@@ -570,7 +592,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.7*
+*Versión: 1.8*
 
 ---
 
@@ -647,7 +669,7 @@ const [loading, setLoading] = useState(true);
 
 - [ ] **Verificar el sitio en Google Search Console** una vez que tengas dominio
 - [ ] **Enviar sitemap** — No hay sitemap.xml generado aún. Pendiente de implementar o usar plugin.
-- [ ] **Configurar Open Graph image** específica para cada destino (actualmente usa la hero_image_url pero falta hero image en muchos)
+- [x] **Configurar Open Graph image** — `SEOHead.tsx` usa `hero_image_url` dinámicamente en cada página de destino/blog/gear. Fallback a imagen OG genérica de Unsplash si no hay hero. Meta tags OG y Twitter Card se generan via react-helmet-async.
 
 ---
 
@@ -704,6 +726,13 @@ const [loading, setLoading] = useState(true);
   - **`AdminBlogPostForm.tsx`**: categoría ahora usa `Select` (shadcn) en vez de Input libre. Campos nuevos: `reading_time_min` (number), `meta_description` (textarea SEO), `tags` (textarea, uno por línea). Tags como `string[]` separado del form state. Payload explícito sin `as any`.
   - **`use-blog-posts.ts`**: interface actualizada con `featured`, `reading_time_min`, `tags`. Query ordena por `featured desc, created_at desc`. Exporta `BlogPost` type.
   - **`types.ts`**: `blog_posts` Row/Insert/Update actualizado con los 3 campos nuevos.
+
+- [x] **Sistema de SEO dinámico + compartir en redes sociales** — react-helmet-async + componentes SEOHead y ShareButtons:
+  - **react-helmet-async** instalado. `<HelmetProvider>` envuelve la app en `App.tsx` (provider más externo, antes de QueryClientProvider).
+  - **`SEOHead.tsx`** (`src/components/`): componente declarativo que usa `<Helmet>` para generar meta tags dinámicos. Props: `title` (se concatena `| Nomaderia Adventures`), `description`, `image` (default: Unsplash mountain), `url` (default: `window.location.href`), `type` (default: `"article"`). Genera: `<title>`, `<meta name="description">`, `og:title/description/image/url/type`, `twitter:card/title/description/image`.
+  - **`ShareButtons.tsx`** (`src/components/`): botones para Facebook, X (Twitter), WhatsApp, Telegram + copiar enlace. Props: `url`, `title`, `description?`, `className?`. Usa `window.open()` popup (600x400) para share, `navigator.clipboard.writeText` + toast para copiar. Hover colores por plataforma (#1877F2 Facebook, foreground X, #25D366 WhatsApp, #0088cc Telegram). Íconos: SVG inline para Facebook/X, lucide `MessageCircle`/`Send`/`Share2`/`Check`.
+  - **Integración en 3 páginas**: `DestinationDetail.tsx`, `BlogPostDetail.tsx`, `GearArticleDetail.tsx` — cada una usa `<SEOHead>` con datos dinámicos y `<ShareButtons>` al final del contenido principal (con `border-t` separator). Se eliminó la manipulación manual de `document.title` y `querySelector` para meta tags (Helmet lo maneja declarativamente).
+  - **`src/components/blog/ShareButtons.tsx`** ya no se importa en ningún archivo (reemplazado por `src/components/ShareButtons.tsx` que añade Telegram y usa popup pattern).
 
 - [ ] **Eliminar `supabase as any`** — Dos archivos usan cast temporal hasta que se regeneren los tipos:
   - `src/pages/admin/AdminItineraryRequests.tsx:56`
