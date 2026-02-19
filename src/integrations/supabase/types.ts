@@ -24,8 +24,11 @@ export type Database = {
           hero_image_url: string | null
           id: string
           is_published: boolean | null
+          meta_description: string | null
+          reading_time_min: number | null
           short_description: string | null
           slug: string
+          tags: string[] | null
           title: string
           updated_at: string
         }
@@ -38,8 +41,11 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           is_published?: boolean | null
+          meta_description?: string | null
+          reading_time_min?: number | null
           short_description?: string | null
           slug: string
+          tags?: string[] | null
           title: string
           updated_at?: string
         }
@@ -52,8 +58,11 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           is_published?: boolean | null
+          meta_description?: string | null
+          reading_time_min?: number | null
           short_description?: string | null
           slug?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
         }

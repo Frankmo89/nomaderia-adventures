@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/landing/Navbar";
@@ -8,8 +9,19 @@ import Footer from "@/components/landing/Footer";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical } from "@/hooks/use-seo";
 import { useBlogPosts } from "@/hooks/use-blog-posts";
+import FeaturedBlogPost from "@/components/blog/FeaturedBlogPost";
 
-const categories = ["Todo", "Preparación", "Errores", "Inspiración", "Consejos"];
+const categories = [
+  "Todo",
+  "Noticias",
+  "Trending Hikes",
+  "Historias",
+  "Preparación",
+  "Errores",
+  "Inspiración",
+  "Consejos",
+  "Listas",
+];
 
 const BlogListing = () => {
   const { data: posts = [], isLoading, error } = useBlogPosts();
@@ -39,6 +51,10 @@ const BlogListing = () => {
             Artículos, consejos y guías para preparar tu primera aventura al aire libre.
           </p>
 
+          {!isLoading && !error && posts.length > 0 && posts[0].featured && (
+            <FeaturedBlogPost post={posts[0]} />
+          )}
+
           {isLoading && <CardGridSkeleton count={3} />}
 
           {error && (
@@ -49,7 +65,7 @@ const BlogListing = () => {
 
           {!isLoading && !error && (
             <Tabs defaultValue="Todo" className="w-full">
-              <TabsList className="bg-muted mb-8 flex flex-wrap gap-1 h-auto">
+              <TabsList className="bg-muted mb-8 flex overflow-x-auto gap-1 h-auto pb-1 scrollbar-hide">
                 {categories.map((cat) => (
                   <TabsTrigger key={cat} value={cat}>{cat}</TabsTrigger>
                 ))}
@@ -76,6 +92,12 @@ const BlogListing = () => {
                             <Badge variant="outline" className="border-card-foreground/20 text-card-foreground">
                               {p.category}
                             </Badge>
+                            {p.reading_time_min && (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {p.reading_time_min} min
+                              </span>
+                            )}
                             {p.author && (
                               <span className="text-xs text-muted-foreground">por {p.author}</span>
                             )}

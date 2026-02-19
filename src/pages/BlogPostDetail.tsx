@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, useJsonLd } from "@/hooks/use-seo";
+import ShareButtons from "@/components/blog/ShareButtons";
 
 interface BlogPost {
   id: string;
@@ -22,6 +23,7 @@ interface BlogPost {
   author: string | null;
   created_at: string;
   updated_at: string;
+  reading_time_min: number | null;
 }
 
 const BlogPostDetail = () => {
@@ -46,7 +48,7 @@ const BlogPostDetail = () => {
         document.title = `${p.title} — Nomaderia`;
         const { data: rel } = await supabase
           .from("blog_posts")
-          .select("id, title, slug, category, short_description, hero_image_url, author, created_at, updated_at")
+          .select("id, title, slug, category, short_description, hero_image_url, author, created_at, updated_at, reading_time_min")
           .eq("is_published", true)
           .eq("category", p.category)
           .neq("id", p.id)
@@ -112,9 +114,15 @@ const BlogPostDetail = () => {
               style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
               {post.title}
             </motion.h1>
-            {post.author && (
-              <p className="text-muted-foreground mt-2">por {post.author}</p>
-            )}
+            <div className="flex items-center gap-3 mt-2 text-muted-foreground">
+              {post.author && <span>por {post.author}</span>}
+              {post.reading_time_min && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {post.reading_time_min} min de lectura
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -123,6 +131,9 @@ const BlogPostDetail = () => {
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="prose prose-invert max-w-none text-foreground/90">
             <ReactMarkdown>{post.content_markdown || ""}</ReactMarkdown>
+          </div>
+          <div className="mt-10 pt-6 border-t border-border">
+            <ShareButtons title={post.title} />
           </div>
         </div>
       </section>

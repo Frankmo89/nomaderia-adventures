@@ -5,8 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const blogCategories = [
+  "Noticias",
+  "Trending Hikes",
+  "Historias",
+  "Preparación",
+  "Errores",
+  "Inspiración",
+  "Consejos",
+  "Listas",
+];
 
 const AdminBlogPostForm = () => {
   const { id } = useParams();
@@ -24,7 +36,10 @@ const AdminBlogPostForm = () => {
     author: "Nomaderia",
     is_published: false,
     featured: false,
+    reading_time_min: "5",
+    meta_description: "",
   });
+  const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -42,7 +57,10 @@ const AdminBlogPostForm = () => {
           author: d.author || "Nomaderia",
           is_published: d.is_published || false,
           featured: d.featured || false,
+          reading_time_min: String(d.reading_time_min || "5"),
+          meta_description: d.meta_description || "",
         });
+        setTags((d.tags as string[]) || []);
       }
     };
     load();
@@ -52,13 +70,26 @@ const AdminBlogPostForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...form };
+    const payload = {
+      title: form.title,
+      slug: form.slug,
+      category: form.category,
+      short_description: form.short_description || null,
+      content_markdown: form.content_markdown || null,
+      hero_image_url: form.hero_image_url || null,
+      author: form.author || null,
+      is_published: form.is_published,
+      featured: form.featured,
+      reading_time_min: form.reading_time_min ? Number(form.reading_time_min) : null,
+      meta_description: form.meta_description || null,
+      tags,
+    };
 
     if (isEdit) {
-      const { error } = await supabase.from("blog_posts").update(payload as any).eq("id", id!);
+      const { error } = await supabase.from("blog_posts").update(payload).eq("id", id!);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     } else {
-      const { error } = await supabase.from("blog_posts").insert(payload as any);
+      const { error } = await supabase.from("blog_posts").insert(payload);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     }
     toast({ title: isEdit ? "Post actualizado" : "Post creado" });
@@ -79,19 +110,46 @@ const AdminBlogPostForm = () => {
       </div>
       <div className="space-y-2">
         <Label className="text-foreground">Categoría</Label>
-        <Input value={form.category} onChange={(e) => set("category", e.target.value)} required />
+        <Select value={form.category} onValueChange={(v) => set("category", v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {blogCategories.map((cat) => (
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-2">
         <Label className="text-foreground">Autor</Label>
         <Input value={form.author} onChange={(e) => set("author", e.target.value)} />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-foreground">Tiempo de lectura (min)</Label>
+          <Input type="number" value={form.reading_time_min} onChange={(e) => set("reading_time_min", e.target.value)} min={1} />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-foreground">Hero Image URL</Label>
+          <Input value={form.hero_image_url} onChange={(e) => set("hero_image_url", e.target.value)} />
+        </div>
       </div>
       <div className="space-y-2">
         <Label className="text-foreground">Descripción corta</Label>
         <Textarea value={form.short_description} onChange={(e) => set("short_description", e.target.value)} rows={2} />
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground">Hero Image URL</Label>
-        <Input value={form.hero_image_url} onChange={(e) => set("hero_image_url", e.target.value)} />
+        <Label className="text-foreground">Meta Description (SEO)</Label>
+        <Textarea value={form.meta_description} onChange={(e) => set("meta_description", e.target.value)} rows={2} placeholder="Descripción optimizada para Google (máx 160 caracteres)" />
+      </div>
+      <div className="space-y-2">
+        <Label className="text-foreground">Tags (uno por línea)</Label>
+        <Textarea
+          value={tags.join("\n")}
+          onChange={(e) => setTags(e.target.value.split("\n").filter((t) => t.trim()))}
+          rows={3}
+          className="font-mono text-sm"
+          placeholder={"hiking\nmexico\nprincipiantes"}
+        />
       </div>
       <div className="space-y-2">
         <Label className="text-foreground">Contenido (Markdown)</Label>

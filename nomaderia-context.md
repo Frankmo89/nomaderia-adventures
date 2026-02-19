@@ -51,8 +51,8 @@ src/
 │   ├── DestinationDetail.tsx        → /destinos/:slug — hero carrusel Embla, tabs con markdown, galería + lightbox
 │   ├── GearListing.tsx              → /gear
 │   ├── GearArticleDetail.tsx        → /gear/:slug
-│   ├── BlogListing.tsx              → /blog
-│   ├── BlogPostDetail.tsx           → /blog/:slug
+│   ├── BlogListing.tsx              → /blog — tabs por categoría (9), FeaturedBlogPost hero, reading time badges
+│   ├── BlogPostDetail.tsx           → /blog/:slug — hero con reading time, ShareButtons (WhatsApp/X/Facebook/copy)
 │   ├── BudgetCalculator.tsx         → /calculadora  ← lazy loaded
 │   ├── PrivacyPolicy.tsx            → /privacidad (Política de Privacidad LFPDPPP)
 │   ├── SobreNosotros.tsx            → /sobre-nosotros (página Sobre Nosotros + credencial agente de viajes)
@@ -66,7 +66,7 @@ src/
 │       ├── AdminGearArticles.tsx    → CRUD lista gear
 │       ├── AdminGearArticleForm.tsx → Crear/editar gear
 │       ├── AdminBlogPosts.tsx       → CRUD lista posts
-│       ├── AdminBlogPostForm.tsx    → Crear/editar post
+│       ├── AdminBlogPostForm.tsx    → Crear/editar post (Select categoría, tags, reading_time_min, meta_description)
 │       ├── AdminQuizResponses.tsx   → Ver respuestas quiz
 │       ├── AdminSubscribers.tsx    → Ver suscriptores
 │       └── AdminItineraryRequests.tsx → Ver solicitudes de itinerario personalizado
@@ -83,6 +83,9 @@ src/
 │   │   ├── NewsletterSignup.tsx     → Formulario de email
 │   │   └── Footer.tsx               → Links de navegación + redes sociales (Instagram, Facebook, TikTok) + contacto
 │   ├── ui/                          → shadcn/ui — solo los componentes en uso (36 archivos, 12 no usados eliminados)
+│   ├── blog/
+│   │   ├── FeaturedBlogPost.tsx     → Hero card full-bleed para post destacado (Framer Motion, hover scale)
+│   │   └── ShareButtons.tsx         → Botones compartir: WhatsApp, X, Facebook, copiar link (con toast)
 │   ├── ErrorBoundary.tsx            → Error boundary genérico para wrappear rutas
 │   ├── LoadingSkeletons.tsx         → Skeleton loaders: DestinationDetailSkeleton, GearArticleDetailSkeleton, CardGridSkeleton
 │   └── NavLink.tsx                  → Link con estado activo
@@ -157,11 +160,14 @@ updated_at        timestamptz
 id                uuid PK
 title             text NOT NULL
 slug              text UNIQUE NOT NULL
-category          text DEFAULT 'general'  → "prep"|"mistakes"|"inspiration"|"tips"
+category          text DEFAULT 'Preparación'  → "Noticias"|"Trending Hikes"|"Historias"|"Preparación"|"Errores"|"Inspiración"|"Consejos"|"Listas"
 short_description text
 content_markdown  text                    → markdown
 hero_image_url    text
 author            text DEFAULT 'Nomaderia'
+tags              text[] DEFAULT '{}'     → array de tags para filtrado (GIN index)
+reading_time_min  integer DEFAULT 5       → tiempo estimado de lectura en minutos
+meta_description  text                    → SEO meta description (máx 160 chars recomendados)
 is_published      boolean DEFAULT false
 featured          boolean DEFAULT false
 created_at        timestamptz
@@ -253,7 +259,8 @@ useGearArticles()               // lista completa de gear publicado
 useFeaturedGearArticles()       // solo los 3 featured (para homepage)
 
 // src/hooks/use-blog-posts.ts
-useBlogPosts()                  // lista completa de posts publicados
+useBlogPosts()                  // lista completa de posts publicados (ordered: featured desc, created_at desc)
+// exports BlogPost type with: id, title, slug, category, short_description, hero_image_url, author, created_at, featured, reading_time_min, tags
 
 // src/hooks/use-quiz.ts
 useQuiz(totalSteps)             // toda la lógica de estado del quiz
@@ -563,7 +570,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.6*
+*Versión: 1.7*
 
 ---
 
@@ -591,11 +598,12 @@ const [loading, setLoading] = useState(true);
 
 ### 🗄️ Supabase
 
-- [x] **Aplicar migraciones** — Las 4 migraciones están aplicadas en el proyecto `vrixiuvnhvqafmxlcyex` vía SQL Editor:
+- [x] **Aplicar migraciones** — Las 5 migraciones están aplicadas en el proyecto `vrixiuvnhvqafmxlcyex` vía SQL Editor:
   - `20260218064349_...sql` — schema base: user_roles, has_role, destinations, gear_articles, quiz_responses, newsletter_subscribers, RLS, triggers
   - `20260218162416_...sql` — tabla blog_posts + RLS + trigger
   - `20260218200000_fix_blog_posts_rls_policy.sql` — fix RLS blog_posts (agrega `TO authenticated`)
   - `20260218210000_add_itinerary_requests.sql` — tabla itinerary_requests + RLS
+  - `20260218_blog_enhancements.sql` — agrega `tags TEXT[]`, `reading_time_min INTEGER`, `meta_description TEXT` + GIN index en tags
 
 - [ ] **Regenerar tipos Supabase** — Después de aplicar las migraciones, regenerar `types.ts` para eliminar los `supabase as any` en el código:
   ```sh
@@ -686,6 +694,16 @@ const [loading, setLoading] = useState(true);
   - **AdminDestinationForm.tsx**: `galleryImages: string[]` como estado separado (igual que `fears`). `GeneralFields` recibe `galleryImages` + `onGalleryChange`. Textarea con `join("\n")` / `split("\n").filter(trim)`, placeholder con URLs de Unsplash y nota "Usa ?w=1200&q=80". Campo `hero_image_url` ahora también visible en el form (antes existía en `emptyForm` pero no se renderizaba). `gallery_images` incluido en la carga y en el payload del submit.
 
 - [x] **`hero_image_url` ahora visible en AdminDestinationForm** — El campo existía en `emptyForm` y se salvaba al submit, pero no tenía input UI. Ahora aparece en `GeneralFields` justo antes del textarea de galería.
+
+- [x] **Blog enhancements — categorías, featured post, share, reading time** — Mejoras completas al sistema de blog:
+  - **Migración SQL** (`supabase/migrations/20260218_blog_enhancements.sql`): agrega `tags TEXT[] DEFAULT '{}'`, `reading_time_min INTEGER DEFAULT 5`, `meta_description TEXT`, GIN index en tags.
+  - **Categorías expandidas** de 4 a 8: Noticias, Trending Hikes, Historias, Preparación, Errores, Inspiración, Consejos, Listas. Tabs en `BlogListing.tsx` ahora horizontally scrollable (`overflow-x-auto scrollbar-hide`).
+  - **`FeaturedBlogPost.tsx`** (`src/components/blog/`): hero card full-bleed (`h-[50vh] min-h-[400px]`) con imagen, gradient overlay, badge categoría, reading time, autor, flecha CTA. Framer Motion fade-in, hover scale-105. Se muestra en `BlogListing` si `posts[0].featured`.
+  - **`ShareButtons.tsx`** (`src/components/blog/`): WhatsApp, X (Twitter), Facebook + copiar link. Hover colores por plataforma. `navigator.clipboard.writeText` con toast. Integrado en `BlogPostDetail.tsx` después del contenido markdown con `border-t` separator.
+  - **Reading time badges**: `BlogPostDetail.tsx` hero muestra `{reading_time_min} min de lectura` con ícono Clock. `BlogListing.tsx` cards muestran `{reading_time_min} min` con Clock.
+  - **`AdminBlogPostForm.tsx`**: categoría ahora usa `Select` (shadcn) en vez de Input libre. Campos nuevos: `reading_time_min` (number), `meta_description` (textarea SEO), `tags` (textarea, uno por línea). Tags como `string[]` separado del form state. Payload explícito sin `as any`.
+  - **`use-blog-posts.ts`**: interface actualizada con `featured`, `reading_time_min`, `tags`. Query ordena por `featured desc, created_at desc`. Exporta `BlogPost` type.
+  - **`types.ts`**: `blog_posts` Row/Insert/Update actualizado con los 3 campos nuevos.
 
 - [ ] **Eliminar `supabase as any`** — Dos archivos usan cast temporal hasta que se regeneren los tipos:
   - `src/pages/admin/AdminItineraryRequests.tsx:56`
