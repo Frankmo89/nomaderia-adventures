@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ImageUpload from "@/components/dashboard/ImageUpload";
 
 const blogCategories = [
   "Noticias",
@@ -123,15 +124,17 @@ const AdminBlogPostForm = () => {
         <Label className="text-foreground">Autor</Label>
         <Input value={form.author} onChange={(e) => set("author", e.target.value)} />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label className="text-foreground">Tiempo de lectura (min)</Label>
-          <Input type="number" value={form.reading_time_min} onChange={(e) => set("reading_time_min", e.target.value)} min={1} />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-foreground">Hero Image URL</Label>
-          <Input value={form.hero_image_url} onChange={(e) => set("hero_image_url", e.target.value)} />
-        </div>
+      <div className="space-y-2">
+        <Label className="text-foreground">Tiempo de lectura (min)</Label>
+        <Input type="number" value={form.reading_time_min} onChange={(e) => set("reading_time_min", e.target.value)} min={1} />
+      </div>
+      <div className="space-y-2">
+        <Label className="text-foreground">Hero Image</Label>
+        <ImageUpload
+          bucket="blog-posts"
+          currentUrl={form.hero_image_url}
+          onUploadComplete={(url) => set("hero_image_url", url)}
+        />
       </div>
       <div className="space-y-2">
         <Label className="text-foreground">Descripción corta</Label>

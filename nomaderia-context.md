@@ -63,11 +63,11 @@ src/
 │       ├── AdminLogin.tsx           → /admin/login
 │       ├── AdminDashboard.tsx       → /admin (índice)
 │       ├── AdminDestinations.tsx    → CRUD lista destinos
-│       ├── AdminDestinationForm.tsx → Crear/editar destino (GeneralFields con hero_image_url + gallery_images, FaqFields, MarkdownFields, AffiliateFields)
+│       ├── AdminDestinationForm.tsx → Crear/editar destino (GeneralFields con ImageUpload hero + gallery_images, FaqFields, MarkdownFields, AffiliateFields)
 │       ├── AdminGearArticles.tsx    → CRUD lista gear
 │       ├── AdminGearArticleForm.tsx → Crear/editar gear
 │       ├── AdminBlogPosts.tsx       → CRUD lista posts
-│       ├── AdminBlogPostForm.tsx    → Crear/editar post (Select categoría, tags, reading_time_min, meta_description)
+│       ├── AdminBlogPostForm.tsx    → Crear/editar post (ImageUpload hero, Select categoría, tags, reading_time_min, meta_description)
 │       ├── AdminQuizResponses.tsx   → Ver respuestas quiz
 │       ├── AdminSubscribers.tsx    → Ver suscriptores
 │       └── AdminItineraryRequests.tsx → Ver solicitudes de itinerario personalizado
@@ -83,6 +83,8 @@ src/
 │   │   ├── PremiumItinerarySection.tsx → Sección de itinerarios personalizados de pago (Dialog con form → itinerary_requests)
 │   │   ├── NewsletterSignup.tsx     → Formulario de email
 │   │   └── Footer.tsx               → Links de navegación + redes sociales (Instagram, Facebook, TikTok) + contacto
+│   ├── dashboard/
+│   │   └── ImageUpload.tsx          → Componente reutilizable de subida de imágenes a Supabase Storage (validación tipo/tamaño, preview, remove)
 │   ├── ui/                          → shadcn/ui — solo los componentes en uso (36 archivos, 12 no usados eliminados)
 │   ├── blog/
 │   │   ├── FeaturedBlogPost.tsx     → Hero card full-bleed para post destacado (Framer Motion, hover scale)
@@ -592,7 +594,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.8*
+*Versión: 1.9*
 
 ---
 
@@ -735,6 +737,13 @@ const [loading, setLoading] = useState(true);
   - **`src/components/blog/ShareButtons.tsx`** ya no se importa en ningún archivo (reemplazado por `src/components/ShareButtons.tsx` que añade Telegram y usa popup pattern).
 
 - [ ] **Eliminar `supabase as any`** — Dos archivos usan cast temporal hasta que se regeneren los tipos:
+
+- [x] **`ImageUpload.tsx` componente + integración en formularios admin** — Componente reutilizable de subida de imágenes a Supabase Storage (`src/components/dashboard/ImageUpload.tsx`):
+  - **Props**: `bucket` (string), `currentUrl?` (string), `onUploadComplete` (callback con URL pública).
+  - **Funcionalidad**: acepta WebP/JPG/PNG (máx 2MB), genera nombres únicos con timestamp, sube a Supabase Storage, muestra preview con botón remove, spinner durante upload, validación de tipo y tamaño, toasts de éxito/error.
+  - **Integrado en `AdminDestinationForm.tsx`**: `bucket="destinations"`, reemplaza input de texto para `hero_image_url`.
+  - **Integrado en `AdminBlogPostForm.tsx`**: `bucket="blog-posts"`, reemplaza input de texto para `hero_image_url`.
+  - **Buckets de Supabase Storage requeridos**: `destinations`, `blog-posts` (ambos deben existir con acceso público para lectura).
   - `src/pages/admin/AdminItineraryRequests.tsx:56`
   - `src/pages/admin/AdminDashboard.tsx:50`
   - Fix: regenerar tipos con `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`

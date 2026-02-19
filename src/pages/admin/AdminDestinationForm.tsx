@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ImageUpload from "@/components/dashboard/ImageUpload";
 
 interface Fear { question: string; answer: string; }
 type FormState = typeof emptyForm;
@@ -63,7 +64,7 @@ const GeneralFields = ({ form, set, galleryImages, onGalleryChange }: {
       </div>
       {field("Descripción Corta", <Textarea value={form.short_description} onChange={(e) => set("short_description", e.target.value)} className={inputCls} />)}
       {field("Descripción de Dificultad", <Textarea value={form.difficulty_description} onChange={(e) => set("difficulty_description", e.target.value)} className={inputCls} />)}
-      {field("URL Imagen Principal (Hero)", <Input value={form.hero_image_url} onChange={(e) => set("hero_image_url", e.target.value)} className={inputCls} placeholder="https://images.unsplash.com/..." />)}
+      <ImageUpload bucket="destinations" currentUrl={form.hero_image_url} onUploadComplete={(url) => set("hero_image_url", url)} />
       <div>
         <Label className="text-card-foreground">Galería de Imágenes (una URL por línea)</Label>
         <Textarea
