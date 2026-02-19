@@ -32,7 +32,12 @@ const field = (label: string, input: React.ReactNode) => (
 
 const inputCls = "bg-background border-border text-foreground";
 
-const GeneralFields = ({ form, set }: { form: FormState; set: (k: string, v: string | boolean) => void }) => (
+const GeneralFields = ({ form, set, galleryImages, onGalleryChange }: {
+  form: FormState;
+  set: (k: string, v: string | boolean) => void;
+  galleryImages: string[];
+  onGalleryChange: (imgs: string[]) => void;
+}) => (
   <Card className="bg-card border-border">
     <CardHeader><CardTitle className="text-card-foreground">Información General</CardTitle></CardHeader>
     <CardContent className="space-y-4">
@@ -58,6 +63,18 @@ const GeneralFields = ({ form, set }: { form: FormState; set: (k: string, v: str
       </div>
       {field("Descripción Corta", <Textarea value={form.short_description} onChange={(e) => set("short_description", e.target.value)} className={inputCls} />)}
       {field("Descripción de Dificultad", <Textarea value={form.difficulty_description} onChange={(e) => set("difficulty_description", e.target.value)} className={inputCls} />)}
+      {field("URL Imagen Principal (Hero)", <Input value={form.hero_image_url} onChange={(e) => set("hero_image_url", e.target.value)} className={inputCls} placeholder="https://images.unsplash.com/..." />)}
+      <div>
+        <Label className="text-card-foreground">Galería de Imágenes (una URL por línea)</Label>
+        <Textarea
+          rows={5}
+          value={galleryImages.join("\n")}
+          onChange={(e) => onGalleryChange(e.target.value.split("\n").filter((url) => url.trim()))}
+          className={`${inputCls} font-mono text-sm`}
+          placeholder={`https://images.unsplash.com/photo-1?w=1200&q=80\nhttps://images.unsplash.com/photo-2?w=1200&q=80\nhttps://images.unsplash.com/photo-3?w=1200&q=80`}
+        />
+        <p className="text-xs text-muted-foreground mt-1">La primera imagen se usa como principal del carrusel. Usa ?w=1200&q=80 en URLs de Unsplash.</p>
+      </div>
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2"><Switch checked={form.is_published} onCheckedChange={(v) => set("is_published", v)} /><Label className="text-card-foreground">Publicado</Label></div>
         <div className="flex items-center gap-2"><Switch checked={form.featured} onCheckedChange={(v) => set("featured", v)} /><Label className="text-card-foreground">Destacado</Label></div>
@@ -127,6 +144,7 @@ const AdminDestinationForm = () => {
   const { toast } = useToast();
   const [form, setForm] = useState(emptyForm);
   const [fears, setFears] = useState<Fear[]>([]);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -149,6 +167,7 @@ const AdminDestinationForm = () => {
         car_rental_url: aff.car_rental_url || "", transfer_url: aff.transfer_url || "",
       });
       setFears((data.common_fears as unknown as Fear[]) || []);
+      setGalleryImages((data.gallery_images as string[]) || []);
     };
     load();
   }, [id, isEdit]);
@@ -168,6 +187,7 @@ const AdminDestinationForm = () => {
       full_guide_markdown: form.full_guide_markdown || null, preparation_plan: form.preparation_plan || null,
       itinerary_markdown: form.itinerary_markdown || null, gear_list_markdown: form.gear_list_markdown || null,
       common_fears: JSON.parse(JSON.stringify(fears)),
+      gallery_images: galleryImages,
       affiliate_links: JSON.parse(JSON.stringify({
         flights_url: form.flights_url, hotels_url: form.hotels_url, insurance_url: form.insurance_url,
         tours_url: form.tours_url, tickets_url: form.tickets_url,
@@ -188,7 +208,7 @@ const AdminDestinationForm = () => {
     <div className="max-w-3xl">
       <h1 className="font-serif text-3xl text-foreground mb-6">{isEdit ? "Editar Destino" : "Nuevo Destino"}</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <GeneralFields form={form} set={set} />
+        <GeneralFields form={form} set={set} galleryImages={galleryImages} onGalleryChange={setGalleryImages} />
         <FaqFields
           fears={fears}
           onAdd={() => setFears([...fears, { question: "", answer: "" }])}

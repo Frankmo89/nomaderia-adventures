@@ -48,7 +48,7 @@ src/
 ├── index.css                        → Variables CSS de tema, Tailwind base
 ├── pages/
 │   ├── Index.tsx                    → Homepage (orquesta secciones landing)
-│   ├── DestinationDetail.tsx        → /destinos/:slug
+│   ├── DestinationDetail.tsx        → /destinos/:slug — hero carrusel Embla, tabs con markdown, galería + lightbox
 │   ├── GearListing.tsx              → /gear
 │   ├── GearArticleDetail.tsx        → /gear/:slug
 │   ├── BlogListing.tsx              → /blog
@@ -62,7 +62,7 @@ src/
 │       ├── AdminLogin.tsx           → /admin/login
 │       ├── AdminDashboard.tsx       → /admin (índice)
 │       ├── AdminDestinations.tsx    → CRUD lista destinos
-│       ├── AdminDestinationForm.tsx → Crear/editar destino (dividido en GeneralFields, FaqFields, MarkdownFields, AffiliateFields)
+│       ├── AdminDestinationForm.tsx → Crear/editar destino (GeneralFields con hero_image_url + gallery_images, FaqFields, MarkdownFields, AffiliateFields)
 │       ├── AdminGearArticles.tsx    → CRUD lista gear
 │       ├── AdminGearArticleForm.tsx → Crear/editar gear
 │       ├── AdminBlogPosts.tsx       → CRUD lista posts
@@ -118,8 +118,8 @@ difficulty_description text
 days_needed           text
 best_season           text
 estimated_budget_usd  integer              → número entero en USD
-hero_image_url        text
-gallery_images        text[]
+hero_image_url        text                 → imagen principal (campo visible en AdminDestinationForm)
+gallery_images        text[]               → URLs para hero carrusel y sección galería (primera imagen = principal del carrusel)
 full_guide_markdown   text
 preparation_plan      text                 → markdown (tab "Preparación Física")
 gear_list_markdown    text                 → markdown (tab "Qué Llevar")
@@ -563,7 +563,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.5*
+*Versión: 1.6*
 
 ---
 
@@ -659,7 +659,7 @@ const [loading, setLoading] = useState(true);
 - [ ] **Agregar destinos reales** desde el panel admin — actualmente el sitio está vacío sin datos en la DB
 - [ ] **Agregar artículos de gear** con productos reales y links de afiliado
 - [ ] **Escribir posts del blog** para SEO inicial
-- [ ] **Agregar hero images** a todos los destinos (URLs de Unsplash o imágenes propias en Supabase Storage)
+- [ ] **Agregar hero images y galerías** a todos los destinos (URLs de Unsplash con `?w=1200&q=80` o imágenes propias en Supabase Storage). El campo `gallery_images` ya está activo — la primera URL es el principal del carrusel, el resto forma la sección galería (mínimo 2 imágenes para que aparezca).
 
 ---
 
@@ -678,6 +678,14 @@ const [loading, setLoading] = useState(true);
 - [x] **`AdminItineraryRequests.tsx` creado** — `/admin/itinerary-requests` con tabla, count, CSV export, skeleton, empty state. Link en sidebar de `AdminLayout.tsx`, stat card en `AdminDashboard.tsx`.
 
 - [x] **Schema DB actualizado en contexto** — Los nombres reales de columnas en `destinations`, `gear_articles`, `blog_posts` y `quiz_responses` están corregidos en Sección 4 (diferían del schema real en las migraciones).
+
+- [x] **gallery_images activado en DestinationDetail + AdminDestinationForm** — Campo `text[]` de la tabla `destinations` ahora completamente integrado:
+  - **Hero carrusel** (`DestinationDetail.tsx`): reemplaza la imagen estática. Usa `useEmblaCarousel({ loop: true })` directamente (sin el wrapper shadcn), autoplay vía `setInterval` cada 5s, dots blancos semi-transparentes en la parte inferior que permiten navegar al hacer clic. Altura `h-[50vh] md:h-[60vh]`. Gradient, texto y badges encima con `z-10`. Fallback a `hero_image_url` si `gallery_images` está vacío.
+  - **Markdown images** (`DestinationDetail.tsx`): objeto `markdownComponents` con renderer `img` → `<figure>` + `<img className="w-full h-64 md:h-80 object-cover rounded-xl" loading="lazy">` + `<figcaption italic>`. Aplicado a los 3 tabs de ReactMarkdown (prep, itinerary, gear).
+  - **Sección Galería** (`DestinationDetail.tsx`): se muestra solo si `gallery_images.length > 1`, entre los tabs y "Destinos Similares". Grid `grid-cols-2 md:grid-cols-3`, primera imagen ocupa `col-span-2 row-span-2` en desktop. Hover zoom `scale-110 duration-700`. Framer Motion fade+slide con delay escalonado por imagen. Al clicar abre Lightbox (`Dialog` shadcn/ui) con imagen centrada, botón X, flechas prev/next, contador, y soporte de teclado (←/→/Escape).
+  - **AdminDestinationForm.tsx**: `galleryImages: string[]` como estado separado (igual que `fears`). `GeneralFields` recibe `galleryImages` + `onGalleryChange`. Textarea con `join("\n")` / `split("\n").filter(trim)`, placeholder con URLs de Unsplash y nota "Usa ?w=1200&q=80". Campo `hero_image_url` ahora también visible en el form (antes existía en `emptyForm` pero no se renderizaba). `gallery_images` incluido en la carga y en el payload del submit.
+
+- [x] **`hero_image_url` ahora visible en AdminDestinationForm** — El campo existía en `emptyForm` y se salvaba al submit, pero no tenía input UI. Ahora aparece en `GeneralFields` justo antes del textarea de galería.
 
 - [ ] **Eliminar `supabase as any`** — Dos archivos usan cast temporal hasta que se regeneren los tipos:
   - `src/pages/admin/AdminItineraryRequests.tsx:56`

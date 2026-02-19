@@ -1,13 +1,15 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Clock, DollarSign, Plane, Hotel, Shield, ArrowLeft, Compass, Ticket, Car, Bus } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, ArrowLeft, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
@@ -25,6 +27,25 @@ const countryFlag: Record<string, string> = {
   México: "🇲🇽", "Estados Unidos": "🇺🇸", España: "🇪🇸", Argentina: "🇦🇷", Nepal: "🇳🇵",
 };
 
+// Custom renderer for markdown images
+const markdownComponents = {
+  img: ({ src, alt }: { src?: string; alt?: string }) => (
+    <figure className="my-6">
+      <img
+        src={src}
+        alt={alt || ""}
+        loading="lazy"
+        className="w-full h-64 md:h-80 object-cover rounded-xl"
+      />
+      {alt && (
+        <figcaption className="text-sm text-muted-foreground text-center mt-2 italic">
+          {alt}
+        </figcaption>
+      )}
+    </figure>
+  ),
+};
+
 const DestinationDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: dest, isLoading, error } = useDestinationBySlug(slug);
@@ -32,6 +53,58 @@ const DestinationDetail = () => {
     dest?.difficulty_level,
     dest?.id
   );
+
+  // Hero carousel
+  const [heroRef, heroApi] = useEmblaCarousel({ loop: true });
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  // Gallery lightbox
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const heroImages = useMemo(() => {
+    const imgs = dest?.gallery_images as string[] | null | undefined;
+    if (imgs && imgs.length > 0) return imgs;
+    return dest?.hero_image_url ? [dest.hero_image_url] : [];
+  }, [dest]);
+
+  const galleryImages = useMemo(() => {
+    const imgs = dest?.gallery_images as string[] | null | undefined;
+    return imgs && imgs.length > 1 ? imgs : [];
+  }, [dest]);
+
+  // Hero autoplay
+  useEffect(() => {
+    if (!heroApi) return;
+    const onSelect = () => setHeroIndex(heroApi.selectedScrollSnap());
+    heroApi.on("select", onSelect);
+    return () => { heroApi.off("select", onSelect); };
+  }, [heroApi]);
+
+  useEffect(() => {
+    if (!heroApi || heroImages.length <= 1) return;
+    const id = setInterval(() => heroApi.scrollNext(), 5000);
+    return () => clearInterval(id);
+  }, [heroApi, heroImages.length]);
+
+  // Lightbox navigation
+  const lightboxPrev = useCallback(() => {
+    setLightboxIndex((i) => (i - 1 + galleryImages.length) % galleryImages.length);
+  }, [galleryImages.length]);
+  const lightboxNext = useCallback(() => {
+    setLightboxIndex((i) => (i + 1) % galleryImages.length);
+  }, [galleryImages.length]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") lightboxPrev();
+      else if (e.key === "ArrowRight") lightboxNext();
+      else if (e.key === "Escape") setLightboxOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [lightboxOpen, lightboxPrev, lightboxNext]);
 
   useCanonical();
 
@@ -92,15 +165,47 @@ const DestinationDetail = () => {
     <main className="bg-background min-h-screen">
       <Navbar />
 
-      {/* Hero */}
+      {/* Hero Carousel */}
       <section className="pt-20">
-        <div className="h-[50vh] flex items-end relative overflow-hidden">
-          {dest.hero_image_url ? (
-            <img src={dest.hero_image_url} alt={`Vista de ${dest.title}`} loading="eager" className="absolute inset-0 w-full h-full object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 to-primary/20" />
-          )}
+        <div className="h-[50vh] md:h-[60vh] flex items-end relative overflow-hidden">
+          {/* Embla viewport */}
+          <div ref={heroRef} className="absolute inset-0 overflow-hidden">
+            <div className="flex h-full">
+              {heroImages.length > 0 ? heroImages.map((src, i) => (
+                <div key={i} className="relative flex-none w-full h-full">
+                  <img
+                    src={src}
+                    alt={i === 0 ? `Vista de ${dest.title}` : `${dest.title} — imagen ${i + 1}`}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    className="w-full h-full object-cover transition-opacity duration-700"
+                  />
+                </div>
+              )) : (
+                <div className="flex-none w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
+              )}
+            </div>
+          </div>
+
+          {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+
+          {/* Dot indicators */}
+          {heroImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {heroImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => heroApi?.scrollTo(i)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    i === heroIndex ? "bg-white scale-125" : "bg-white/50"
+                  }`}
+                  aria-label={`Ir a imagen ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Hero text content */}
           <div className="container mx-auto px-4 pb-10 relative z-10">
             <Link to="/#destinos" className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 mb-4">
               <ArrowLeft className="h-4 w-4" /> Volver a destinos
@@ -154,9 +259,21 @@ const DestinationDetail = () => {
                   </>
                 )}
               </TabsContent>
-              <TabsContent value="prep"><div className="prose prose-invert max-w-none text-foreground/90"><ReactMarkdown>{dest.preparation_plan || "Contenido próximamente."}</ReactMarkdown></div></TabsContent>
-              <TabsContent value="itinerary"><div className="prose prose-invert max-w-none text-foreground/90"><ReactMarkdown>{dest.itinerary_markdown || "Contenido próximamente."}</ReactMarkdown></div></TabsContent>
-              <TabsContent value="gear"><div className="prose prose-invert max-w-none text-foreground/90"><ReactMarkdown>{dest.gear_list_markdown || "Contenido próximamente."}</ReactMarkdown></div></TabsContent>
+              <TabsContent value="prep">
+                <div className="prose prose-invert max-w-none text-foreground/90">
+                  <ReactMarkdown components={markdownComponents}>{dest.preparation_plan || "Contenido próximamente."}</ReactMarkdown>
+                </div>
+              </TabsContent>
+              <TabsContent value="itinerary">
+                <div className="prose prose-invert max-w-none text-foreground/90">
+                  <ReactMarkdown components={markdownComponents}>{dest.itinerary_markdown || "Contenido próximamente."}</ReactMarkdown>
+                </div>
+              </TabsContent>
+              <TabsContent value="gear">
+                <div className="prose prose-invert max-w-none text-foreground/90">
+                  <ReactMarkdown components={markdownComponents}>{dest.gear_list_markdown || "Contenido próximamente."}</ReactMarkdown>
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
           <aside className="w-full lg:w-80 shrink-0">
@@ -231,6 +348,86 @@ const DestinationDetail = () => {
           </aside>
         </div>
       </section>
+
+      {/* Galería de Fotos */}
+      {galleryImages.length > 1 && (
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="font-serif text-3xl text-foreground mb-8 text-center"
+            >
+              Galería de Fotos
+            </motion.h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {galleryImages.map((src, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08, duration: 0.5 }}
+                  className={`overflow-hidden rounded-xl cursor-pointer ${
+                    i === 0 ? "col-span-2 row-span-2 md:col-span-2 md:row-span-2" : ""
+                  }`}
+                  style={{ aspectRatio: i === 0 ? "16/9" : "4/3" }}
+                  onClick={() => { setLightboxIndex(i); setLightboxOpen(true); }}
+                >
+                  <img
+                    src={src}
+                    alt={`${dest.title} — galería ${i + 1}`}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-5xl w-full bg-black/95 border-0 p-0 overflow-hidden">
+          <div className="relative flex items-center justify-center min-h-[60vh]">
+            <img
+              src={galleryImages[lightboxIndex]}
+              alt={`${dest.title} — imagen ${lightboxIndex + 1}`}
+              className="max-h-[80vh] max-w-full object-contain"
+            />
+            <button
+              onClick={() => setLightboxOpen(false)}
+              className="absolute top-3 right-3 text-white/80 hover:text-white bg-black/40 rounded-full p-1.5 transition-colors"
+              aria-label="Cerrar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  onClick={lightboxPrev}
+                  className="absolute left-3 text-white/80 hover:text-white bg-black/40 rounded-full p-2 transition-colors"
+                  aria-label="Imagen anterior"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={lightboxNext}
+                  className="absolute right-3 text-white/80 hover:text-white bg-black/40 rounded-full p-2 transition-colors"
+                  aria-label="Imagen siguiente"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+              {lightboxIndex + 1} / {galleryImages.length}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {related.length > 0 && (
         <section className="py-16 bg-muted/30">
