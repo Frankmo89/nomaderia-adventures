@@ -14,6 +14,8 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
+import SEOHead from "@/components/SEOHead";
+import ShareButtons from "@/components/ShareButtons";
 import { useCanonical, useJsonLd } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 
@@ -108,24 +110,6 @@ const DestinationDetail = () => {
 
   useCanonical();
 
-  useEffect(() => {
-    if (!dest) return;
-    document.title = `${dest.title} — Nomaderia`;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute("content", dest.short_description || "");
-    const ogTitle = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) ogTitle.setAttribute("content", `${dest.title} — Nomaderia`);
-    const ogDesc = document.querySelector('meta[property="og:description"]');
-    if (ogDesc) ogDesc.setAttribute("content", dest.short_description || "");
-    if (dest.hero_image_url) {
-      const ogImage = document.querySelector('meta[property="og:image"]');
-      if (ogImage) ogImage.setAttribute("content", dest.hero_image_url);
-    }
-    return () => {
-      document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando";
-    };
-  }, [dest]);
-
   const jsonLd = useMemo(() => {
     if (!dest) return null;
     return {
@@ -164,6 +148,11 @@ const DestinationDetail = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <SEOHead
+        title={dest.title}
+        description={dest.short_description || `Guía completa de ${dest.title} para principiantes`}
+        image={dest.hero_image_url || undefined}
+      />
 
       {/* Hero Carousel */}
       <section className="pt-20">
@@ -428,6 +417,19 @@ const DestinationDetail = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Compartir */}
+      <section className="pb-8">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="pt-6 border-t border-border">
+            <ShareButtons
+              url={window.location.href}
+              title={dest.title}
+              description={dest.short_description || undefined}
+            />
+          </div>
+        </div>
+      </section>
 
       {related.length > 0 && (
         <section className="py-16 bg-muted/30">

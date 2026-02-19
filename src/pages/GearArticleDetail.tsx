@@ -11,6 +11,8 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, useJsonLd } from "@/hooks/use-seo";
+import SEOHead from "@/components/SEOHead";
+import ShareButtons from "@/components/ShareButtons";
 import type { Tables } from "@/integrations/supabase/types";
 
 type GearArticle = Tables<"gear_articles">;
@@ -43,17 +45,6 @@ const GearArticleDetail = () => {
         .maybeSingle();
       setArticle(data);
       if (data) {
-        document.title = `${data.title} — Nomaderia`;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) metaDesc.setAttribute("content", data.short_description || "");
-        const ogTitle = document.querySelector('meta[property="og:title"]');
-        if (ogTitle) ogTitle.setAttribute("content", `${data.title} — Nomaderia`);
-        const ogDesc = document.querySelector('meta[property="og:description"]');
-        if (ogDesc) ogDesc.setAttribute("content", data.short_description || "");
-        if (data.hero_image_url) {
-          const ogImage = document.querySelector('meta[property="og:image"]');
-          if (ogImage) ogImage.setAttribute("content", data.hero_image_url);
-        }
         const { data: rel } = await supabase
           .from("gear_articles")
           .select("*")
@@ -66,9 +57,6 @@ const GearArticleDetail = () => {
       setLoading(false);
     };
     load();
-    return () => {
-      document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando";
-    };
   }, [slug]);
 
   const jsonLd = useMemo(() => {
@@ -108,6 +96,11 @@ const GearArticleDetail = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <SEOHead
+        title={article.title}
+        description={article.short_description || `${article.title} — Gear Guide de Nomaderia`}
+        image={article.hero_image_url || undefined}
+      />
 
       <section className="pt-20">
         <div className="h-[35vh] flex items-end relative overflow-hidden">
@@ -183,6 +176,13 @@ const GearArticleDetail = () => {
               </div>
             </>
           )}
+          <div className="mt-10 pt-6 border-t border-border">
+            <ShareButtons
+              url={window.location.href}
+              title={article.title}
+              description={article.short_description || undefined}
+            />
+          </div>
         </div>
       </section>
 

@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -50,14 +51,15 @@ const PageLoader = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
               <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
               <Route path="/destinos/:slug" element={<ErrorBoundary><DestinationDetail /></ErrorBoundary>} />
               <Route path="/gear" element={<ErrorBoundary><GearListing /></ErrorBoundary>} />
@@ -84,12 +86,13 @@ const App = () => (
                 <Route path="blog-posts/:id/edit" element={<AdminBlogPostForm />} />
               </Route>
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

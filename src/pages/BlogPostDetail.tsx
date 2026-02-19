@@ -10,7 +10,8 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, useJsonLd } from "@/hooks/use-seo";
-import ShareButtons from "@/components/blog/ShareButtons";
+import SEOHead from "@/components/SEOHead";
+import ShareButtons from "@/components/ShareButtons";
 
 interface BlogPost {
   id: string;
@@ -45,7 +46,6 @@ const BlogPostDetail = () => {
       const p = data as BlogPost | null;
       setPost(p);
       if (p) {
-        document.title = `${p.title} — Nomaderia`;
         const { data: rel } = await supabase
           .from("blog_posts")
           .select("id, title, slug, category, short_description, hero_image_url, author, created_at, updated_at, reading_time_min")
@@ -58,7 +58,6 @@ const BlogPostDetail = () => {
       setLoading(false);
     };
     load();
-    return () => { document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando"; };
   }, [slug]);
 
   const jsonLd = useMemo(() => {
@@ -96,6 +95,11 @@ const BlogPostDetail = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <SEOHead
+        title={post.title}
+        description={post.short_description || `${post.title} — Blog de Nomaderia`}
+        image={post.hero_image_url || undefined}
+      />
       <section className="pt-20">
         <div className="h-[35vh] flex items-end relative overflow-hidden">
           {post.hero_image_url ? (
@@ -133,7 +137,11 @@ const BlogPostDetail = () => {
             <ReactMarkdown>{post.content_markdown || ""}</ReactMarkdown>
           </div>
           <div className="mt-10 pt-6 border-t border-border">
-            <ShareButtons title={post.title} />
+            <ShareButtons
+              url={window.location.href}
+              title={post.title}
+              description={post.short_description || undefined}
+            />
           </div>
         </div>
       </section>
