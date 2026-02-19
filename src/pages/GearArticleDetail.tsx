@@ -138,6 +138,11 @@ const GearArticleDetail = () => {
           </div>
           {products.length > 0 && (
             <>
+              <div className="bg-muted/30 border border-border rounded-lg p-3 mb-6">
+                <p className="text-xs text-muted-foreground">
+                  📋 <strong>Transparencia:</strong> Esta guía contiene enlaces de afiliado a Amazon. Si compras a través de ellos, ganamos una pequeña comisión sin costo extra para ti. Solo recomendamos productos que consideramos útiles para principiantes.
+                </p>
+              </div>
               <h2 className="font-serif text-2xl text-foreground mb-6">Productos Recomendados</h2>
               <div className="space-y-6">
                 {products.map((p, i) => (
@@ -168,7 +173,7 @@ const GearArticleDetail = () => {
                             </div>
                           </div>
                           <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                            <a href={p.affiliate_url || "#"} target="_blank" rel="noopener noreferrer">Ver en Amazon <ExternalLink className="ml-1 h-3 w-3" /></a>
+                            <a href={p.affiliate_url || "#"} target="_blank" rel="noopener noreferrer sponsored">Ver en Amazon <ExternalLink className="ml-1 h-3 w-3" /></a>
                           </Button>
                         </div>
                       </div>

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Clock, DollarSign, Plane, Hotel, Shield, ArrowLeft } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, ArrowLeft, Compass, Ticket, Car, Bus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -162,14 +162,71 @@ const DestinationDetail = () => {
           <aside className="w-full lg:w-80 shrink-0">
             <div className="lg:sticky lg:top-24 space-y-4">
               <Card className="bg-card border-border">
-                <CardHeader><CardTitle className="font-serif text-xl text-card-foreground">Reserva Tu Viaje</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="font-serif text-xl text-card-foreground">
+                    Reserva Tu Viaje
+                  </CardTitle>
+                </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                  {affiliateLinks.flights_url && <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"><a href={affiliateLinks.flights_url} target="_blank" rel="noopener noreferrer"><Plane className="mr-2 h-4 w-4" /> Buscar Vuelos</a></Button>}
-                  {affiliateLinks.hotels_url && <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted"><a href={affiliateLinks.hotels_url} target="_blank" rel="noopener noreferrer"><Hotel className="mr-2 h-4 w-4" /> Buscar Hoteles</a></Button>}
-                  {affiliateLinks.insurance_url && <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted"><a href={affiliateLinks.insurance_url} target="_blank" rel="noopener noreferrer"><Shield className="mr-2 h-4 w-4" /> Seguro de Viaje</a></Button>}
-                  {!affiliateLinks.flights_url && !affiliateLinks.hotels_url && !affiliateLinks.insurance_url && <p className="text-sm text-card-foreground/60">Enlaces de reserva próximamente.</p>}
+                  {affiliateLinks.flights_url && (
+                    <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full">
+                      <a href={affiliateLinks.flights_url} target="_blank" rel="noopener noreferrer">
+                        <Plane className="mr-2 h-4 w-4" /> Buscar Vuelos
+                      </a>
+                    </Button>
+                  )}
+                  {affiliateLinks.hotels_url && (
+                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                      <a href={affiliateLinks.hotels_url} target="_blank" rel="noopener noreferrer">
+                        <Hotel className="mr-2 h-4 w-4" /> Buscar Hoteles
+                      </a>
+                    </Button>
+                  )}
+                  {affiliateLinks.tours_url && (
+                    <Button asChild className="bg-secondary hover:bg-secondary/90 text-secondary-foreground w-full">
+                      <a href={affiliateLinks.tours_url} target="_blank" rel="noopener noreferrer">
+                        <Compass className="mr-2 h-4 w-4" /> Ver Tours y Actividades
+                      </a>
+                    </Button>
+                  )}
+                  {affiliateLinks.tickets_url && (
+                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                      <a href={affiliateLinks.tickets_url} target="_blank" rel="noopener noreferrer">
+                        <Ticket className="mr-2 h-4 w-4" /> Entradas y Atracciones
+                      </a>
+                    </Button>
+                  )}
+                  {affiliateLinks.car_rental_url && (
+                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                      <a href={affiliateLinks.car_rental_url} target="_blank" rel="noopener noreferrer">
+                        <Car className="mr-2 h-4 w-4" /> Rentar Auto
+                      </a>
+                    </Button>
+                  )}
+                  {affiliateLinks.transfer_url && (
+                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                      <a href={affiliateLinks.transfer_url} target="_blank" rel="noopener noreferrer">
+                        <Bus className="mr-2 h-4 w-4" /> Transfer Aeropuerto
+                      </a>
+                    </Button>
+                  )}
+                  {affiliateLinks.insurance_url && (
+                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                      <a href={affiliateLinks.insurance_url} target="_blank" rel="noopener noreferrer">
+                        <Shield className="mr-2 h-4 w-4" /> Seguro de Viaje
+                      </a>
+                    </Button>
+                  )}
+                  {!affiliateLinks.flights_url && !affiliateLinks.hotels_url && !affiliateLinks.tours_url && !affiliateLinks.tickets_url && !affiliateLinks.car_rental_url && !affiliateLinks.transfer_url && !affiliateLinks.insurance_url && (
+                    <p className="text-sm text-card-foreground/60">
+                      Enlaces de reserva próximamente.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
+              <p className="text-xs text-muted-foreground/50 text-center mt-2 px-2">
+                Algunos enlaces son de afiliado. Si reservas a través de ellos, ganamos una pequeña comisión sin costo extra para ti. Esto nos ayuda a mantener el sitio.
+              </p>
             </div>
           </aside>
         </div>

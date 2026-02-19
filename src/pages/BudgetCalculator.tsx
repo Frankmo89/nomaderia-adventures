@@ -17,6 +17,7 @@ interface Destination {
   estimated_budget_usd: number | null;
   days_needed: string | null;
   difficulty_level: string;
+  affiliate_links: Record<string, string> | null;
 }
 
 type ComfortLevel = "budget" | "mid" | "premium";
@@ -55,7 +56,7 @@ const BudgetCalculator = () => {
     document.title = "Calculadora de Presupuesto | Nomaderia";
     supabase
       .from("destinations")
-      .select("id, title, slug, country, estimated_budget_usd, days_needed, difficulty_level")
+      .select("id, title, slug, country, estimated_budget_usd, days_needed, difficulty_level, affiliate_links")
       .eq("is_published", true)
       .order("title")
       .then(({ data }) => {
@@ -260,9 +261,9 @@ const BudgetCalculator = () => {
                   <Plane className="h-4 w-4" /> Buscar Vuelos <ArrowRight className="h-4 w-4 ml-auto" />
                 </Button>
               </a>
-              <a href="https://www.travelpayouts.com" target="_blank" rel="noopener noreferrer">
+              <a href={selectedDest?.affiliate_links?.tours_url || "https://www.klook.com/"} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="w-full gap-2">
-                  <Hotel className="h-4 w-4" /> Ver Hospedaje <ArrowRight className="h-4 w-4 ml-auto" />
+                  <Compass className="h-4 w-4" /> Ver Tours y Actividades <ArrowRight className="h-4 w-4 ml-auto" />
                 </Button>
               </a>
               {selectedDest && (

@@ -17,7 +17,7 @@
 
 **Audiencia objetivo:** Adultos hispanohablantes de 25-45 años con nivel físico entre principiante y moderado que quieren hacer aventura sin ser expertos.
 
-**Modelo de monetización:** Links de afiliados (vuelos, hoteles, seguros, equipo outdoor).
+**Modelo de monetización:** Links de afiliados (vuelos, hoteles, tours, entradas, renta de autos, transfers, seguros, equipo outdoor). Programas activos: Klook, Tiqets, Localrent, Welcome Pickups (todos vía Travelpayouts) y Amazon Associates (`tag: nomaderia-20`).
 
 ---
 
@@ -127,7 +127,7 @@ common_fears          jsonb DEFAULT '[]'   → [{question, answer}]
 itinerary_markdown    text                 → markdown (tab "Itinerario")
 has_premium_itinerary boolean DEFAULT false
 premium_itinerary_price decimal
-affiliate_links       jsonb DEFAULT '{}'   → {flights_url, hotels_url, insurance_url}
+affiliate_links       jsonb DEFAULT '{}'   → {flights_url, hotels_url, tours_url, tickets_url, car_rental_url, transfer_url, insurance_url}
 experience_type       text
 tags                  text[]
 is_published          boolean DEFAULT false
@@ -563,7 +563,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.4*
+*Versión: 1.5*
 
 ---
 
@@ -623,11 +623,13 @@ const [loading, setLoading] = useState(true);
 
 - [ ] **Configurar Google Analytics / Plausible** — No hay tracking instalado actualmente. Pendiente de decidir herramienta.
 
-- [ ] **Registrar cuentas de afiliados** para los links de productos:
-  - Amazon Afiliados (productos de gear)
-  - Booking.com Afiliados (hoteles)
-  - Skyscanner / Kayak Afiliados (vuelos)
-  - iati Seguros / Chapka (seguros de viaje)
+- [x] **Registrar cuentas de afiliados** — Cuentas activas:
+  - **Amazon Associates** — `tag: nomaderia-20` — gear outdoor (3-4% comisión)
+  - **Klook** (vía Travelpayouts) — tours y actividades (2-5%)
+  - **Tiqets** (vía Travelpayouts) — entradas a atracciones (3.5-8%)
+  - **Localrent** (vía Travelpayouts) — renta de autos (7.5-12%)
+  - **Welcome Pickups** (vía Travelpayouts) — transfers aeropuerto (8-9%)
+  - ⚠️ Sin programa de vuelos ni hoteles todavía — dejar `flights_url` y `hotels_url` vacíos por ahora
 
 - [ ] **Agregar los affiliate links reales** a los destinos desde el panel admin (`/admin/destinations`)
 
@@ -662,6 +664,8 @@ const [loading, setLoading] = useState(true);
 ---
 
 ### 🛠️ Código — Próximas Mejoras
+
+- [x] **Sistema de affiliate links expandido** — Se amplió el sidebar de "Reserva Tu Viaje" en `DestinationDetail.tsx` de 3 a 7 botones condicionales (Vuelos, Hoteles, Tours/Klook, Entradas/Tiqets, Renta Auto/Localrent, Transfer/Welcome Pickups, Seguro). Botones solo renderizados si la URL está presente. `AdminDestinationForm.tsx` actualizado con los 4 campos nuevos (`tours_url`, `tickets_url`, `car_rental_url`, `transfer_url`) + layout grid para los 7 inputs. `BudgetCalculator.tsx` — botón "Ver Hospedaje" reemplazado por "Ver Tours y Actividades" apuntando a `selectedDest?.affiliate_links?.tours_url || "https://www.klook.com/"`. `GearArticleDetail.tsx` — botón Amazon actualizado a `rel="noopener noreferrer sponsored"`. Disclosure de afiliados añadido en `DestinationDetail.tsx` (debajo del sidebar) y `GearArticleDetail.tsx` (antes de "Productos Recomendados"). `PrivacyPolicy.tsx` ya tenía la sección 4 de afiliados, no requirió cambios.
 
 - [x] **`PrivacyPolicy.tsx` creada** — Página `/privacidad` con política de privacidad completa en español (LFPDPPP). Cubre: recopilación de datos, links de afiliados, servicios de terceros, derechos ARCO, contacto.
 

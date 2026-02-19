@@ -21,6 +21,7 @@ const emptyForm = {
   experience_type: "", is_published: false, featured: false,
   full_guide_markdown: "", preparation_plan: "", itinerary_markdown: "",
   gear_list_markdown: "", flights_url: "", hotels_url: "", insurance_url: "",
+  tours_url: "", tickets_url: "", car_rental_url: "", transfer_url: "",
 };
 
 // --- Sub-components ---
@@ -104,9 +105,15 @@ const AffiliateFields = ({ form, set }: { form: FormState; set: (k: string, v: s
   <Card className="bg-card border-border">
     <CardHeader><CardTitle className="text-card-foreground">Affiliate Links</CardTitle></CardHeader>
     <CardContent className="space-y-4">
-      {field("URL Vuelos", <Input value={form.flights_url} onChange={(e) => set("flights_url", e.target.value)} className={inputCls} />)}
-      {field("URL Hoteles", <Input value={form.hotels_url} onChange={(e) => set("hotels_url", e.target.value)} className={inputCls} />)}
-      {field("URL Seguro de Viaje", <Input value={form.insurance_url} onChange={(e) => set("insurance_url", e.target.value)} className={inputCls} />)}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {field("URL Vuelos", <Input value={form.flights_url} onChange={(e) => set("flights_url", e.target.value)} className={inputCls} placeholder="https://..." />)}
+        {field("URL Hoteles", <Input value={form.hotels_url} onChange={(e) => set("hotels_url", e.target.value)} className={inputCls} placeholder="https://..." />)}
+        {field("Tours y Actividades URL (Klook)", <Input value={form.tours_url} onChange={(e) => set("tours_url", e.target.value)} className={inputCls} placeholder="https://www.klook.com/..." />)}
+        {field("Entradas y Atracciones URL (Tiqets)", <Input value={form.tickets_url} onChange={(e) => set("tickets_url", e.target.value)} className={inputCls} placeholder="https://www.tiqets.com/..." />)}
+        {field("Renta de Auto URL (Localrent)", <Input value={form.car_rental_url} onChange={(e) => set("car_rental_url", e.target.value)} className={inputCls} placeholder="https://localrent.com/..." />)}
+        {field("Transfer Aeropuerto URL (Welcome Pickups)", <Input value={form.transfer_url} onChange={(e) => set("transfer_url", e.target.value)} className={inputCls} placeholder="https://www.welcomepickups.com/..." />)}
+        {field("URL Seguro de Viaje", <Input value={form.insurance_url} onChange={(e) => set("insurance_url", e.target.value)} className={inputCls} placeholder="https://..." />)}
+      </div>
     </CardContent>
   </Card>
 );
@@ -138,6 +145,8 @@ const AdminDestinationForm = () => {
         full_guide_markdown: data.full_guide_markdown || "", preparation_plan: data.preparation_plan || "",
         itinerary_markdown: data.itinerary_markdown || "", gear_list_markdown: data.gear_list_markdown || "",
         flights_url: aff.flights_url || "", hotels_url: aff.hotels_url || "", insurance_url: aff.insurance_url || "",
+        tours_url: aff.tours_url || "", tickets_url: aff.tickets_url || "",
+        car_rental_url: aff.car_rental_url || "", transfer_url: aff.transfer_url || "",
       });
       setFears((data.common_fears as unknown as Fear[]) || []);
     };
@@ -159,7 +168,11 @@ const AdminDestinationForm = () => {
       full_guide_markdown: form.full_guide_markdown || null, preparation_plan: form.preparation_plan || null,
       itinerary_markdown: form.itinerary_markdown || null, gear_list_markdown: form.gear_list_markdown || null,
       common_fears: JSON.parse(JSON.stringify(fears)),
-      affiliate_links: JSON.parse(JSON.stringify({ flights_url: form.flights_url, hotels_url: form.hotels_url, insurance_url: form.insurance_url })),
+      affiliate_links: JSON.parse(JSON.stringify({
+        flights_url: form.flights_url, hotels_url: form.hotels_url, insurance_url: form.insurance_url,
+        tours_url: form.tours_url, tickets_url: form.tickets_url,
+        car_rental_url: form.car_rental_url, transfer_url: form.transfer_url,
+      })),
     };
 
     const { error } = isEdit
