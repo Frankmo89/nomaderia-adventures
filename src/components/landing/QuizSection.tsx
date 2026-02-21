@@ -232,7 +232,7 @@ const ResultCard = ({ d, index }: { d: QuizDestination; index: number }) => (
             {countryFlag[d.country] ?? ""} {d.country} · {d.days_needed} · ~${d.estimated_budget_usd} USD
           </p>
           {d.matchReasons.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <div className="flex flex-wrap gap-1.5 mb-3" aria-label="Razones de match">
               {d.matchReasons.slice(0, 2).map((reason, ri) => (
                 <span key={ri} className="text-xs bg-primary/20 text-primary-foreground/90 px-2 py-0.5 rounded-full backdrop-blur-sm">
                   {reason}

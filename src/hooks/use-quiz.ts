@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,18 +34,26 @@ export interface QuizDestination {
   matchReasons: string[];
 }
 
+type DestinationFields = {
+  experience_type: string | null;
+  difficulty_level: string;
+  short_description: string | null;
+  estimated_budget_usd: number | null;
+};
+
 type ScoringRule = {
   key: string;
   value: string;
-  match: (d: {
-    experience_type: string | null;
-    difficulty_level: string;
-    short_description: string | null;
-    estimated_budget_usd: number | null;
-  }) => boolean;
+  match: (d: DestinationFields) => boolean;
   weight: number;
   reason: string;
 };
+
+function matchesKeywords(d: DestinationFields, keywords: string[]): boolean {
+  const exp = d.experience_type?.toLowerCase() ?? "";
+  const desc = d.short_description?.toLowerCase() ?? "";
+  return keywords.some((kw) => exp.includes(kw) || desc.includes(kw));
+}
 
 const SCORING_RULES: ScoringRule[] = [
   // Fitness → difficulty
@@ -55,10 +63,10 @@ const SCORING_RULES: ScoringRule[] = [
   { key: "fitness_level", value: "active", match: (d) => d.difficulty_level === "challenging", weight: 3, reason: "Aventura desafiante para tu nivel activo" },
 
   // Landscape → experience_type + short_description
-  { key: "interest", value: "mountains", match: (d) => d.experience_type?.toLowerCase().includes("mountain") === true || d.experience_type?.toLowerCase().includes("trek") === true || d.short_description?.toLowerCase().includes("montaña") === true || d.short_description?.toLowerCase().includes("mountain") === true, weight: 3, reason: "Destino de montaña" },
-  { key: "interest", value: "forests", match: (d) => d.experience_type?.toLowerCase().includes("forest") === true || d.experience_type?.toLowerCase().includes("jungle") === true || d.short_description?.toLowerCase().includes("bosque") === true || d.short_description?.toLowerCase().includes("selva") === true, weight: 3, reason: "Experiencia en naturaleza verde" },
-  { key: "interest", value: "deserts", match: (d) => d.experience_type?.toLowerCase().includes("desert") === true || d.experience_type?.toLowerCase().includes("canyon") === true || d.short_description?.toLowerCase().includes("desierto") === true || d.short_description?.toLowerCase().includes("cañón") === true, weight: 3, reason: "Paisaje desértico impresionante" },
-  { key: "interest", value: "cultural", match: (d) => d.experience_type?.toLowerCase().includes("cultural") === true || d.experience_type?.toLowerCase().includes("pilgrim") === true || d.short_description?.toLowerCase().includes("cultural") === true || d.short_description?.toLowerCase().includes("históric") === true, weight: 3, reason: "Rica experiencia cultural" },
+  { key: "interest", value: "mountains", match: (d) => matchesKeywords(d, ["mountain", "trek", "montaña"]), weight: 3, reason: "Destino de montaña" },
+  { key: "interest", value: "forests", match: (d) => matchesKeywords(d, ["forest", "jungle", "bosque", "selva"]), weight: 3, reason: "Experiencia en naturaleza verde" },
+  { key: "interest", value: "deserts", match: (d) => matchesKeywords(d, ["desert", "canyon", "desierto", "cañón"]), weight: 3, reason: "Paisaje desértico impresionante" },
+  { key: "interest", value: "cultural", match: (d) => matchesKeywords(d, ["cultural", "pilgrim", "históric"]), weight: 3, reason: "Rica experiencia cultural" },
 
   // Duration → days_needed
   { key: "trip_duration", value: "weekend", match: (d) => { const desc = d.short_description?.toLowerCase() ?? ""; return desc.includes("1 día") || desc.includes("2 día") || desc.includes("fin de semana"); }, weight: 2, reason: "Perfecto para escapada corta" },
@@ -74,12 +82,7 @@ const SCORING_RULES: ScoringRule[] = [
 
 function scoreDestination(
   answers: Record<string, string>,
-  d: {
-    experience_type: string | null;
-    difficulty_level: string;
-    short_description: string | null;
-    estimated_budget_usd: number | null;
-  }
+  d: DestinationFields
 ): { score: number; matchReasons: string[] } {
   let score = 0;
   const matchReasons: string[] = [];
@@ -145,7 +148,7 @@ export function useQuiz(totalSteps: number) {
     }
   };
 
-  const fetchResults = async () => {
+  const fetchResults = useCallback(async () => {
     setLoading(true);
     try {
       const { data: destinations } = await supabase
@@ -194,7 +197,7 @@ export function useQuiz(totalSteps: number) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [answers, toast]);
 
   const handleEmailSubmit = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
