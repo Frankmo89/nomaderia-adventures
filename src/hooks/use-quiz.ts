@@ -29,102 +29,179 @@ export interface QuizDestination {
   hero_image_url: string | null;
   experience_type: string | null;
   region: string | null;
+  tags: string[] | null;
+  best_season: string | null;
   score: number;
   matchPercent: number;
   matchReasons: string[];
 }
 
 type DestinationFields = {
+  id: string;
+  title: string;
   experience_type: string | null;
   difficulty_level: string;
   short_description: string | null;
   estimated_budget_usd: number | null;
   days_needed: string | null;
+  country: string;
+  region: string | null;
+  tags: string[] | null;
+  best_season: string | null;
 };
 
-type ScoringRule = {
-  key: string;
-  value: string;
-  match: (d: DestinationFields) => boolean;
-  weight: number;
-  reason: string;
+const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) => { points: number; reason: string }> = {
+  fitness_level: (answer, dest) => {
+    const diffMap: Record<string, string[]> = {
+      sedentary: ["easy"],
+      light_activity: ["easy", "moderate"],
+      moderate: ["moderate", "challenging"],
+      active: ["challenging"],
+    };
+    const allowed = diffMap[answer] || [];
+    if (allowed.includes(dest.difficulty_level)) {
+      if (answer === "sedentary") {
+        return { points: 3, reason: "Nivel de dificultad ideal para tu condición actual" };
+      }
+      if (answer === "light_activity") {
+        return { points: 2, reason: "Dificultad moderada, perfecta para ti" };
+      }
+      if (answer === "moderate") {
+        return { points: 2, reason: "Buen reto para tu nivel de actividad" };
+      }
+      if (answer === "active") {
+        return { points: 3, reason: "Aventura desafiante a la altura de tu energía" };
+      }
+    }
+    return { points: 0, reason: "" };
+  },
+
+  interest: (answer, dest) => {
+    const typeMap: Record<string, string[]> = {
+      mountains: ["trekking", "mountaineering", "hiking", "montaña", "glaciar"],
+      forests: ["trekking", "hiking", "nature", "bosque", "selva"],
+      deserts: ["desert", "canyon", "rock", "desierto"],
+      cultural: ["cultural", "pilgrimage", "camino", "históric"],
+    };
+
+    const keywords = typeMap[answer] || [];
+    const destText = `${dest.experience_type || ""} ${dest.short_description || ""} ${dest.title || ""}`.toLowerCase();
+    const textMatch = keywords.some((k) => destText.includes(k));
+
+    // Also check tags array
+    const destTags = (dest.tags || []).map((t: string) => t.toLowerCase());
+    const tagMatch = keywords.some((k) => destTags.some((tag: string) => tag.includes(k)));
+
+    const geoHints: Record<string, string[]> = {
+      mountains: ["patagonia", "nepal", "andes", "sierra", "torres"],
+      forests: ["bosque", "selva", "forest"],
+      deserts: ["desierto", "joshua", "cañón", "canyon", "gran cañón"],
+      cultural: ["santiago", "camino", "cultural"],
+    };
+    const geoMatch = (geoHints[answer] || []).some((k) => destText.includes(k));
+
+    if (tagMatch) {
+      return { points: 5, reason: "El paisaje que buscas" };
+    }
+    if (textMatch || geoMatch) {
+      return { points: 4, reason: "El paisaje que buscas" };
+    }
+    return { points: 0, reason: "" };
+  },
+
+  trip_duration: (answer, dest) => {
+    const days = (dest as any).days_needed;
+    if (answer === "weekend") {
+      if (typeof days === "number" && days <= 3) {
+        return { points: 2, reason: "Perfecto para escapada corta" };
+      }
+      const desc = dest.short_description?.toLowerCase() ?? "";
+      if (desc.includes("1 día") || desc.includes("2 día") || desc.includes("fin de semana")) {
+        return { points: 2, reason: "Perfecto para escapada corta" };
+      }
+    } else if (answer === "one_week") {
+      if (typeof days === "number" && days >= 4 && days <= 8) {
+        return { points: 2, reason: "Ideal para una semana" };
+      }
+    } else if (answer === "two_weeks") {
+      if (typeof days === "number" && days >= 9 && days <= 16) {
+        return { points: 2, reason: "Aventura extendida perfecta" };
+      }
+    }
+    return { points: 0, reason: "" };
+  },
+
+  budget: (answer, dest) => {
+    const budget = dest.estimated_budget_usd;
+    if (budget == null) return { points: 0, reason: "" };
+    if (answer === "low" && budget <= 500) return { points: 2, reason: "Dentro de tu presupuesto" };
+    if (answer === "medium" && budget > 500 && budget <= 1500) return { points: 2, reason: "Presupuesto moderado ideal" };
+    if (answer === "high" && budget > 1500 && budget <= 3000) return { points: 2, reason: "Gran aventura, buena inversión" };
+    if (answer === "unlimited" && budget > 3000) return { points: 1, reason: "Sin límite de presupuesto" };
+    return { points: 0, reason: "" };
+  },
+
+  season: (answer, dest) => {
+    const bestSeason = (dest.best_season || "").toLowerCase();
+    if (!bestSeason || answer === "flexible") return { points: 1, reason: "" };
+
+    const now = new Date();
+    const monthNames = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+    let targetMonth = "";
+    if (answer === "next_month") {
+      targetMonth = monthNames[(now.getMonth() + 1) % 12];
+    } else if (answer === "three_months") {
+      targetMonth = monthNames[(now.getMonth() + 3) % 12];
+    } else if (answer === "six_months") {
+      targetMonth = monthNames[(now.getMonth() + 6) % 12];
+    }
+
+    if (!targetMonth) return { points: 1, reason: "" };
+
+    if (bestSeason.includes(targetMonth)) {
+      return { points: 3, reason: "Temporada perfecta" };
+    }
+
+    // Check if nearby months match
+    const targetIdx = monthNames.indexOf(targetMonth);
+    const nearbyMonths = [
+      monthNames[(targetIdx + 1) % 12],
+      monthNames[(targetIdx + 11) % 12],
+    ];
+    if (nearbyMonths.some((m) => bestSeason.includes(m))) {
+      return { points: 1, reason: "" };
+    }
+
+    return { points: -1, reason: "" };
+  },
+
+  origin: (answer, dest) => {
+    const country = (dest.country || "").toLowerCase();
+    const region = (dest.region || "").toLowerCase();
+    const title = (dest.title || "").toLowerCase();
+
+    // Proximity scoring by origin
+    const proximityMap: Record<string, string[]> = {
+      mexico: ["méxico", "estados unidos", "usa", "joshua", "gran cañón", "yosemite"],
+      usa: ["estados unidos", "usa", "joshua", "yosemite", "gran cañón", "méxico"],
+      colombia: ["colombia", "perú", "ecuador", "chile", "patagonia"],
+      spain: ["españa", "camino", "santiago", "europa"],
+      other: [],
+    };
+
+    const nearby = proximityMap[answer] || [];
+    const destText = `${country} ${region} ${title}`;
+
+    if (nearby.some((k) => destText.includes(k))) {
+      return { points: 2, reason: "Cerca de ti" };
+    }
+    return { points: 0, reason: "" };
+  },
 };
 
-function matchesKeywords(d: DestinationFields, keywords: string[]): boolean {
-  const exp = d.experience_type?.toLowerCase() ?? "";
-  const desc = d.short_description?.toLowerCase() ?? "";
-  return keywords.some((kw) => exp.includes(kw) || desc.includes(kw));
-}
-
-const SCORING_RULES: ScoringRule[] = [
-  // Fitness → difficulty
-  { key: "fitness_level", value: "sedentary", match: (d) => d.difficulty_level === "easy", weight: 3, reason: "Nivel de dificultad ideal para tu fitness" },
-  { key: "fitness_level", value: "light_activity", match: (d) => d.difficulty_level === "easy" || d.difficulty_level === "moderate", weight: 2, reason: "Dificultad moderada, perfecta para ti" },
-  { key: "fitness_level", value: "moderate", match: (d) => d.difficulty_level === "moderate" || d.difficulty_level === "challenging", weight: 2, reason: "Buen reto para tu nivel de actividad" },
-  { key: "fitness_level", value: "active", match: (d) => d.difficulty_level === "challenging", weight: 3, reason: "Aventura desafiante para tu nivel activo" },
-
-  // Landscape → experience_type + short_description
-  { key: "interest", value: "mountains", match: (d) => matchesKeywords(d, ["mountain", "trek", "montaña"]), weight: 3, reason: "Destino de montaña" },
-  { key: "interest", value: "forests", match: (d) => matchesKeywords(d, ["forest", "jungle", "bosque", "selva"]), weight: 3, reason: "Experiencia en naturaleza verde" },
-  { key: "interest", value: "deserts", match: (d) => matchesKeywords(d, ["desert", "canyon", "desierto", "cañón"]), weight: 3, reason: "Paisaje desértico impresionante" },
-  { key: "interest", value: "cultural", match: (d) => matchesKeywords(d, ["cultural", "pilgrim", "históric"]), weight: 3, reason: "Rica experiencia cultural" },
-
-  // Duration → days_needed
-  {
-    key: "trip_duration",
-    value: "weekend",
-    match: (d) => {
-      const days = (d as any).days_needed;
-      if (typeof days === "number") {
-        // Consider trips of up to 3 days as suitable for a weekend
-        return days <= 3;
-      }
-      // Fallback to description-based heuristic when days_needed is unavailable
-      const desc = d.short_description?.toLowerCase() ?? "";
-      return (
-        desc.includes("1 día") ||
-        desc.includes("2 día") ||
-        desc.includes("fin de semana")
-      );
-    },
-    weight: 2,
-    reason: "Perfecto para escapada corta",
-  },
-  {
-    key: "trip_duration",
-    value: "one_week",
-    match: (d) => {
-      const days = (d as any).days_needed;
-      if (typeof days === "number") {
-        // Typical one-week trips: roughly 4–8 days
-        return days >= 4 && days <= 8;
-      }
-      return false;
-    },
-    weight: 2,
-    reason: "Ideal para una semana",
-  },
-  {
-    key: "trip_duration",
-    value: "two_weeks",
-    match: (d) => {
-      const days = (d as any).days_needed;
-      if (typeof days === "number") {
-        // Extended trips: roughly 9–16 days
-        return days >= 9 && days <= 16;
-      }
-      return false;
-    },
-    weight: 2,
-    reason: "Aventura extendida perfecta",
-  },
-
-  // Budget → estimated_budget_usd
-  { key: "budget_range", value: "low", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd <= 500, weight: 2, reason: "Dentro de tu presupuesto" },
-  { key: "budget_range", value: "medium", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd > 500 && d.estimated_budget_usd <= 1500, weight: 2, reason: "Presupuesto moderado ideal" },
-  { key: "budget_range", value: "high", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd > 1500 && d.estimated_budget_usd <= 3000, weight: 2, reason: "Gran aventura, buena inversión" },
-  { key: "budget_range", value: "unlimited", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd > 3000, weight: 1, reason: "Sin límite de presupuesto" },
-];
+// Maximum achievable score: fitness:3 + interest:5 + trip_duration:2 + budget:2 + season:3 + origin:2
+const MAX_SCORE = 17;
 
 function scoreDestination(
   answers: Record<string, string>,
@@ -133,12 +210,13 @@ function scoreDestination(
   let score = 0;
   const matchReasons: string[] = [];
 
-  for (const rule of SCORING_RULES) {
-    if (answers[rule.key] === rule.value && rule.match(d)) {
-      score += rule.weight;
-      if (!matchReasons.includes(rule.reason)) {
-        matchReasons.push(rule.reason);
-      }
+  for (const [key, ruleFn] of Object.entries(SCORING_RULES)) {
+    const answer = answers[key];
+    if (!answer) continue;
+    const { points, reason } = ruleFn(answer, d);
+    score += points;
+    if (reason && !matchReasons.includes(reason)) {
+      matchReasons.push(reason);
     }
   }
 
@@ -199,17 +277,8 @@ export function useQuiz(totalSteps: number) {
     try {
       const { data: destinations } = await supabase
         .from("destinations")
-        .select("id, title, slug, short_description, difficulty_level, country, estimated_budget_usd, days_needed, hero_image_url, experience_type, region")
+        .select("id, title, slug, short_description, difficulty_level, country, estimated_budget_usd, days_needed, hero_image_url, experience_type, region, tags, best_season")
         .eq("is_published", true);
-
-      const maxWeightsByKey: Record<string, number> = {};
-      for (const rule of SCORING_RULES) {
-        const currentMax = maxWeightsByKey[rule.key] ?? 0;
-        if (rule.weight > currentMax) {
-          maxWeightsByKey[rule.key] = rule.weight;
-        }
-      }
-      const maxPossible = Object.values(maxWeightsByKey).reduce((sum, weight) => sum + weight, 0);
 
       const scored: QuizDestination[] = (destinations || []).map((d) => {
         const { score, matchReasons } = scoreDestination(answers, d);
@@ -225,8 +294,10 @@ export function useQuiz(totalSteps: number) {
           hero_image_url: d.hero_image_url,
           experience_type: d.experience_type,
           region: d.region,
+          tags: d.tags ?? null,
+          best_season: d.best_season ?? null,
           score,
-          matchPercent: toMatchPercent(score, maxPossible),
+          matchPercent: toMatchPercent(score, MAX_SCORE),
           matchReasons,
         };
       });
@@ -234,16 +305,6 @@ export function useQuiz(totalSteps: number) {
       const top = scored.slice(0, 3);
       setResults(top);
       setShowResults(true);
-
-      await supabase.from("quiz_responses").insert({
-        fitness_level: answers.fitness_level,
-        interest: answers.interest,
-        trip_duration: answers.trip_duration,
-        budget_range: answers.budget_range,
-        // travel_style column is deprecated in favor of budget_range; keep it explicit as null until schema is cleaned up.
-        travel_style: null,
-        recommended_destinations: top.map((d) => d.id),
-      });
     } catch {
       toast({ title: "Error", description: "Algo salió mal. Intenta de nuevo.", variant: "destructive" });
     } finally {
@@ -260,6 +321,15 @@ export function useQuiz(totalSteps: number) {
     setLoading(true);
     try {
       await supabase.from("newsletter_subscribers").insert({ email, source: "quiz" }).select();
+      await supabase.from("quiz_responses").insert({
+        email,
+        fitness_level: answers.fitness_level,
+        interest: answers.interest,
+        trip_duration: answers.trip_duration,
+        travel_style: answers.origin || null,
+        budget_range: answers.budget_range ?? answers.budget ?? null,
+        recommended_destinations: results.map((d) => d.id),
+      });
       setEmailSubmitted(true);
       toast({ title: "¡Listo! 🎉", description: "Te enviaremos aventuras personalizadas." });
     } catch {
