@@ -268,9 +268,13 @@ useBlogPosts()                  // lista completa de posts publicados (ordered: 
 // exports BlogPost type with: id, title, slug, category, short_description, hero_image_url, author, created_at, featured, reading_time_min, tags
 
 // src/hooks/use-quiz.ts
-useQuiz(totalSteps)             // scoring por SCORING_RULES, matchPercent (40-100%), matchReasons[], fetchResults() y handleEmailSubmit() separados
+useQuiz(totalSteps)             // scoring por SCORING_RULES (objeto de funciones), matchPercent (40-100%), matchReasons[], fetchResults() y handleEmailSubmit() separados
 // exports: step, answers, email, setEmail, showResults, showEmailCapture, emailSubmitted, loading, results, direction, isQuizDone, handleSelect, handleBack, handleSwipe, fetchResults, handleEmailSubmit, handleShowEmailCapture
-// exports types: QuizOption, QuizStep, QuizDestination (incluye matchPercent, matchReasons, experience_type, region)
+// exports types: QuizOption, QuizStep, QuizDestination (incluye matchPercent, matchReasons, experience_type, region, tags, best_season)
+// SCORING_RULES tiene 6 reglas: fitness_level, interest, trip_duration, budget, season, origin
+// MAX_SCORE = 17 (fitness:3 + interest:5 + trip_duration:2 + budget:2 + season:3 + origin:2)
+// El quiz tiene pasos con keys: fitness_level, interest, trip_duration, budget, season, origin
+// handleEmailSubmit guarda en newsletter_subscribers + quiz_responses (con email, travel_style=answers.origin, budget_range=answers.budget)
 ```
 
 ### Formularios
@@ -597,7 +601,41 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 2.0*
+*Versión: 2.1*
+
+---
+
+## 17. Cambios Recientes — use-quiz.ts (v2.1)
+
+### Cambios aplicados
+
+1. **SCORING_RULES refactorizado**: de array de objetos a `Record<string, (answer, dest) => { points, reason }>` con 6 reglas:
+   - `fitness_level` — mapea nivel físico a dificultad del destino (0–3 pts)
+   - `interest` — verifica `tags[]`, `experience_type`, `short_description` y geo-hints (0–5 pts)
+   - `trip_duration` — compara duración preferida con `days_needed` (0–2 pts)
+   - `budget` — compara rango de presupuesto con `estimated_budget_usd` (0–2 pts)
+   - `season` — compara mes objetivo con `best_season` del destino (-1–3 pts)
+   - `origin` — da puntos de proximidad según país de origen del viajero (0–2 pts)
+
+2. **MAX_SCORE = 17** — puntuación máxima teórica usada para calcular `matchPercent`
+
+3. **`QuizDestination` y `DestinationFields`** — ahora incluyen los campos `tags: string[] | null` y `best_season: string | null`, así como `id`, `title`, `country`, `region`
+
+4. **Select de Supabase** — actualizado para incluir `tags` y `best_season`
+
+5. **`handleEmailSubmit`** — ahora guarda en dos tablas:
+   - `newsletter_subscribers` (email + source: "quiz")
+   - `quiz_responses` (email + respuestas + destinos recomendados; `travel_style` ← `answers.origin`, `budget_range` ← `answers.budget`)
+
+6. **`fetchResults`** — eliminado el insert anónimo a `quiz_responses` (movido a `handleEmailSubmit` con email)
+
+### Próximas mejoras recomendadas
+
+- **Agregar los pasos `season` y `origin` al quiz en `QuizSection.tsx`**: actualmente el hook soporta estas reglas pero el componente quiz puede que no tenga esos pasos configurados aún
+- **Actualizar `AdminQuizResponses.tsx`** para mostrar la nueva columna `travel_style` como "Origen" en el panel de administración
+- **Migración de DB**: verificar que la columna `email` en `quiz_responses` esté creada (puede requerir `ALTER TABLE quiz_responses ADD COLUMN IF NOT EXISTS email text`)
+- **Considerar índices GIN en `destinations.tags`** para búsquedas eficientes si el catálogo crece
+- **Tests unitarios para `scoreDestination`**: crear tests para las 6 reglas de scoring usando Vitest
 
 ---
 
