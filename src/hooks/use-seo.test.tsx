@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { useCanonical, useJsonLd } from "./use-seo";
+import type { ReactNode } from "react";
 
 describe("useCanonical", () => {
   afterEach(() => {
@@ -11,8 +12,9 @@ describe("useCanonical", () => {
 
   it("should create a canonical link element with the correct href", () => {
     renderHook(() => useCanonical(), {
-      wrapper: ({ children }) =>
-        MemoryRouter({ initialEntries: ["/destinos/camino-inca"], children }),
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <MemoryRouter initialEntries={["/destinos/camino-inca"]}>{children}</MemoryRouter>
+      ),
     });
 
     const link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
@@ -22,8 +24,9 @@ describe("useCanonical", () => {
 
   it("should use window.location.origin as fallback when VITE_SITE_URL is not set", () => {
     renderHook(() => useCanonical(), {
-      wrapper: ({ children }) =>
-        MemoryRouter({ initialEntries: ["/blog"], children }),
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <MemoryRouter initialEntries={["/blog"]}>{children}</MemoryRouter>
+      ),
     });
 
     const link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
