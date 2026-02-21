@@ -18,7 +18,7 @@ const durationLabels: Record<string, string> = {
   weekend: "⚡ Fin de semana", one_week: "🗓️ Una semana", two_weeks: "🌍 2+ semanas",
 };
 const budgetLabels: Record<string, string> = {
-  low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", any: "🚀 Sin límite",
+  low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", unlimited: "🚀 Sin límite",
 };
 const originLabels: Record<string, string> = {
   mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", other: "🌎 Otro",
