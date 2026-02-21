@@ -271,10 +271,10 @@ useBlogPosts()                  // lista completa de posts publicados (ordered: 
 useQuiz(totalSteps)             // scoring por SCORING_RULES (objeto de funciones), matchPercent (40-100%), matchReasons[], fetchResults() y handleEmailSubmit() separados
 // exports: step, answers, email, setEmail, showResults, showEmailCapture, emailSubmitted, loading, results, direction, isQuizDone, handleSelect, handleBack, handleSwipe, fetchResults, handleEmailSubmit, handleShowEmailCapture
 // exports types: QuizOption, QuizStep, QuizDestination (incluye matchPercent, matchReasons, experience_type, region, tags, best_season)
-// SCORING_RULES tiene 6 reglas: fitness_level, interest, trip_duration, budget_range, season, origin
-// MAX_SCORE = 17 (fitness:3 + interest:5 + trip_duration:2 + budget_range:2 + season:3 + origin:2)
-// El quiz tiene pasos con keys: fitness_level, interest, trip_duration, budget_range, season, origin
-// handleEmailSubmit guarda en newsletter_subscribers + quiz_responses (con email y todas las respuestas del quiz, p.ej. fitness_level, interest, trip_duration, budget_range, season, origin)
+// SCORING_RULES tiene 6 reglas: fitness_level, interest, trip_duration, budget, season, origin
+// MAX_SCORE = 17 (fitness:3 + interest:5 + trip_duration:2 + budget:2 + season:3 + origin:2)
+// El quiz tiene pasos con keys: fitness_level, interest, trip_duration, budget, season, origin
+// handleEmailSubmit guarda en newsletter_subscribers + quiz_responses (con email y todas las respuestas del quiz, p.ej. fitness_level, interest, trip_duration, budget, season, origin)
 ```
 
 ### Formularios
