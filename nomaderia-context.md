@@ -76,7 +76,7 @@ src/
 │   │   ├── Navbar.tsx               → Navegación principal (sticky, con scroll effect)
 │   │   ├── HeroSection.tsx          → Hero con parallax (DOM directo via ref, sin re-renders)
 │   │   ├── DidYouKnowSection.tsx    → Carrusel horizontal "¿Sabías que...?"
-│   │   ├── QuizSection.tsx          → Quiz de 4 pasos (lógica en useQuiz, JSX en ResultCard + QuizResults)
+│   │   ├── QuizSection.tsx          → Quiz de 4 pasos con resultados-primero (MatchRing SVG, QuizLoading, EmailCapture post-resultados, CelebrationParticles)
 │   │   ├── DestinationsCatalog.tsx  → Grid de destinos (usa useDestinations hook)
 │   │   ├── GearPreview.tsx          → Preview de gear destacado (usa useFeaturedGearArticles hook)
 │   │   ├── SocialProof.tsx          → Testimonios
@@ -98,7 +98,7 @@ src/
 │   ├── use-destinations.ts          → useDestinations(), useDestinationBySlug(), useRelatedDestinations()
 │   ├── use-gear-articles.ts         → useGearArticles(), useFeaturedGearArticles()
 │   ├── use-blog-posts.ts            → useBlogPosts()
-│   ├── use-quiz.ts                  → useQuiz() — lógica de estado y submit del quiz
+│   ├── use-quiz.ts                  → useQuiz() — scoring por reglas (SCORING_RULES), matchPercent/matchReasons, flujo resultados-primero, email post-resultados
 │   ├── use-seo.ts                   → useCanonical() + useJsonLd() para SEO
 │   ├── use-mobile.tsx               → Hook responsive (< 768px = mobile)
 │   └── use-toast.ts                 → Hook para toasts
@@ -268,7 +268,9 @@ useBlogPosts()                  // lista completa de posts publicados (ordered: 
 // exports BlogPost type with: id, title, slug, category, short_description, hero_image_url, author, created_at, featured, reading_time_min, tags
 
 // src/hooks/use-quiz.ts
-useQuiz(totalSteps)             // toda la lógica de estado del quiz
+useQuiz(totalSteps)             // scoring por SCORING_RULES, matchPercent (40-100%), matchReasons[], fetchResults() y handleEmailSubmit() separados
+// exports: step, answers, email, setEmail, showResults, showEmailCapture, emailSubmitted, loading, results, direction, isQuizDone, handleSelect, handleBack, handleSwipe, fetchResults, handleEmailSubmit, handleShowEmailCapture
+// exports types: QuizOption, QuizStep, QuizDestination (incluye matchPercent, matchReasons, experience_type, region)
 ```
 
 ### Formularios
@@ -752,3 +754,13 @@ const [loading, setLoading] = useState(true);
 - [x] **`VITE_SITE_URL` como variable de entorno** — `src/hooks/use-seo.ts` ya no tiene URL hardcodeada. Usa `import.meta.env.VITE_SITE_URL` con fallback a `window.location.origin`. Variable añadida a `.env` (vacía por defecto). El dueño debe configurar `VITE_SITE_URL` en el hosting cuando tenga dominio.
 
 - [x] **Sitemap y robots.txt actualizados** — `public/sitemap.xml` ahora incluye todas las rutas públicas estáticas (`/`, `/gear`, `/blog`, `/calculadora`, `/sobre-nosotros`, `/privacidad`). Se eliminaron los slugs de destino hardcodeados (contenido dinámico). `public/robots.txt` actualizado. Ambos usan `https://nomaderia.com` como placeholder — reemplazar con el dominio real.
+
+- [x] **Quiz optimizado — scoring inteligente y flujo resultados-primero** — Reescritura completa de `use-quiz.ts` y `QuizSection.tsx`:
+  - **Scoring por reglas (SCORING_RULES)**: lee `experience_type`, `difficulty_level`, `short_description`, `estimated_budget_usd` de cada destino. Elimina slugs hardcodeados (`camino-de-santiago`, `gran-canon`).
+  - **Nueva pregunta de presupuesto**: reemplaza "¿Con quién irías?" (que no afectaba scoring) con 4 opciones de budget (Económico <$500, Moderado $500-$1500, Premium $1500-$3000, Sin límite).
+  - **matchPercent (40-100%) y matchReasons[]** por destino: porcentaje calculado como proporción del score máximo posible. Razones visibles en badges en cada resultado.
+  - **Flujo resultados-primero**: `fetchResults()` se ejecuta al terminar las 4 preguntas (sin pedir email). `handleEmailSubmit()` es separado, post-resultados. Mejor conversión al mostrar valor antes de capturar email.
+  - **Nuevos componentes**: `MatchRing` (anillo SVG animado con %), `QuizLoading` (spinner + dots animados), `CelebrationParticles` (partículas de colores), `EmailCapture` (formulario post-resultados).
+  - **Botón "Anterior"** visible desde pregunta 2. Subtitles y descriptions en cada opción de cada pregunta.
+  - **Select de Supabase** ahora incluye `experience_type` y `region`.
+  - **Preguntas**: actividad física, paisaje, duración, presupuesto. Cada una con subtitle descriptivo y descriptions por opción.
