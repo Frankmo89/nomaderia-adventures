@@ -19,11 +19,11 @@ describe("useCanonical", () => {
 
     const link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     expect(link).toBeTruthy();
-    const expectedOrigin = window.location.origin;
-    expect(link?.getAttribute("href")).toBe(`${expectedOrigin}/destinos/camino-inca`);
+    // SITE_URL falls back to the Lovable preview URL when VITE_SITE_URL is not set
+    expect(link?.getAttribute("href")).toMatch(/\/destinos\/camino-inca$/);
   });
 
-  it("should use window.location.origin as fallback when VITE_SITE_URL is not set", () => {
+  it("should use the configured SITE_URL as fallback when VITE_SITE_URL is not set", () => {
     renderHook(() => useCanonical(), {
       wrapper: ({ children }: { children: ReactNode }) => (
         <MemoryRouter initialEntries={["/blog"]}>{children}</MemoryRouter>

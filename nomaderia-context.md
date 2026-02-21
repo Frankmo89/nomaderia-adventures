@@ -844,3 +844,31 @@ const [loading, setLoading] = useState(true);
 - Analytics de temporada (campo season) cuando haya suficiente data
 - Gráficas de tendencia con Recharts para ver cambios en audiencia over time
 - Considerar agregar analytics de clics en affiliate links por destino
+
+---
+
+## 19. SEO Técnico — Mejoras Implementadas (Febrero 2026)
+
+### Sitemap Dinámico
+- Script `scripts/generate-sitemap.ts` genera `public/sitemap.xml` desde Supabase
+- Incluye todas las páginas estáticas + destinos + gear + blog publicados
+- Ejecutar con `npm run generate:sitemap` antes de cada deploy
+- Usa `VITE_SITE_URL` como base URL (fallback al preview de Lovable)
+
+### use-seo.ts Mejorado
+- `SITE_URL` ahora usa variable de entorno `VITE_SITE_URL` con fallback
+- Nuevo hook `usePageMeta({ title, description, image, type })` — centraliza meta tags
+- `SITE_URL` exportado para uso en JSON-LD de otros componentes
+
+### JSON-LD Structured Data
+- `Index.tsx`: schema WebSite con SearchAction
+- `DestinationDetail.tsx`: schema TouristDestination (ya existía)
+- `GearArticleDetail.tsx`: schema Article (ya existía)
+- `BlogPostDetail.tsx`: schema BlogPosting (NUEVO) con headline, author, publisher, dates
+
+### Recomendaciones Futuras SEO
+- Cuando haya dominio propio: actualizar VITE_SITE_URL, regenerar sitemap, verificar en Google Search Console
+- Agregar sitemap generation al CI/CD pipeline (GitHub Action pre-deploy)
+- Agregar schema BreadcrumbList en páginas de detalle
+- Considerar agregar schema FAQPage en destinos que tienen common_fears
+- Implementar Open Graph image generator dinámico por destino
