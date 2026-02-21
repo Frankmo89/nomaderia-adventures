@@ -123,7 +123,7 @@ const SCORING_RULES: ScoringRule[] = [
   { key: "budget_range", value: "low", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd <= 500, weight: 2, reason: "Dentro de tu presupuesto" },
   { key: "budget_range", value: "medium", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd > 500 && d.estimated_budget_usd <= 1500, weight: 2, reason: "Presupuesto moderado ideal" },
   { key: "budget_range", value: "high", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd > 1500 && d.estimated_budget_usd <= 3000, weight: 2, reason: "Gran aventura, buena inversión" },
-  { key: "budget_range", value: "unlimited", match: (d) => true, weight: 1, reason: "Sin límite de presupuesto" },
+  { key: "budget_range", value: "unlimited", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd > 3000, weight: 1, reason: "Sin límite de presupuesto" },
 ];
 
 function scoreDestination(
