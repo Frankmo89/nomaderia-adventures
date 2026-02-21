@@ -319,7 +319,7 @@ export function useQuiz(totalSteps: number) {
         interest: answers.interest,
         trip_duration: answers.trip_duration,
         travel_style: answers.origin || null,
-        budget_range: answers.budget || null,
+        budget_range: answers.budget_range ?? answers.budget ?? null,
         recommended_destinations: results.map((d) => d.id),
       });
       setEmailSubmitted(true);
