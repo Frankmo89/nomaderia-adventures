@@ -7,10 +7,12 @@ export interface QuizOption {
   value: string;
   icon: React.ReactNode;
   emoji: string;
+  description?: string;
 }
 
 export interface QuizStep {
   question: string;
+  subtitle?: string;
   key: string;
   options: QuizOption[];
 }
@@ -25,7 +27,79 @@ export interface QuizDestination {
   estimated_budget_usd: number | null;
   days_needed: string | null;
   hero_image_url: string | null;
+  experience_type: string | null;
+  region: string | null;
   score: number;
+  matchPercent: number;
+  matchReasons: string[];
+}
+
+type ScoringRule = {
+  key: string;
+  value: string;
+  match: (d: {
+    experience_type: string | null;
+    difficulty_level: string;
+    short_description: string | null;
+    estimated_budget_usd: number | null;
+  }) => boolean;
+  weight: number;
+  reason: string;
+};
+
+const SCORING_RULES: ScoringRule[] = [
+  // Fitness → difficulty
+  { key: "fitness_level", value: "sedentary", match: (d) => d.difficulty_level === "easy", weight: 3, reason: "Nivel de dificultad ideal para tu fitness" },
+  { key: "fitness_level", value: "light_activity", match: (d) => d.difficulty_level === "easy" || d.difficulty_level === "moderate", weight: 2, reason: "Dificultad moderada, perfecta para ti" },
+  { key: "fitness_level", value: "moderate", match: (d) => d.difficulty_level === "moderate" || d.difficulty_level === "challenging", weight: 2, reason: "Buen reto para tu nivel de actividad" },
+  { key: "fitness_level", value: "active", match: (d) => d.difficulty_level === "challenging", weight: 3, reason: "Aventura desafiante para tu nivel activo" },
+
+  // Landscape → experience_type + short_description
+  { key: "interest", value: "mountains", match: (d) => d.experience_type?.toLowerCase().includes("mountain") === true || d.experience_type?.toLowerCase().includes("trek") === true || d.short_description?.toLowerCase().includes("montaña") === true || d.short_description?.toLowerCase().includes("mountain") === true, weight: 3, reason: "Destino de montaña" },
+  { key: "interest", value: "forests", match: (d) => d.experience_type?.toLowerCase().includes("forest") === true || d.experience_type?.toLowerCase().includes("jungle") === true || d.short_description?.toLowerCase().includes("bosque") === true || d.short_description?.toLowerCase().includes("selva") === true, weight: 3, reason: "Experiencia en naturaleza verde" },
+  { key: "interest", value: "deserts", match: (d) => d.experience_type?.toLowerCase().includes("desert") === true || d.experience_type?.toLowerCase().includes("canyon") === true || d.short_description?.toLowerCase().includes("desierto") === true || d.short_description?.toLowerCase().includes("cañón") === true, weight: 3, reason: "Paisaje desértico impresionante" },
+  { key: "interest", value: "cultural", match: (d) => d.experience_type?.toLowerCase().includes("cultural") === true || d.experience_type?.toLowerCase().includes("pilgrim") === true || d.short_description?.toLowerCase().includes("cultural") === true || d.short_description?.toLowerCase().includes("históric") === true, weight: 3, reason: "Rica experiencia cultural" },
+
+  // Duration → days_needed
+  { key: "trip_duration", value: "weekend", match: (d) => { const desc = d.short_description?.toLowerCase() ?? ""; return desc.includes("1 día") || desc.includes("2 día") || desc.includes("fin de semana"); }, weight: 2, reason: "Perfecto para escapada corta" },
+  { key: "trip_duration", value: "one_week", match: (d) => d.difficulty_level === "easy" || d.difficulty_level === "moderate", weight: 2, reason: "Ideal para una semana" },
+  { key: "trip_duration", value: "two_weeks", match: (d) => d.difficulty_level === "moderate" || d.difficulty_level === "challenging", weight: 2, reason: "Aventura extendida perfecta" },
+
+  // Budget → estimated_budget_usd
+  { key: "budget_range", value: "low", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd <= 500, weight: 2, reason: "Dentro de tu presupuesto" },
+  { key: "budget_range", value: "medium", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd > 500 && d.estimated_budget_usd <= 1500, weight: 2, reason: "Presupuesto moderado ideal" },
+  { key: "budget_range", value: "high", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd > 1500 && d.estimated_budget_usd <= 3000, weight: 2, reason: "Gran aventura, buena inversión" },
+  { key: "budget_range", value: "unlimited", match: (d) => true, weight: 1, reason: "Sin límite de presupuesto" },
+];
+
+function scoreDestination(
+  answers: Record<string, string>,
+  d: {
+    experience_type: string | null;
+    difficulty_level: string;
+    short_description: string | null;
+    estimated_budget_usd: number | null;
+  }
+): { score: number; matchReasons: string[] } {
+  let score = 0;
+  const matchReasons: string[] = [];
+
+  for (const rule of SCORING_RULES) {
+    if (answers[rule.key] === rule.value && rule.match(d)) {
+      score += rule.weight;
+      if (!matchReasons.includes(rule.reason)) {
+        matchReasons.push(rule.reason);
+      }
+    }
+  }
+
+  return { score, matchReasons };
+}
+
+function toMatchPercent(score: number, maxScore: number): number {
+  if (maxScore <= 0) return 40;
+  const pct = Math.round(40 + (score / maxScore) * 60);
+  return Math.min(100, Math.max(40, pct));
 }
 
 export function useQuiz(totalSteps: number) {
@@ -33,6 +107,8 @@ export function useQuiz(totalSteps: number) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [email, setEmail] = useState("");
   const [showResults, setShowResults] = useState(false);
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<QuizDestination[]>([]);
   const [direction, setDirection] = useState(1);
@@ -51,6 +127,13 @@ export function useQuiz(totalSteps: number) {
     }
   };
 
+  const handleBack = () => {
+    if (step > 0) {
+      setDirection(-1);
+      setStep((s) => s - 1);
+    }
+  };
+
   const handleSwipe = (offsetX: number, currentStep: number, currentAnswers: Record<string, string>, stepKey: string) => {
     if (isQuizDone) return;
     if (offsetX < -50 && currentStep < totalSteps - 1 && currentAnswers[stepKey]) {
@@ -62,28 +145,21 @@ export function useQuiz(totalSteps: number) {
     }
   };
 
-  const handleSubmit = async () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-      toast({ title: "Email inválido", description: "Por favor ingresa un email válido.", variant: "destructive" });
-      return;
-    }
+  const fetchResults = async () => {
     setLoading(true);
     try {
       const { data: destinations } = await supabase
         .from("destinations")
-        .select("id, title, slug, short_description, difficulty_level, country, estimated_budget_usd, days_needed, hero_image_url")
+        .select("id, title, slug, short_description, difficulty_level, country, estimated_budget_usd, days_needed, hero_image_url, experience_type, region")
         .eq("is_published", true);
 
+      const maxPossible = SCORING_RULES.reduce((max, rule) => {
+        if (answers[rule.key] === rule.value) return max + rule.weight;
+        return max;
+      }, 0);
+
       const scored: QuizDestination[] = (destinations || []).map((d) => {
-        let score = 0;
-        if (answers.interest === "mountains" && d.difficulty_level !== "challenging") score += 2;
-        if (answers.interest === "cultural" && d.slug === "camino-de-santiago") score += 3;
-        if (answers.interest === "deserts" && d.slug === "gran-canon") score += 3;
-        if (answers.fitness_level === "sedentary" && d.difficulty_level === "easy") score += 3;
-        if (answers.fitness_level === "active" && d.difficulty_level === "challenging") score += 2;
-        if (answers.trip_duration === "weekend" && d.days_needed?.includes("1")) score += 2;
-        if (answers.trip_duration === "two_weeks" && d.difficulty_level === "challenging") score += 2;
+        const { score, matchReasons } = scoreDestination(answers, d);
         return {
           id: d.id,
           title: d.title,
@@ -94,23 +170,25 @@ export function useQuiz(totalSteps: number) {
           estimated_budget_usd: d.estimated_budget_usd,
           days_needed: d.days_needed,
           hero_image_url: d.hero_image_url,
+          experience_type: d.experience_type,
+          region: d.region,
           score,
+          matchPercent: toMatchPercent(score, maxPossible),
+          matchReasons,
         };
       });
       scored.sort((a, b) => b.score - a.score);
       const top = scored.slice(0, 3);
       setResults(top);
+      setShowResults(true);
 
       await supabase.from("quiz_responses").insert({
-        email,
         fitness_level: answers.fitness_level,
         interest: answers.interest,
         trip_duration: answers.trip_duration,
-        travel_style: answers.travel_style,
+        budget_range: answers.budget_range,
         recommended_destinations: top.map((d) => d.id),
       });
-      await supabase.from("newsletter_subscribers").insert({ email, source: "quiz" }).select();
-      setShowResults(true);
     } catch {
       toast({ title: "Error", description: "Algo salió mal. Intenta de nuevo.", variant: "destructive" });
     } finally {
@@ -118,10 +196,32 @@ export function useQuiz(totalSteps: number) {
     }
   };
 
+  const handleEmailSubmit = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      toast({ title: "Email inválido", description: "Por favor ingresa un email válido.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      await supabase.from("newsletter_subscribers").insert({ email, source: "quiz" }).select();
+      setEmailSubmitted(true);
+      toast({ title: "¡Listo! 🎉", description: "Te enviaremos aventuras personalizadas." });
+    } catch {
+      toast({ title: "Error", description: "Algo salió mal. Intenta de nuevo.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleShowEmailCapture = () => setShowEmailCapture(true);
+
   return {
     step, answers, email, setEmail,
-    showResults, loading, results,
+    showResults, showEmailCapture, emailSubmitted,
+    loading, results,
     direction, isQuizDone,
-    handleSelect, handleSwipe, handleSubmit,
+    handleSelect, handleBack, handleSwipe,
+    fetchResults, handleEmailSubmit, handleShowEmailCapture,
   };
 }
