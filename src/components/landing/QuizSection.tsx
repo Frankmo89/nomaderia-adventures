@@ -81,10 +81,10 @@ const steps: QuizStep[] = [
     subtitle: "Para recomendarte destinos más accesibles",
     key: "origin",
     options: [
-      { label: "México", value: "mexico", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇲🇽", description: "" },
-      { label: "Estados Unidos", value: "usa", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇺🇸", description: "" },
-      { label: "España", value: "spain", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇪🇸", description: "" },
-      { label: "Otro país", value: "other", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🌎", description: "" },
+      { label: "México", value: "mexico", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇲🇽", description: "Proximidad a EE.UU. y Centroamérica" },
+      { label: "Estados Unidos", value: "usa", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇺🇸", description: "Acceso directo a América del Norte" },
+      { label: "España", value: "spain", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇪🇸", description: "Punto de partida ideal para Europa y el Mediterráneo" },
+      { label: "Otro país", value: "other", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🌎", description: "Recomendaciones ajustadas a tu región de origen" },
     ],
   },
 ];
