@@ -819,3 +819,28 @@ const [loading, setLoading] = useState(true);
 - Card de "Destinos Más Recomendados" cruzando recommended_destinations con destinations
 - Filtro de rango de fechas para comparar periodos
 - Tasa de conversión quiz→email
+
+---
+
+## 18. Changelog — Quiz Analytics Dashboard (Febrero 2026)
+
+### AdminDashboard — Sección Analytics del Quiz
+- 4 cards con barras horizontales: Paisaje Favorito, Origen de Audiencia, Presupuesto, Nivel Físico
+- Componente `MiniBar` para visualización de distribución de datos con porcentajes
+- Fetch de últimas 200 quiz responses para calcular analytics
+- Labels con emojis para todos los valores del quiz
+- Solo se muestra si hay quiz responses (stats.quiz > 0)
+
+### AdminQuizResponses — Tabla actualizada
+- 7 columnas: Email, Fitness, Paisaje, Duración, Presupuesto, Origen, Fecha
+- Labels legibles con emojis en tabla y CSV export
+- budget_range ahora se guarda correctamente (no en travel_style)
+- travel_style ahora guarda el origen/país del usuario
+
+### Recomendaciones Futuras
+- Card de "Destinos Más Recomendados" cruzando recommended_destinations con tabla destinations
+- Filtro de rango de fechas en analytics para comparar periodos
+- Tasa de conversión quiz→email (completan quiz vs dejan email)
+- Analytics de temporada (campo season) cuando haya suficiente data
+- Gráficas de tendencia con Recharts para ver cambios en audiencia over time
+- Considerar agregar analytics de clics en affiliate links por destino

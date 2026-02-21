@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,41 @@ interface RecentItem {
   created_at: string;
 }
 
+const interestLabels: Record<string, string> = {
+  mountains: "🏔️ Montañas", forests: "🌲 Bosques", deserts: "🏜️ Desiertos", cultural: "🏛️ Cultural",
+};
+const originLabels: Record<string, string> = {
+  mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", other: "🌎 Otro",
+};
+const budgetLabels: Record<string, string> = {
+  low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", any: "🚀 Sin límite",
+};
+const fitnessLabels: Record<string, string> = {
+  sedentary: "🚶 Sedentario", light_activity: "🏃 Activo casual", moderate: "💪 Regular", active: "🔥 Muy activo",
+};
+
+const MiniBar = ({ data, labels }: { data: Record<string, number>; labels: Record<string, string> }) => {
+  const total = Object.values(data).reduce((a, b) => a + b, 0);
+  if (total === 0) return <p className="text-sm text-muted-foreground">Sin datos aún</p>;
+  const sorted = Object.entries(data).sort(([, a], [, b]) => b - a);
+  return (
+    <div className="space-y-2">
+      {sorted.map(([key, count]) => {
+        const pct = Math.round((count / total) * 100);
+        return (
+          <div key={key} className="flex items-center gap-3">
+            <span className="text-sm w-32 truncate">{labels[key] || key}</span>
+            <div className="flex-1 bg-border/50 rounded-full h-2.5 overflow-hidden">
+              <div className="bg-primary h-2.5 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+            </div>
+            <span className="text-xs text-muted-foreground w-16 text-right">{count} ({pct}%)</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState<Stats>({
     destinations: 0, destinationDrafts: 0,
@@ -34,6 +69,12 @@ const AdminDashboard = () => {
     quiz: 0, subscribers: 0, itineraryRequests: 0,
   });
   const [recent, setRecent] = useState<RecentItem[]>([]);
+  const [quizAnalytics, setQuizAnalytics] = useState<{
+    interests: Record<string, number>;
+    origins: Record<string, number>;
+    budgets: Record<string, number>;
+    fitness: Record<string, number>;
+  }>({ interests: {}, origins: {}, budgets: {}, fitness: {} });
 
   useEffect(() => {
     const load = async () => {
@@ -68,6 +109,21 @@ const AdminDashboard = () => {
         ...(recentB.data || []).map((r) => ({ ...r, type: "blog" as const, is_published: r.is_published ?? false })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 6);
       setRecent(combined);
+
+      const quizData = await supabase.from("quiz_responses").select("interest, fitness_level, budget_range, travel_style, created_at").order("created_at", { ascending: false }).limit(200);
+      if (quizData.data) {
+        const interests: Record<string, number> = {};
+        const origins: Record<string, number> = {};
+        const budgets: Record<string, number> = {};
+        const fitness: Record<string, number> = {};
+        quizData.data.forEach((r) => {
+          if (r.interest) interests[r.interest] = (interests[r.interest] || 0) + 1;
+          if (r.travel_style) origins[r.travel_style] = (origins[r.travel_style] || 0) + 1;
+          if (r.budget_range) budgets[r.budget_range] = (budgets[r.budget_range] || 0) + 1;
+          if (r.fitness_level) fitness[r.fitness_level] = (fitness[r.fitness_level] || 0) + 1;
+        });
+        setQuizAnalytics({ interests, origins, budgets, fitness });
+      }
     };
     load();
   }, []);
@@ -179,6 +235,34 @@ const AdminDashboard = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {stats.quiz > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            <h2 className="font-serif text-xl text-foreground">Analytics del Quiz</h2>
+            <span className="text-xs text-muted-foreground">({stats.quiz} respuestas)</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-card-foreground/70">Paisaje Favorito</CardTitle></CardHeader>
+              <CardContent><MiniBar data={quizAnalytics.interests} labels={interestLabels} /></CardContent>
+            </Card>
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-card-foreground/70">Origen de Audiencia</CardTitle></CardHeader>
+              <CardContent><MiniBar data={quizAnalytics.origins} labels={originLabels} /></CardContent>
+            </Card>
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-card-foreground/70">Presupuesto</CardTitle></CardHeader>
+              <CardContent><MiniBar data={quizAnalytics.budgets} labels={budgetLabels} /></CardContent>
+            </Card>
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-card-foreground/70">Nivel Físico</CardTitle></CardHeader>
+              <CardContent><MiniBar data={quizAnalytics.fitness} labels={fitnessLabels} /></CardContent>
+            </Card>
           </div>
         </div>
       )}
