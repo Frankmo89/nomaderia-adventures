@@ -60,10 +60,18 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
     };
     const allowed = diffMap[answer] || [];
     if (allowed.includes(dest.difficulty_level)) {
-      if (answer === "sedentary" || answer === "active") {
-        return { points: 3, reason: "Nivel de dificultad ideal para tu fitness" };
+      if (answer === "sedentary") {
+        return { points: 3, reason: "Nivel de dificultad ideal para tu condición actual" };
       }
-      return { points: 2, reason: "Dificultad moderada, perfecta para ti" };
+      if (answer === "light_activity") {
+        return { points: 2, reason: "Dificultad moderada, perfecta para ti" };
+      }
+      if (answer === "moderate") {
+        return { points: 2, reason: "Buen reto para tu nivel de actividad" };
+      }
+      if (answer === "active") {
+        return { points: 3, reason: "Aventura desafiante a la altura de tu energía" };
+      }
     }
     return { points: 0, reason: "" };
   },
