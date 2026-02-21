@@ -802,3 +802,20 @@ const [loading, setLoading] = useState(true);
   - **Botón "Anterior"** visible desde pregunta 2. Subtitles y descriptions en cada opción de cada pregunta.
   - **Select de Supabase** ahora incluye `experience_type` y `region`.
   - **Preguntas**: actividad física, paisaje, duración, presupuesto. Cada una con subtitle descriptivo y descriptions por opción.
+
+---
+
+## 18. Changelog — AdminQuizResponses Actualizado (Febrero 2026)
+
+### AdminQuizResponses — Tabla completa
+- 7 columnas: Email, Fitness, Paisaje, Duración, Presupuesto, Origen, Fecha
+- Label maps con emojis para valores legibles (no muestra "sedentary" sino "🚶 Sedentario")
+- CSV export actualizado con los mismos 7 campos y labels
+- travel_style ahora muestra el origen/país del usuario
+- budget_range se muestra correctamente (antes no aparecía en la tabla)
+
+### Recomendaciones Futuras
+- Agregar analytics visuales al AdminDashboard con barras de distribución del quiz
+- Card de "Destinos Más Recomendados" cruzando recommended_destinations con destinations
+- Filtro de rango de fechas para comparar periodos
+- Tasa de conversión quiz→email
