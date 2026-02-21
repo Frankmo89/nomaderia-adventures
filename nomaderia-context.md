@@ -440,6 +440,7 @@ useJsonLd({
 VITE_SUPABASE_URL=               # URL del proyecto Supabase  (ej: https://vrixiuvnhvqafmxlcyex.supabase.co)
 VITE_SUPABASE_PUBLISHABLE_KEY=   # Publishable key de Supabase (formato: sb_publishable_*)
 VITE_SUPABASE_PROJECT_ID=        # Project ID (ej: vrixiuvnhvqafmxlcyex) — usado para regenerar tipos
+VITE_SITE_URL=                   # URL de producción del sitio (ej: https://nomaderia.com) — usado para canonical URLs y SEO. Si está vacío, usa window.location.origin como fallback.
 ```
 
 Acceso en código: `import.meta.env.VITE_SUPABASE_URL`
@@ -594,7 +595,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.9*
+*Versión: 2.0*
 
 ---
 
@@ -610,11 +611,12 @@ const [loading, setLoading] = useState(true);
 
 - [ ] **Comprar y configurar dominio** — El sitio aún no tiene URL de producción.
   - Opciones sugeridas: Namecheap, Google Domains, GoDaddy
-  - Una vez comprado, actualizar `SITE_URL` en `src/hooks/use-seo.ts` (o mejor, moverlo a variable de entorno `VITE_SITE_URL`)
+  - ✅ `SITE_URL` ya se movió a variable de entorno `VITE_SITE_URL` en `src/hooks/use-seo.ts` (con fallback a `window.location.origin`)
+  - Una vez comprado, actualizar `VITE_SITE_URL` en el hosting y reemplazar `https://nomaderia.com` en `public/sitemap.xml` y `public/robots.txt`
 
 - [ ] **Configurar hosting** — Dónde se va a desplegar el sitio.
   - Recomendado: Vercel o Netlify (soportan Vite + SPA routing con `_redirects`)
-  - Al configurar, agregar las variables de entorno: `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`
+  - Al configurar, agregar las variables de entorno: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` y `VITE_SITE_URL`
 
 - [ ] **Configurar `VITE_SITE_URL`** en el panel del proveedor de hosting una vez que tengas dominio.
 
@@ -670,7 +672,8 @@ const [loading, setLoading] = useState(true);
 ### 🔍 SEO Pre-lanzamiento
 
 - [ ] **Verificar el sitio en Google Search Console** una vez que tengas dominio
-- [ ] **Enviar sitemap** — No hay sitemap.xml generado aún. Pendiente de implementar o usar plugin.
+- [x] **Sitemap generado** — `public/sitemap.xml` incluye todas las rutas públicas estáticas (`/`, `/gear`, `/blog`, `/calculadora`, `/sobre-nosotros`, `/privacidad`). Las URLs dinámicas de `/destinos/:slug`, `/gear/:slug` y `/blog/:slug` se deben agregar manualmente o con un generador cuando se publique contenido. **Pendiente:** reemplazar `https://nomaderia.com` por el dominio real.
+- [ ] **Enviar sitemap a Google Search Console** una vez verificado el sitio
 - [x] **Configurar Open Graph image** — `SEOHead.tsx` usa `hero_image_url` dinámicamente en cada página de destino/blog/gear. Fallback a imagen OG genérica de Unsplash si no hay hero. Meta tags OG y Twitter Card se generan via react-helmet-async.
 
 ---
@@ -745,3 +748,7 @@ const [loading, setLoading] = useState(true);
   - `src/pages/admin/AdminItineraryRequests.tsx:56`
   - `src/pages/admin/AdminDashboard.tsx:50`
   - Fix: regenerar tipos con `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`
+
+- [x] **`VITE_SITE_URL` como variable de entorno** — `src/hooks/use-seo.ts` ya no tiene URL hardcodeada. Usa `import.meta.env.VITE_SITE_URL` con fallback a `window.location.origin`. Variable añadida a `.env` (vacía por defecto). El dueño debe configurar `VITE_SITE_URL` en el hosting cuando tenga dominio.
+
+- [x] **Sitemap y robots.txt actualizados** — `public/sitemap.xml` ahora incluye todas las rutas públicas estáticas (`/`, `/gear`, `/blog`, `/calculadora`, `/sobre-nosotros`, `/privacidad`). Se eliminaron los slugs de destino hardcodeados (contenido dinámico). `public/robots.txt` actualizado. Ambos usan `https://nomaderia.com` como placeholder — reemplazar con el dominio real.

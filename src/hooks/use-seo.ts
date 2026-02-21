@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const SITE_URL = "https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app";
+const SITE_URL =
+  import.meta.env.VITE_SITE_URL ||
+  (typeof window !== "undefined" ? window.location.origin : "");
 
 /**
  * Sets a canonical link and cleans up on unmount.
