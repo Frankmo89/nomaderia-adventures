@@ -1,9 +1,14 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
+const envSiteUrl = import.meta.env.VITE_SITE_URL;
+// Treat an empty string (or missing value) as "unset" so we fall back to window.location.origin.
 const SITE_URL =
-  import.meta.env.VITE_SITE_URL ||
-  (typeof window !== "undefined" ? window.location.origin : "");
+  envSiteUrl && envSiteUrl.trim() !== ""
+    ? envSiteUrl
+    : typeof window !== "undefined"
+      ? window.location.origin
+      : "";
 
 /**
  * Sets a canonical link and cleans up on unmount.
