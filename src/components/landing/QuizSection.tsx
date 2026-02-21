@@ -124,16 +124,17 @@ const QuizLoading = () => (
 );
 
 // --- Celebration particles ---
+const celebrationColors = ["bg-orange-500", "bg-emerald-600", "bg-sky-500", "bg-yellow-400"];
+
 const CelebrationParticles = () => (
   <div className="absolute inset-0 pointer-events-none overflow-hidden">
     {Array.from({ length: 12 }).map((_, i) => (
       <motion.div
         key={i}
-        className="absolute w-2 h-2 rounded-full"
+        className={`absolute w-2 h-2 rounded-full ${celebrationColors[i % celebrationColors.length]}`}
         style={{
           left: `${10 + Math.random() * 80}%`,
           top: `${Math.random() * 40}%`,
-          backgroundColor: ["#E86C3A", "#4A7C59", "#6BA3BE", "#FFD700"][i % 4],
         }}
         initial={{ opacity: 0, scale: 0, y: 0 }}
         animate={{ opacity: [0, 1, 0], scale: [0, 1.2, 0], y: [0, -40 - Math.random() * 60] }}
