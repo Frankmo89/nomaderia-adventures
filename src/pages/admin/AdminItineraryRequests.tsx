@@ -52,8 +52,7 @@ const AdminItineraryRequests = () => {
 
   useEffect(() => {
     const load = async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("itinerary_requests")
         .select("*")
         .order("created_at", { ascending: false });

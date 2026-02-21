@@ -46,8 +46,7 @@ const AdminDashboard = () => {
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("is_published", false),
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from("itinerary_requests").select("id", { count: "exact", head: true }),
+        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }),
         supabase.from("destinations").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
         supabase.from("gear_articles").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
         supabase.from("blog_posts").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),

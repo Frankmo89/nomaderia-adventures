@@ -736,9 +736,7 @@ const [loading, setLoading] = useState(true);
   - **Integración en 3 páginas**: `DestinationDetail.tsx`, `BlogPostDetail.tsx`, `GearArticleDetail.tsx` — cada una usa `<SEOHead>` con datos dinámicos y `<ShareButtons>` al final del contenido principal (con `border-t` separator). Se eliminó la manipulación manual de `document.title` y `querySelector` para meta tags (Helmet lo maneja declarativamente).
   - **`src/components/blog/ShareButtons.tsx`** ya no se importa en ningún archivo (reemplazado por `src/components/ShareButtons.tsx` que añade Telegram y usa popup pattern).
 
-- [ ] **Eliminar `supabase as any`** — Dos archivos usan cast temporal hasta que se regeneren los tipos:
-
-- [x] **`ImageUpload.tsx` componente + integración en formularios admin** — Componente reutilizable de subida de imágenes a Supabase Storage (`src/components/dashboard/ImageUpload.tsx`):
+- [x] **Eliminar `supabase as any`** — La tabla `itinerary_requests` fue añadida a `src/integrations/supabase/types.ts` con sus tipos Row/Insert/Update. Los casts `supabase as any` y los comentarios `eslint-disable` fueron eliminados de `AdminItineraryRequests.tsx` y `AdminDashboard.tsx`. — Componente reutilizable de subida de imágenes a Supabase Storage (`src/components/dashboard/ImageUpload.tsx`):
   - **Props**: `bucket` (string), `currentUrl?` (string), `onUploadComplete` (callback con URL pública).
   - **Funcionalidad**: acepta WebP/JPG/PNG (máx 2MB), genera nombres únicos con timestamp, sube a Supabase Storage, muestra preview con botón remove, spinner durante upload, validación de tipo y tamaño, toasts de éxito/error.
   - **Integrado en `AdminDestinationForm.tsx`**: `bucket="destinations"`, reemplaza input de texto para `hero_image_url`.

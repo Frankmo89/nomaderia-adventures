@@ -203,6 +203,36 @@ export type Database = {
         }
         Relationships: []
       }
+      itinerary_requests: {
+        Row: {
+          created_at: string
+          destination: string
+          email: string
+          estimated_budget: string | null
+          id: string
+          message: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          email: string
+          estimated_budget?: string | null
+          id?: string
+          message?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          email?: string
+          estimated_budget?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
