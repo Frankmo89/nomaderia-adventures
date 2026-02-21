@@ -235,6 +235,8 @@ export function useQuiz(totalSteps: number) {
         interest: answers.interest,
         trip_duration: answers.trip_duration,
         budget_range: answers.budget_range,
+        // travel_style column is deprecated in favor of budget_range; keep it explicit as null until schema is cleaned up.
+        travel_style: null,
         recommended_destinations: top.map((d) => d.id),
       });
     } catch {
