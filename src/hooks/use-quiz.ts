@@ -202,10 +202,14 @@ export function useQuiz(totalSteps: number) {
         .select("id, title, slug, short_description, difficulty_level, country, estimated_budget_usd, days_needed, hero_image_url, experience_type, region")
         .eq("is_published", true);
 
-      const maxPossible = SCORING_RULES.reduce((max, rule) => {
-        if (answers[rule.key] === rule.value) return max + rule.weight;
-        return max;
-      }, 0);
+      const maxWeightsByKey: Record<string, number> = {};
+      for (const rule of SCORING_RULES) {
+        const currentMax = maxWeightsByKey[rule.key] ?? 0;
+        if (rule.weight > currentMax) {
+          maxWeightsByKey[rule.key] = rule.weight;
+        }
+      }
+      const maxPossible = Object.values(maxWeightsByKey).reduce((sum, weight) => sum + weight, 0);
 
       const scored: QuizDestination[] = (destinations || []).map((d) => {
         const { score, matchReasons } = scoreDestination(answers, d);
