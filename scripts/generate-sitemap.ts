@@ -3,7 +3,7 @@ import { writeFileSync } from "fs";
 
 const SITE_URL =
   process.env.VITE_SITE_URL ||
-  "https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app";
+  "https://nomaderia.com";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL || "https://vrixiuvnhvqafmxlcyex.supabase.co",
