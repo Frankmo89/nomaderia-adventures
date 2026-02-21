@@ -8,14 +8,31 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type QuizResponse = Tables<"quiz_responses">;
 
+const fitnessLabels: Record<string, string> = {
+  sedentary: "🚶 Sedentario", light_activity: "🏃 Activo casual", moderate: "💪 Regular", active: "🔥 Muy activo",
+};
+const interestLabels: Record<string, string> = {
+  mountains: "🏔️ Montañas", forests: "🌲 Bosques", deserts: "🏜️ Desiertos", cultural: "🏛️ Cultural",
+};
+const durationLabels: Record<string, string> = {
+  weekend: "⚡ Fin de semana", one_week: "🗓️ Una semana", two_weeks: "🌍 2+ semanas",
+};
+const budgetLabels: Record<string, string> = {
+  low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", any: "🚀 Sin límite",
+};
+const originLabels: Record<string, string> = {
+  mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", other: "🌎 Otro",
+};
+
 const exportCSV = (items: QuizResponse[]) => {
-  const headers = ["Email", "Interés", "Fitness", "Duración", "Estilo", "Fecha"];
+  const headers = ["Email", "Fitness", "Paisaje", "Duración", "Presupuesto", "Origen", "Fecha"];
   const rows = items.map((r) => [
     r.email || "",
-    r.interest || "",
-    r.fitness_level || "",
-    r.trip_duration || "",
-    r.travel_style || "",
+    fitnessLabels[r.fitness_level || ""] || r.fitness_level || "",
+    interestLabels[r.interest || ""] || r.interest || "",
+    durationLabels[r.trip_duration || ""] || r.trip_duration || "",
+    budgetLabels[r.budget_range || ""] || r.budget_range || "",
+    originLabels[r.travel_style || ""] || r.travel_style || "",
     new Date(r.created_at).toLocaleDateString("es-MX"),
   ]);
   const csv = [headers, ...rows].map((row) => row.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -60,10 +77,11 @@ const AdminQuizResponses = () => {
           <TableHeader>
             <TableRow className="border-border">
               <TableHead className="text-foreground">Email</TableHead>
-              <TableHead className="text-foreground">Interés</TableHead>
               <TableHead className="text-foreground">Fitness</TableHead>
+              <TableHead className="text-foreground">Paisaje</TableHead>
               <TableHead className="text-foreground">Duración</TableHead>
-              <TableHead className="text-foreground">Estilo</TableHead>
+              <TableHead className="text-foreground">Presupuesto</TableHead>
+              <TableHead className="text-foreground">Origen</TableHead>
               <TableHead className="text-foreground">Fecha</TableHead>
             </TableRow>
           </TableHeader>
@@ -71,14 +89,14 @@ const AdminQuizResponses = () => {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i} className="border-border">
-                  {Array.from({ length: 6 }).map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-24" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                   No hay respuestas del quiz todavía.
                 </TableCell>
               </TableRow>
@@ -86,10 +104,11 @@ const AdminQuizResponses = () => {
               items.map((r) => (
                 <TableRow key={r.id} className="border-border">
                   <TableCell className="text-foreground">{r.email || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.interest || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.fitness_level || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.trip_duration || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.travel_style || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{fitnessLabels[r.fitness_level || ""] || r.fitness_level || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{interestLabels[r.interest || ""] || r.interest || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{durationLabels[r.trip_duration || ""] || r.trip_duration || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{budgetLabels[r.budget_range || ""] || r.budget_range || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{originLabels[r.travel_style || ""] || r.travel_style || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{new Date(r.created_at).toLocaleDateString("es-MX")}</TableCell>
                 </TableRow>
               ))
