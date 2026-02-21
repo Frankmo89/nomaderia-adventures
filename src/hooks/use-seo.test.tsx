@@ -19,7 +19,8 @@ describe("useCanonical", () => {
 
     const link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     expect(link).toBeTruthy();
-    expect(link?.getAttribute("href")).toContain("/destinos/camino-inca");
+    const expectedOrigin = window.location.origin;
+    expect(link?.getAttribute("href")).toBe(`${expectedOrigin}/destinos/camino-inca`);
   });
 
   it("should use window.location.origin as fallback when VITE_SITE_URL is not set", () => {
