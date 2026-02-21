@@ -2,13 +2,11 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const envSiteUrl = import.meta.env.VITE_SITE_URL;
-// Treat an empty string (or missing value) as "unset" so we fall back to window.location.origin.
+// Treat an empty string (or missing value) as "unset" so we fall back to the preview URL.
 const SITE_URL =
   envSiteUrl && envSiteUrl.trim() !== ""
     ? envSiteUrl
-    : typeof window !== "undefined"
-      ? window.location.origin
-      : "";
+    : "https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app";
 
 /**
  * Sets a canonical link and cleans up on unmount.
@@ -50,3 +48,41 @@ export const useJsonLd = (data: Record<string, any> | null) => {
     };
   }, [data]);
 };
+
+interface PageMeta {
+  title: string;
+  description: string;
+  image?: string;
+  type?: string;
+}
+
+/**
+ * Updates document title and meta tags for the current page.
+ * Restores the default title on unmount.
+ */
+export const usePageMeta = ({ title, description, image, type = "website" }: PageMeta) => {
+  useEffect(() => {
+    const fullTitle = `${title} — Nomaderia`;
+    document.title = fullTitle;
+
+    const setMeta = (selector: string, attr: string, value: string) => {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute(attr, value);
+    };
+
+    setMeta('meta[name="description"]', "content", description);
+    setMeta('meta[property="og:title"]', "content", fullTitle);
+    setMeta('meta[property="og:description"]', "content", description);
+    setMeta('meta[property="og:type"]', "content", type);
+    if (image) {
+      setMeta('meta[property="og:image"]', "content", image);
+      setMeta('meta[name="twitter:image"]', "content", image);
+    }
+
+    return () => {
+      document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando";
+    };
+  }, [title, description, image, type]);
+};
+
+export { SITE_URL };

@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /admin
 
-# Actualizar al dominio de producción cuando esté listo
-Sitemap: https://nomaderia.com/sitemap.xml
+Sitemap: /sitemap.xml
