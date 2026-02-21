@@ -601,7 +601,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 2.1*
+*Versión: 2.2*
 
 ---
 
@@ -649,16 +649,11 @@ const [loading, setLoading] = useState(true);
 
 ### 🌐 Dominio y Hosting
 
-- [ ] **Comprar y configurar dominio** — El sitio aún no tiene URL de producción.
-  - Opciones sugeridas: Namecheap, Google Domains, GoDaddy
-  - ✅ `SITE_URL` ya se movió a variable de entorno `VITE_SITE_URL` en `src/hooks/use-seo.ts` (con fallback a `window.location.origin`)
-  - Una vez comprado, actualizar `VITE_SITE_URL` en el hosting y reemplazar `https://nomaderia.com` en `public/sitemap.xml` y `public/robots.txt`
+- ✅ **Comprar y configurar dominio** — Dominio `nomaderia.com` comprado y configurado. DNS configurado en Cloudflare con 4 registros A apuntando a GitHub Pages (185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153) y un CNAME www → nomaderia.com. Todos los registros en modo "DNS Only" (sin proxy Cloudflare).
 
-- [ ] **Configurar hosting** — Dónde se va a desplegar el sitio.
-  - Recomendado: Vercel o Netlify (soportan Vite + SPA routing con `_redirects`)
-  - Al configurar, agregar las variables de entorno: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` y `VITE_SITE_URL`
+- ✅ **Configurar hosting** — Hosting configurado en **GitHub Pages** (NO Vercel/Netlify). Fuente de despliegue: **GitHub Actions**. Workflow en `.github/workflows/deploy.yml`.
 
-- [ ] **Configurar `VITE_SITE_URL`** en el panel del proveedor de hosting una vez que tengas dominio.
+- [ ] **Configurar `VITE_SITE_URL`** — La URL de producción es `https://nomaderia.com` y ya está configurada en `scripts/generate-sitemap.ts` y `public/robots.txt`. Pendiente: configurar como variable de entorno en GitHub Actions secrets o directamente en el workflow.
 
 ---
 
@@ -715,6 +710,7 @@ const [loading, setLoading] = useState(true);
 - [x] **Sitemap generado** — `public/sitemap.xml` incluye todas las rutas públicas estáticas (`/`, `/gear`, `/blog`, `/calculadora`, `/sobre-nosotros`, `/privacidad`). Las URLs dinámicas de `/destinos/:slug`, `/gear/:slug` y `/blog/:slug` se deben agregar manualmente o con un generador cuando se publique contenido. **Pendiente:** reemplazar `https://nomaderia.com` por el dominio real.
 - [ ] **Enviar sitemap a Google Search Console** una vez verificado el sitio
 - [x] **Configurar Open Graph image** — `SEOHead.tsx` usa `hero_image_url` dinámicamente en cada página de destino/blog/gear. Fallback a imagen OG genérica de Unsplash si no hay hero. Meta tags OG y Twitter Card se generan via react-helmet-async.
+- [x] **Dominio propio configurado** — `nomaderia.com` activo con HTTPS enforced. `VITE_SITE_URL` debe configurarse como variable de entorno en GitHub Actions secrets o directamente en el workflow si es público.
 
 ---
 
@@ -790,6 +786,13 @@ const [loading, setLoading] = useState(true);
   - Fix: regenerar tipos con `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`
 
 - [x] **`VITE_SITE_URL` como variable de entorno** — `src/hooks/use-seo.ts` ya no tiene URL hardcodeada. Usa `import.meta.env.VITE_SITE_URL` con fallback a `window.location.origin`. Variable añadida a `.env` (vacía por defecto). El dueño debe configurar `VITE_SITE_URL` en el hosting cuando tenga dominio.
+
+- [x] **GitHub Pages + CI/CD configurado** — Se migró el despliegue de Jekyll estático a un workflow de GitHub Actions:
+  - `.github/workflows/deploy.yml` — Workflow completo: `npm ci` → `npm run build` (incluye `postbuild` que ejecuta `generate:sitemap`) → deploy de `dist/` via `actions/deploy-pages@v4`.
+  - `public/CNAME` — Archivo movido a `public/` para que Vite lo copie automáticamente a `dist/` durante el build.
+  - `tsx` agregado a `devDependencies` en `package.json` para que `npx tsx` funcione correctamente en CI.
+  - El paso `generate:sitemap` fue eliminado del workflow como paso explícito porque ya lo maneja el script `postbuild` de `package.json` automáticamente después del build.
+  - Fuente de despliegue en GitHub Pages debe estar configurada como **"GitHub Actions"** en Settings → Pages.
 
 - [x] **Sitemap y robots.txt actualizados** — `public/sitemap.xml` ahora incluye todas las rutas públicas estáticas (`/`, `/gear`, `/blog`, `/calculadora`, `/sobre-nosotros`, `/privacidad`). Se eliminaron los slugs de destino hardcodeados (contenido dinámico). `public/robots.txt` actualizado. Ambos usan `https://nomaderia.com` como placeholder — reemplazar con el dominio real.
 
@@ -872,3 +875,62 @@ const [loading, setLoading] = useState(true);
 - Agregar schema BreadcrumbList en páginas de detalle
 - Considerar agregar schema FAQPage en destinos que tienen common_fears
 - Implementar Open Graph image generator dinámico por destino
+
+---
+
+## 20. Infraestructura y Despliegue — GitHub Pages (Febrero 2026)
+
+### Hosting: GitHub Pages via GitHub Actions
+
+El sitio está desplegado en **GitHub Pages** usando un workflow de GitHub Actions personalizado (NO Jekyll estático, NO Vercel/Netlify).
+
+**Workflow:** `.github/workflows/deploy.yml`
+- Trigger: push a `main` + `workflow_dispatch` (manual)
+- Jobs: `build` → `deploy`
+- Build: `npm ci` → `npm run build` (Vite, output en `dist/`)
+- El script `postbuild` en `package.json` ejecuta `npm run generate:sitemap` automáticamente después del build
+- Deploy: `actions/deploy-pages@v4` desde el artifact `dist/`
+
+**Permisos requeridos en Settings → Actions → General:**
+- Workflow permissions: **Read and write permissions** ✅
+- Allow GitHub Actions to create and approve pull requests ✅
+- Actions permissions: **Allow all actions and reusable workflows** ✅
+
+**Fuente de despliegue:** Settings → Pages → Source → **GitHub Actions** (NO "Deploy from a branch")
+
+### Dominio Personalizado: nomaderia.com
+
+**Registros DNS en Cloudflare (DNS Only — sin proxy):**
+| Tipo | Nombre | Valor |
+|------|--------|-------|
+| A | nomaderia.com | 185.199.108.153 |
+| A | nomaderia.com | 185.199.109.153 |
+| A | nomaderia.com | 185.199.110.153 |
+| A | nomaderia.com | 185.199.111.153 |
+| CNAME | www.nomaderia.com | nomaderia.com |
+
+⚠️ **IMPORTANTE:** Los registros Cloudflare deben estar en modo **"DNS Only"** (nube gris), NO "Proxied" (nube naranja). El proxy de Cloudflare interfiere con la emisión del certificado TLS de GitHub Pages.
+
+**Archivo CNAME:** `public/CNAME` contiene `nomaderia.com` — Vite lo copia a `dist/CNAME` durante el build.
+
+**HTTPS:** Enforce HTTPS activado en Settings → Pages. Certificado TLS gestionado automáticamente por GitHub Pages.
+
+### Dependencias de CI/CD
+
+- `tsx` en `devDependencies` — requerido para ejecutar `scripts/generate-sitemap.ts` via `npx tsx` en el script `postbuild`
+
+### Comandos de Despliegue
+
+```sh
+# El deploy es automático en cada push a main
+# Para forzar un deploy manual:
+# GitHub → Actions → "Deploy to GitHub Pages" → Run workflow
+
+# Para verificar el build localmente:
+npm run build  # Incluye generación de sitemap via postbuild
+```
+
+### Recomendaciones Futuras
+- Agregar `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` como GitHub Actions secrets para el workflow de CI/CD
+- Configurar `VITE_SITE_URL=https://nomaderia.com` en el workflow o como secret
+- Considerar agregar cache de `node_modules` en el workflow para builds más rápidos
