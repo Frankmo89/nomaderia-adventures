@@ -76,7 +76,7 @@ src/
 │   │   ├── Navbar.tsx               → Navegación principal (sticky, con scroll effect)
 │   │   ├── HeroSection.tsx          → Hero con parallax (DOM directo via ref, sin re-renders)
 │   │   ├── DidYouKnowSection.tsx    → Carrusel horizontal "¿Sabías que...?"
-│   │   ├── QuizSection.tsx          → Quiz de 4 pasos con resultados-primero (MatchRing SVG, QuizLoading, EmailCapture post-resultados, CelebrationParticles)
+│   │   ├── QuizSection.tsx          → Quiz de 6 pasos con resultados-primero (MatchRing SVG, QuizLoading, EmailCapture post-resultados, CelebrationParticles)
 │   │   ├── DestinationsCatalog.tsx  → Grid de destinos (usa useDestinations hook)
 │   │   ├── GearPreview.tsx          → Preview de gear destacado (usa useFeaturedGearArticles hook)
 │   │   ├── SocialProof.tsx          → Testimonios
@@ -273,8 +273,8 @@ useQuiz(totalSteps)             // scoring por SCORING_RULES (objeto de funcione
 // exports types: QuizOption, QuizStep, QuizDestination (incluye matchPercent, matchReasons, experience_type, region, tags, best_season)
 // SCORING_RULES tiene 4 reglas: fitness_level, interest, trip_duration, budget_range
 // MAX_SCORE = 12 (fitness:3 + interest:5 + trip_duration:2 + budget_range:2)
-// El quiz tiene pasos con keys: fitness_level, interest, trip_duration, budget_range
-// handleEmailSubmit guarda en newsletter_subscribers + quiz_responses (con email y todas las respuestas del quiz, p.ej. fitness_level, interest, trip_duration, budget_range)
+// El quiz tiene pasos con keys: fitness_level, interest, trip_duration, budget_range, season, origin
+// handleEmailSubmit guarda en newsletter_subscribers + quiz_responses (con email y todas las respuestas del quiz, p.ej. fitness_level, interest, trip_duration, budget_range, season, origin)
 ```
 
 ### Formularios
