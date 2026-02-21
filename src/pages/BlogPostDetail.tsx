@@ -77,13 +77,38 @@ const BlogPostDetail = () => {
 
   useJsonLd(jsonLd);
 
-  usePageMeta({
-    title: post?.title || "",
-    description: post?.short_description || "",
-    image: post?.hero_image_url || undefined,
-    type: "article",
-  });
+  const pageMeta = useMemo(
+    () => {
+      if (post) {
+        return {
+          title: post.title,
+          description:
+            post.short_description ||
+            "Explora guías y artículos de viaje en Nomaderia.",
+          image: post.hero_image_url || undefined,
+          type: "article" as const,
+        };
+      }
 
+      if (loading) {
+        return {
+          title: "Cargando artículo del blog",
+          description: "Explora guías y artículos de viaje en Nomaderia.",
+          type: "article" as const,
+        };
+      }
+
+      return {
+        title: "Artículo no encontrado",
+        description:
+          "El artículo que buscas no existe o ha sido movido. Explora otros contenidos en el blog de Nomaderia.",
+        type: "article" as const,
+      };
+    },
+    [post, loading]
+  );
+
+  usePageMeta(pageMeta);
   if (loading) return (
     <main className="bg-background min-h-screen"><Navbar />
       <div className="pt-20"><GearArticleDetailSkeleton /></div>
