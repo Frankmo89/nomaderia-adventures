@@ -68,7 +68,7 @@ const BlogPostDetail = () => {
       description: post.short_description || "",
       image: post.hero_image_url || "",
       author: { "@type": "Organization", name: "Nomaderia" },
-      publisher: { "@type": "Organization", name: "Nomaderia", logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.png` } },
+      publisher: { "@type": "Organization", name: "Nomaderia", logo: { "@type": "ImageObject", url: post.hero_image_url || "" } },
       datePublished: post.created_at,
       dateModified: post.updated_at,
       mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/blog/${post.slug}` },
