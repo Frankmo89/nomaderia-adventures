@@ -3,7 +3,7 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass, Check,
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
-  Mail, Send, Loader2,
+  Mail, Send, Loader2, Calendar, MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,28 @@ const steps: QuizStep[] = [
       { label: "Moderado", value: "medium", icon: <DollarSign className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "💵", description: "$500 - $1,500 USD" },
       { label: "Premium", value: "high", icon: <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "💎", description: "$1,500 - $3,000 USD" },
       { label: "Sin límite", value: "unlimited", icon: <Sparkles className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "✨", description: "La aventura no tiene precio" },
+    ],
+  },
+  {
+    question: "¿Cuándo te gustaría ir?",
+    subtitle: "Algunos destinos tienen temporada ideal",
+    key: "season",
+    options: [
+      { label: "El próximo mes", value: "next_month", icon: <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "⏰", description: "Ya quiero irme" },
+      { label: "En 3 meses", value: "three_months", icon: <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "📅", description: "Tiempo para planear" },
+      { label: "En 6 meses", value: "six_months", icon: <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🗓️", description: "Con calma" },
+      { label: "Soy flexible", value: "flexible", icon: <Compass className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🤷", description: "Cuando sea" },
+    ],
+  },
+  {
+    question: "¿Desde dónde viajarías?",
+    subtitle: "Para recomendarte destinos más accesibles",
+    key: "origin",
+    options: [
+      { label: "México", value: "mexico", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇲🇽", description: "Proximidad a EE.UU. y Centroamérica" },
+      { label: "Estados Unidos", value: "usa", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇺🇸", description: "Acceso directo a América del Norte" },
+      { label: "España", value: "spain", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇪🇸", description: "Punto de partida ideal para Europa y el Mediterráneo" },
+      { label: "Otro país", value: "other", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🌎", description: "Recomendaciones ajustadas a tu región de origen" },
     ],
   },
 ];
@@ -367,7 +389,7 @@ const QuizSection = () => {
           ¿No Sabes A Dónde Ir?
         </motion.h2>
         <p className="text-muted-foreground mb-6 sm:mb-8 text-sm sm:text-base">
-          Responde {steps.length} preguntas y te recomendamos tu aventura ideal
+          {steps.length} preguntas · 1 minuto · destino personalizado
         </p>
 
         <div className="w-full bg-border rounded-full h-3 sm:h-2 mb-8 sm:mb-10">
