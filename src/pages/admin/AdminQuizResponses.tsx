@@ -33,6 +33,7 @@ const budgetLabels: Record<string, string> = {
   medium: "💰 Balanceado",
   high: "✨ Cómodo",
   any: "🚀 Sin límite",
+  unlimited: "🚀 Sin límite",
 };
 
 const originLabels: Record<string, string> = {
