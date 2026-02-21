@@ -21,7 +21,7 @@ const budgetLabels: Record<string, string> = {
   low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", unlimited: "🚀 Sin límite",
 };
 const originLabels: Record<string, string> = {
-  mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", other: "🌎 Otro",
+  mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", colombia: "🇨🇴 Colombia", other: "🌎 Otro",
 };
 
 const exportCSV = (items: QuizResponse[]) => {
