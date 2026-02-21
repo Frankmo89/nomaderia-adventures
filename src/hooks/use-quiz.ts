@@ -39,6 +39,7 @@ type DestinationFields = {
   difficulty_level: string;
   short_description: string | null;
   estimated_budget_usd: number | null;
+  days_needed: string | null;
 };
 
 type ScoringRule = {
