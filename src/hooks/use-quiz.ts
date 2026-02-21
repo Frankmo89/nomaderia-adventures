@@ -69,9 +69,54 @@ const SCORING_RULES: ScoringRule[] = [
   { key: "interest", value: "cultural", match: (d) => matchesKeywords(d, ["cultural", "pilgrim", "históric"]), weight: 3, reason: "Rica experiencia cultural" },
 
   // Duration → days_needed
-  { key: "trip_duration", value: "weekend", match: (d) => { const desc = d.short_description?.toLowerCase() ?? ""; return desc.includes("1 día") || desc.includes("2 día") || desc.includes("fin de semana"); }, weight: 2, reason: "Perfecto para escapada corta" },
-  { key: "trip_duration", value: "one_week", match: (d) => d.difficulty_level === "easy" || d.difficulty_level === "moderate", weight: 2, reason: "Ideal para una semana" },
-  { key: "trip_duration", value: "two_weeks", match: (d) => d.difficulty_level === "moderate" || d.difficulty_level === "challenging", weight: 2, reason: "Aventura extendida perfecta" },
+  {
+    key: "trip_duration",
+    value: "weekend",
+    match: (d) => {
+      const days = (d as any).days_needed;
+      if (typeof days === "number") {
+        // Consider trips of up to 3 days as suitable for a weekend
+        return days <= 3;
+      }
+      // Fallback to description-based heuristic when days_needed is unavailable
+      const desc = d.short_description?.toLowerCase() ?? "";
+      return (
+        desc.includes("1 día") ||
+        desc.includes("2 día") ||
+        desc.includes("fin de semana")
+      );
+    },
+    weight: 2,
+    reason: "Perfecto para escapada corta",
+  },
+  {
+    key: "trip_duration",
+    value: "one_week",
+    match: (d) => {
+      const days = (d as any).days_needed;
+      if (typeof days === "number") {
+        // Typical one-week trips: roughly 4–8 days
+        return days >= 4 && days <= 8;
+      }
+      return false;
+    },
+    weight: 2,
+    reason: "Ideal para una semana",
+  },
+  {
+    key: "trip_duration",
+    value: "two_weeks",
+    match: (d) => {
+      const days = (d as any).days_needed;
+      if (typeof days === "number") {
+        // Extended trips: roughly 9–16 days
+        return days >= 9 && days <= 16;
+      }
+      return false;
+    },
+    weight: 2,
+    reason: "Aventura extendida perfecta",
+  },
 
   // Budget → estimated_budget_usd
   { key: "budget_range", value: "low", match: (d) => d.estimated_budget_usd != null && d.estimated_budget_usd <= 500, weight: 2, reason: "Dentro de tu presupuesto" },
