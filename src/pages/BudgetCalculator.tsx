@@ -352,34 +352,38 @@ const BudgetCalculator = () => {
 
             {/* CTAs */}
             <div className="grid sm:grid-cols-2 gap-3 mb-10">
-              {selectedDest?.affiliate_links?.flights_url && (
-                <a href={selectedDest.affiliate_links.flights_url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="w-full gap-2">
-                    <Plane className="h-4 w-4" /> Buscar Vuelos <ArrowRight className="h-4 w-4 ml-auto" />
-                  </Button>
-                </a>
-              )}
-              {selectedDest?.affiliate_links?.hotels_url && (
-                <a href={selectedDest.affiliate_links.hotels_url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="w-full gap-2">
-                    <Hotel className="h-4 w-4" /> Buscar Hoteles <ArrowRight className="h-4 w-4 ml-auto" />
-                  </Button>
-                </a>
-              )}
-              {selectedDest?.affiliate_links?.tours_url && (
-                <a href={selectedDest.affiliate_links.tours_url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="w-full gap-2">
-                    <Compass className="h-4 w-4" /> Ver Tours y Actividades <ArrowRight className="h-4 w-4 ml-auto" />
-                  </Button>
-                </a>
-              )}
-              {selectedDest?.affiliate_links?.insurance_url && (
-                <a href={selectedDest.affiliate_links.insurance_url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="w-full gap-2">
-                    <ShieldCheck className="h-4 w-4" /> Seguro de Viaje <ArrowRight className="h-4 w-4 ml-auto" />
-                  </Button>
-                </a>
-              )}
+              {selectedDest?.affiliate_links?.flights_url &&
+                /^https?:\/\//i.test(selectedDest.affiliate_links.flights_url) && (
+                  <a href={selectedDest.affiliate_links.flights_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full gap-2">
+                      <Plane className="h-4 w-4" /> Buscar Vuelos <ArrowRight className="h-4 w-4 ml-auto" />
+                    </Button>
+                  </a>
+                )}
+              {selectedDest?.affiliate_links?.hotels_url &&
+                /^https?:\/\//i.test(selectedDest.affiliate_links.hotels_url) && (
+                  <a href={selectedDest.affiliate_links.hotels_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full gap-2">
+                      <Hotel className="h-4 w-4" /> Buscar Hoteles <ArrowRight className="h-4 w-4 ml-auto" />
+                    </Button>
+                  </a>
+                )}
+              {selectedDest?.affiliate_links?.tours_url &&
+                /^https?:\/\//i.test(selectedDest.affiliate_links.tours_url) && (
+                  <a href={selectedDest.affiliate_links.tours_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full gap-2">
+                      <Compass className="h-4 w-4" /> Ver Tours y Actividades <ArrowRight className="h-4 w-4 ml-auto" />
+                    </Button>
+                  </a>
+                )}
+              {selectedDest?.affiliate_links?.insurance_url &&
+                /^https?:\/\//i.test(selectedDest.affiliate_links.insurance_url) && (
+                  <a href={selectedDest.affiliate_links.insurance_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full gap-2">
+                      <ShieldCheck className="h-4 w-4" /> Seguro de Viaje <ArrowRight className="h-4 w-4 ml-auto" />
+                    </Button>
+                  </a>
+                )}
               {selectedDest && (
                 <Link to={`/destinos/${selectedDest.slug}`}>
                   <Button variant="secondary" className="w-full gap-2">
