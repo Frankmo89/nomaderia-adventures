@@ -199,8 +199,38 @@ serve(async (req) => {
     const resendData = await resendResponse.json();
 
     if (!resendResponse.ok) {
-      console.error("Resend error:", resendData);
-      throw new Error(resendData.message || "Failed to send email");
+      let errorMessage =
+        (resendData && typeof resendData.message === "string"
+          ? resendData.message
+          : "Failed to send email");
+
+      switch (resendResponse.status) {
+        case 401:
+          errorMessage =
+            "Resend authentication failed. Check RESEND_API_KEY configuration.";
+          break;
+        case 429:
+          errorMessage =
+            "Resend rate limit exceeded. Please try again later.";
+          break;
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          errorMessage =
+            "Resend service encountered an error. This may be temporary, please try again.";
+          break;
+        default:
+          // keep default or API-provided message
+          break;
+      }
+
+      console.error("Resend error:", {
+        status: resendResponse.status,
+        body: resendData,
+      });
+
+      throw new Error(errorMessage);
     }
 
     return new Response(
