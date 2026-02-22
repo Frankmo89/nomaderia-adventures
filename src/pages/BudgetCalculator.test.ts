@@ -1,14 +1,14 @@
 /**
  * Unit tests for the budget calculator pricing logic.
  *
- * We replicate the exported constants and calculation logic from
+ * These tests mirror the constants and calculation logic defined in
  * BudgetCalculator.tsx to validate that destination-specific cost
  * multipliers and origin→destination flight multipliers produce
  * different results for different inputs.
  */
 import { describe, it, expect } from "vitest";
 
-// Replicate the constants from BudgetCalculator.tsx
+// Test copy of the constants defined in BudgetCalculator.tsx (keep in sync manually)
 type ComfortLevel = "budget" | "mid" | "premium";
 
 const ranges: Record<ComfortLevel, {
