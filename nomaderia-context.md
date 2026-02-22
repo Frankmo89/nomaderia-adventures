@@ -956,3 +956,23 @@ npm run build  # Incluye generación de sitemap via postbuild
 - Verificar dominio en Google Search Console
 - Enviar sitemap: https://nomaderia.com/sitemap.xml
 - Configurar VITE_SITE_URL=https://nomaderia.com en variables de entorno del hosting
+
+---
+
+## 21. Sitemap Estático (Febrero 2026)
+
+### Enfoque
+- `public/sitemap.xml` es un archivo estático mantenido manualmente
+- Se actualiza cada vez que se publica nuevo contenido (destinos, gear, blog)
+- Para actualizar: pedirle al agent "actualiza el sitemap con el contenido nuevo"
+
+### URLs incluidas
+- 6 páginas estáticas (home, gear, blog, calculadora, sobre-nosotros, privacidad)
+- Todos los destinos publicados en `/destinos/{slug}`
+- Todos los gear articles publicados en `/gear/{slug}`
+- Todos los blog posts publicados en `/blog/{slug}`
+
+### Recomendaciones Futuras
+- Cuando haya muchas páginas (50+), considerar dividir en sitemap index
+- Agregar <lastmod> con la fecha real de updated_at de cada contenido
+- Automatizar actualización del sitemap en un GitHub Action post-merge
