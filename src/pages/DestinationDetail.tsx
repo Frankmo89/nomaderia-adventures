@@ -247,7 +247,7 @@ const DestinationDetail = () => {
               <span className="text-muted-foreground">/</span>
               <Link to="/#destinos" className="text-muted-foreground hover:text-foreground">Destinos</Link>
               <span className="text-muted-foreground">/</span>
-              <span className="text-foreground/70 truncate max-w-[200px]">{dest.title}</span>
+              <span className="text-foreground/70 truncate max-w-[200px]" aria-current="page">{dest.title}</span>
             </nav>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="font-serif text-4xl md:text-6xl font-bold text-foreground mb-3"
