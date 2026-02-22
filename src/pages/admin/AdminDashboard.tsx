@@ -30,10 +30,10 @@ const interestLabels: Record<string, string> = {
   mountains: "🏔️ Montañas", forests: "🌲 Bosques", deserts: "🏜️ Desiertos", cultural: "🏛️ Cultural",
 };
 const originLabels: Record<string, string> = {
-  mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", other: "🌎 Otro",
+  mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", colombia: "🇨🇴 Colombia", other: "🌎 Otro",
 };
 const budgetLabels: Record<string, string> = {
-  low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", any: "🚀 Sin límite",
+  low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", unlimited: "🚀 Sin límite",
 };
 const fitnessLabels: Record<string, string> = {
   sedentary: "🚶 Sedentario", light_activity: "🏃 Activo casual", moderate: "💪 Regular", active: "🔥 Muy activo",
