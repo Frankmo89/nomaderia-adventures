@@ -31,6 +31,14 @@
 
 ## Changelog (completados)
 
+### ✅ SocialProof: Estadísticas Reales (Febrero 2026)
+- Reemplazó testimonios falsos con 3 tarjetas de datos reales
+- Contador de quiz_responses desde Supabase (crece automáticamente)
+- Contador de destinos publicados desde Supabase
+- Badge de certificación TAP Test
+- CTA al quiz al final de la sección
+- Mismo estilo visual del sitio (bg-muted, noise, Framer Motion)
+
 ### ✅ Sección "¿Sabías que puedes...?" Premium (Febrero 2026)
 - Datos dinámicos desde Supabase (ya no hardcodeados)
 - Imágenes reales de hero_image_url de cada destino
