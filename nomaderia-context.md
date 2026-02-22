@@ -1001,3 +1001,26 @@ npm run build  # Incluye generación de sitemap via postbuild
 - Agregar schema FAQPage cuando un blog post tenga sección de preguntas frecuentes
 - Agregar botones de compartir en redes sociales (WhatsApp, Facebook, Twitter)
 - Considerar paginación en BlogListing cuando haya 20+ posts
+
+---
+
+## 23. Destinos SEO + Conversión (Febrero 2026)
+
+### DestinationDetail.tsx — Mejoras SEO
+- usePageMeta reemplaza meta tags manuales (elimina querySelector)
+- JSON-LD TouristDestination mejorado con url e inLanguage
+- JSON-LD BreadcrumbList (Inicio > Destinos > Nombre)
+- JSON-LD FAQPage generado dinámicamente desde common_fears
+- Breadcrumbs visuales con aria-label
+
+### DestinationDetail.tsx — Mejoras de Conversión
+- Card "Reserva Tu Viaje" muestra mejor temporada del destino
+- Links internos a gear guide y calculadora debajo de botones de afiliados
+- Cross-linking entre destino → gear → calculadora → quiz
+
+### Recomendaciones Futuras Destinos
+- Agregar schema Offer cuando haya itinerarios premium con precio
+- Agregar botones de compartir en redes sociales
+- Agregar "Destinos cercanos por presupuesto" además de dificultad similar
+- Implementar sticky CTA en mobile para "Reserva Tu Viaje"
+- Tracking de clics en affiliate links (evento custom para analytics)

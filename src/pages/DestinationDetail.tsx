@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { Clock, DollarSign, Plane, Hotel, Shield, ArrowLeft, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +16,7 @@ import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import SEOHead from "@/components/SEOHead";
 import ShareButtons from "@/components/ShareButtons";
-import { useCanonical, useJsonLd } from "@/hooks/use-seo";
+import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 
 const difficultyColor: Record<string, string> = {
@@ -110,6 +110,18 @@ const DestinationDetail = () => {
 
   useCanonical();
 
+  usePageMeta({
+    title: dest?.title || "Destino",
+    description: dest?.short_description || "Guía completa de aventura outdoor",
+    image: dest?.hero_image_url || undefined,
+    type: "article",
+  });
+
+  const fears = useMemo(() => {
+    if (!dest) return [];
+    return (dest.common_fears as Array<{ question: string; answer: string }>) || [];
+  }, [dest]);
+
   const jsonLd = useMemo(() => {
     if (!dest) return null;
     return {
@@ -120,10 +132,47 @@ const DestinationDetail = () => {
       image: dest.hero_image_url || "",
       address: { "@type": "PostalAddress", addressCountry: dest.country },
       touristType: dest.experience_type || "Adventure",
+      url: `${SITE_URL}/destinos/${dest.slug}`,
+      inLanguage: "es",
+      isAccessibleForFree: false,
+      publicAccess: true,
     };
   }, [dest]);
 
   useJsonLd(jsonLd);
+
+  const breadcrumbLd = useMemo(() => {
+    if (!dest) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Destinos", item: `${SITE_URL}/#destinos` },
+        { "@type": "ListItem", position: 3, name: dest.title, item: `${SITE_URL}/destinos/${dest.slug}` },
+      ],
+    };
+  }, [dest]);
+
+  useJsonLd(breadcrumbLd);
+
+  const faqLd = useMemo(() => {
+    if (!dest || !fears.length) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: fears.map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: f.answer,
+        },
+      })),
+    };
+  }, [dest, fears]);
+
+  useJsonLd(faqLd);
 
   if (isLoading) return (
     <main className="bg-background min-h-screen">
@@ -143,7 +192,6 @@ const DestinationDetail = () => {
   );
 
   const affiliateLinks = (dest.affiliate_links as Record<string, string>) || {};
-  const fears = (dest.common_fears as Array<{ question: string; answer: string }>) || [];
 
   return (
     <main className="bg-background min-h-screen">
@@ -196,9 +244,13 @@ const DestinationDetail = () => {
 
           {/* Hero text content */}
           <div className="container mx-auto px-4 pb-10 relative z-10">
-            <Link to="/#destinos" className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 mb-4">
-              <ArrowLeft className="h-4 w-4" /> Volver a destinos
-            </Link>
+            <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
+              <Link to="/" className="text-muted-foreground hover:text-foreground">Inicio</Link>
+              <span className="text-muted-foreground">/</span>
+              <Link to="/#destinos" className="text-muted-foreground hover:text-foreground">Destinos</Link>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-foreground/70 truncate max-w-[200px]">{dest.title}</span>
+            </nav>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="font-serif text-4xl md:text-6xl font-bold text-foreground mb-3"
               style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
@@ -269,9 +321,10 @@ const DestinationDetail = () => {
             <div className="lg:sticky lg:top-24 space-y-4">
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="font-serif text-xl text-card-foreground">
-                    Reserva Tu Viaje
-                  </CardTitle>
+                  <CardTitle className="font-serif text-xl text-card-foreground">Reserva Tu Viaje</CardTitle>
+                  {dest.best_season && (
+                    <p className="text-xs text-primary mt-1">🗓️ Mejor temporada: {dest.best_season}</p>
+                  )}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                   {affiliateLinks.flights_url && (
@@ -328,6 +381,14 @@ const DestinationDetail = () => {
                       Enlaces de reserva próximamente.
                     </p>
                   )}
+                  <div className="border-t border-border pt-3 mt-3 flex flex-col gap-2">
+                    <Link to="/gear" className="text-sm text-primary hover:underline flex items-center gap-1">
+                      🎒 Ver guía de equipo recomendado
+                    </Link>
+                    <Link to="/calculadora" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      💰 Calcular presupuesto detallado
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
               <p className="text-xs text-muted-foreground/50 text-center mt-2 px-2">
