@@ -138,7 +138,7 @@ const DidYouKnowSection = () => {
     );
     cards.forEach((card) => observer.observe(card));
     return () => observer.disconnect();
-  }, [destinations]);
+  }, [destinations.length]);
 
   if (isLoading || destinations.length === 0) return null;
 
