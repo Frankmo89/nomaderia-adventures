@@ -331,27 +331,32 @@ export function useQuiz(totalSteps: number) {
         recommended_destinations: results.map((d) => d.id),
       });
       // Enviar email con resultados del quiz
-      try {
-        await supabase.functions.invoke("send-quiz-email", {
-          body: {
-            email,
-            destinations: results.map((d) => ({
-              title: d.title,
-              slug: d.slug,
-              short_description: d.short_description,
-              country: d.country,
-              estimated_budget_usd: d.estimated_budget_usd,
-              days_needed: d.days_needed,
-              hero_image_url: d.hero_image_url,
-              difficulty_level: d.difficulty_level,
-            })),
-            fitness_level: answers.fitness_level,
-            interest: answers.interest,
-          },
-        });
-      } catch (emailError) {
-        // No bloquear la UI si el email falla, pero registrar el fallo para monitoreo
-        console.error("Error enviando email:", emailError);
+      if (!results || results.length === 0) {
+        // Evitar llamar a la Edge Function sin destinos válidos
+        console.warn("Omitiendo envío de email: no hay destinos recomendados para incluir.");
+      } else {
+        try {
+          await supabase.functions.invoke("send-quiz-email", {
+            body: {
+              email,
+              destinations: results.map((d) => ({
+                title: d.title,
+                slug: d.slug,
+                short_description: d.short_description,
+                country: d.country,
+                estimated_budget_usd: d.estimated_budget_usd,
+                days_needed: d.days_needed,
+                hero_image_url: d.hero_image_url,
+                difficulty_level: d.difficulty_level,
+              })),
+              fitness_level: answers.fitness_level,
+              interest: answers.interest,
+            },
+          });
+        } catch (emailError) {
+          // No bloquear la UI si el email falla
+          console.error("Error enviando email:", emailError);
+        }
         const serializedError =
           emailError instanceof Error
             ? { message: emailError.message, name: emailError.name, stack: emailError.stack }
