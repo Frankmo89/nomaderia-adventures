@@ -1,7 +1,13 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Compass, MapPin, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const STATS = [
+  { icon: MapPin, value: "30+", label: "Destinos" },
+  { icon: Users, value: "10k+", label: "Aventureros" },
+  { icon: Star, value: "4.9", label: "Valoración" },
+];
 
 const HeroSection = () => {
   const bgRef = useRef<HTMLDivElement>(null);
@@ -15,6 +21,10 @@ const HeroSection = () => {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const scrollToQuiz = () => {
+    document.getElementById("quiz")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -32,10 +42,20 @@ const HeroSection = () => {
       }} />
 
       <div className="relative z-10 container mx-auto px-5 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 bg-secondary/20 border border-secondary/40 backdrop-blur-sm text-secondary-foreground rounded-full px-4 py-1.5 text-sm font-sans mb-6"
+        >
+          <Compass className="h-4 w-4 text-secondary" />
+          <span>Guías para aventureros principiantes</span>
+        </motion.div>
+
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 1, delay: 0.1, ease: "easeOut" }}
           className="font-serif text-[2rem] leading-[1.15] sm:text-5xl md:text-7xl lg:text-8xl font-bold text-foreground mb-5 sm:mb-6"
           style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
         >
@@ -47,7 +67,7 @@ const HeroSection = () => {
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          transition={{ duration: 0.8, delay: 0.35 }}
           className="text-base sm:text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-8 sm:mb-10 font-sans"
           style={{ textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}
         >
@@ -62,22 +82,46 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.5 }}
           className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
         >
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base sm:text-lg px-8 h-12 sm:h-14 shadow-lg shadow-primary/30 w-full sm:w-auto">
-            <a href="#quiz">Descubre A Dónde Ir →</a>
+          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base sm:text-lg px-8 h-12 sm:h-14 shadow-lg shadow-primary/30 w-full sm:w-auto gap-2">
+            <a href="#quiz">
+              <Compass className="h-5 w-5" />
+              Descubre A Dónde Ir
+            </a>
           </Button>
           <Button asChild variant="outline" size="lg" className="border-foreground/30 text-foreground hover:bg-foreground/10 text-base sm:text-lg px-8 h-12 sm:h-14 backdrop-blur-sm w-full sm:w-auto">
             <a href="#destinos">Explorar Destinos</a>
           </Button>
         </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="flex items-center justify-center gap-6 sm:gap-10 mt-10 sm:mt-12"
+        >
+          {STATS.map(({ icon: Icon, value, label }) => (
+            <div key={label} className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-1.5">
+                <Icon className="h-4 w-4 text-primary" />
+                <span className="font-serif font-bold text-lg sm:text-xl text-foreground" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                  {value}
+                </span>
+              </div>
+              <span className="text-xs text-foreground/60 font-sans uppercase tracking-wider">{label}</span>
+            </div>
+          ))}
+        </motion.div>
       </div>
 
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+      <motion.button
+        aria-label="Desplazar hacia abajo"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 cursor-pointer"
         animate={{ y: [0, 10, 0] }}
         transition={{ repeat: Infinity, duration: 2 }}
+        onClick={scrollToQuiz}
       >
-        <ChevronDown className="h-8 w-8 text-foreground/50" />
-      </motion.div>
+        <ChevronDown className="h-8 w-8 text-foreground/50 hover:text-foreground/80 transition-colors" />
+      </motion.button>
     </section>
   );
 };
