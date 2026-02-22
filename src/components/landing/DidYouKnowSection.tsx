@@ -187,7 +187,7 @@ const DidYouKnowSection = () => {
 
         {/* Desktop: Bento grid */}
         <div className="container mx-auto px-5">
-          <div className="hidden lg:grid lg:grid-cols-3 lg:grid-rows-2 gap-4" style={{ height: "600px" }}>
+          <div className="hidden lg:grid lg:grid-cols-3 lg:grid-rows-2 gap-4" style={{ minHeight: "600px" }}>
             {destinations[0] && (
               <motion.div
                 className="col-span-1 row-span-2"
