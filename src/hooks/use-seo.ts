@@ -2,11 +2,11 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const envSiteUrl = import.meta.env.VITE_SITE_URL;
-// Treat an empty string (or missing value) as "unset" so we fall back to the preview URL.
+// Treat an empty string (or missing value) as "unset" so we fall back to the production URL.
 const SITE_URL =
   envSiteUrl && envSiteUrl.trim() !== ""
     ? envSiteUrl
-    : "https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app";
+    : "https://nomaderia.com";
 
 /**
  * Sets a canonical link and cleans up on unmount.
