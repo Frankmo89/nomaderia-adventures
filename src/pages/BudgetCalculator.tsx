@@ -164,11 +164,32 @@ const BudgetCalculator = () => {
     if (!email) return;
     setEmailLoading(true);
     try {
-      await supabase.from("newsletter_subscribers").insert({ email, source: "calculator" });
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .insert({ email, source: "calculator" });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description:
+            error.message ||
+            "No pudimos registrar tu correo. Por favor, intenta de nuevo.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setEmailDone(true);
-      toast({ title: "¡Listo! 🎉", description: "Te enviaremos tips para ahorrar en tu aventura." });
+      toast({
+        title: "¡Listo! 🎉",
+        description: "Te enviaremos tips para ahorrar en tu aventura.",
+      });
     } catch {
-      toast({ title: "Error", description: "No pudimos registrar tu correo. Por favor, intenta de nuevo.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "No pudimos registrar tu correo. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      });
     } finally {
       setEmailLoading(false);
     }
