@@ -6,12 +6,14 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_KEY =
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY;
 const SITE_URL = process.env.VITE_SITE_URL || "https://nomaderia.com";
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.warn(
-    "Skipping sitemap generation: VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are not set."
+    "Skipping sitemap generation: VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY) are not set."
   );
   process.exit(0);
 }
