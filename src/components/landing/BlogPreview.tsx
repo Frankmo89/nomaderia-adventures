@@ -54,7 +54,7 @@ const BlogPreview = () => {
           className="text-center mb-10 sm:mb-14"
         >
           <span className="text-primary text-sm font-semibold tracking-wider uppercase mb-3 block">
-            Últimas publicaciones
+            Publicaciones del blog
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3">
             Del Blog
