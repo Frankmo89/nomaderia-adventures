@@ -134,8 +134,6 @@ const DestinationDetail = () => {
       touristType: dest.experience_type || "Adventure",
       url: `${SITE_URL}/destinos/${dest.slug}`,
       inLanguage: "es",
-      isAccessibleForFree: false,
-      publicAccess: true,
     };
   }, [dest]);
 
