@@ -227,8 +227,8 @@ const GearArticleDetail = () => {
       {/* CTA interno */}
       <div className="container mx-auto px-4 max-w-3xl pb-8">
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center">
-          <p className="text-foreground font-serif text-lg mb-2">¿No sabes qué destino elegir?</p>
-          <p className="text-muted-foreground text-sm mb-4">Nuestro quiz de 1 minuto te recomienda el destino perfecto según tu nivel y preferencias.</p>
+          <p className="text-foreground font-serif text-lg mb-2">¿Necesitas ayuda eligiendo tu equipo?</p>
+          <p className="text-muted-foreground text-sm mb-4">Nuestro quiz de 1 minuto te ayuda a elegir el equipo ideal según tu nivel, estilo y presupuesto.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/#quiz" className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
               Hacer el Quiz
