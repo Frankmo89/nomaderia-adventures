@@ -67,9 +67,28 @@ const CardContent = ({ dest, isLarge = false }: { dest: Destination; isLarge?: b
       </p>
 
       <div className="flex items-center gap-2 flex-wrap mb-3">
-        <span className="text-white/70 text-xs">📍 {dest.country}</span>
-        {dest.days_needed && <span className="text-white/70 text-xs">· ⏱️ {dest.days_needed} días</span>}
-        {dest.estimated_budget_usd && <span className="text-white/70 text-xs">· 💰 ~${dest.estimated_budget_usd} USD</span>}
+        <span
+          className="text-white/70 text-xs"
+          aria-label={`Ubicación: ${dest.country}`}
+        >
+          <span aria-hidden="true">📍</span> {dest.country}
+        </span>
+        {dest.days_needed && (
+          <span
+            className="text-white/70 text-xs"
+            aria-label={`Duración: ${dest.days_needed} días`}
+          >
+            · <span aria-hidden="true">⏱️</span> {dest.days_needed} días
+          </span>
+        )}
+        {dest.estimated_budget_usd && (
+          <span
+            className="text-white/70 text-xs"
+            aria-label={`Presupuesto estimado: ${dest.estimated_budget_usd} dólares estadounidenses`}
+          >
+            · <span aria-hidden="true">💰</span> ~${dest.estimated_budget_usd} USD
+          </span>
+        )}
       </div>
 
       <span className="inline-flex items-center text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
