@@ -32,7 +32,7 @@
 ## Changelog (completados)
 
 ### ✅ Blog Preview en Homepage (Febrero 2026)
-- Nuevo componente BlogPreview muestra los 3 posts más recientes
+- Nuevo componente BlogPreview muestra 3 posts aleatorios/rotativos del blog
 - Usa hook useBlogPosts() existente (TanStack Query)
 - Cards con imagen, categoría badge, fecha, descripción truncada
 - CTA "Ver todo el blog" al final
