@@ -235,6 +235,7 @@ const DidYouKnowSection = () => {
             <button
               onClick={() => document.getElementById("quiz")?.scrollIntoView({ behavior: "smooth" })}
               className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+              aria-label="Scroll to quiz section to discover your ideal destination"
             >
               🧭 Descubre tu destino ideal
             </button>
