@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const SITE_URL = Deno.env.get("SITE_URL") || "https://nomaderia.com";
+// Keep URL configuration consistent with the frontend:
+// - Prefer VITE_SITE_URL (used by the frontend at build time)
+// - Fall back to SITE_URL (existing Edge Function secret name)
+// - Finally fall back to the production URL
+const SITE_URL = Deno.env.get("VITE_SITE_URL") || Deno.env.get("SITE_URL") || "https://nomaderia.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
