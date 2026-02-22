@@ -168,7 +168,7 @@ const BudgetCalculator = () => {
       setEmailDone(true);
       toast({ title: "¡Listo! 🎉", description: "Te enviaremos tips para ahorrar en tu aventura." });
     } catch {
-      toast({ title: "Error", description: "Intenta de nuevo.", variant: "destructive" });
+      toast({ title: "Error", description: "No pudimos registrar tu correo. Por favor, intenta de nuevo.", variant: "destructive" });
     } finally {
       setEmailLoading(false);
     }
@@ -243,7 +243,7 @@ const BudgetCalculator = () => {
                 <button
                   key={opt.value}
                   onClick={() => { setComfort(opt.value); setCalculated(false); }}
-                  className={`flex-1 min-w-0 rounded-lg border px-2 py-2 text-xs sm:text-sm text-center transition-colors ${
+                  className={`flex-1 min-w-0 rounded-lg border px-3 py-2 text-xs sm:text-sm text-center transition-colors ${
                     comfort === opt.value
                       ? "border-primary bg-primary/20 text-primary-foreground"
                       : "border-border bg-muted text-muted-foreground hover:border-primary/50"
