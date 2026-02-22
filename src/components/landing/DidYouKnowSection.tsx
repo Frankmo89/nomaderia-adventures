@@ -31,7 +31,7 @@ type Destination = {
   short_description: string | null;
   difficulty_level: string;
   estimated_budget_usd: number | null;
-  days_needed: number | null;
+  days_needed: string | null;
 };
 
 const CardContent = ({ dest, isLarge = false }: { dest: Destination; isLarge?: boolean }) => (
