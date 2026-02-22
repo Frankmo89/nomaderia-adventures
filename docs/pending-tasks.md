@@ -31,6 +31,11 @@
 
 ## Changelog (completados)
 
+### ✅ Gear SEO Estructural (Febrero 2026)
+- GearArticleDetail: usePageMeta, JSON-LD Article mejorado con articleSection + inLanguage, BreadcrumbList, breadcrumbs visuales con aria-current, fecha de publicación, CTA interno (quiz + calculadora)
+- GearListing: usePageMeta, JSON-LD CollectionPage, fecha en cada card
+- Patrón ahora consistente en blog, destinos y gear
+
 ### ✅ Email Marketing Post-Quiz (Febrero 2026)
 - Supabase Edge Function `send-quiz-email` envía email personalizado via Resend API
 - Se llama desde `use-quiz.ts` después de guardar respuesta del quiz

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, Star, ExternalLink, BookOpen } from "lucide-react";
+import { Star, ExternalLink, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,10 +67,20 @@ const GearArticleDetail = () => {
       headline: article.title,
       description: article.short_description || "",
       image: article.hero_image_url || "",
-      author: { "@type": "Organization", name: "Nomaderia" },
+      author: { "@type": "Organization", name: "Nomaderia Adventures" },
+      publisher: {
+        "@type": "Organization",
+        name: "Nomaderia Adventures",
+        url: SITE_URL,
+      },
       datePublished: article.created_at,
       dateModified: article.updated_at,
-      publisher: { "@type": "Organization", name: "Nomaderia" },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/gear/${article.slug}`,
+      },
+      articleSection: article.category,
+      inLanguage: "es",
     };
   }, [article]);
 
@@ -132,15 +142,22 @@ const GearArticleDetail = () => {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           <div className="container mx-auto px-4 pb-8 relative z-10">
-            <Link to="/gear" className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 mb-4">
-              <ArrowLeft className="h-4 w-4" /> Volver a Gear Guide
-            </Link>
+            <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
+              <Link to="/" className="text-muted-foreground hover:text-foreground">Inicio</Link>
+              <span className="text-muted-foreground">/</span>
+              <Link to="/gear" className="text-muted-foreground hover:text-foreground">Gear Guide</Link>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-foreground/70 truncate max-w-[200px]" aria-current="page">{article.title}</span>
+            </nav>
             <Badge variant="outline" className="border-foreground/20 text-foreground mb-3">{article.category}</Badge>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="font-serif text-3xl md:text-5xl font-bold text-foreground"
               style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
               {article.title}
             </motion.h1>
+            <p className="text-muted-foreground mt-2">
+              {new Date(article.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
           </div>
         </div>
       </section>
@@ -206,6 +223,22 @@ const GearArticleDetail = () => {
           </div>
         </div>
       </section>
+
+      {/* CTA interno */}
+      <div className="container mx-auto px-4 max-w-3xl pb-8">
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center">
+          <p className="text-foreground font-serif text-lg mb-2">¿Necesitas ayuda eligiendo tu equipo?</p>
+          <p className="text-muted-foreground text-sm mb-4">Nuestro quiz de 1 minuto te ayuda a elegir el equipo ideal según tu nivel, estilo y presupuesto.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/#quiz" className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              Hacer el Quiz
+            </Link>
+            <Link to="/calculadora" className="inline-flex items-center justify-center border border-border hover:bg-muted text-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              Calcular Presupuesto
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {related.length > 0 && (
         <section className="py-16 bg-muted/30">
