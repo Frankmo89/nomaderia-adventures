@@ -31,6 +31,16 @@
 
 ## Changelog (completados)
 
+### ✅ Sección "¿Sabías que puedes...?" Premium (Febrero 2026)
+- Datos dinámicos desde Supabase (ya no hardcodeados)
+- Imágenes reales de hero_image_url de cada destino
+- Bento grid en desktop (card principal grande + 4 secundarias)
+- Cards cinematográficas de 420px en mobile con snap scroll
+- Badge de dificultad con color, meta info (país, días, presupuesto)
+- Mapeo de textos emocionales por slug de destino
+- CTA al quiz al final de la sección
+- Subtítulo "Aventuras reales para principiantes"
+
 ### ✅ Gear SEO Estructural (Febrero 2026)
 - GearArticleDetail: usePageMeta, JSON-LD Article mejorado con articleSection + inLanguage, BreadcrumbList, breadcrumbs visuales con aria-current, fecha de publicación, CTA interno (quiz + calculadora)
 - GearListing: usePageMeta, JSON-LD CollectionPage, fecha en cada card
