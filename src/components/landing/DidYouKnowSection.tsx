@@ -119,19 +119,26 @@ const DidYouKnowSection = () => {
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const scrollLeft = el.scrollLeft;
-      const cardWidth = el.firstElementChild?.clientWidth || 1;
-      setActiveIndex(Math.round(scrollLeft / (cardWidth + 16)));
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
+    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
+    if (cards.length === 0 || !scrollRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = cards.indexOf(entry.target as HTMLDivElement);
+            if (index !== -1) setActiveIndex(index);
+          }
+        });
+      },
+      { root: scrollRef.current, threshold: 0.6 }
+    );
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [destinations.length]);
 
   if (isLoading || destinations.length === 0) return null;
 
@@ -165,9 +172,10 @@ const DidYouKnowSection = () => {
           className="flex lg:hidden gap-4 overflow-x-auto snap-x snap-mandatory px-5 pb-4 scrollbar-hide"
           style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {destinations.map((dest) => (
+          {destinations.map((dest, i) => (
             <div
               key={dest.slug}
+              ref={(el) => { cardRefs.current[i] = el; }}
               className="snap-center shrink-0"
               style={{ width: "85vw", height: "420px" }}
             >
@@ -224,12 +232,13 @@ const DidYouKnowSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <Link
-              to="/#quiz"
+            <button
+              onClick={() => document.getElementById("quiz")?.scrollIntoView({ behavior: "smooth" })}
               className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+              aria-label="Scroll to quiz section to discover your ideal destination"
             >
               🧭 Descubre tu destino ideal
-            </Link>
+            </button>
           </motion.div>
         </div>
       </div>
