@@ -4,6 +4,7 @@ import DidYouKnowSection from "@/components/landing/DidYouKnowSection";
 import QuizSection from "@/components/landing/QuizSection";
 import DestinationsCatalog from "@/components/landing/DestinationsCatalog";
 import GearPreview from "@/components/landing/GearPreview";
+import BlogPreview from "@/components/landing/BlogPreview";
 import SocialProof from "@/components/landing/SocialProof";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import NewsletterSignup from "@/components/landing/NewsletterSignup";
@@ -40,6 +41,7 @@ const Index = () => {
       <QuizSection />
       <DestinationsCatalog />
       <GearPreview />
+      <BlogPreview />
       <SocialProof />
       <PremiumItinerarySection />
       <NewsletterSignup />

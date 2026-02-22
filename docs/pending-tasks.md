@@ -31,6 +31,14 @@
 
 ## Changelog (completados)
 
+### ✅ Blog Preview en Homepage (Febrero 2026)
+- Nuevo componente BlogPreview muestra 3 posts aleatorios/rotativos del blog
+- Usa hook useBlogPosts() existente (TanStack Query)
+- Cards con imagen, categoría badge, fecha, descripción truncada
+- CTA "Ver todo el blog" al final
+- Integrado en Index.tsx entre GearPreview y SocialProof
+- Si no hay posts publicados, la sección no se renderiza
+
 ### ✅ SocialProof: Estadísticas Reales (Febrero 2026)
 - Reemplazó testimonios falsos con 3 tarjetas de datos reales
 - Contador de quiz_responses desde Supabase (crece automáticamente)
