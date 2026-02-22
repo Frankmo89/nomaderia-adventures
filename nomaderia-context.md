@@ -976,3 +976,28 @@ npm run build  # Incluye generación de sitemap via postbuild
 - Cuando haya muchas páginas (50+), considerar dividir en sitemap index
 - Agregar <lastmod> con la fecha real de updated_at de cada contenido
 - Automatizar actualización del sitemap en un GitHub Action post-merge
+
+---
+
+## 22. Blog SEO Estructural (Febrero 2026)
+
+### BlogPostDetail.tsx — Mejoras
+- `usePageMeta` reemplaza lógica manual de meta tags
+- Tiempo de lectura estimado (palabras / 200)
+- Fecha de publicación formateada en español
+- JSON-LD BlogPosting mejorado con wordCount e inLanguage
+- JSON-LD BreadcrumbList (Inicio > Blog > Post)
+- Breadcrumbs visuales con `aria-label="Breadcrumb"`
+- CTA interno al final del post (quiz + calculadora)
+
+### BlogListing.tsx — Mejoras
+- `usePageMeta` para meta tags centralizados
+- JSON-LD CollectionPage
+- Fecha de publicación en cada card del listado
+
+### Recomendaciones Futuras Blog
+- Agregar Table of Contents (TOC) automático generado desde headings del markdown
+- Implementar internal linking automático (detectar menciones de destinos en el texto y linkear)
+- Agregar schema FAQPage cuando un blog post tenga sección de preguntas frecuentes
+- Agregar botones de compartir en redes sociales (WhatsApp, Facebook, Twitter)
+- Considerar paginación en BlogListing cuando haya 20+ posts
