@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,12 @@ import Footer from "@/components/landing/Footer";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import ShareButtons from "@/components/ShareButtons";
+
+const estimateReadingTime = (markdown: string | null): number => {
+  if (!markdown) return 1;
+  const words = markdown.trim().split(/\s+/).length;
+  return Math.max(1, Math.round(words / 200));
+};
 
 interface BlogPost {
   id: string;
@@ -67,15 +72,38 @@ const BlogPostDetail = () => {
       headline: post.title,
       description: post.short_description || "",
       image: post.hero_image_url || "",
-      author: { "@type": "Organization", name: "Nomaderia" },
-      publisher: { "@type": "Organization", name: "Nomaderia", logo: { "@type": "ImageObject", url: post.hero_image_url || "" } },
+      author: { "@type": "Person", name: post.author || "Nomaderia" },
+      publisher: {
+        "@type": "Organization",
+        name: "Nomaderia Adventures",
+        url: SITE_URL,
+      },
       datePublished: post.created_at,
       dateModified: post.updated_at,
-      mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/blog/${post.slug}` },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/blog/${post.slug}`,
+      },
+      wordCount: post.content_markdown ? post.content_markdown.trim().split(/\s+/).length : 0,
+      inLanguage: "es",
+    };
+  }, [post]);
+
+  const breadcrumbLd = useMemo(() => {
+    if (!post) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blog` },
+        { "@type": "ListItem", position: 3, name: post.title, item: `${SITE_URL}/blog/${post.slug}` },
+      ],
     };
   }, [post]);
 
   useJsonLd(jsonLd);
+  useJsonLd(breadcrumbLd);
 
   const pageMeta = useMemo(
     () => {
@@ -136,9 +164,13 @@ const BlogPostDetail = () => {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           <div className="container mx-auto px-4 pb-8 relative z-10">
-            <Link to="/blog" className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 mb-4">
-              <ArrowLeft className="h-4 w-4" /> Volver al Blog
-            </Link>
+            <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
+              <Link to="/" className="text-muted-foreground hover:text-foreground">Inicio</Link>
+              <span className="text-muted-foreground">/</span>
+              <Link to="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-foreground/70 truncate max-w-[200px]" aria-current="page">{post.title}</span>
+            </nav>
             <Badge variant="outline" className="border-foreground/20 text-foreground mb-3">{post.category}</Badge>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="font-serif text-3xl md:text-5xl font-bold text-foreground"
@@ -146,13 +178,11 @@ const BlogPostDetail = () => {
               {post.title}
             </motion.h1>
             <div className="flex items-center gap-3 mt-2 text-muted-foreground">
-              {post.author && <span>por {post.author}</span>}
-              {post.reading_time_min && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {post.reading_time_min} min de lectura
-                </span>
-              )}
+              <p className="text-muted-foreground mt-2">
+                {post.author && <>por {post.author} · </>}
+                {estimateReadingTime(post.content_markdown)} min de lectura ·{" "}
+                {new Date(post.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
             </div>
           </div>
         </div>
@@ -172,6 +202,22 @@ const BlogPostDetail = () => {
           </div>
         </div>
       </section>
+
+      {/* CTA interno */}
+      <div className="container mx-auto px-4 max-w-3xl pb-8">
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center">
+          <p className="text-foreground font-serif text-lg mb-2">¿Listo para tu primera aventura?</p>
+          <p className="text-muted-foreground text-sm mb-4">Descubre qué destino es perfecto para ti con nuestro quiz de 1 minuto.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/#quiz" className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              Hacer el Quiz
+            </Link>
+            <Link to="/calculadora" className="inline-flex items-center justify-center border border-border hover:bg-muted text-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              Calcular Presupuesto
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {related.length > 0 && (
         <section className="py-16 bg-muted/30">

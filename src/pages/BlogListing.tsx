@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
@@ -7,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
-import { useCanonical } from "@/hooks/use-seo";
+import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { useBlogPosts } from "@/hooks/use-blog-posts";
 import FeaturedBlogPost from "@/components/blog/FeaturedBlogPost";
 
@@ -28,10 +27,20 @@ const BlogListing = () => {
 
   useCanonical();
 
-  useEffect(() => {
-    document.title = "Blog — Nomaderia";
-    return () => { document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando"; };
-  }, []);
+  usePageMeta({
+    title: "Blog",
+    description: "Artículos, consejos y guías para preparar tu primera aventura al aire libre.",
+  });
+
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Blog — Nomaderia Adventures",
+    description: "Artículos, consejos y guías para preparar tu primera aventura al aire libre.",
+    url: `${SITE_URL}/blog`,
+    inLanguage: "es",
+    isPartOf: { "@type": "WebSite", name: "Nomaderia Adventures", url: SITE_URL },
+  });
 
   const filter = (cat: string) =>
     cat === "Todo" ? posts : posts.filter((p) => p.category === cat);
@@ -104,6 +113,9 @@ const BlogListing = () => {
                           </div>
                           <h3 className="font-serif text-lg font-bold text-card-foreground mb-1">{p.title}</h3>
                           <p className="text-sm text-card-foreground/70 line-clamp-2">{p.short_description}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {new Date(p.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+                          </p>
                           <span className="text-primary text-sm font-medium mt-3 inline-block group-hover:underline">
                             Leer más →
                           </span>
