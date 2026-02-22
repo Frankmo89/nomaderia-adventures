@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
-import { useCanonical, useJsonLd } from "@/hooks/use-seo";
+import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import SEOHead from "@/components/SEOHead";
 import ShareButtons from "@/components/ShareButtons";
 import type { Tables } from "@/integrations/supabase/types";
@@ -74,7 +74,28 @@ const GearArticleDetail = () => {
     };
   }, [article]);
 
+  const breadcrumbLd = useMemo(() => {
+    if (!article) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Gear Guide", item: `${SITE_URL}/gear` },
+        { "@type": "ListItem", position: 3, name: article.title, item: `${SITE_URL}/gear/${article.slug}` },
+      ],
+    };
+  }, [article]);
+
+  usePageMeta(article ? {
+    title: article.title,
+    description: article.short_description || `${article.title} — Gear Guide de Nomaderia`,
+    image: article.hero_image_url || undefined,
+    type: "article",
+  } : { title: "Gear Guide", description: "Guías de equipo outdoor para aventureros" });
+
   useJsonLd(jsonLd);
+  useJsonLd(breadcrumbLd);
 
   if (loading) return (
     <main className="bg-background min-h-screen"><Navbar />
