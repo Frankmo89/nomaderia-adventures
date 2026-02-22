@@ -330,8 +330,31 @@ export function useQuiz(totalSteps: number) {
         budget_range: answers.budget_range ?? answers.budget ?? null,
         recommended_destinations: results.map((d) => d.id),
       });
+      // Enviar email con resultados del quiz
+      try {
+        await supabase.functions.invoke("send-quiz-email", {
+          body: {
+            email,
+            destinations: results.map((d) => ({
+              title: d.title,
+              slug: d.slug,
+              short_description: d.short_description,
+              country: d.country,
+              estimated_budget_usd: d.estimated_budget_usd,
+              days_needed: d.days_needed,
+              hero_image_url: d.hero_image_url,
+              difficulty_level: d.difficulty_level,
+            })),
+            fitness_level: answers.fitness_level,
+            interest: answers.interest,
+          },
+        });
+      } catch (emailError) {
+        // No bloquear la UI si el email falla
+        console.error("Error enviando email:", emailError);
+      }
       setEmailSubmitted(true);
-      toast({ title: "¡Listo! 🎉", description: "Te enviaremos aventuras personalizadas." });
+      toast({ title: "¡Resultados listos! 📧", description: "También te enviamos los resultados a tu email." });
     } catch {
       toast({ title: "Error", description: "Algo salió mal. Intenta de nuevo.", variant: "destructive" });
     } finally {
