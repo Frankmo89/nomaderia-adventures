@@ -934,3 +934,25 @@ npm run build  # Incluye generación de sitemap via postbuild
 - Agregar `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` como GitHub Actions secrets para el workflow de CI/CD
 - Configurar `VITE_SITE_URL=https://nomaderia.com` en el workflow o como secret
 - Considerar agregar cache de `node_modules` en el workflow para builds más rápidos
+
+---
+
+## 20. Migración a Dominio Propio (Febrero 2026)
+
+### URL de producción
+- Dominio: **https://nomaderia.com**
+- URL anterior (preview): `https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app`
+- Todas las referencias al preview fueron reemplazadas en el codebase
+- sitemap.xml y robots.txt ahora apuntan a nomaderia.com
+
+### Archivos actualizados
+- `src/hooks/use-seo.ts` — SITE_URL fallback
+- `public/sitemap.xml` — todas las URLs
+- `public/robots.txt` — Sitemap URL
+- `index.html` — meta tags (si aplicaba)
+- Cualquier otro archivo que referenciaba el preview
+
+### Pasos post-migración pendientes (dueño del proyecto)
+- Verificar dominio en Google Search Console
+- Enviar sitemap: https://nomaderia.com/sitemap.xml
+- Configurar VITE_SITE_URL=https://nomaderia.com en variables de entorno del hosting
