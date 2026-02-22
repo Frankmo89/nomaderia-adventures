@@ -84,7 +84,7 @@ const HeroSection = () => {
         >
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base sm:text-lg px-8 h-12 sm:h-14 shadow-lg shadow-primary/30 w-full sm:w-auto gap-2">
             <a href="#quiz">
-              <Compass className="h-5 w-5" />
+              <Compass />
               Descubre A Dónde Ir
             </a>
           </Button>
