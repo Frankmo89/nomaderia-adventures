@@ -31,6 +31,14 @@
 
 ## Changelog (completados)
 
+### ✅ Email Marketing Post-Quiz (Febrero 2026)
+- Supabase Edge Function `send-quiz-email` envía email personalizado via Resend API
+- Se llama desde `use-quiz.ts` después de guardar respuesta del quiz
+- Email dark theme con destino #1 + imagen + alternativas + CTA itinerario
+- El email no bloquea la UI — si falla, usuario ve resultados igual
+- From: hola@nomaderia.com (dominio verificado en Resend)
+- Secrets: RESEND_API_KEY + SITE_URL configurados en Supabase Edge Functions
+
 - ✅ **Quiz de 6 preguntas** con matching de destinos + analytics en admin
 - ✅ **8 destinos** insertados (Yosemite a Torres del Paine)
 - ✅ **PrivacyPolicy.tsx** — `/privacidad` con LFPDPPP completa
@@ -49,3 +57,23 @@ Siempre que hagas cambios al código:
 1. Actualiza este archivo con lo que se completó
 2. Agrega recomendaciones de próximos pasos si aplica
 3. Si creas archivos nuevos, actualiza la estructura en `CLAUDE.md` si es necesario
+
+## Pendientes Futuros
+
+### 📧 Emails Futuros (pendientes)
+- Email 2 (3 días post-quiz): "5 cosas que desearía saber antes de mi primera aventura" — contenido educativo + gear
+- Email 3 (7 días post-quiz): Oferta directa itinerario personalizado con precios
+- Requiere: tabla email_queue + Supabase scheduled function o pg_cron
+
+### 💰 Página de Pricing: Itinerarios Personalizados (pendiente)
+- Weekend (1-3 días): $299 MXN / $19 USD
+- Aventura (4-7 días): $549 MXN / $35 USD
+- Expedición (8+ días): $899 MXN / $59 USD — incluye soporte WhatsApp
+- Incluye: itinerario día a día, presupuesto, checklist gear, tips seguridad
+- Integración: Stripe + PayPal + MercadoPago
+
+### 🚀 Mejoras Técnicas (backlog)
+- Performance: lazy loading imágenes, hero images WebP/srcset, más skeleton loaders
+- Dashboard avanzado: top destinos recomendados, conversión quiz→email, trends con Recharts
+- PWA/offline: service worker, manifest.json, cache de guías para trail sin señal
+- Chatbot WhatsApp: integración con WhatsApp Business API para paquete Expedición
