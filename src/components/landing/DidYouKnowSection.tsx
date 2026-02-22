@@ -105,12 +105,15 @@ const DidYouKnowSection = () => {
   const { data: destinations = [], isLoading } = useQuery({
     queryKey: ["didyouknow-destinations"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("destinations")
         .select("title, slug, country, hero_image_url, short_description, difficulty_level, estimated_budget_usd, days_needed")
         .eq("is_published", true)
         .order("featured", { ascending: false })
         .limit(5);
+      if (error) {
+        throw error;
+      }
       return (data || []) as Destination[];
     },
   });
