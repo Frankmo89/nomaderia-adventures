@@ -466,19 +466,27 @@ const QuizSection = () => {
               exit={{ opacity: 0, x: direction * -60 }} transition={{ duration: 0.3 }}
               drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.15} onDragEnd={onDragEnd}>
               <h3 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mb-1.5">
-                {steps[step]?.question}
+                {steps[Math.min(step, steps.length - 1)]?.question}
               </h3>
-              {steps[step]?.subtitle && (
-                <p className="text-muted-foreground text-sm mb-6">{steps[step].subtitle}</p>
+              {steps[Math.min(step, steps.length - 1)]?.subtitle && (
+                <p className="text-muted-foreground text-sm mb-6">
+                  {steps[Math.min(step, steps.length - 1)]?.subtitle}
+                </p>
               )}
 
               <div className="space-y-3 mt-5">
-                {steps[step]?.options.map((opt) => {
-                  const isSelected = answers[steps[step].key] === opt.value;
+                {steps[Math.min(step, steps.length - 1)]?.options?.map((opt) => {
+                  const isSelected =
+                    answers[steps[Math.min(step, steps.length - 1)].key] === opt.value;
                   return (
                     <motion.button
                       key={opt.value}
-                      onClick={() => handleSelect(steps[step].key, opt.value)}
+                      onClick={() =>
+                        handleSelect(
+                          steps[Math.min(step, steps.length - 1)].key,
+                          opt.value
+                        )
+                      }
                       whileTap={{ scale: 0.985 }}
                       className={cn(
                         "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left group",
