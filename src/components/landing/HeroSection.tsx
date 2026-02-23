@@ -76,7 +76,7 @@ const HeroSection = () => {
       {/* Floating decorative icons */}
       {FLOATING_ICONS.map(({ Icon, top, left, right, size, delay, duration }, i) => (
         <motion.div
-          key={i}
+          key={`${Icon.name}-${top}-${left ?? right}-${i}`}
           className="absolute pointer-events-none hidden sm:block"
           style={{ top, left, right }}
           animate={{ y: [-8, 8, -8], opacity: [0.12, 0.22, 0.12] }}
