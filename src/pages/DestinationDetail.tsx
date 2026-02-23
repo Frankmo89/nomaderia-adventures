@@ -190,6 +190,7 @@ const DestinationDetail = () => {
   );
 
   const affiliateLinks = (dest.affiliate_links as Record<string, string>) || {};
+  const bookingOutlineBtn = "w-full bg-transparent border-card-foreground/25 text-card-foreground hover:bg-card-foreground/10 hover:text-card-foreground";
 
   return (
     <main className="bg-background min-h-screen">
@@ -333,7 +334,7 @@ const DestinationDetail = () => {
                     </Button>
                   )}
                   {affiliateLinks.hotels_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.hotels_url} target="_blank" rel="noopener noreferrer">
                         <Hotel className="mr-2 h-4 w-4" /> Buscar Hoteles
                       </a>
@@ -347,28 +348,28 @@ const DestinationDetail = () => {
                     </Button>
                   )}
                   {affiliateLinks.tickets_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.tickets_url} target="_blank" rel="noopener noreferrer">
                         <Ticket className="mr-2 h-4 w-4" /> Entradas y Atracciones
                       </a>
                     </Button>
                   )}
                   {affiliateLinks.car_rental_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.car_rental_url} target="_blank" rel="noopener noreferrer">
                         <Car className="mr-2 h-4 w-4" /> Rentar Auto
                       </a>
                     </Button>
                   )}
                   {affiliateLinks.transfer_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.transfer_url} target="_blank" rel="noopener noreferrer">
                         <Bus className="mr-2 h-4 w-4" /> Transfer Aeropuerto
                       </a>
                     </Button>
                   )}
                   {affiliateLinks.insurance_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.insurance_url} target="_blank" rel="noopener noreferrer">
                         <Shield className="mr-2 h-4 w-4" /> Seguro de Viaje
                       </a>
