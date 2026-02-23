@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Compass, MapPin, Mountain, Shield, Star, Sunrise, TreePine, Users } from "lucide-react";
+import { ChevronDown, Compass, MapPin, Mountain, Shield, Star, Sunrise, TreePine, Users, Wind } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const STATS = [
@@ -21,12 +21,21 @@ const FLOATING_ICONS = [
   { Icon: Mountain, top: "18%", left: "8%", size: "h-5 w-5 sm:h-6 sm:w-6", delay: 0, duration: 7 },
   { Icon: TreePine, top: "28%", right: "10%", size: "h-4 w-4 sm:h-5 sm:w-5", delay: 1.5, duration: 8 },
   { Icon: Sunrise, top: "65%", left: "6%", size: "h-4 w-4 sm:h-5 sm:w-5", delay: 3, duration: 6 },
-  { Icon: Compass, top: "60%", right: "7%", size: "h-5 w-5 sm:h-6 sm:w-6", delay: 2, duration: 9 },
+  { Icon: Wind, top: "60%", right: "7%", size: "h-5 w-5 sm:h-6 sm:w-6", delay: 2, duration: 9 },
 ];
 
 const HeroSection = () => {
   const bgRef = useRef<HTMLDivElement>(null);
   const [phraseIndex, setPhraseIndex] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (mq?.matches) setPrefersReducedMotion(true);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mq?.addEventListener("change", handler);
+    return () => mq?.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -39,20 +48,13 @@ const HeroSection = () => {
   }, []);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia
-      ? window.matchMedia("(prefers-reduced-motion: reduce)")
-      : null;
-
-    if (mediaQuery && mediaQuery.matches) {
-      // Respect users who prefer reduced motion by not starting the rotation.
-      return;
-    }
+    if (prefersReducedMotion) return;
 
     const interval = setInterval(() => {
       setPhraseIndex((prev) => (prev + 1) % ROTATING_PHRASES.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [prefersReducedMotion]);
 
   const scrollToQuiz = () => {
     document.getElementById("quiz")?.scrollIntoView({ behavior: "smooth" });
@@ -74,9 +76,9 @@ const HeroSection = () => {
       }} />
 
       {/* Floating decorative icons */}
-      {FLOATING_ICONS.map(({ Icon, top, left, right, size, delay, duration }, i) => (
+      {!prefersReducedMotion && FLOATING_ICONS.map(({ Icon, top, left, right, size, delay, duration }) => (
         <motion.div
-          key={`${Icon.name}-${top}-${left ?? right}-${i}`}
+          key={`${Icon.displayName ?? Icon.name}-${top}-${left ?? right}`}
           className="absolute pointer-events-none hidden sm:block"
           style={{ top, left, right }}
           animate={{ y: [-8, 8, -8], opacity: [0.12, 0.22, 0.12] }}
@@ -129,7 +131,7 @@ const HeroSection = () => {
           <br className="hidden sm:block" />
           <span>Solo necesitas decir: </span>
           {/* min-w sized to fit the longest phrase ("vamos a explorar.") and prevent layout shift */}
-          <span className="inline-block relative h-[1.5em] align-bottom min-w-[140px] sm:min-w-[180px]">
+          <span className="inline-block relative h-[1.5em] align-bottom min-w-[140px] sm:min-w-[180px] overflow-hidden" aria-live="polite">
             <AnimatePresence mode="wait">
               <motion.em
                 key={phraseIndex}
@@ -167,7 +169,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="mt-10 sm:mt-14 inline-flex items-center gap-0 bg-foreground/[0.06] backdrop-blur-md border border-foreground/10 rounded-2xl px-4 py-3 sm:px-6 sm:py-4"
+          className="mt-10 sm:mt-14 inline-flex flex-wrap items-center justify-center gap-0 bg-foreground/[0.06] backdrop-blur-md border border-foreground/10 rounded-2xl px-4 py-3 sm:px-6 sm:py-4"
         >
           {STATS.map(({ icon: Icon, value, label }, idx) => (
             <div key={label} className="flex items-center">
@@ -210,7 +212,7 @@ const HeroSection = () => {
         <div className="w-6 h-10 rounded-full border-2 border-foreground/30 flex items-start justify-center p-1.5">
           <motion.div
             className="w-1.5 h-1.5 rounded-full bg-primary"
-            animate={{ y: [0, 12, 0] }}
+            animate={prefersReducedMotion ? undefined : { y: [0, 12, 0] }}
             transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
           />
         </div>
