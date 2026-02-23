@@ -57,8 +57,8 @@ const TravelInsuranceSection = () => {
             <span className="text-accent">Aventura</span>
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            El 68% de los principiantes viajan sin seguro y un accidente en montaña puede costar más de $10,000 USD.
-            Cotiza en segundos y viaja tranquilo desde menos de $2 USD al día.
+            Muchos principiantes viajan sin seguro y un accidente en montaña puede implicar gastos médicos muy altos.
+            Cotiza en segundos y viaja tranquilo con una cobertura pensada para tus aventuras.
           </p>
         </motion.div>
 
