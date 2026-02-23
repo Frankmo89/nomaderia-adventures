@@ -169,7 +169,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="mt-10 sm:mt-14 inline-flex flex-wrap items-center justify-center gap-0 bg-foreground/[0.06] backdrop-blur-md border border-foreground/10 rounded-2xl px-4 py-3 sm:px-6 sm:py-4"
+          className="mt-10 sm:mt-14 inline-flex flex-wrap items-center justify-center gap-y-2 bg-foreground/[0.06] backdrop-blur-md border border-foreground/10 rounded-2xl px-4 py-3 sm:px-6 sm:py-4"
         >
           {STATS.map(({ icon: Icon, value, label }, idx) => (
             <div key={label} className="flex items-center">
