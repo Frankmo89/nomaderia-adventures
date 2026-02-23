@@ -39,6 +39,15 @@ const HeroSection = () => {
   }, []);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia
+      ? window.matchMedia("(prefers-reduced-motion: reduce)")
+      : null;
+
+    if (mediaQuery && mediaQuery.matches) {
+      // Respect users who prefer reduced motion by not starting the rotation.
+      return;
+    }
+
     const interval = setInterval(() => {
       setPhraseIndex((prev) => (prev + 1) % ROTATING_PHRASES.length);
     }, 3000);
