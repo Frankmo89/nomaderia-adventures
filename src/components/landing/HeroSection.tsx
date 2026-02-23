@@ -81,6 +81,7 @@ const HeroSection = () => {
           style={{ top, left, right }}
           animate={{ y: [-8, 8, -8], opacity: [0.12, 0.22, 0.12] }}
           transition={{ repeat: Infinity, duration, delay, ease: "easeInOut" }}
+          aria-hidden="true"
         >
           <Icon className={`${size} text-foreground/15`} />
         </motion.div>
