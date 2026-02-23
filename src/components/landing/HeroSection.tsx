@@ -118,6 +118,7 @@ const HeroSection = () => {
           <span>No necesitas ser atleta. No necesitas experiencia.</span>
           <br className="hidden sm:block" />
           <span>Solo necesitas decir: </span>
+          {/* min-w sized to fit the longest phrase ("vamos a explorar.") and prevent layout shift */}
           <span className="inline-block relative h-[1.5em] align-bottom min-w-[140px] sm:min-w-[180px]">
             <AnimatePresence mode="wait">
               <motion.em
