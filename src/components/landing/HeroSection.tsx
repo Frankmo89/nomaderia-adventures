@@ -91,7 +91,7 @@ const HeroSection = () => {
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] sm:w-[800px] sm:h-[400px] rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse at center, rgba(232,108,58,0.12) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse at center, hsl(var(--primary) / 0.12) 0%, transparent 70%)",
         }}
       />
 
