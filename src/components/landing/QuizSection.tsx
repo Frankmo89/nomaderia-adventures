@@ -456,7 +456,7 @@ const QuizSection = () => {
               )}
             </AnimatePresence>
             <span aria-live="polite" aria-atomic="true" className="ml-auto text-xs font-medium text-muted-foreground tracking-wide">
-              Pregunta {step + 1} de {steps.length}
+              Pregunta {Math.min(step + 1, steps.length)} de {steps.length}
             </span>
           </div>
 
