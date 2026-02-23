@@ -7,6 +7,7 @@
 2. **Amazon Associates** — Equipo outdoor (botas, bastones, mochilas, cámaras). Tag: `nomaderia-20`. Status: activo.
 3. **Itinerarios Premium** — Servicio personalizado como agente de viajes certificada (TAP Test, The Travel Institute). Formulario en `itinerary_requests` → contacto directo. Rango: $250-$2,000 USD.
 4. **Newsletter** → Futuro: email marketing con ofertas de afiliado segmentadas por quiz responses.
+5. **Seguros de Viaje** — Sección "Protege Tu Aventura" en homepage. Comisiones vía Travelpayouts (red de seguros, ya aprobada). Componente: `TravelInsuranceSection.tsx`. Relevancia alta para principiantes que no consideran seguro para aventuras outdoor. Comisión típica: 15-30% por póliza.
 
 ### Funnel de Conversión
 ```
@@ -15,6 +16,8 @@ Google (SEO) → Blog / Destino → Quiz → Email capture → Recomendación de
               Gear article → Amazon affiliate          Affiliate links (vuelos/hoteles)
                     ↓                                        ↓
               Premium itinerary request              Travelpayouts comisión
+                                                             ↓
+                                                   Seguro de viaje → Travelpayouts comisión
 ```
 
 ## SEO
