@@ -7,7 +7,7 @@ const STATS = [
   { icon: MapPin, value: "30+", label: "Destinos" },
   { icon: Users, value: "10k+", label: "Aventureros" },
   { icon: Star, value: "4.9", label: "Valoración" },
-  { icon: Shield, value: "100%", label: "Seguro" },
+  { icon: Shield, value: "Con", label: "Seguro" },
 ];
 
 const ROTATING_PHRASES = [
