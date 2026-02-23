@@ -6,6 +6,7 @@ import DestinationsCatalog from "@/components/landing/DestinationsCatalog";
 import GearPreview from "@/components/landing/GearPreview";
 import BlogPreview from "@/components/landing/BlogPreview";
 import SocialProof from "@/components/landing/SocialProof";
+import TravelInsuranceSection from "@/components/landing/TravelInsuranceSection";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
@@ -43,6 +44,7 @@ const Index = () => {
       <GearPreview />
       <BlogPreview />
       <SocialProof />
+      <TravelInsuranceSection />
       <PremiumItinerarySection />
       <NewsletterSignup />
       <Footer />
