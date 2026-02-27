@@ -153,7 +153,7 @@ const BudgetCalculator = () => {
       totalLow,
       totalHigh,
     };
-  }, [calculated, comfort, days, r, selectedDest, origin]);
+  }, [calculated, days, r, selectedDest, origin]);
 
   const handleCalculate = () => {
     if (selectedSlug && days > 0) setCalculated(true);
