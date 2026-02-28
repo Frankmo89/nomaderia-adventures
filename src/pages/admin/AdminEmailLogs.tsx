@@ -66,8 +66,8 @@ const AdminEmailLogs = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await (supabase as unknown as { from: (t: string) => { select: (q: string) => { order: (col: string, opts: object) => Promise<{ data: EmailLog[] | null }> } } })
-        .from("email_drip_log")
+      const { data } = await supabase
+        .from<EmailLog>("email_drip_log")
         .select("*")
         .order("sent_at", { ascending: false });
       setItems(data || []);
