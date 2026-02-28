@@ -229,48 +229,82 @@ const ResultCard = ({ d, index }: { d: QuizDestination; index: number }) => (
   >
     <Link
       to={`/destinos/${d.slug}`}
-      className="block rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 active:scale-[0.98] sm:hover:scale-[1.02] group relative"
+      className="block rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 active:scale-[0.98] sm:hover:scale-[1.02] group bg-card border border-border"
     >
-      <div className={`relative overflow-hidden ${index === 0 ? "h-64 sm:h-80" : "h-52 sm:h-56"}`}>
+      {/* Imagen con overlays mínimos */}
+      <div className={`relative overflow-hidden ${index === 0 ? "h-48 sm:h-72" : "h-40 sm:h-52"}`}>
         {d.hero_image_url ? (
-          <img src={d.hero_image_url} alt={`Vista de ${d.title}`} loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <img
+            src={d.hero_image_url}
+            alt={`Vista de ${d.title}`}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        <div className="absolute top-4 left-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+
+        {/* MatchRing — top left */}
+        <div className="absolute top-3 left-3">
           <MatchRing percent={d.matchPercent} />
         </div>
-        <div className="absolute top-4 right-4">
+
+        {/* Difficulty badge — top right */}
+        <div className="absolute top-3 right-3">
           <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${difficultyColor[d.difficulty_level]}`}>
             {difficultyLabel[d.difficulty_level]}
           </span>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-          <h3 className={`font-serif font-bold text-foreground mb-1 ${index === 0 ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"}`}
-            style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
-            {d.title}
-          </h3>
-          <p className="text-sm text-foreground/80 mb-2" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
-            {countryFlag[d.country] ?? ""} {d.country} · {d.days_needed} · ~${d.estimated_budget_usd} USD
-          </p>
-          {d.matchReasons.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3" aria-label="Razones de match">
-              {d.matchReasons.slice(0, 2).map((reason, ri) => (
-                <span key={ri} className="text-xs bg-primary/20 text-primary-foreground/90 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                  {reason}
-                </span>
-              ))}
-            </div>
-          )}
-          <p className="text-sm text-foreground/70 line-clamp-2 mb-4" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+      </div>
+
+      {/* Contenido debajo de la imagen */}
+      <div className="p-4 sm:p-5 space-y-2.5">
+        <h3
+          className={`font-serif font-bold text-foreground leading-tight ${
+            index === 0 ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
+          }`}
+        >
+          {d.title}
+        </h3>
+
+        <p className="text-sm text-muted-foreground">
+          {(() => {
+            const countryLabel = `${countryFlag[d.country] ?? ""} ${d.country}`.trim();
+            const daysLabel = d.days_needed ?? "—";
+            const budgetLabel =
+              d.estimated_budget_usd != null
+                ? `~$${new Intl.NumberFormat("en-US", {
+                    maximumFractionDigits: 0,
+                  }).format(d.estimated_budget_usd)} USD`
+                : null;
+            return [countryLabel, daysLabel, budgetLabel].filter(Boolean).join(" · ");
+          })()}
+        </p>
+
+        {d.matchReasons.length > 0 && (
+          <div className="flex flex-wrap gap-1.5" aria-label="Razones de match">
+            {d.matchReasons.slice(0, 2).map((reason, ri) => (
+              <span
+                key={ri}
+                className="text-xs bg-primary/15 text-primary px-2.5 py-0.5 rounded-full"
+              >
+                {reason}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {d.short_description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">
             {d.short_description}
           </p>
-          <span className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold shadow-lg shadow-primary/30 transition-colors">
-            Ver Guía Completa <ArrowRight className="h-4 w-4" />
-          </span>
-        </div>
+        )}
+
+        <span className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold shadow-lg shadow-primary/30 transition-colors mt-1">
+          Ver Guía Completa <ArrowRight className="h-4 w-4" />
+        </span>
       </div>
     </Link>
   </motion.div>
