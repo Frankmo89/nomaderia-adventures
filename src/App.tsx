@@ -35,6 +35,7 @@ const AdminSubscribers = lazy(() => import("./pages/admin/AdminSubscribers"));
 const AdminItineraryRequests = lazy(() => import("./pages/admin/AdminItineraryRequests"));
 const AdminBlogPosts = lazy(() => import("./pages/admin/AdminBlogPosts"));
 const AdminBlogPostForm = lazy(() => import("./pages/admin/AdminBlogPostForm"));
+const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,6 +87,7 @@ const App = () => (
                 <Route path="blog-posts" element={<AdminBlogPosts />} />
                 <Route path="blog-posts/new" element={<AdminBlogPostForm />} />
                 <Route path="blog-posts/:id/edit" element={<AdminBlogPostForm />} />
+                <Route path="email-logs" element={<AdminEmailLogs />} />
               </Route>
               <Route path="*" element={<NotFound />} />
               </Routes>

@@ -21,6 +21,15 @@
 - [ ] Agregar hero images a destinos sin imagen
 - [ ] Completar affiliate links reales en destinos desde `/admin`
 
+### 🔑 Secrets de Supabase (requieren acción)
+- [ ] Configurar `RESEND_API_KEY` en Supabase Dashboard > Edge Functions > Secrets
+  - Obtener en https://resend.com/api-keys
+  - Comando: `supabase secrets set RESEND_API_KEY=re_xxxxx`
+- [ ] Configurar `SITE_URL` en los mismos secrets
+  - Comando: `supabase secrets set SITE_URL=https://nomaderia.com`
+- [ ] Habilitar extensión `pg_cron` en Supabase Dashboard > Database > Extensions
+  - Alternativa sin pg_cron: usar cron-job.org (gratis) con POST diario a la Edge Function
+
 ### 🔧 Código Pendiente
 - [ ] Eliminar `supabase as any` en:
   - `src/pages/admin/AdminItineraryRequests.tsx:56`
@@ -62,6 +71,18 @@
 - GearListing: usePageMeta, JSON-LD CollectionPage, fecha en cada card
 - Patrón ahora consistente en blog, destinos y gear
 
+### ✅ Email Drip Sequence Completo (Febrero 2026)
+- Tabla `email_drip_log` con RLS e índice para deduplicación
+- Edge Function `send-quiz-email` — Email 1 inmediato al completar quiz (ya existente, integrada)
+- Edge Function `send-drip-emails` — Emails 2 (gear guide, 3 días) y 3 (itinerary CTA, 7 días)
+- `use-quiz.ts` — Bug fix: eliminado código `emailError` fuera de scope + `failed_email_events` inexistente
+- `AdminEmailLogs.tsx` — Panel admin con tabla de logs, badges por tipo/estado, exportar CSV
+- `AdminDashboard.tsx` — Nueva stat card "Emails Enviados" con conteo desde `email_drip_log`
+- `AdminLayout.tsx` + `App.tsx` — Ruta `/admin/email-logs` con ícono 📧 en sidebar
+- Migración pg_cron: cron job diario 16:00 UTC (10:00 AM CT) para `send-drip-emails`
+- **Pendiente del dueño:** Configurar `RESEND_API_KEY` en Supabase secrets
+- **Pendiente del dueño:** Habilitar pg_cron en Dashboard > Database > Extensions
+
 ### ✅ Email Marketing Post-Quiz (Febrero 2026)
 - Supabase Edge Function `send-quiz-email` envía email personalizado via Resend API
 - Se llama desde `use-quiz.ts` después de guardar respuesta del quiz
@@ -91,7 +112,11 @@ Siempre que hagas cambios al código:
 
 ## Pendientes Futuros
 
-### 📧 Emails Futuros (pendientes)
+### 📧 Emails Futuros
+- Email 4 — Re-engagement a los 30 días para usuarios que no han vuelto al sitio
+- Tracking de opens/clicks con Resend webhooks → tabla `email_events`
+
+### 📧 Emails Futuros (pendientes — archivo histórico)
 - Email 2 (3 días post-quiz): "5 cosas que desearía saber antes de mi primera aventura" — contenido educativo + gear
 - Email 3 (7 días post-quiz): Oferta directa itinerario personalizado con precios
 - Requiere: tabla email_queue + Supabase scheduled function o pg_cron
