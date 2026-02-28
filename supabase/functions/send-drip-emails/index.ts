@@ -315,12 +315,24 @@ serve(async (req) => {
           errorMessage = err instanceof Error ? err.message : String(err);
           console.error(`Error sending itinerary_cta to ${sub.email}:`, errorMessage);
         }
-        await supabase.from("email_drip_log").insert({
+        const { error: logError } = await supabase.from("email_drip_log").insert({
           email: sub.email,
           email_type: "itinerary_cta",
           status,
           error_message: errorMessage,
         });
+        if (logError) {
+          console.error("Error inserting email_drip_log for itinerary_cta", {
+            email: sub.email,
+            status,
+            errorMessage,
+            logError,
+          });
+          return new Response(
+            JSON.stringify({ error: "Failed to persist email drip log for itinerary_cta" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
         await delay(200);
       }
     }
