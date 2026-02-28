@@ -1,7 +1,8 @@
 import { useState } from "react";
+import type { ImgHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface OptimizedImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   alt: string;
   lazy?: boolean;
@@ -15,7 +16,8 @@ const OptimizedImage = ({
   lazy = true,
   width,
   height,
-  className,
+  className: externalClassName,
+  onLoad: externalOnLoad,
   ...props
 }: OptimizedImageProps) => {
   const [loaded, setLoaded] = useState(false);
@@ -31,17 +33,20 @@ const OptimizedImage = ({
       <img
         src={src}
         alt={alt}
+        {...props}
         loading={lazy ? "lazy" : "eager"}
         decoding={lazy ? "async" : "sync"}
         width={width}
         height={height}
-        onLoad={() => setLoaded(true)}
+        onLoad={(e) => {
+          setLoaded(true);
+          externalOnLoad?.(e);
+        }}
         className={cn(
           "transition-opacity duration-300",
           loaded ? "opacity-100" : "opacity-0",
-          className
+          externalClassName
         )}
-        {...props}
       />
     </div>
   );
