@@ -270,7 +270,17 @@ const ResultCard = ({ d, index }: { d: QuizDestination; index: number }) => (
         </h3>
 
         <p className="text-sm text-muted-foreground">
-          {countryFlag[d.country] ?? ""} {d.country} · {d.days_needed} · ~${d.estimated_budget_usd} USD
+          {(() => {
+            const countryLabel = `${countryFlag[d.country] ?? ""} ${d.country}`.trim();
+            const daysLabel = d.days_needed ?? "—";
+            const budgetLabel =
+              d.estimated_budget_usd != null
+                ? `~$${new Intl.NumberFormat("en-US", {
+                    maximumFractionDigits: 0,
+                  }).format(d.estimated_budget_usd)} USD`
+                : null;
+            return [countryLabel, daysLabel, budgetLabel].filter(Boolean).join(" · ");
+          })()}
         </p>
 
         {d.matchReasons.length > 0 && (
