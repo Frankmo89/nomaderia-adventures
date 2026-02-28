@@ -33,7 +33,7 @@ export const useCanonical = () => {
 /**
  * Injects a JSON-LD script tag and removes it on unmount.
  */
-export const useJsonLd = (data: Record<string, any> | null) => {
+export const useJsonLd = (data: Record<string, unknown> | null) => {
   useEffect(() => {
     if (!data) return;
 

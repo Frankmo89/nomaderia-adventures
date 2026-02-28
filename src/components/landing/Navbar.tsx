@@ -124,8 +124,7 @@ const Navbar = () => {
             {/* Nav links */}
             <nav className="flex-1 flex flex-col justify-center items-center gap-6 px-8">
               {navLinks.map((link, i) => {
-                const Component = link.href.startsWith("/") ? Link : "a";
-                const linkProps = link.href.startsWith("/") ? { to: link.href } : { href: link.href };
+                const className = "text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors min-h-[48px] flex items-center";
                 return (
                   <motion.div
                     key={link.label}
@@ -133,13 +132,15 @@ const Navbar = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08 }}
                   >
-                    <Component
-                      {...(linkProps as any)}
-                      onClick={() => setOpen(false)}
-                      className="text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors min-h-[48px] flex items-center"
-                    >
-                      {link.label}
-                    </Component>
+                    {link.href.startsWith("/") ? (
+                      <Link to={link.href} onClick={() => setOpen(false)} className={className}>
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a href={link.href} onClick={() => setOpen(false)} className={className}>
+                        {link.label}
+                      </a>
+                    )}
                   </motion.div>
                 );
               })}

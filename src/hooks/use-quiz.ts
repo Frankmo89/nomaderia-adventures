@@ -110,9 +110,22 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
   },
 
   trip_duration: (answer, dest) => {
-    const days = (dest as any).days_needed;
+    const parseDays = (value: unknown): number => {
+      if (value == null) return NaN;
+      if (typeof value === "number") return value;
+      if (typeof value === "string") {
+        const match = value.match(/\d+/);
+        if (match) {
+          const parsed = parseInt(match[0], 10);
+          return Number.isNaN(parsed) ? NaN : parsed;
+        }
+      }
+      return NaN;
+    };
+
+    const days = parseDays(dest.days_needed);
     if (answer === "weekend") {
-      if (typeof days === "number" && days <= 3) {
+      if (!isNaN(days) && days <= 3) {
         return { points: 2, reason: "Perfecto para escapada corta" };
       }
       const desc = dest.short_description?.toLowerCase() ?? "";
@@ -120,11 +133,11 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
         return { points: 2, reason: "Perfecto para escapada corta" };
       }
     } else if (answer === "one_week") {
-      if (typeof days === "number" && days >= 4 && days <= 8) {
+      if (!isNaN(days) && days >= 4 && days <= 8) {
         return { points: 2, reason: "Ideal para una semana" };
       }
     } else if (answer === "two_weeks") {
-      if (typeof days === "number" && days >= 9 && days <= 16) {
+      if (!isNaN(days) && days >= 9 && days <= 16) {
         return { points: 2, reason: "Aventura extendida perfecta" };
       }
     }

@@ -30,7 +30,7 @@ const Index = () => {
         "query-input": "required name=search_term_string",
       },
     }),
-    [SITE_URL]
+    []
   );
 
   useJsonLd(jsonLdData);
