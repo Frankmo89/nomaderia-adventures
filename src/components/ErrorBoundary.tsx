@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
         return (
           <div className="min-h-screen bg-background flex items-center justify-center px-5">
             <div className="text-center max-w-md space-y-4">
-              <span className="text-4xl block">📡</span>
+              <span className="text-4xl block" aria-hidden="true">📡</span>
               <h1 className="font-serif text-2xl text-foreground">
                 Problema de conexión
               </h1>
