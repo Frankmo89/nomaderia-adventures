@@ -54,7 +54,7 @@ const AdminGearArticleForm = () => {
 
   const addProduct = () => setProducts([...products, emptyProduct()]);
   const removeProduct = (i: number) => setProducts(products.filter((_, idx) => idx !== i));
-  const updateProduct = (i: number, key: keyof Product, val: Product[keyof Product]) =>
+  const updateProduct = <K extends keyof Product>(i: number, key: K, val: Product[K]) =>
     setProducts(products.map((p, idx) => (idx === i ? { ...p, [key]: val } : p)));
 
   return (
