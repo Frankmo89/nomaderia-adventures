@@ -14,7 +14,8 @@ export interface QuizStep {
   question: string;
   subtitle?: string;
   key: string;
-  options: QuizOption[];
+  type?: "combined";
+  options?: QuizOption[];
 }
 
 export interface QuizDestination {
@@ -194,12 +195,15 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
     const region = (dest.region || "").toLowerCase();
     const title = (dest.title || "").toLowerCase();
 
-    // Proximity scoring by origin
+    // Proximity scoring by origin zone
     const proximityMap: Record<string, string[]> = {
-      mexico: ["méxico", "estados unidos", "usa", "joshua", "gran cañón", "yosemite"],
-      usa: ["estados unidos", "usa", "joshua", "yosemite", "gran cañón", "méxico"],
-      colombia: ["colombia", "perú", "ecuador", "chile", "patagonia"],
+      mx_border: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california"],
+      mx_center: ["méxico", "nevado", "toluca"],
+      mx_south: ["méxico"],
+      us_southwest: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california"],
+      us_other: ["estados unidos", "usa"],
       spain: ["españa", "camino", "santiago", "europa"],
+      south_america: ["chile", "argentina", "patagonia", "torres del paine", "ushuaia", "perú", "colombia"],
       other: [],
     };
 
@@ -382,6 +386,12 @@ export function useQuiz(totalSteps: number) {
 
   const handleShowEmailCapture = () => setShowEmailCapture(true);
 
+  const handleCombinedSubmit = (fields: Record<string, string>) => {
+    setAnswers((prev) => ({ ...prev, ...fields }));
+    setDirection(1);
+    setStep(totalSteps);
+  };
+
   return {
     step, answers, email, setEmail,
     showResults, showEmailCapture, emailSubmitted,
@@ -389,5 +399,6 @@ export function useQuiz(totalSteps: number) {
     direction, isQuizDone,
     handleSelect, handleBack, handleSwipe,
     fetchResults, handleEmailSubmit, handleShowEmailCapture,
+    handleCombinedSubmit,
   };
 }

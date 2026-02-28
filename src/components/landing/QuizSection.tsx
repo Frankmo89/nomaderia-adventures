@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass, Check,
@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Link } from "react-router-dom";
 import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizStep } from "@/hooks/use-quiz";
@@ -21,6 +24,24 @@ const difficultyLabel: Record<string, string> = { easy: "Fácil", moderate: "Mod
 const countryFlag: Record<string, string> = {
   México: "🇲🇽", "Estados Unidos": "🇺🇸", España: "🇪🇸", Argentina: "🇦🇷", Nepal: "🇳🇵",
 };
+
+const seasonOptions = [
+  { label: "El próximo mes", value: "next_month" },
+  { label: "En 3 meses", value: "three_months" },
+  { label: "En 6 meses", value: "six_months" },
+  { label: "Soy flexible", value: "flexible" },
+];
+
+const originOptions = [
+  { label: "Frontera MX-USA (Tijuana, Mexicali, Juárez)", value: "mx_border" },
+  { label: "Centro de México (CDMX, Guadalajara, Puebla)", value: "mx_center" },
+  { label: "Sur/Sureste de México (Cancún, Oaxaca, Veracruz)", value: "mx_south" },
+  { label: "California / Suroeste USA (San Diego, LA, Phoenix)", value: "us_southwest" },
+  { label: "Otro estado de EE.UU.", value: "us_other" },
+  { label: "España", value: "spain" },
+  { label: "Sudamérica", value: "south_america" },
+  { label: "Otro país", value: "other" },
+];
 
 const steps: QuizStep[] = [
   {
@@ -67,26 +88,10 @@ const steps: QuizStep[] = [
     ],
   },
   {
-    question: "¿Cuándo te gustaría ir?",
-    subtitle: "Algunos destinos tienen temporada ideal",
-    key: "season",
-    options: [
-      { label: "El próximo mes", value: "next_month", icon: <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "⏰", description: "Ya quiero irme" },
-      { label: "En 3 meses", value: "three_months", icon: <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "📅", description: "Tiempo para planear" },
-      { label: "En 6 meses", value: "six_months", icon: <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🗓️", description: "Con calma" },
-      { label: "Soy flexible", value: "flexible", icon: <Compass className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🤷", description: "Cuando sea" },
-    ],
-  },
-  {
-    question: "¿Desde dónde viajarías?",
-    subtitle: "Para recomendarte destinos más accesibles",
-    key: "origin",
-    options: [
-      { label: "México", value: "mexico", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇲🇽", description: "Proximidad a EE.UU. y Centroamérica" },
-      { label: "Estados Unidos", value: "usa", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇺🇸", description: "Acceso directo a América del Norte" },
-      { label: "España", value: "spain", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🇪🇸", description: "Punto de partida ideal para Europa y el Mediterráneo" },
-      { label: "Otro país", value: "other", icon: <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />, emoji: "🌎", description: "Recomendaciones ajustadas a tu región de origen" },
-    ],
+    question: "Últimos detalles",
+    subtitle: "Para afinar tus recomendaciones",
+    key: "combined",
+    type: "combined",
   },
 ];
 
@@ -381,7 +386,11 @@ const QuizSection = () => {
     direction, isQuizDone,
     handleSelect, handleBack, handleSwipe,
     fetchResults, handleEmailSubmit, handleShowEmailCapture,
+    handleCombinedSubmit,
   } = useQuiz(steps.length);
+
+  const [combinedSeason, setCombinedSeason] = useState("");
+  const [combinedOrigin, setCombinedOrigin] = useState("");
 
   useEffect(() => {
     if (isQuizDone && !showResults && !loading) {
@@ -391,6 +400,21 @@ const QuizSection = () => {
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
     handleSwipe(info.offset.x, step, answers, steps[step]?.key ?? "");
+  };
+
+  const currentStep = steps[Math.min(step, steps.length - 1)];
+  const isCombinedStep = currentStep?.type === "combined";
+
+  const dragProps = isCombinedStep ? {} : {
+    drag: "x" as const,
+    dragConstraints: { left: 0, right: 0 },
+    dragElastic: 0.15,
+    onDragEnd,
+  };
+
+  const onCombinedSubmit = () => {
+    if (!combinedSeason || !combinedOrigin) return;
+    handleCombinedSubmit({ season: combinedSeason, origin: combinedOrigin });
   };
 
   if (loading && !showResults) return (
@@ -498,74 +522,120 @@ const QuizSection = () => {
             <motion.div key={step} custom={direction}
               initial={{ opacity: 0, x: direction * 60 }} animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: direction * -60 }} transition={{ duration: 0.3 }}
-              drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.15} onDragEnd={onDragEnd}>
+              {...dragProps}>
               <h3 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mb-1.5">
-                {steps[Math.min(step, steps.length - 1)]?.question}
+                {currentStep?.question}
               </h3>
-              {steps[Math.min(step, steps.length - 1)]?.subtitle && (
+              {currentStep?.subtitle && (
                 <p className="text-muted-foreground text-sm mb-6">
-                  {steps[Math.min(step, steps.length - 1)]?.subtitle}
+                  {currentStep.subtitle}
                 </p>
               )}
 
-              <div className="space-y-3 mt-5">
-                {steps[Math.min(step, steps.length - 1)]?.options?.map((opt) => {
-                  const isSelected =
-                    answers[steps[Math.min(step, steps.length - 1)].key] === opt.value;
-                  return (
-                    <motion.button
-                      key={opt.value}
-                      onClick={() =>
-                        handleSelect(
-                          steps[Math.min(step, steps.length - 1)].key,
-                          opt.value
-                        )
-                      }
-                      whileTap={{ scale: 0.985 }}
-                      className={cn(
-                        "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left group",
-                        isSelected
-                          ? "border-primary bg-primary/10 shadow-md shadow-primary/10"
-                          : "border-border hover:border-primary/40 hover:bg-muted/40"
-                      )}
-                    >
-                      {/* Emoji tile */}
-                      <div className={cn(
-                        "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-all duration-200",
-                        isSelected ? "bg-primary/20" : "bg-muted group-hover:bg-muted/80"
-                      )}>
-                        {opt.emoji}
-                      </div>
+              {isCombinedStep ? (
+                <div className="space-y-5 mt-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      ¿Cuándo te gustaría ir?
+                    </label>
+                    <Select value={combinedSeason} onValueChange={setCombinedSeason}>
+                      <SelectTrigger className="bg-muted border-border text-foreground h-11">
+                        <SelectValue placeholder="Selecciona temporada" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {seasonOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                      {/* Label + description */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm sm:text-base font-medium text-foreground leading-snug">
-                          {opt.label}
-                        </p>
-                        {opt.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                            {opt.description}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      ¿Desde qué zona viajarías?
+                    </label>
+                    <Select value={combinedOrigin} onValueChange={setCombinedOrigin}>
+                      <SelectTrigger className="bg-muted border-border text-foreground h-11">
+                        <SelectValue placeholder="Selecciona tu zona" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {originOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    onClick={onCombinedSubmit}
+                    disabled={!combinedSeason || !combinedOrigin}
+                    className="w-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 h-11 mt-2"
+                  >
+                    Ver Mis Resultados <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3 mt-5">
+                  {currentStep?.options?.map((opt) => {
+                    const isSelected = answers[currentStep.key] === opt.value;
+                    return (
+                      <motion.button
+                        key={opt.value}
+                        onClick={() => handleSelect(currentStep.key, opt.value)}
+                        whileTap={{ scale: 0.985 }}
+                        className={cn(
+                          "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left group",
+                          isSelected
+                            ? "border-primary bg-primary/10 shadow-md shadow-primary/10"
+                            : "border-border hover:border-primary/40 hover:bg-muted/40"
+                        )}
+                      >
+                        {/* Emoji tile */}
+                        <div className={cn(
+                          "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-all duration-200",
+                          isSelected ? "bg-primary/20" : "bg-muted group-hover:bg-muted/80"
+                        )}>
+                          {opt.emoji}
+                        </div>
+
+                        {/* Label + description */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm sm:text-base font-medium text-foreground leading-snug">
+                            {opt.label}
                           </p>
-                        )}
-                      </div>
+                          {opt.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                              {opt.description}
+                            </p>
+                          )}
+                        </div>
 
-                      {/* Selection indicator */}
-                      <div className={cn(
-                        "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200",
-                        isSelected ? "border-primary bg-primary" : "border-border"
-                      )}>
-                        {isSelected && (
-                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                            <Check className="h-3 w-3 text-primary-foreground" />
-                          </motion.div>
-                        )}
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
+                        {/* Selection indicator */}
+                        <div className={cn(
+                          "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200",
+                          isSelected ? "border-primary bg-primary" : "border-border"
+                        )}>
+                          {isSelected && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+                              <Check className="h-3 w-3 text-primary-foreground" />
+                            </motion.div>
+                          )}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              )}
 
-              <p className="text-xs text-muted-foreground mt-5 text-center sm:hidden">← Desliza para navegar →</p>
+              {!isCombinedStep && (
+                <p className="text-xs text-muted-foreground mt-5 text-center sm:hidden">← Desliza para navegar →</p>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
