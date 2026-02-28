@@ -9,7 +9,9 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   process.env.VITE_SUPABASE_ANON_KEY;
-const SITE_URL = process.env.VITE_SITE_URL || "https://nomaderia.com";
+const SITE_URL =
+  process.env.VITE_SITE_URL ||
+  "https://nomaderia.com";
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.warn(
@@ -22,19 +24,19 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const { data: destinations, error: destErr } = await supabase
   .from("destinations")
-  .select("slug")
+  .select("slug, updated_at")
   .eq("is_published", true)
   .order("title");
 
 const { data: blogs, error: blogErr } = await supabase
   .from("blog_posts")
-  .select("slug")
+  .select("slug, updated_at")
   .eq("is_published", true)
   .order("title");
 
 const { data: gear, error: gearErr } = await supabase
   .from("gear_articles")
-  .select("slug")
+  .select("slug, updated_at")
   .eq("is_published", true)
   .order("title");
 
@@ -47,29 +49,51 @@ if (destErr || blogErr || gearErr) {
   process.exit(1);
 }
 
-const destSlugs = (destinations ?? []).map((d: { slug: string }) => d.slug);
-const blogSlugs = (blogs ?? []).map((b: { slug: string }) => b.slug);
-const gearSlugs = (gear ?? []).map((g: { slug: string }) => g.slug);
+const destSlugs = (destinations ?? []) as {
+  slug: string;
+  updated_at: string;
+}[];
+const blogSlugs = (blogs ?? []) as {
+  slug: string;
+  updated_at: string;
+}[];
+const gearSlugs = (gear ?? []) as {
+  slug: string;
+  updated_at: string;
+}[];
 
-console.log(`Destinations (${destSlugs.length}):`, destSlugs);
-console.log(`Blog posts  (${blogSlugs.length}):`, blogSlugs);
-console.log(`Gear articles (${gearSlugs.length}):`, gearSlugs);
+console.log(
+  `Destinations (${destSlugs.length}):`,
+  destSlugs.map((d) => d.slug)
+);
+console.log(
+  `Blog posts  (${blogSlugs.length}):`,
+  blogSlugs.map((b) => b.slug)
+);
+console.log(
+  `Gear articles (${gearSlugs.length}):`,
+  gearSlugs.map((g) => g.slug)
+);
 
 function url(
   loc: string,
   changefreq: string,
-  priority: string
+  priority: string,
+  lastmod?: string
 ): string {
-  return `  <url>\n    <loc>${loc}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+  const lastmodTag = lastmod
+    ? `\n    <lastmod>${lastmod.slice(0, 10)}</lastmod>`
+    : "";
+  return `  <url>\n    <loc>${loc}</loc>${lastmodTag}\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
 
 const staticPages = [
-  url(`${SITE_URL}/`, "weekly", "1.0"),
+  url(`${SITE_URL}/`, "daily", "1.0"),
   url(`${SITE_URL}/gear`, "weekly", "0.8"),
   url(`${SITE_URL}/blog`, "weekly", "0.8"),
-  url(`${SITE_URL}/calculadora`, "monthly", "0.6"),
+  url(`${SITE_URL}/calculadora`, "monthly", "0.5"),
   url(`${SITE_URL}/sobre-nosotros`, "monthly", "0.5"),
-  url(`${SITE_URL}/privacidad`, "yearly", "0.3"),
+  url(`${SITE_URL}/privacidad`, "yearly", "0.5"),
 ];
 
 const lines: string[] = [
@@ -81,22 +105,22 @@ const lines: string[] = [
 
 if (destSlugs.length > 0) {
   lines.push("", "  <!-- Destinos -->");
-  for (const slug of destSlugs) {
-    lines.push(url(`${SITE_URL}/destinos/${slug}`, "monthly", "0.9"));
+  for (const { slug, updated_at } of destSlugs) {
+    lines.push(url(`${SITE_URL}/destinos/${slug}`, "monthly", "0.9", updated_at));
   }
 }
 
 if (gearSlugs.length > 0) {
   lines.push("", "  <!-- Gear Articles -->");
-  for (const slug of gearSlugs) {
-    lines.push(url(`${SITE_URL}/gear/${slug}`, "monthly", "0.8"));
+  for (const { slug, updated_at } of gearSlugs) {
+    lines.push(url(`${SITE_URL}/gear/${slug}`, "weekly", "0.7", updated_at));
   }
 }
 
 if (blogSlugs.length > 0) {
   lines.push("", "  <!-- Blog Posts -->");
-  for (const slug of blogSlugs) {
-    lines.push(url(`${SITE_URL}/blog/${slug}`, "weekly", "0.7"));
+  for (const { slug, updated_at } of blogSlugs) {
+    lines.push(url(`${SITE_URL}/blog/${slug}`, "weekly", "0.7", updated_at));
   }
 }
 
