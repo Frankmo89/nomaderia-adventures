@@ -110,7 +110,20 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
   },
 
   trip_duration: (answer, dest) => {
-    const days = dest.days_needed != null ? Number(dest.days_needed) : NaN;
+    const parseDays = (value: unknown): number => {
+      if (value == null) return NaN;
+      if (typeof value === "number") return value;
+      if (typeof value === "string") {
+        const match = value.match(/\d+/);
+        if (match) {
+          const parsed = parseInt(match[0], 10);
+          return Number.isNaN(parsed) ? NaN : parsed;
+        }
+      }
+      return NaN;
+    };
+
+    const days = parseDays(dest.days_needed);
     if (answer === "weekend") {
       if (!isNaN(days) && days <= 3) {
         return { points: 2, reason: "Perfecto para escapada corta" };
