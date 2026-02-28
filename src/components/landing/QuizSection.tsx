@@ -286,9 +286,11 @@ const ResultCard = ({ d, index }: { d: QuizDestination; index: number }) => (
           </div>
         )}
 
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {d.short_description}
-        </p>
+        {d.short_description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {d.short_description}
+          </p>
+        )}
 
         <span className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold shadow-lg shadow-primary/30 transition-colors mt-1">
           Ver Guía Completa <ArrowRight className="h-4 w-4" />
