@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3 } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ interface Stats {
   quiz: number;
   subscribers: number;
   itineraryRequests: number;
+  emailsSent: number;
 }
 
 interface RecentItem {
@@ -66,7 +67,7 @@ const AdminDashboard = () => {
     destinations: 0, destinationDrafts: 0,
     gear: 0, gearDrafts: 0,
     blog: 0, blogDrafts: 0,
-    quiz: 0, subscribers: 0, itineraryRequests: 0,
+    quiz: 0, subscribers: 0, itineraryRequests: 0, emailsSent: 0,
   });
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [quizAnalytics, setQuizAnalytics] = useState<{
@@ -78,7 +79,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [dPub, dDraft, gPub, gDraft, bPub, bDraft, q, s, ir, recentD, recentG, recentB] = await Promise.all([
+      const [dPub, dDraft, gPub, gDraft, bPub, bDraft, q, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", false),
         supabase.from("gear_articles").select("id", { count: "exact", head: true }).eq("is_published", true),
@@ -88,6 +89,7 @@ const AdminDashboard = () => {
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
         supabase.from("itinerary_requests").select("id", { count: "exact", head: true }),
+        (supabase as unknown as { from: (t: string) => { select: (q: string, opts: object) => Promise<{ count: number | null }> } }).from("email_drip_log").select("id", { count: "exact", head: true }),
         supabase.from("destinations").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
         supabase.from("gear_articles").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
         supabase.from("blog_posts").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
@@ -102,6 +104,7 @@ const AdminDashboard = () => {
         quiz: q.count || 0,
         subscribers: s.count || 0,
         itineraryRequests: ir.count || 0,
+        emailsSent: emailsSent.count || 0,
       });
       const combined: RecentItem[] = [
         ...(recentD.data || []).map((r) => ({ ...r, type: "destination" as const, is_published: r.is_published ?? false })),
@@ -136,7 +139,7 @@ const AdminDashboard = () => {
       <h1 className="font-serif text-3xl text-foreground mb-8">Dashboard</h1>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-card-foreground/70">Destinos</CardTitle>
@@ -195,6 +198,17 @@ const AdminDashboard = () => {
           <CardContent>
             <p className="text-3xl font-bold text-card-foreground">{stats.subscribers}</p>
             <p className="text-xs text-muted-foreground mt-1">{stats.quiz} quiz response{stats.quiz !== 1 ? "s" : ""}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-card-foreground/70">Emails Enviados</CardTitle>
+            <Mail className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-card-foreground">{stats.emailsSent}</p>
+            <p className="text-xs text-muted-foreground mt-1">drip sequence</p>
           </CardContent>
         </Card>
       </div>

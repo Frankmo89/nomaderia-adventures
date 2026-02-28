@@ -370,17 +370,6 @@ export function useQuiz(totalSteps: number) {
           // No bloquear la UI si el email falla
           console.error("Error enviando email:", emailError);
         }
-        const serializedError =
-          emailError instanceof Error
-            ? { message: emailError.message, name: emailError.name, stack: emailError.stack }
-            : { message: String(emailError) };
-        // Guardar intento fallido de envío de email para revisión posterior
-        await supabase.from("failed_email_events").insert({
-          email,
-          context: "quiz_results",
-          error: serializedError,
-          created_at: new Date().toISOString(),
-        });
       }
       setEmailSubmitted(true);
       toast({ title: "¡Resultados listos! 📧", description: "También te enviamos los resultados a tu email." });
