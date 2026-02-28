@@ -1,4 +1,4 @@
-import { useEffect, useState as useLocalState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass, Check,
@@ -389,8 +389,8 @@ const QuizSection = () => {
     handleCombinedSubmit,
   } = useQuiz(steps.length);
 
-  const [combinedSeason, setCombinedSeason] = useLocalState("");
-  const [combinedOrigin, setCombinedOrigin] = useLocalState("");
+  const [combinedSeason, setCombinedSeason] = useState("");
+  const [combinedOrigin, setCombinedOrigin] = useState("");
 
   useEffect(() => {
     if (isQuizDone && !showResults && !loading) {
@@ -404,6 +404,13 @@ const QuizSection = () => {
 
   const currentStep = steps[Math.min(step, steps.length - 1)];
   const isCombinedStep = currentStep?.type === "combined";
+
+  const dragProps = isCombinedStep ? {} : {
+    drag: "x" as const,
+    dragConstraints: { left: 0, right: 0 },
+    dragElastic: 0.15,
+    onDragEnd,
+  };
 
   const onCombinedSubmit = () => {
     if (!combinedSeason || !combinedOrigin) return;
@@ -515,7 +522,7 @@ const QuizSection = () => {
             <motion.div key={step} custom={direction}
               initial={{ opacity: 0, x: direction * 60 }} animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: direction * -60 }} transition={{ duration: 0.3 }}
-              {...(!isCombinedStep ? { drag: "x" as const, dragConstraints: { left: 0, right: 0 }, dragElastic: 0.15, onDragEnd } : {})}>
+              {...dragProps}>
               <h3 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mb-1.5">
                 {currentStep?.question}
               </h3>
