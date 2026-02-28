@@ -49,7 +49,9 @@ src/
 ├── integrations/supabase/
 │   ├── client.ts             # Cliente Supabase (instancia única)
 │   └── types.ts              # Tipos auto-generados (NO editar — regenerar con CLI)
-└── lib/utils.ts              # cn() = clsx + tailwind-merge
+└── lib/
+    ├── utils.ts              # cn() = clsx + tailwind-merge
+    └── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
 ```
 
 ## Rutas
