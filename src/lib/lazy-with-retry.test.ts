@@ -49,11 +49,7 @@ describe("lazyWithRetry", () => {
   });
 
   it("should set sessionStorage and call reload after all retries exhausted", async () => {
-    const reloadMock = vi.fn();
-    Object.defineProperty(window, "location", {
-      value: { reload: reloadMock },
-      writable: true,
-    });
+    const reloadMock = vi.spyOn(window.location, "reload").mockImplementation(() => {});
 
     const importFn = vi.fn().mockRejectedValue(new Error("Chunk failed"));
 
