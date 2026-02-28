@@ -13,7 +13,7 @@ export function lazyWithRetry<T extends ComponentType<unknown>>(
   return lazy(() => retryImport(importFn, maxRetries));
 }
 
-async function retryImport<T extends ComponentType<unknown>>(
+export async function retryImport<T extends ComponentType<unknown>>(
   importFn: () => Promise<{ default: T }>,
   retries: number,
 ): Promise<{ default: T }> {
