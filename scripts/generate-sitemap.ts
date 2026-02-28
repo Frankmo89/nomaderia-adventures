@@ -49,15 +49,18 @@ if (destErr || blogErr || gearErr) {
   process.exit(1);
 }
 
-const destSlugs = (destinations ?? []).map(
-  (d: { slug: string; updated_at: string }) => d
-);
-const blogSlugs = (blogs ?? []).map(
-  (b: { slug: string; updated_at: string }) => b
-);
-const gearSlugs = (gear ?? []).map(
-  (g: { slug: string; updated_at: string }) => g
-);
+const destSlugs = (destinations ?? []) as {
+  slug: string;
+  updated_at: string;
+}[];
+const blogSlugs = (blogs ?? []) as {
+  slug: string;
+  updated_at: string;
+}[];
+const gearSlugs = (gear ?? []) as {
+  slug: string;
+  updated_at: string;
+}[];
 
 console.log(
   `Destinations (${destSlugs.length}):`,
