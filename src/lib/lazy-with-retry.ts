@@ -16,14 +16,16 @@ export function lazyWithRetry<T extends ComponentType<unknown>>(
 export async function retryImport<T extends ComponentType<unknown>>(
   importFn: () => Promise<{ default: T }>,
   retries: number,
+  attempt = 0,
 ): Promise<{ default: T }> {
   try {
     return await importFn();
   } catch (error) {
     if (retries > 0) {
-      // Exponential backoff: 1s, 2s
-      await new Promise((r) => setTimeout(r, 1000 * (3 - retries)));
-      return retryImport(importFn, retries - 1);
+      // Exponential backoff based on attempt index: 1s, 2s, 4s, ...
+      const delayMs = 1000 * Math.pow(2, attempt);
+      await new Promise((r) => setTimeout(r, delayMs));
+      return retryImport(importFn, retries - 1, attempt + 1);
     }
 
     // All retries exhausted — likely a new deploy changed chunk hashes.
