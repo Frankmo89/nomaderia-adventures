@@ -260,13 +260,14 @@ serve(async (req) => {
 
     // Obtener logs existentes para estos emails
     const emails = subscribers.map((s) => s.email);
-    const { data: existingLogs } = await supabase
+    const { data: existingLogs, error: logsError } = await supabase
       .from("email_drip_log")
       .select("email, email_type")
       .in("email", emails)
       .in("email_type", ["gear_guide", "itinerary_cta"])
       .eq("status", "sent");
 
+    if (logsError) throw logsError;
     const sentSet = new Set((existingLogs || []).map((l) => `${l.email}:${l.email_type}`));
 
     let processed = 0;
