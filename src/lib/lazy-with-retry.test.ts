@@ -18,15 +18,20 @@ describe("lazyWithRetry", () => {
   });
 
   it("should retry on failure and succeed on second attempt", async () => {
+    vi.useFakeTimers();
     const mockComponent = () => null;
     const importFn = vi
       .fn()
       .mockRejectedValueOnce(new Error("Network error"))
       .mockResolvedValueOnce({ default: mockComponent });
 
-    const result = await retryImport(importFn, 2);
+    const promise = retryImport(importFn, 2);
+    await vi.advanceTimersByTimeAsync(1000);
+
+    const result = await promise;
     expect(result).toEqual({ default: mockComponent });
     expect(importFn).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
   });
 
   it("should retry with exponential backoff timing", async () => {
