@@ -44,6 +44,7 @@ const CardContent = ({ dest, isLarge = false }: { dest: Destination; isLarge?: b
         src={dest.hero_image_url}
         alt={dest.title}
         loading="lazy"
+        decoding="async"
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
     ) : (

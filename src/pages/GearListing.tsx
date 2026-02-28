@@ -77,7 +77,7 @@ const GearListing = () => {
                       >
                         <div className="h-44 overflow-hidden relative">
                           {a.hero_image_url ? (
-                            <img src={a.hero_image_url} alt={a.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                            <img src={a.hero_image_url} alt={a.title} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                           )}

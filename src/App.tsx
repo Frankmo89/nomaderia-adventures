@@ -11,13 +11,15 @@ import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 // Rutas públicas críticas — carga inmediata
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import DestinationDetail from "./pages/DestinationDetail";
-import GearListing from "./pages/GearListing";
-import GearArticleDetail from "./pages/GearArticleDetail";
-import BlogListing from "./pages/BlogListing";
-import BlogPostDetail from "./pages/BlogPostDetail";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import SobreNosotros from "./pages/SobreNosotros";
+
+// Rutas públicas secundarias — lazy load
+const DestinationDetail = lazy(() => import("./pages/DestinationDetail"));
+const GearListing = lazy(() => import("./pages/GearListing"));
+const GearArticleDetail = lazy(() => import("./pages/GearArticleDetail"));
+const BlogListing = lazy(() => import("./pages/BlogListing"));
+const BlogPostDetail = lazy(() => import("./pages/BlogPostDetail"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const SobreNosotros = lazy(() => import("./pages/SobreNosotros"));
 
 // Rutas secundarias — lazy load
 const BudgetCalculator = lazy(() => import("./pages/BudgetCalculator"));

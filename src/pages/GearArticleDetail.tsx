@@ -249,7 +249,7 @@ const GearArticleDetail = () => {
                 <Link key={r.id} to={`/gear/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-32 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <img src={r.hero_image_url} alt={r.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <img src={r.hero_image_url} alt={r.title} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center"><BookOpen className="h-8 w-8 text-accent/40" /></div>
                     )}

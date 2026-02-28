@@ -44,7 +44,7 @@ Testing:     Vitest + Testing Library
 
 ```
 src/
-├── App.tsx                          → Router central + HelmetProvider — rutas públicas eager, admin + calculadora lazy
+├── App.tsx                          → Router central + HelmetProvider — Index eager, rutas públicas secundarias + admin + calculadora lazy
 ├── main.tsx                         → Entry point, providers globales
 ├── index.css                        → Variables CSS de tema, Tailwind base
 ├── pages/
@@ -90,6 +90,7 @@ src/
 │   │   ├── FeaturedBlogPost.tsx     → Hero card full-bleed para post destacado (Framer Motion, hover scale)
 │   │   └── ShareButtons.tsx         → [LEGACY, sin importar] Botones compartir originales del blog (reemplazado por src/components/ShareButtons.tsx)
 │   ├── SEOHead.tsx                  → Meta tags dinámicos OG + Twitter Card via react-helmet-async (Helmet)
+│   ├── OptimizedImage.tsx           → Wrapper reutilizable: loading="lazy" + decoding="async" + skeleton placeholder (bg-muted animate-pulse) + onLoad fade-in
 │   ├── ShareButtons.tsx             → Botones compartir: Facebook, X, WhatsApp, Telegram, copiar enlace (popup + toast)
 │   ├── ErrorBoundary.tsx            → Error boundary genérico para wrappear rutas
 │   ├── LoadingSkeletons.tsx         → Skeleton loaders: DestinationDetailSkeleton, GearArticleDetailSkeleton, CardGridSkeleton
@@ -601,7 +602,7 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 2.2*
+*Versión: 2.3*
 
 ---
 
@@ -735,6 +736,8 @@ const [loading, setLoading] = useState(true);
 ---
 
 ### 🛠️ Código — Próximas Mejoras
+
+- [x] **Performance: Lazy loading + image optimization** — Rutas públicas con React.lazy(), imágenes con loading="lazy" + decoding="async", componente OptimizedImage reutilizable. `App.tsx`: DestinationDetail, GearListing, GearArticleDetail, BlogListing, BlogPostDetail, PrivacyPolicy, SobreNosotros convertidas a lazy (solo Index.tsx sigue eager). `decoding="async"` añadido a todos los `<img loading="lazy">` en: DestinationsCatalog, GearPreview, DidYouKnowSection, GearListing, BlogListing, GearArticleDetail (relacionados), BlogPostDetail (relacionados), DestinationDetail (galería + markdown renderer + relacionados). Componente `OptimizedImage.tsx` creado con skeleton placeholder (bg-muted animate-pulse), fade-in onLoad, y soporte de lazy/eager configurable. **Recomendaciones futuras**: implementar `srcset` + `sizes` para imágenes responsive, convertir imágenes a WebP en Supabase Storage, agregar `<link rel="preload">` para fuentes críticas (Playfair Display + Inter), usar `fetchpriority="high"` en la hero image principal de DestinationDetail.
 
 - [x] **Sistema de affiliate links expandido** — Se amplió el sidebar de "Reserva Tu Viaje" en `DestinationDetail.tsx` de 3 a 7 botones condicionales (Vuelos, Hoteles, Tours/Klook, Entradas/Tiqets, Renta Auto/Localrent, Transfer/Welcome Pickups, Seguro). Botones solo renderizados si la URL está presente. `AdminDestinationForm.tsx` actualizado con los 4 campos nuevos (`tours_url`, `tickets_url`, `car_rental_url`, `transfer_url`) + layout grid para los 7 inputs. `BudgetCalculator.tsx` — botón "Ver Hospedaje" reemplazado por "Ver Tours y Actividades" apuntando a `selectedDest?.affiliate_links?.tours_url || "https://www.klook.com/"`. `GearArticleDetail.tsx` — botón Amazon actualizado a `rel="noopener noreferrer sponsored"`. Disclosure de afiliados añadido en `DestinationDetail.tsx` (debajo del sidebar) y `GearArticleDetail.tsx` (antes de "Productos Recomendados"). `PrivacyPolicy.tsx` ya tenía la sección 4 de afiliados, no requirió cambios.
 
