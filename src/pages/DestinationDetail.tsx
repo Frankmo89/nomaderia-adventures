@@ -37,6 +37,7 @@ const markdownComponents = {
         src={src}
         alt={alt || ""}
         loading="lazy"
+        decoding="async"
         className="w-full h-64 md:h-80 object-cover rounded-xl"
       />
       {alt && (
@@ -428,6 +429,7 @@ const DestinationDetail = () => {
                     src={src}
                     alt={`${dest.title} — galería ${i + 1}`}
                     loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                   />
                 </motion.div>
@@ -500,7 +502,7 @@ const DestinationDetail = () => {
                 <Link key={r.id} to={`/destinos/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-40 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <img src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <img src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
                     )}
