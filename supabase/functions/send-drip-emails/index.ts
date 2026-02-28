@@ -247,8 +247,7 @@ serve(async (req) => {
       .from("newsletter_subscribers")
       .select("email, created_at")
       .lte("created_at", threeDaysAgo)
-      .order("created_at", { ascending: true })
-      .limit(50);
+      .lte("created_at", threeDaysAgo);
 
     if (subError) throw subError;
     if (!subscribers?.length) {
