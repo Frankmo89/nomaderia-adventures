@@ -40,6 +40,13 @@
 
 ## Changelog (completados)
 
+### ✅ Resilient Lazy Loading (Febrero 2026)
+- [x] **Resilient lazy loading** — `lazyWithRetry()` con retry automático + backoff exponencial + reload por deploy + ErrorBoundary con detección de chunk errors y UI de reconexión.
+- `src/lib/lazy-with-retry.ts` — Wrapper de `React.lazy()` con retry automático (2 reintentos, backoff exponencial) + reload por deploy
+- `src/App.tsx` — Migrados todos los `lazy()` a `lazyWithRetry()`
+- `src/components/ErrorBoundary.tsx` — Detección de chunk load errors con UI específica ("Problema de conexión")
+- `src/main.tsx` — Limpieza de `sessionStorage` key `chunk-reload` en boot exitoso
+
 ### ✅ Blog Preview en Homepage (Febrero 2026)
 - Nuevo componente BlogPreview muestra 3 posts aleatorios/rotativos del blog
 - Usa hook useBlogPosts() existente (TanStack Query)
