@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { MessageCircle, Map, Smile, Check } from "lucide-react";
+import { MessageCircle, Map, Smile, Check, BadgeCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -134,13 +134,14 @@ const Servicios = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <Badge className="mb-6 bg-transparent text-secondary border border-secondary hover:bg-transparent">
-            ✦ Diseño 100% Personalizado
+          <Badge className="mb-6 bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/10">
+            <BadgeCheck className="h-3.5 w-3.5 mr-1" />
+            Agente de Viajes Certificado TAP
           </Badge>
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground mb-6">
             Tu Concierge de Aventuras en Español
           </h1>
-          <p className="text-lg md:text-xl text-foreground/80 leading-relaxed max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-foreground/70 leading-relaxed max-w-2xl mx-auto">
             Te armo tu viaje completo — itinerario, equipo, presupuesto —
             adaptado a ti.
           </p>
