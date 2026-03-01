@@ -281,8 +281,8 @@ const Servicios = () => {
           viewport={{ once: true }}
         >
           <Accordion type="single" collapsible className="w-full">
-            {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`faq-${i}`}>
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.question} value={faq.question}>
                 <AccordionTrigger className="text-left text-foreground hover:no-underline">
                   {faq.question}
                 </AccordionTrigger>
