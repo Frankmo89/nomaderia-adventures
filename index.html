@@ -32,10 +32,6 @@
       fbq('init', 'XXXXXXXXXXXXXXXXX');
       fbq('track', 'PageView');
     </script>
-    <noscript>
-      <img height="1" width="1" style="display:none"
-        src="https://www.facebook.com/tr?id=XXXXXXXXXXXXXXXXX&ev=PageView&noscript=1" />
-    </noscript>
 
     <!-- ========================== -->
     <!-- GOOGLE ANALYTICS (GA4) — Reemplaza G-XXXXXXXXXX con tu Measurement ID real -->
@@ -49,6 +45,11 @@
     </script>
   </head>
   <body>
+    <!-- Meta Pixel noscript fallback -->
+    <noscript>
+      <img height="1" width="1" alt="" style="display:none"
+        src="https://www.facebook.com/tr?id=XXXXXXXXXXXXXXXXX&ev=PageView&noscript=1" />
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
