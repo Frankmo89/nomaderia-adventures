@@ -51,6 +51,20 @@
 
 ## Changelog (completados)
 
+### ✅ Tarea 1.4 — Componente ArticleWhatsAppCTA reutilizable (Marzo 2026)
+- [x] Nuevo componente `src/components/ArticleWhatsAppCTA.tsx` con diseño editorial limpio
+  - Fondo sutil Light Sand (`#F5F0EB`), bordes finos, animación Framer Motion
+  - Copy motivador: "¿Listo para vivir esta aventura? Deja de planear y empieza a empacar."
+  - Botón CTA: "Diseña mi viaje a medida" con ícono MessageCircle
+  - Prop `title` para mensaje contextual: "¡Hola! Acabo de leer sobre [title] y me gustaría que me ayudes a armar mi viaje."
+  - Usa `buildWhatsAppUrl()` con número hardcodeado `18588996802`
+- [x] Insertado al final del contenido principal en `DestinationDetail.tsx` (antes de PremiumItinerarySection)
+- [x] Insertado al final del contenido principal en `BlogPostDetail.tsx` (antes de artículos relacionados)
+- [x] Reemplaza las Cards CTA inline anteriores en ambas páginas por el componente reutilizable
+- `src/components/ArticleWhatsAppCTA.tsx` — Nuevo componente
+- `src/pages/DestinationDetail.tsx` — Usa ArticleWhatsAppCTA
+- `src/pages/BlogPostDetail.tsx` — Usa ArticleWhatsAppCTA
+
 ### ✅ Botones de Pricing conectados a WhatsApp (Marzo 2026)
 - [x] Botones "Pedir mi Escapada/Aventura/Expedición" en `/servicios` ahora abren WhatsApp en nueva pestaña
 - [x] Número final hardcodeado: `18588996802` (ya no depende de `VITE_WHATSAPP_NUMBER`)
