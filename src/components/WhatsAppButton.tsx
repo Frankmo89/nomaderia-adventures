@@ -15,8 +15,8 @@ const WhatsAppButton = () => {
 
   // Ocultar si no hay número de WhatsApp configurado
   if (!WHATSAPP_URL) return null;
-  // Ocultar en rutas de admin
-  if (pathname.startsWith("/admin")) return null;
+  // Ocultar en /admin y subrutas de admin
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
 
   return (
     <motion.a
