@@ -89,8 +89,8 @@ const PremiumItinerarySection = () => {
         >
           {/* Badge */}
           <div className="flex justify-center mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/20 border border-secondary/30 text-secondary text-sm font-medium tracking-wide">
-              ✦ Exclusivo · Solo 5 cupos al mes
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-transparent border border-secondary text-secondary text-sm font-medium tracking-wide">
+              🏔️ Diseño 100% Personalizado
             </span>
           </div>
 
@@ -102,7 +102,7 @@ const PremiumItinerarySection = () => {
             </h2>
           </div>
 
-          <p className="text-center text-muted-foreground text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
+          <p className="text-center text-gray-700 text-lg max-w-2xl mx-auto mb-16 leading-relaxed">
             Diseño tu itinerario de trekking desde cero, adaptado a tu cuerpo, presupuesto y sueños.
             Sin plantillas genéricas. Sin rutas de turista.
           </p>
