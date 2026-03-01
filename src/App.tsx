@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 // Rutas públicas críticas — carga inmediata
 import Index from "./pages/Index";
@@ -94,6 +95,7 @@ const App = () => (
               </Routes>
             </Suspense>
           </ErrorBoundary>
+          <WhatsAppButton />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

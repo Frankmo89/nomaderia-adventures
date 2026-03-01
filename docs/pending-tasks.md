@@ -40,6 +40,11 @@
 
 ## Changelog (completados)
 
+### ✅ Botón flotante WhatsApp (Febrero 2026)
+- [x] **Botón flotante WhatsApp** — Componente `WhatsAppButton.tsx` con icono SVG inline, color verde WhatsApp (#25D366), posición fixed inferior derecha (z-50), animación de entrada con Framer Motion (scale desde 0, delay 1s), tooltip "Plática conmigo" en desktop, oculto en rutas /admin/*. Renderizado en App.tsx fuera de `<Routes>`.
+- `src/components/WhatsAppButton.tsx` — Componente del botón flotante
+- `src/App.tsx` — Import y render de WhatsAppButton fuera de Routes
+
 ### ✅ Quiz: Combinada temporada + zona de origen (Febrero 2026)
 - [x] **Quiz: Combinada temporada + zona de origen** — Preguntas 5 y 6 combinadas en una sola pantalla con Select dropdowns. Origen ahora usa zonas específicas (Frontera MX-USA, Centro MX, Sur MX, California/SW USA, etc.) para mejor granularidad en recomendaciones de presupuesto. Quiz reducido de 6 a 5 pasos.
 
