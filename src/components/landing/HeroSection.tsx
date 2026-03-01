@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 
 const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
 const WHATSAPP_URL = whatsappNumber
-  ? `https://wa.me/${encodeURIComponent(
-      whatsappNumber
-    )}?text=${encodeURIComponent("Hola Frank, quiero planear mi primera aventura")}`
+  ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Hola Frank, quiero planear mi primera aventura")}`
   : null;
 
 const HeroSection = () => {
@@ -77,7 +75,7 @@ const HeroSection = () => {
           className="mt-8 inline-flex items-center gap-2 bg-black/20 border border-white/20 backdrop-blur-sm rounded-full px-5 py-2.5 text-sm text-white/80 font-sans"
         >
           <ShieldCheck className="h-4 w-4 text-primary" />
-          <span>Agente de Viajes Certificado (TAP) · Respuesta en &lt; 24h</span>
+          <span>Agente de Viajes Certificado (TAP) · Respuesta en {"<"} 24h</span>
         </motion.div>
       </div>
     </section>
