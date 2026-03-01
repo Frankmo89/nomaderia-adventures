@@ -85,7 +85,7 @@ src/
 |-------|-----|----------|
 | Primary (Sunset Amber) | #D97706 | `bg-primary`, `text-primary` |
 | Secondary (Forest Green) | #166534 | `bg-secondary`, `text-secondary` |
-| Accent (Light Warm Gray) | — | `bg-accent`, `text-accent` |
+| Accent (Light Warm Gray) | #E5E7EB | `bg-accent`, `text-accent` |
 | Background (Off-White) | #FAFAFA | `bg-background` |
 | Foreground (Charcoal) | #1C1917 | `text-foreground` |
 

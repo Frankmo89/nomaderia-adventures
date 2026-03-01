@@ -42,6 +42,8 @@
 
 ### ✅ Pivot visual a Light Theme (Marzo 2026)
 - [x] **Pivot visual a Light Theme completado** — Migración de dark mode nativo a diseño luminoso, limpio y editorial enfocado en fotografía (estilo MBA). Fondo #FAFAFA, texto #1C1917, acento primario #D97706, acento secundario #166534. Gradientes de imagen actualizados de `from-background` a `from-black` para mantener legibilidad. Hero sections de detalle con texto blanco sobre overlay oscuro. Navbar con texto blanco en modo transparente (sobre hero) y texto oscuro al hacer scroll. `prose-invert` eliminado. `.dark` class removida. CLAUDE.md actualizado con nuevo Design System.
+- [x] **Fix darkMode config** — Restaurado `darkMode: ["class"]` en `tailwind.config.ts` para evitar que el OS del usuario active dark mode via media query en componentes de shadcn/ui.
+- [x] **Hero Inmersivo** — Nuevo HeroSection con headline "Tu Concierge de Aventuras en Español", CTA primario WhatsApp ("Plática Conmigo"), CTA secundario al quiz, badge de confianza TAP, fondo temporal `bg-neutral-800` listo para video/foto real.
 
 ### ✅ Botón flotante WhatsApp (Febrero 2026)
 - [x] **Botón flotante WhatsApp** — Componente `WhatsAppButton.tsx` con icono SVG inline, color verde WhatsApp (#25D366), posición fixed inferior derecha (z-50), animación de entrada con Framer Motion (scale desde 0, delay 1s), tooltip "Plática conmigo" en desktop, oculto en rutas /admin/*. Renderizado en App.tsx fuera de `<Routes>`.
