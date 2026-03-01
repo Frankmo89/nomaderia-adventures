@@ -10,10 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { MessageCircle } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import SEOHead from "@/components/SEOHead";
 import ShareButtons from "@/components/ShareButtons";
 import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
@@ -519,6 +521,34 @@ const DestinationDetail = () => {
           </div>
         </section>
       )}
+
+      {/* WhatsApp CTA */}
+      <section className="pb-8">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="flex flex-col items-center text-center p-8">
+              <h3 className="font-serif text-2xl text-foreground mb-2">
+                ¿Quieres que te arme este viaje a {dest.title}?
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Te preparo un itinerario personalizado con todo lo que necesitas.
+              </p>
+              {buildWhatsAppUrl(`Hola Frank, me interesa un itinerario para ${dest.title}`) && (
+                <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <a
+                    href={buildWhatsAppUrl(`Hola Frank, me interesa un itinerario para ${dest.title}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Plática Conmigo por WhatsApp →
+                  </a>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
       <PremiumItinerarySection />
 
