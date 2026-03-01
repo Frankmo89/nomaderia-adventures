@@ -1,12 +1,20 @@
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 
-const WHATSAPP_URL =
-  "https://wa.me/TUNUMERO?text=Hola%20Frank%2C%20me%20interesa%20un%20itinerario%20personalizado";
+const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
+const WHATSAPP_MESSAGE =
+  "Hola Frank, me interesa un itinerario personalizado";
+const WHATSAPP_URL = whatsappNumber
+  ? `https://wa.me/${encodeURIComponent(
+      whatsappNumber
+    )}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
+  : null;
 
 const WhatsAppButton = () => {
   const { pathname } = useLocation();
 
+  // Ocultar si no hay número de WhatsApp configurado
+  if (!WHATSAPP_URL) return null;
   // Ocultar en rutas de admin
   if (pathname.startsWith("/admin")) return null;
 
