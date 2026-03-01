@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
-const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
-const WHATSAPP_URL = whatsappNumber
-  ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Hola Frank, quiero planear mi primera aventura")}`
-  : null;
+const WHATSAPP_URL = buildWhatsAppUrl(
+  "Hola Frank, quiero planear mi primera aventura"
+);
 
 const HeroSection = () => {
   return (

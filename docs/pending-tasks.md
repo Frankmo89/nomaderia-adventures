@@ -40,6 +40,24 @@
 
 ## Changelog (completados)
 
+### ✅ PremiumItinerarySection: Tarjetas de precio en lugar de formulario (Marzo 2026)
+- [x] Eliminado formulario modal (Dialog, Form, inputs, Zod schema, Supabase insert)
+- [x] Reemplazado con 3 tarjetas compactas de precio: Escapada $9, Aventura $25, Expedición $49
+- [x] Cada tarjeta con 3 viñetas principales y botón WhatsApp con mensaje prellenado
+- [x] Aventura destacada con `border-primary` y badge "Más Popular"
+- [x] Enlace "Ver todos los detalles →" a `/servicios` debajo de las tarjetas
+- [x] Mantenidos título "Tu Aventura, Tu Medida", badge "Exclusivo" y animaciones Framer Motion
+- [x] Colores adaptados al tema claro (textos oscuros)
+- [x] Eliminada prop `destinationName` (ya no necesaria sin formulario)
+- [x] Refactorizado `buildWhatsAppUrl` a helper centralizado `src/lib/whatsapp.ts`
+- [x] Actualizados WhatsAppButton, HeroSection, PremiumItinerarySection, Servicios para usar helper compartido
+- `src/lib/whatsapp.ts` — Helper centralizado para URLs de WhatsApp
+- `src/components/landing/PremiumItinerarySection.tsx` — Refactorizado completo
+- `src/components/WhatsAppButton.tsx` — Usa helper centralizado
+- `src/components/landing/HeroSection.tsx` — Usa helper centralizado
+- `src/pages/Servicios.tsx` — Usa helper centralizado
+- `src/pages/DestinationDetail.tsx` — Removida prop `destinationName`
+
 ### ✅ Pivot visual a Light Theme (Marzo 2026)
 - [x] **Pivot visual a Light Theme completado** — Migración de dark mode nativo a diseño luminoso, limpio y editorial enfocado en fotografía (estilo MBA). Fondo #FAFAFA, texto #1C1917, acento primario #D97706, acento secundario #166534. Gradientes de imagen actualizados de `from-background` a `from-black` para mantener legibilidad. Hero sections de detalle con texto blanco sobre overlay oscuro. Navbar con texto blanco en modo transparente (sobre hero) y texto oscuro al hacer scroll. `prose-invert` eliminado. `.dark` class removida. CLAUDE.md actualizado con nuevo Design System.
 - [x] **Fix darkMode config** — Restaurado `darkMode: ["class"]` en `tailwind.config.ts` para evitar que el OS del usuario active dark mode via media query en componentes de shadcn/ui.
