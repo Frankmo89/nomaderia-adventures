@@ -31,3 +31,4 @@ dist-ssr
 # Claude Code temp files
 tmpclaude-*
 nul
+.env.local

@@ -140,7 +140,7 @@ const Servicios = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <Badge className="mb-6 bg-primary/10 text-primary border-primary/20 hover:bg-primary/10">
+          <Badge className="mb-6 bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/10">
             <BadgeCheck className="h-3.5 w-3.5 mr-1" />
             Agente de Viajes Certificado TAP
           </Badge>
@@ -190,7 +190,7 @@ const Servicios = () => {
 
       {/* Paquetes */}
       <section className="container mx-auto px-4 pb-20 max-w-6xl">
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-start">
+        <div className="grid md:grid-cols-3 gap-8 items-start">
           {packages.map((pkg, i) => (
             <motion.div
               key={pkg.name}
@@ -201,15 +201,15 @@ const Servicios = () => {
             >
               <Card
                 className={cn(
-                  "relative flex flex-col h-full",
+                  "relative flex flex-col h-full bg-white shadow-lg",
                   pkg.popular
-                    ? "border-secondary shadow-lg shadow-secondary/10 md:scale-105"
+                    ? "border-2 border-primary shadow-primary/10 md:scale-105"
                     : "border-border"
                 )}
               >
                 {pkg.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary">
+                    <Badge className="bg-primary text-primary-foreground hover:bg-primary">
                       Más Popular
                     </Badge>
                   </div>
@@ -244,12 +244,7 @@ const Servicios = () => {
                   {buildWhatsAppUrl(pkg.message) ? (
                     <Button
                       asChild
-                      className={cn(
-                        "w-full h-12 text-base",
-                        pkg.popular
-                          ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                          : "bg-primary hover:bg-primary/90 text-primary-foreground"
-                      )}
+                      className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       <a
                         href={buildWhatsAppUrl(pkg.message)}

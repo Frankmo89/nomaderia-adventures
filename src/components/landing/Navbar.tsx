@@ -51,7 +51,10 @@ const Navbar = () => {
         <div className="container mx-auto flex items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2">
             <Mountain className="h-6 w-6 text-primary" />
-            <span className="font-serif text-xl font-bold tracking-wide text-foreground">
+            <span className={cn(
+              "font-serif text-xl font-bold tracking-wide transition-colors duration-500",
+              scrolled ? "text-foreground" : "text-white"
+            )}>
               NOMADERIA
             </span>
           </Link>
@@ -63,7 +66,10 @@ const Navbar = () => {
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                  className={cn(
+                    "text-sm font-medium transition-colors",
+                    scrolled ? "text-foreground/80 hover:text-primary" : "text-white/80 hover:text-white"
+                  )}
                 >
                   {link.label}
                 </Link>
@@ -71,7 +77,10 @@ const Navbar = () => {
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                  className={cn(
+                    "text-sm font-medium transition-colors",
+                    scrolled ? "text-foreground/80 hover:text-primary" : "text-white/80 hover:text-white"
+                  )}
                 >
                   {link.label}
                 </a>
@@ -89,7 +98,7 @@ const Navbar = () => {
             className="md:hidden min-h-[44px] min-w-[44px]"
             onClick={() => setOpen(true)}
           >
-            <Menu className="h-6 w-6 text-foreground" />
+            <Menu className={cn("h-6 w-6", scrolled ? "text-foreground" : "text-white")} />
           </Button>
         </div>
       </header>

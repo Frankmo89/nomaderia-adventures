@@ -81,7 +81,7 @@ const GearListing = () => {
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                         </div>
                         <div className="p-5">
                           <Badge variant="outline" className="mb-2 border-card-foreground/20 text-card-foreground">

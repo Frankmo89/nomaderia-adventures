@@ -59,7 +59,7 @@ const GearPreview = () => {
                       decoding="async"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                   </div>
                   <div className="p-4 sm:p-5">
                     <Badge className="bg-secondary text-secondary-foreground mb-3">
