@@ -50,6 +50,7 @@
   - Subtítulo: "Yo te armo el viaje completo — desde $9 USD."
   - Botón: "Escríbeme por WhatsApp →" con mensaje prellenado incluyendo título del artículo
 - [x] Ambas Cards usan `buildWhatsAppUrl()` de `src/lib/whatsapp.ts`
+- [x] Cards se ocultan completamente cuando `VITE_WHATSAPP_NUMBER` no está configurado
 - [x] Diseño: `bg-primary/5`, `border-primary/20`, textos oscuros de alto contraste
 - `src/pages/DestinationDetail.tsx` — Nueva Card CTA WhatsApp
 - `src/pages/BlogPostDetail.tsx` — Nueva Card CTA WhatsApp

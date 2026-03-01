@@ -225,16 +225,16 @@ const BlogPostDetail = () => {
       </div>
 
       {/* WhatsApp CTA */}
-      <div className="container mx-auto px-4 max-w-3xl pb-8">
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="flex flex-col items-center text-center p-8">
-            <h3 className="font-serif text-2xl text-foreground mb-2">
-              ¿Necesitas ayuda para planear esto?
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Yo te armo el viaje completo — desde $9 USD.
-            </p>
-            {whatsAppCtaUrl && (
+      {whatsAppCtaUrl && (
+        <div className="container mx-auto px-4 max-w-3xl pb-8">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="flex flex-col items-center text-center p-8">
+              <h3 className="font-serif text-2xl text-foreground mb-2">
+                ¿Necesitas ayuda para planear esto?
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Yo te armo el viaje completo — desde $9 USD.
+              </p>
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <a
                   href={whatsAppCtaUrl}
@@ -245,10 +245,10 @@ const BlogPostDetail = () => {
                   Escríbeme por WhatsApp →
                 </a>
               </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {related.length > 0 && (
         <section className="py-16 bg-muted/30">

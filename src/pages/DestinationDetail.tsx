@@ -524,17 +524,17 @@ const DestinationDetail = () => {
       )}
 
       {/* WhatsApp CTA */}
-      <section className="pb-8">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="flex flex-col items-center text-center p-8">
-              <h3 className="font-serif text-2xl text-foreground mb-2">
-                ¿Quieres que te arme este viaje a {dest.title}?
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Te preparo un itinerario personalizado con todo lo que necesitas.
-              </p>
-              {whatsAppCtaUrl && (
+      {whatsAppCtaUrl && (
+        <section className="pb-8">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="flex flex-col items-center text-center p-8">
+                <h3 className="font-serif text-2xl text-foreground mb-2">
+                  ¿Quieres que te arme este viaje a {dest.title}?
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Te preparo un itinerario personalizado con todo lo que necesitas.
+                </p>
                 <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <a
                     href={whatsAppCtaUrl}
@@ -545,11 +545,11 @@ const DestinationDetail = () => {
                     Plática Conmigo por WhatsApp →
                   </a>
                 </Button>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      )}
 
       <PremiumItinerarySection />
 
