@@ -51,6 +51,14 @@
 
 ## Changelog (completados)
 
+### ✅ Hero de Servicios optimizado (Marzo 2026)
+- [x] Badge cambiado de "Agente de Viajes Certificado TAP" a "✦ Diseño 100% Personalizado"
+- [x] Badge con fondo transparente, borde secondary (#166534) y texto secondary
+- [x] Eliminado ícono BadgeCheck del badge (el ✦ sirve como decorativo)
+- [x] Subtítulo oscurecido de text-foreground/70 a text-foreground/80 para mejor contraste
+- [x] Añadido mb-10 al subtítulo para breathing room antes de las tarjetas
+- `src/pages/Servicios.tsx` — Hero refinado
+
 ### ✅ Meta Pixel y Google Analytics (GA4) (Marzo 2026)
 - [x] Script estándar de Meta Pixel con `fbq('track', 'PageView')` y `<noscript>` fallback
 - [x] Script estándar de Google Analytics (GA4) con `gtag.js`
