@@ -10,7 +10,8 @@
 - [ ] Preview actual: https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
 
 ### 📊 Analytics y Monetización
-- [ ] Configurar Google Analytics o Plausible (no hay tracking instalado)
+- [x] Scripts de Meta Pixel y Google Analytics (GA4) agregados en `index.html` con IDs placeholder
+- [ ] **Reemplazar IDs placeholder** en `index.html`: `XXXXXXXXXXXXXXXXX` → tu Meta Pixel ID real, `G-XXXXXXXXXX` → tu GA4 Measurement ID real
 - [ ] Verificar sitio en Google Search Console (requiere dominio)
 - [ ] Enviar sitemap.xml (pendiente de implementar)
 - [ ] Re-aplicar a programas Travelpayouts rechazados cuando tráfico > 1,000/mes:
@@ -39,6 +40,14 @@
 - [ ] Resolver issues de contraste texto para WCAG AA compliance
 
 ## Changelog (completados)
+
+### ✅ Meta Pixel y Google Analytics (GA4) (Marzo 2026)
+- [x] Script estándar de Meta Pixel con `fbq('track', 'PageView')` y `<noscript>` fallback
+- [x] Script estándar de Google Analytics (GA4) con `gtag.js`
+- [x] IDs placeholder (`XXXXXXXXXXXXXXXXX` y `G-XXXXXXXXXX`) listos para reemplazo
+- [x] Comentarios HTML en español antes de cada bloque de script
+- [x] Scripts directos en `index.html`, sin dependencias npm adicionales
+- `index.html` — Scripts de tracking en `<head>`
 
 ### ✅ Banners de conversión WhatsApp en Blog y Destinos (Marzo 2026)
 - [x] Card CTA WhatsApp en `DestinationDetail.tsx` antes de `PremiumItinerarySection`
