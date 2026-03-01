@@ -49,7 +49,13 @@
 - [x] Mantenidos título "Tu Aventura, Tu Medida", badge "Exclusivo" y animaciones Framer Motion
 - [x] Colores adaptados al tema claro (textos oscuros)
 - [x] Eliminada prop `destinationName` (ya no necesaria sin formulario)
+- [x] Refactorizado `buildWhatsAppUrl` a helper centralizado `src/lib/whatsapp.ts`
+- [x] Actualizados WhatsAppButton, HeroSection, PremiumItinerarySection, Servicios para usar helper compartido
+- `src/lib/whatsapp.ts` — Helper centralizado para URLs de WhatsApp
 - `src/components/landing/PremiumItinerarySection.tsx` — Refactorizado completo
+- `src/components/WhatsAppButton.tsx` — Usa helper centralizado
+- `src/components/landing/HeroSection.tsx` — Usa helper centralizado
+- `src/pages/Servicios.tsx` — Usa helper centralizado
 - `src/pages/DestinationDetail.tsx` — Removida prop `destinationName`
 
 ### ✅ Pivot visual a Light Theme (Marzo 2026)

@@ -5,13 +5,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
-
-const buildWhatsAppUrl = (message: string) =>
-  whatsappNumber
-    ? `https://wa.me/${encodeURIComponent(whatsappNumber)}?text=${encodeURIComponent(message)}`
-    : undefined;
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const benefits = [
   {
@@ -137,7 +131,9 @@ const PremiumItinerarySection = () => {
 
           {/* Pricing cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {packages.map((pkg, i) => (
+            {packages.map((pkg, i) => {
+              const url = buildWhatsAppUrl(pkg.message);
+              return (
               <motion.div
                 key={pkg.name}
                 initial={{ opacity: 0, y: 20 }}
@@ -184,13 +180,13 @@ const PremiumItinerarySection = () => {
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    {buildWhatsAppUrl(pkg.message) ? (
+                    {url ? (
                       <Button
                         asChild
                         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                       >
                         <a
-                          href={buildWhatsAppUrl(pkg.message)}
+                          href={url}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -205,7 +201,8 @@ const PremiumItinerarySection = () => {
                   </CardFooter>
                 </Card>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Link to full details */}

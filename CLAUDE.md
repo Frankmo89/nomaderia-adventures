@@ -51,7 +51,8 @@ src/
 │   └── types.ts              # Tipos auto-generados (NO editar — regenerar con CLI)
 └── lib/
     ├── utils.ts              # cn() = clsx + tailwind-merge
-    └── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
+    ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
+    └── whatsapp.ts           # buildWhatsAppUrl() — URL centralizada de WhatsApp
 ```
 
 ## Rutas

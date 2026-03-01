@@ -1,14 +1,10 @@
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
-const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
-const WHATSAPP_MESSAGE =
-  "Hola Frank, me interesa un itinerario personalizado";
-const WHATSAPP_URL = whatsappNumber
-  ? `https://wa.me/${encodeURIComponent(
-      whatsappNumber
-    )}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
-  : null;
+const WHATSAPP_URL = buildWhatsAppUrl(
+  "Hola Frank, me interesa un itinerario personalizado"
+);
 
 const WhatsAppButton = () => {
   const { pathname } = useLocation();

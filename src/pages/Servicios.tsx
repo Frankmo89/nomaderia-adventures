@@ -14,13 +14,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-
-const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
-
-const buildWhatsAppUrl = (message: string) =>
-  whatsappNumber
-    ? `https://wa.me/${encodeURIComponent(whatsappNumber)}?text=${encodeURIComponent(message)}`
-    : undefined;
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const steps = [
   {
@@ -191,7 +185,9 @@ const Servicios = () => {
       {/* Paquetes */}
       <section className="container mx-auto px-4 pb-20 max-w-6xl">
         <div className="grid md:grid-cols-3 gap-8 items-start">
-          {packages.map((pkg, i) => (
+          {packages.map((pkg, i) => {
+            const url = buildWhatsAppUrl(pkg.message);
+            return (
             <motion.div
               key={pkg.name}
               initial={{ opacity: 0, y: 30 }}
@@ -241,13 +237,13 @@ const Servicios = () => {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  {buildWhatsAppUrl(pkg.message) ? (
+                  {url ? (
                     <Button
                       asChild
                       className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       <a
-                        href={buildWhatsAppUrl(pkg.message)}
+                        href={url}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -265,7 +261,8 @@ const Servicios = () => {
                 </CardFooter>
               </Card>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
