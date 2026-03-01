@@ -147,6 +147,16 @@ const Servicios = () => {
             Te armo tu viaje completo — itinerario, equipo, presupuesto —
             adaptado a ti.
           </p>
+          <Button asChild size="lg" className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground">
+            <a
+              href={buildWhatsAppUrl("¡Hola! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?", SERVICIOS_WHATSAPP_NUMBER)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MessageCircle className="h-5 w-5 mr-2" />
+              Escríbeme por WhatsApp
+            </a>
+          </Button>
         </motion.div>
       </section>
 
