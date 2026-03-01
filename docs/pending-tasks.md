@@ -40,6 +40,21 @@
 
 ## Changelog (completados)
 
+### ✅ Banners de conversión WhatsApp en Blog y Destinos (Marzo 2026)
+- [x] Card CTA WhatsApp en `DestinationDetail.tsx` antes de `PremiumItinerarySection`
+  - Título dinámico: "¿Quieres que te arme este viaje a [dest.title]?"
+  - Subtítulo: "Te preparo un itinerario personalizado con todo lo que necesitas."
+  - Botón: "Plática Conmigo por WhatsApp →" con mensaje prellenado
+- [x] Card CTA WhatsApp en `BlogPostDetail.tsx` después del contenido del post
+  - Título: "¿Necesitas ayuda para planear esto?"
+  - Subtítulo: "Yo te armo el viaje completo — desde $9 USD."
+  - Botón: "Escríbeme por WhatsApp →" con mensaje prellenado incluyendo título del artículo
+- [x] Ambas Cards usan `buildWhatsAppUrl()` de `src/lib/whatsapp.ts`
+- [x] Cards se ocultan completamente cuando `VITE_WHATSAPP_NUMBER` no está configurado
+- [x] Diseño: `bg-primary/5`, `border-primary/20`, textos oscuros de alto contraste
+- `src/pages/DestinationDetail.tsx` — Nueva Card CTA WhatsApp
+- `src/pages/BlogPostDetail.tsx` — Nueva Card CTA WhatsApp
+
 ### ✅ PremiumItinerarySection: Tarjetas de precio en lugar de formulario (Marzo 2026)
 - [x] Eliminado formulario modal (Dialog, Form, inputs, Zod schema, Supabase insert)
 - [x] Reemplazado con 3 tarjetas compactas de precio: Escapada $9, Aventura $25, Expedición $49
