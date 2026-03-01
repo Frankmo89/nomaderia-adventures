@@ -9,6 +9,7 @@ const navLinks = [
   { label: "Destinos", href: "#destinos" },
   { label: "Gear Guide", href: "/gear" },
   { label: "Blog", href: "/blog" },
+  { label: "Servicios", href: "/servicios" },
   { label: "Calculadora", href: "/calculadora" },
   { label: "Sobre Nosotros", href: "/sobre-nosotros" },
 ];

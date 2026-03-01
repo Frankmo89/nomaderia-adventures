@@ -60,8 +60,9 @@ src/
 /                    → Index.tsx          /destinos/:slug  → DestinationDetail.tsx
 /gear                → GearListing.tsx    /gear/:slug      → GearArticleDetail.tsx
 /blog                → BlogListing.tsx    /blog/:slug      → BlogPostDetail.tsx
-/calculadora         → BudgetCalculator   /sobre-nosotros  → SobreNosotros.tsx
-/privacidad          → PrivacyPolicy.tsx  /admin/*         → AdminLayout (protegido)
+/calculadora         → BudgetCalculator   /servicios       → Servicios.tsx
+/sobre-nosotros      → SobreNosotros.tsx  /privacidad      → PrivacyPolicy.tsx
+/admin/*             → AdminLayout (protegido)
 ```
 
 ## Patrones Obligatorios
