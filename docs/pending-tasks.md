@@ -51,6 +51,13 @@
 
 ## Changelog (completados)
 
+### ✅ Hero de PremiumItinerarySection optimizado (Marzo 2026)
+- [x] Badge cambiado de "✦ Exclusivo · Solo 5 cupos al mes" a "✦ Diseño 100% Personalizado"
+- [x] Badge con fondo transparente (bg-transparent), borde secondary sólido y texto secondary
+- [x] Subtítulo oscurecido de text-muted-foreground a text-foreground/70 para mejor contraste
+- [x] Añadido mb-16 al subtítulo (antes mb-12) para breathing room antes de las tarjetas
+- `src/components/landing/PremiumItinerarySection.tsx` — Hero refinado
+
 ### ✅ Meta Pixel y Google Analytics (GA4) (Marzo 2026)
 - [x] Script estándar de Meta Pixel con `fbq('track', 'PageView')` y `<noscript>` fallback
 - [x] Script estándar de Google Analytics (GA4) con `gtag.js`
