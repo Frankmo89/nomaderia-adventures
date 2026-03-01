@@ -188,7 +188,7 @@ const Servicios = () => {
       <section className="container mx-auto px-4 pb-20 max-w-6xl">
         <div className="grid md:grid-cols-3 gap-8 items-start">
           {packages.map((pkg, i) => {
-            const url = buildWhatsAppUrl(pkg.message, SERVICIOS_WHATSAPP_NUMBER)!;
+            const url = buildWhatsAppUrl(pkg.message, SERVICIOS_WHATSAPP_NUMBER) ?? "#";
             return (
             <motion.div
               key={pkg.name}
