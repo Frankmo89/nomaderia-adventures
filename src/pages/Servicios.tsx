@@ -20,7 +20,7 @@ const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
 const buildWhatsAppUrl = (message: string) =>
   whatsappNumber
     ? `https://wa.me/${encodeURIComponent(whatsappNumber)}?text=${encodeURIComponent(message)}`
-    : "#";
+    : undefined;
 
 const steps = [
   {
