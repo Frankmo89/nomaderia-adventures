@@ -2,9 +2,15 @@ const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
 
 /**
  * Builds a WhatsApp `wa.me` URL with a pre-filled message.
- * Returns `undefined` when `VITE_WHATSAPP_NUMBER` is not configured.
+ * When `phoneNumber` is provided it is used directly; otherwise falls back
+ * to `VITE_WHATSAPP_NUMBER` and returns `undefined` when neither is available.
  */
-export const buildWhatsAppUrl = (message: string): string | undefined =>
-  WHATSAPP_NUMBER
-    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
+export const buildWhatsAppUrl = (
+  message: string,
+  phoneNumber?: string,
+): string | undefined => {
+  const number = phoneNumber ?? WHATSAPP_NUMBER;
+  return number
+    ? `https://wa.me/${number}?text=${encodeURIComponent(message)}`
     : undefined;
+};

@@ -14,6 +14,9 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
+
+const SERVICIOS_WHATSAPP_NUMBER = "18588996802";
 
 const steps = [
   {
@@ -185,7 +188,7 @@ const Servicios = () => {
       <section className="container mx-auto px-4 pb-20 max-w-6xl">
         <div className="grid md:grid-cols-3 gap-8 items-start">
           {packages.map((pkg, i) => {
-            const url = `https://wa.me/18588996802?text=${encodeURIComponent(pkg.message)}`;
+            const url = buildWhatsAppUrl(pkg.message, SERVICIOS_WHATSAPP_NUMBER)!;
             return (
             <motion.div
               key={pkg.name}
