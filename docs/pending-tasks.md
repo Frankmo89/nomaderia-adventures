@@ -113,9 +113,11 @@
 - [x] **Fix botón secundario Hero** — Corregido botón outline que se renderizaba como bloque blanco sólido. Forzadas clases `bg-transparent border border-white text-white hover:bg-white/10` para que sea ghost real sobre fondo oscuro.
 - [x] **Página de Servicios editorial** — Página `/servicios` con diseño luminoso: hero minimalista con badge TAP en secondary (#166534), sección "Cómo Funciona" con 3 pasos, tarjetas de precio (Escapada $9 / Aventura $25 / Expedición $49) con bg-white shadow-lg, Aventura destacada con border-primary y badge "Más Popular", FAQ con Accordion, links WhatsApp prellenados.
 
-### ✅ Botón flotante WhatsApp (Febrero 2026)
+### ✅ Tarea 1.2 — Botón flotante WhatsApp con mensaje contextual (Marzo 2026)
 - [x] **Botón flotante WhatsApp** — Componente `WhatsAppButton.tsx` con icono SVG inline, color verde WhatsApp (#25D366), posición fixed inferior derecha (z-50), animación de entrada con Framer Motion (scale desde 0, delay 1s), tooltip "Plática conmigo" en desktop, oculto en rutas /admin/*. Renderizado en App.tsx fuera de `<Routes>`.
-- `src/components/WhatsAppButton.tsx` — Componente del botón flotante
+- [x] **Número hardcodeado** — `18588996802` (ya no depende de `VITE_WHATSAPP_NUMBER`)
+- [x] **Mensaje contextual** — `getPageLabel()` detecta la ruta actual y genera: "¡Hola! Estoy viendo [página] y me gustaría más información." Cubre: `/`, `/calculadora`, `/blog`, `/gear`, `/servicios`, `/sobre-nosotros`, `/privacidad`, `/destinos/:slug`, `/blog/:slug`, `/gear/:slug`
+- `src/components/WhatsAppButton.tsx` — Componente del botón flotante (Tarea 1.2 completada)
 - `src/App.tsx` — Import y render de WhatsAppButton fuera de Routes
 
 ### ✅ Quiz: Combinada temporada + zona de origen (Febrero 2026)

@@ -2,21 +2,39 @@ import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
-const WHATSAPP_URL = buildWhatsAppUrl(
-  "Hola Frank, me interesa un itinerario personalizado"
-);
+const WHATSAPP_PHONE = "18588996802";
+
+function getPageLabel(pathname: string): string {
+  if (pathname === "/") return "la página principal";
+  if (pathname === "/calculadora") return "la calculadora de presupuesto";
+  if (pathname === "/blog") return "el blog";
+  if (pathname === "/gear") return "la guía de gear outdoor";
+  if (pathname === "/servicios") return "la página de servicios";
+  if (pathname === "/sobre-nosotros") return "la página Sobre Nosotros";
+  if (pathname === "/privacidad") return "la política de privacidad";
+
+  const extractSlug = (prefix: string) =>
+    pathname.replace(prefix, "").replace(/-/g, " ");
+
+  if (pathname.startsWith("/destinos/")) return `el destino ${extractSlug("/destinos/")}`;
+  if (pathname.startsWith("/blog/")) return `el artículo ${extractSlug("/blog/")}`;
+  if (pathname.startsWith("/gear/")) return `el artículo de gear ${extractSlug("/gear/")}`;
+
+  return "el sitio";
+}
 
 const WhatsAppButton = () => {
   const { pathname } = useLocation();
 
-  // Ocultar si no hay número de WhatsApp configurado
-  if (!WHATSAPP_URL) return null;
   // Ocultar en /admin y subrutas de admin
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
 
+  const message = `¡Hola! Estoy viendo ${getPageLabel(pathname)} y me gustaría más información.`;
+  const whatsappUrl = buildWhatsAppUrl(message, WHATSAPP_PHONE);
+
   return (
     <motion.a
-      href={WHATSAPP_URL}
+      href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"
