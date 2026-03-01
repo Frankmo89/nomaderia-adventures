@@ -249,7 +249,7 @@ const ResultCard = ({ d, index }: { d: QuizDestination; index: number }) => (
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
         {/* MatchRing — top left */}
         <div className="absolute top-3 left-3">

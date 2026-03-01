@@ -69,8 +69,8 @@ const HeroSection = () => {
           backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80)`,
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
       }} />
@@ -85,7 +85,7 @@ const HeroSection = () => {
           transition={{ repeat: Infinity, duration, delay, ease: "easeInOut" }}
           aria-hidden="true"
         >
-          <Icon className={`${size} text-foreground/15`} />
+          <Icon className={`${size} text-white/15`} />
         </motion.div>
       ))}
 
@@ -102,9 +102,9 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 bg-secondary/20 border border-secondary/40 backdrop-blur-sm text-secondary-foreground rounded-full px-4 py-1.5 text-sm font-sans mb-6"
+          className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-sm text-white rounded-full px-4 py-1.5 text-sm font-sans mb-6"
         >
-          <Compass className="h-4 w-4 text-secondary" />
+          <Compass className="h-4 w-4 text-primary" />
           <span>Guías para aventureros principiantes</span>
         </motion.div>
 
@@ -112,7 +112,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.1, ease: "easeOut" }}
-          className="font-serif text-[2rem] leading-[1.15] sm:text-5xl md:text-7xl lg:text-8xl font-bold text-foreground mb-5 sm:mb-6"
+          className="font-serif text-[2rem] leading-[1.15] sm:text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-5 sm:mb-6"
           style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
         >
           Tu Primera Aventura
@@ -124,7 +124,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.35 }}
-          className="text-base sm:text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto mb-8 sm:mb-10 font-sans"
+          className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8 sm:mb-10 font-sans"
           style={{ textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}
         >
           <span>No necesitas ser atleta. No necesitas experiencia.</span>
@@ -159,7 +159,7 @@ const HeroSection = () => {
               Descubre A Dónde Ir
             </a>
           </Button>
-          <Button asChild variant="outline" size="lg" className="border-foreground/30 text-foreground hover:bg-foreground/10 text-base sm:text-lg px-8 h-12 sm:h-14 backdrop-blur-sm w-full sm:w-auto">
+          <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 text-base sm:text-lg px-8 h-12 sm:h-14 backdrop-blur-sm w-full sm:w-auto">
             <a href="#destinos">Explorar Destinos</a>
           </Button>
         </motion.div>
@@ -169,12 +169,12 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="mt-10 sm:mt-14 inline-flex flex-wrap items-center justify-center gap-y-2 bg-foreground/[0.06] backdrop-blur-md border border-foreground/10 rounded-2xl px-4 py-3 sm:px-6 sm:py-4"
+          className="mt-10 sm:mt-14 inline-flex flex-wrap items-center justify-center gap-y-2 bg-white/[0.08] backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 sm:px-6 sm:py-4"
         >
           {STATS.map(({ icon: Icon, value, label }, idx) => (
             <div key={label} className="flex items-center">
               {idx > 0 && (
-                <div className="w-px h-8 bg-foreground/10 mx-3 sm:mx-5" />
+                <div className="w-px h-8 bg-white/10 mx-3 sm:mx-5" />
               )}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -185,13 +185,13 @@ const HeroSection = () => {
                 <div className="flex items-center gap-1.5">
                   <Icon className="h-4 w-4 text-primary" />
                   <span
-                    className="font-serif font-bold text-lg sm:text-xl text-foreground"
+                    className="font-serif font-bold text-lg sm:text-xl text-white"
                     style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
                   >
                     {value}
                   </span>
                 </div>
-                <span className="text-[10px] sm:text-xs text-foreground/60 font-sans uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs text-white/60 font-sans uppercase tracking-wider">
                   {label}
                 </span>
               </motion.div>
@@ -209,14 +209,14 @@ const HeroSection = () => {
         transition={{ delay: 1.2, duration: 0.6 }}
         onClick={scrollToQuiz}
       >
-        <div className="w-6 h-10 rounded-full border-2 border-foreground/30 flex items-start justify-center p-1.5">
+        <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-1.5">
           <motion.div
             className="w-1.5 h-1.5 rounded-full bg-primary"
             animate={prefersReducedMotion ? undefined : { y: [0, 12, 0] }}
             transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
           />
         </div>
-        <ChevronDown className="h-4 w-4 text-foreground/40" />
+        <ChevronDown className="h-4 w-4 text-white/40" />
       </motion.button>
     </section>
   );

@@ -48,7 +48,7 @@ const DestinationsCatalog = () => {
               <MapPin className="h-12 w-12 text-primary/40" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           <div className="absolute top-3 left-3 flex gap-2">
             <Badge className={difficultyColor[d.difficulty_level]}>{difficultyLabel[d.difficulty_level]}</Badge>
           </div>

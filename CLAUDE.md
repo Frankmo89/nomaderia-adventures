@@ -83,15 +83,15 @@ src/
 
 | Token | Hex | Tailwind |
 |-------|-----|----------|
-| Primary (Sunset Orange) | #E86C3A | `bg-primary`, `text-primary` |
-| Secondary (Trail Green) | #4A7C59 | `bg-secondary`, `text-secondary` |
-| Accent (Sky Blue) | #6BA3BE | `bg-accent`, `text-accent` |
-| Background (Charcoal) | #1C1917 | `bg-background` |
-| Foreground (Light Sand) | #F5F0EB | `text-foreground` |
+| Primary (Sunset Amber) | #D97706 | `bg-primary`, `text-primary` |
+| Secondary (Forest Green) | #166534 | `bg-secondary`, `text-secondary` |
+| Accent (Light Warm Gray) | — | `bg-accent`, `text-accent` |
+| Background (Off-White) | #FAFAFA | `bg-background` |
+| Foreground (Charcoal) | #1C1917 | `text-foreground` |
 
-Tipografías: `font-serif` → Playfair Display (headings) · `font-sans` → Inter (body/UI)
+Tipografías: `font-serif` → Playfair Display (headings, oscuro sobre fondo claro) · `font-sans` → Inter (body/UI)
 
-Dark mode nativo (sin toggle). Mobile-first.
+Light theme editorial (sin toggle). Mobile-first. Diseño luminoso, limpio y enfocado en fotografía.
 
 ## Reglas Críticas (NO violar)
 

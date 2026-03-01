@@ -162,23 +162,23 @@ const BlogPostDetail = () => {
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-secondary/20" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
           <div className="container mx-auto px-4 pb-8 relative z-10">
             <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
-              <Link to="/" className="text-muted-foreground hover:text-foreground">Inicio</Link>
-              <span className="text-muted-foreground">/</span>
-              <Link to="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-foreground/70 truncate max-w-[200px]" aria-current="page">{post.title}</span>
+              <Link to="/" className="text-white/60 hover:text-white">Inicio</Link>
+              <span className="text-white/40">/</span>
+              <Link to="/blog" className="text-white/60 hover:text-white">Blog</Link>
+              <span className="text-white/40">/</span>
+              <span className="text-white/70 truncate max-w-[200px]" aria-current="page">{post.title}</span>
             </nav>
-            <Badge variant="outline" className="border-foreground/20 text-foreground mb-3">{post.category}</Badge>
+            <Badge variant="outline" className="border-white/20 text-white mb-3">{post.category}</Badge>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="font-serif text-3xl md:text-5xl font-bold text-foreground"
+              className="font-serif text-3xl md:text-5xl font-bold text-white"
               style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
               {post.title}
             </motion.h1>
-            <div className="flex items-center gap-3 mt-2 text-muted-foreground">
-              <p className="text-muted-foreground mt-2">
+            <div className="flex items-center gap-3 mt-2 text-white/60">
+              <p className="text-white/60 mt-2">
                 {post.author && <>por {post.author} · </>}
                 {estimateReadingTime(post.content_markdown)} min de lectura ·{" "}
                 {new Date(post.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
@@ -190,7 +190,7 @@ const BlogPostDetail = () => {
 
       <section className="py-12">
         <div className="container mx-auto px-4 max-w-3xl">
-          <div className="prose prose-invert max-w-none text-foreground/90">
+          <div className="prose max-w-none text-foreground/90">
             <ReactMarkdown>{post.content_markdown || ""}</ReactMarkdown>
           </div>
           <div className="mt-10 pt-6 border-t border-border">
@@ -232,7 +232,7 @@ const BlogPostDetail = () => {
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   </div>
                   <div className="p-4">
                     <Badge variant="outline" className="mb-2 border-card-foreground/20 text-card-foreground">{r.category}</Badge>

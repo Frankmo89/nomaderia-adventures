@@ -224,7 +224,7 @@ const DestinationDetail = () => {
           </div>
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
 
           {/* Dot indicators */}
           {heroImages.length > 1 && (
@@ -245,25 +245,25 @@ const DestinationDetail = () => {
           {/* Hero text content */}
           <div className="container mx-auto px-4 pb-10 relative z-10">
             <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
-              <Link to="/" className="text-muted-foreground hover:text-foreground">Inicio</Link>
-              <span className="text-muted-foreground">/</span>
-              <Link to="/#destinos" className="text-muted-foreground hover:text-foreground">Destinos</Link>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-foreground/70 truncate max-w-[200px]" aria-current="page">{dest.title}</span>
+              <Link to="/" className="text-white/60 hover:text-white">Inicio</Link>
+              <span className="text-white/40">/</span>
+              <Link to="/#destinos" className="text-white/60 hover:text-white">Destinos</Link>
+              <span className="text-white/40">/</span>
+              <span className="text-white/70 truncate max-w-[200px]" aria-current="page">{dest.title}</span>
             </nav>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="font-serif text-4xl md:text-6xl font-bold text-foreground mb-3"
+              className="font-serif text-4xl md:text-6xl font-bold text-white mb-3"
               style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
               {dest.title}
             </motion.h1>
-            <p className="text-lg text-muted-foreground mb-4">
+            <p className="text-lg text-white/70 mb-4">
               {countryFlag[dest.country] || ""} {dest.country} {dest.region ? `· ${dest.region}` : ""}
             </p>
             <div className="flex flex-wrap gap-3">
               <Badge className={difficultyColor[dest.difficulty_level]}>{difficultyLabel[dest.difficulty_level]}</Badge>
-              <Badge variant="outline" className="border-foreground/20 text-foreground"><Clock className="h-3 w-3 mr-1" /> {dest.days_needed}</Badge>
-              {dest.estimated_budget_usd && <Badge variant="outline" className="border-foreground/20 text-foreground"><DollarSign className="h-3 w-3 mr-1" /> ~${dest.estimated_budget_usd} USD</Badge>}
-              {dest.best_season && <Badge variant="outline" className="border-foreground/20 text-foreground">🗓 {dest.best_season}</Badge>}
+              <Badge variant="outline" className="border-white/20 text-white"><Clock className="h-3 w-3 mr-1" /> {dest.days_needed}</Badge>
+              {dest.estimated_budget_usd && <Badge variant="outline" className="border-white/20 text-white"><DollarSign className="h-3 w-3 mr-1" /> ~${dest.estimated_budget_usd} USD</Badge>}
+              {dest.best_season && <Badge variant="outline" className="border-white/20 text-white">🗓 {dest.best_season}</Badge>}
             </div>
           </div>
         </div>
@@ -282,7 +282,7 @@ const DestinationDetail = () => {
               </TabsList>
               <TabsContent value="can-i">
                 {dest.difficulty_description && (
-                  <div className="prose prose-invert max-w-none mb-8">
+                  <div className="prose max-w-none mb-8">
                     <p className="text-foreground/90 text-lg leading-relaxed">{dest.difficulty_description}</p>
                   </div>
                 )}
@@ -301,17 +301,17 @@ const DestinationDetail = () => {
                 )}
               </TabsContent>
               <TabsContent value="prep">
-                <div className="prose prose-invert max-w-none text-foreground/90">
+                <div className="prose max-w-none text-foreground/90">
                   <ReactMarkdown components={markdownComponents}>{dest.preparation_plan || "Contenido próximamente."}</ReactMarkdown>
                 </div>
               </TabsContent>
               <TabsContent value="itinerary">
-                <div className="prose prose-invert max-w-none text-foreground/90">
+                <div className="prose max-w-none text-foreground/90">
                   <ReactMarkdown components={markdownComponents}>{dest.itinerary_markdown || "Contenido próximamente."}</ReactMarkdown>
                 </div>
               </TabsContent>
               <TabsContent value="gear">
-                <div className="prose prose-invert max-w-none text-foreground/90">
+                <div className="prose max-w-none text-foreground/90">
                   <ReactMarkdown components={markdownComponents}>{dest.gear_list_markdown || "Contenido próximamente."}</ReactMarkdown>
                 </div>
               </TabsContent>
@@ -506,7 +506,7 @@ const DestinationDetail = () => {
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   </div>
                   <div className="p-4">
                     <Badge className={difficultyColor[r.difficulty_level] + " mb-2"}>{difficultyLabel[r.difficulty_level]}</Badge>
