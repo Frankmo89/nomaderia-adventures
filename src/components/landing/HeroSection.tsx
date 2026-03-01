@@ -59,9 +59,8 @@ const HeroSection = () => {
           )}
           <Button
             asChild
-            variant="outline"
             size="lg"
-            className="border-white/30 text-white hover:bg-white/10 text-lg px-10 h-14 backdrop-blur-sm w-full sm:w-auto"
+            className="bg-transparent border border-white text-white hover:bg-white/10 text-lg px-10 h-14 backdrop-blur-sm w-full sm:w-auto"
           >
             <a href="#quiz">Descubre Tu Destino Ideal →</a>
           </Button>
