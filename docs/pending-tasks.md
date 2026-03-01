@@ -55,7 +55,7 @@
 - [x] Botones "Pedir mi Escapada/Aventura/Expedición" en `/servicios` ahora abren WhatsApp en nueva pestaña
 - [x] Número final hardcodeado: `18588996802` (ya no depende de `VITE_WHATSAPP_NUMBER`)
 - [x] Mensajes prellenados específicos por paquete con precio incluido
-- [x] Eliminada dependencia de `buildWhatsAppUrl()` en Servicios.tsx; URL construida directamente con `encodeURIComponent`
+- [x] `Servicios.tsx` sigue usando `buildWhatsAppUrl()`, ahora con número hardcodeado y override por paquete (no se construye la URL inline con `encodeURIComponent`)
 - `src/pages/Servicios.tsx` — Botones de pricing funcionales con WhatsApp
 
 ### ✅ Hero de PremiumItinerarySection optimizado (Marzo 2026)
