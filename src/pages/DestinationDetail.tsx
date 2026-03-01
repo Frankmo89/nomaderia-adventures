@@ -194,6 +194,7 @@ const DestinationDetail = () => {
 
   const affiliateLinks = (dest.affiliate_links as Record<string, string>) || {};
   const bookingOutlineBtn = "w-full bg-transparent border-card-foreground/25 text-card-foreground hover:bg-card-foreground/10 hover:text-card-foreground";
+  const whatsAppCtaUrl = buildWhatsAppUrl(`Hola Frank, me interesa un itinerario para ${dest.title}`);
 
   return (
     <main className="bg-background min-h-screen">
@@ -533,10 +534,10 @@ const DestinationDetail = () => {
               <p className="text-muted-foreground mb-6">
                 Te preparo un itinerario personalizado con todo lo que necesitas.
               </p>
-              {buildWhatsAppUrl(`Hola Frank, me interesa un itinerario para ${dest.title}`) && (
+              {whatsAppCtaUrl && (
                 <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <a
-                    href={buildWhatsAppUrl(`Hola Frank, me interesa un itinerario para ${dest.title}`)}
+                    href={whatsAppCtaUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

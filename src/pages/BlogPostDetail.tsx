@@ -155,6 +155,8 @@ const BlogPostDetail = () => {
     </main>
   );
 
+  const whatsAppCtaUrl = buildWhatsAppUrl(`Hola Frank, leí tu artículo sobre ${post.title} y me gustaría ayuda para planear un viaje`);
+
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
@@ -232,10 +234,10 @@ const BlogPostDetail = () => {
             <p className="text-muted-foreground mb-6">
               Yo te armo el viaje completo — desde $9 USD.
             </p>
-            {buildWhatsAppUrl(`Hola Frank, leí tu artículo sobre ${post.title} y me gustaría ayuda para planear un viaje`) && (
+            {whatsAppCtaUrl && (
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <a
-                  href={buildWhatsAppUrl(`Hola Frank, leí tu artículo sobre ${post.title} y me gustaría ayuda para planear un viaje`)}
+                  href={whatsAppCtaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
