@@ -51,6 +51,13 @@
 
 ## Changelog (completados)
 
+### ✅ Botones de Pricing conectados a WhatsApp (Marzo 2026)
+- [x] Botones "Pedir mi Escapada/Aventura/Expedición" en `/servicios` ahora abren WhatsApp en nueva pestaña
+- [x] Número final hardcodeado: `18588996802` (ya no depende de `VITE_WHATSAPP_NUMBER`)
+- [x] Mensajes prellenados específicos por paquete con precio incluido
+- [x] `Servicios.tsx` sigue usando `buildWhatsAppUrl()`, ahora con número hardcodeado y override por paquete (no se construye la URL inline con `encodeURIComponent`)
+- `src/pages/Servicios.tsx` — Botones de pricing funcionales con WhatsApp
+
 ### ✅ Hero de PremiumItinerarySection optimizado (Marzo 2026)
 - [x] Badge cambiado de "✦ Exclusivo · Solo 5 cupos al mes" a "✦ Diseño 100% Personalizado"
 - [x] Badge con fondo transparente (bg-transparent), borde secondary sólido y texto secondary
