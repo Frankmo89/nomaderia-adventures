@@ -14,7 +14,6 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const steps = [
   {
@@ -51,7 +50,7 @@ const packages = [
       "Mapa interactivo",
     ],
     cta: "Pedir mi Escapada →",
-    message: "Hola Frank, me interesa el paquete Escapada para [destino]",
+    message: "¡Hola! Me interesa diseñar mi viaje con el paquete Escapada de $9 USD. ¿Cuáles son los siguientes pasos?",
   },
   {
     name: "Aventura",
@@ -67,7 +66,7 @@ const packages = [
       "Opciones de alojamiento comparadas",
     ],
     cta: "Pedir mi Aventura →",
-    message: "Hola Frank, me interesa el paquete Aventura para [destino]",
+    message: "¡Hola! Me interesa diseñar mi viaje con el paquete Aventura de $25 USD. ¿Cuáles son los siguientes pasos?",
   },
   {
     name: "Expedición",
@@ -82,7 +81,7 @@ const packages = [
       "Checklist pre-viaje completo",
     ],
     cta: "Pedir mi Expedición →",
-    message: "Hola Frank, me interesa el paquete Expedición para [destino]",
+    message: "¡Hola! Me interesa diseñar mi viaje con el paquete Expedición de $49 USD. ¿Cuáles son los siguientes pasos?",
   },
 ];
 
@@ -186,7 +185,7 @@ const Servicios = () => {
       <section className="container mx-auto px-4 pb-20 max-w-6xl">
         <div className="grid md:grid-cols-3 gap-8 items-start">
           {packages.map((pkg, i) => {
-            const url = buildWhatsAppUrl(pkg.message);
+            const url = `https://wa.me/18588996802?text=${encodeURIComponent(pkg.message)}`;
             return (
             <motion.div
               key={pkg.name}
@@ -237,27 +236,18 @@ const Servicios = () => {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  {url ? (
-                    <Button
-                      asChild
-                      className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {pkg.cta}
-                      </a>
-                    </Button>
-                  ) : (
-                    <Button
-                      disabled
-                      className="w-full h-12 text-base"
+                  <Button
+                    asChild
+                    className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
                       {pkg.cta}
-                    </Button>
-                  )}
+                    </a>
+                  </Button>
                 </CardFooter>
               </Card>
             </motion.div>
