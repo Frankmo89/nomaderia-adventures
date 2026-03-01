@@ -2,6 +2,16 @@
 
 > **Para agentes AI:** Si el usuario pide algo que depende de una tarea pendiente aquí, recuérdale que primero debe completarla.
 
+### 📝 TAREAS MANUALES PARA FRANK (Dueño)
+
+- [ ] Descargar WhatsApp Business y configurar el número de Nomaderia.
+- [ ] Reemplazar VITE_WHATSAPP_NUMBER en el archivo .env con el número real.
+- [ ] Subir la foto/video estrella a la carpeta `/public` y actualizar el src en `HeroSection.tsx`.
+- [ ] Entrar al panel de admin de Nomaderia y subir imágenes de portada (hero images) a los destinos que falten.
+- [ ] Crear cuenta en Facebook Business Manager para obtener el Pixel ID y reemplazar el placeholder en index.html.
+- [ ] Crear cuenta en Google Analytics para obtener el Measurement ID y reemplazar el placeholder en index.html.
+- [ ] Guardar las 4 Respuestas Rápidas en la configuración de WhatsApp Business.
+
 ## Tareas del Dueño (requieren acción humana)
 
 ### 🌐 Dominio y Hosting
