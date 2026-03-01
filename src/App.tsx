@@ -13,6 +13,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 // Rutas públicas críticas — carga inmediata
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Servicios from "./pages/Servicios";
 
 // Rutas públicas secundarias — lazy load con retry automático
 const DestinationDetail = lazyWithRetry(() => import("./pages/DestinationDetail"));
@@ -73,6 +74,7 @@ const App = () => (
               <Route path="/blog" element={<ErrorBoundary><BlogListing /></ErrorBoundary>} />
               <Route path="/blog/:slug" element={<ErrorBoundary><BlogPostDetail /></ErrorBoundary>} />
               <Route path="/privacidad" element={<ErrorBoundary><PrivacyPolicy /></ErrorBoundary>} />
+              <Route path="/servicios" element={<ErrorBoundary><Servicios /></ErrorBoundary>} />
               <Route path="/sobre-nosotros" element={<ErrorBoundary><SobreNosotros /></ErrorBoundary>} />
               <Route path="/admin/login" element={<ErrorBoundary><AdminLogin /></ErrorBoundary>} />
               <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>

@@ -136,12 +136,15 @@ Siempre que hagas cambios al código:
 - Email 3 (7 días post-quiz): Oferta directa itinerario personalizado con precios
 - Requiere: tabla email_queue + Supabase scheduled function o pg_cron
 
-### 💰 Página de Pricing: Itinerarios Personalizados (pendiente)
-- Weekend (1-3 días): $299 MXN / $19 USD
-- Aventura (4-7 días): $549 MXN / $35 USD
-- Expedición (8+ días): $899 MXN / $59 USD — incluye soporte WhatsApp
-- Incluye: itinerario día a día, presupuesto, checklist gear, tips seguridad
-- Integración: Stripe + PayPal + MercadoPago
+### 💰 ~~Página de Pricing: Itinerarios Personalizados~~ ✅ (completado)
+- [x] Página `/servicios` con 3 paquetes Travel Concierge (Escapada, Aventura, Expedición)
+- [x] Hero section con badge TAP + título + subtítulo
+- [x] Sección "Cómo Funciona" con 3 pasos (MessageCircle, Map, Smile)
+- [x] 3 tarjetas de precio con Card de shadcn/ui, Framer Motion stagger
+- [x] Botones WhatsApp directos por paquete con mensaje prellenado
+- [x] FAQ con Accordion de shadcn/ui (5 preguntas)
+- [x] Ruta eager load en App.tsx
+- [x] Link "Servicios" en Navbar entre "Blog" y "Calculadora"
 
 ### 🚀 Mejoras Técnicas (backlog)
 - Performance: lazy loading imágenes, hero images WebP/srcset, más skeleton loaders
