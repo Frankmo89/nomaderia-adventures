@@ -241,23 +241,32 @@ const Servicios = () => {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Button
-                    asChild
-                    className={cn(
-                      "w-full h-12 text-base",
-                      pkg.popular
-                        ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                        : "bg-primary hover:bg-primary/90 text-primary-foreground"
-                    )}
-                  >
-                    <a
-                      href={buildWhatsAppUrl(pkg.message)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  {buildWhatsAppUrl(pkg.message) ? (
+                    <Button
+                      asChild
+                      className={cn(
+                        "w-full h-12 text-base",
+                        pkg.popular
+                          ? "bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                          : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      )}
+                    >
+                      <a
+                        href={buildWhatsAppUrl(pkg.message)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {pkg.cta}
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button
+                      disabled
+                      className="w-full h-12 text-base"
                     >
                       {pkg.cta}
-                    </a>
-                  </Button>
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             </motion.div>
