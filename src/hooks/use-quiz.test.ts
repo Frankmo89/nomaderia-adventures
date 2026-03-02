@@ -101,7 +101,7 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
     return { points: 0, reason: "" };
   },
 
-  budget: (answer, dest) => {
+  budget_range: (answer, dest) => {
     const budget = dest.estimated_budget_usd;
     if (budget == null) return { points: 0, reason: "" };
     if (answer === "low" && budget <= 500) return { points: 2, reason: "Dentro de tu presupuesto" };
@@ -133,11 +133,12 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
     const region = (dest.region || "").toLowerCase();
     const title = (dest.title || "").toLowerCase();
     const proximityMap: Record<string, string[]> = {
-      mexico: ["méxico", "estados unidos", "usa", "joshua", "gran cañón", "yosemite"],
-      usa: ["estados unidos", "usa", "joshua", "yosemite", "gran cañón", "méxico"],
-      colombia: ["colombia", "perú", "ecuador", "chile", "patagonia"],
-      spain: ["españa", "camino", "santiago", "europa"],
-      other: [],
+      tijuana_baja: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
+      sandiego_socal: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
+      cdmx: ["méxico", "nevado", "toluca"],
+      resto_mx: ["méxico"],
+      resto_usa: ["estados unidos", "usa"],
+      otro: [],
     };
     const nearby = proximityMap[answer] || [];
     const destText = `${country} ${region} ${title}`;
@@ -279,34 +280,34 @@ describe("SCORING_RULES — trip_duration", () => {
   });
 });
 
-describe("SCORING_RULES — budget", () => {
+describe("SCORING_RULES — budget_range", () => {
   it("low + $400 destination → 2 points", () => {
-    const { points } = SCORING_RULES.budget("low", makeDestination({ estimated_budget_usd: 400 }));
+    const { points } = SCORING_RULES.budget_range("low", makeDestination({ estimated_budget_usd: 400 }));
     expect(points).toBe(2);
   });
 
   it("medium + $1000 destination → 2 points", () => {
-    const { points } = SCORING_RULES.budget("medium", makeDestination({ estimated_budget_usd: 1000 }));
+    const { points } = SCORING_RULES.budget_range("medium", makeDestination({ estimated_budget_usd: 1000 }));
     expect(points).toBe(2);
   });
 
   it("high + $2000 destination → 2 points", () => {
-    const { points } = SCORING_RULES.budget("high", makeDestination({ estimated_budget_usd: 2000 }));
+    const { points } = SCORING_RULES.budget_range("high", makeDestination({ estimated_budget_usd: 2000 }));
     expect(points).toBe(2);
   });
 
   it("unlimited + $5000 destination → 1 point", () => {
-    const { points } = SCORING_RULES.budget("unlimited", makeDestination({ estimated_budget_usd: 5000 }));
+    const { points } = SCORING_RULES.budget_range("unlimited", makeDestination({ estimated_budget_usd: 5000 }));
     expect(points).toBe(1);
   });
 
   it("low + $2000 destination → 0 points (over budget)", () => {
-    const { points } = SCORING_RULES.budget("low", makeDestination({ estimated_budget_usd: 2000 }));
+    const { points } = SCORING_RULES.budget_range("low", makeDestination({ estimated_budget_usd: 2000 }));
     expect(points).toBe(0);
   });
 
   it("null budget → 0 points", () => {
-    const { points } = SCORING_RULES.budget("medium", makeDestination({ estimated_budget_usd: null }));
+    const { points } = SCORING_RULES.budget_range("medium", makeDestination({ estimated_budget_usd: null }));
     expect(points).toBe(0);
   });
 });
@@ -359,33 +360,38 @@ describe("SCORING_RULES — season", () => {
 });
 
 describe("SCORING_RULES — origin", () => {
-  it("mexico + destination in México → 2 points", () => {
-    const { points } = SCORING_RULES.origin("mexico", makeDestination({ country: "México" }));
+  it("tijuana_baja + destination in México → 2 points", () => {
+    const { points } = SCORING_RULES.origin("tijuana_baja", makeDestination({ country: "México" }));
     expect(points).toBe(2);
   });
 
-  it("usa + destination in Estados Unidos → 2 points", () => {
-    const { points } = SCORING_RULES.origin("usa", makeDestination({ country: "Estados Unidos" }));
+  it("sandiego_socal + destination in Estados Unidos → 2 points", () => {
+    const { points } = SCORING_RULES.origin("sandiego_socal", makeDestination({ country: "Estados Unidos" }));
     expect(points).toBe(2);
   });
 
-  it("spain + destination in España → 2 points", () => {
-    const { points } = SCORING_RULES.origin("spain", makeDestination({ country: "España" }));
+  it("cdmx + destination in México → 2 points", () => {
+    const { points } = SCORING_RULES.origin("cdmx", makeDestination({ country: "México" }));
     expect(points).toBe(2);
   });
 
-  it("colombia + destination in Chile (nearby) → 2 points", () => {
-    const { points } = SCORING_RULES.origin("colombia", makeDestination({ country: "Chile" }));
+  it("resto_mx + destination in México → 2 points", () => {
+    const { points } = SCORING_RULES.origin("resto_mx", makeDestination({ country: "México" }));
     expect(points).toBe(2);
   });
 
-  it("other + any destination → 0 points", () => {
-    const { points } = SCORING_RULES.origin("other", makeDestination({ country: "Nepal" }));
+  it("resto_usa + destination in Estados Unidos → 2 points", () => {
+    const { points } = SCORING_RULES.origin("resto_usa", makeDestination({ country: "Estados Unidos" }));
+    expect(points).toBe(2);
+  });
+
+  it("otro + any destination → 0 points", () => {
+    const { points } = SCORING_RULES.origin("otro", makeDestination({ country: "Nepal" }));
     expect(points).toBe(0);
   });
 
-  it("mexico + destination in Nepal (no proximity) → 0 points", () => {
-    const { points } = SCORING_RULES.origin("mexico", makeDestination({ country: "Nepal" }));
+  it("cdmx + destination in Nepal (no proximity) → 0 points", () => {
+    const { points } = SCORING_RULES.origin("cdmx", makeDestination({ country: "Nepal" }));
     expect(points).toBe(0);
   });
 });
@@ -398,14 +404,14 @@ describe("scoreDestination — aggregate scoring", () => {
       trip_duration: "one_week",
       budget_range: "medium",
       season: "flexible",
-      origin: "spain",
+      origin: "cdmx",
     };
     const dest = makeDestination({
       difficulty_level: "moderate",
       experience_type: "trekking",
       estimated_budget_usd: 1200,
       days_needed: 7,
-      country: "España",
+      country: "México",
       best_season: null,
     });
     const { score, matchReasons } = scoreDestination(answers, dest);

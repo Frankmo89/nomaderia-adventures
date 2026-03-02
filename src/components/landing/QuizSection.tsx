@@ -3,7 +3,7 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass, Check,
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
-  Mail, Send, Loader2, Calendar, MapPin,
+  Mail, Send, Loader2, Calendar, MapPin, HeartPulse, Backpack, Tent,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,14 +33,12 @@ const seasonOptions = [
 ];
 
 const originOptions = [
-  { label: "Frontera MX-USA (Tijuana, Mexicali, Juárez)", value: "mx_border" },
-  { label: "Centro de México (CDMX, Guadalajara, Puebla)", value: "mx_center" },
-  { label: "Sur/Sureste de México (Cancún, Oaxaca, Veracruz)", value: "mx_south" },
-  { label: "California / Suroeste USA (San Diego, LA, Phoenix)", value: "us_southwest" },
-  { label: "Otro estado de EE.UU.", value: "us_other" },
-  { label: "España", value: "spain" },
-  { label: "Sudamérica", value: "south_america" },
-  { label: "Otro país", value: "other" },
+  { label: "Tijuana / Baja California", value: "tijuana_baja" },
+  { label: "San Diego / Sur de California", value: "sandiego_socal" },
+  { label: "Ciudad de México (CDMX)", value: "cdmx" },
+  { label: "Resto de México", value: "resto_mx" },
+  { label: "Resto de Estados Unidos", value: "resto_usa" },
+  { label: "Otro lugar", value: "otro" },
 ];
 
 const steps: QuizStep[] = [
@@ -49,10 +47,10 @@ const steps: QuizStep[] = [
     subtitle: "Esto nos ayuda a encontrar rutas adecuadas para ti",
     key: "fitness_level",
     options: [
-      { label: "Camino poco", value: "sedentary", icon: <Footprints className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🚶", description: "Paseos cortos y tranquilos" },
-      { label: "Camino seguido", value: "light_activity", icon: <Map className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🏃", description: "Caminatas de unas horas" },
-      { label: "Hago ejercicio regular", value: "moderate", icon: <Mountain className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "💪", description: "Entreno varias veces por semana" },
-      { label: "Soy bastante activo", value: "active", icon: <Shield className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🔥", description: "Listo para cualquier desafío" },
+      { label: "Camino poco", value: "sedentary", icon: <Footprints className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Paseos cortos y tranquilos" },
+      { label: "Camino seguido", value: "light_activity", icon: <Map className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Caminatas de unas horas" },
+      { label: "Hago ejercicio regular", value: "moderate", icon: <Mountain className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Entreno varias veces por semana" },
+      { label: "Soy bastante activo", value: "active", icon: <Shield className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Listo para cualquier desafío" },
     ],
   },
   {
@@ -60,10 +58,10 @@ const steps: QuizStep[] = [
     subtitle: "Cada paisaje ofrece una experiencia única",
     key: "interest",
     options: [
-      { label: "Montañas", value: "mountains", icon: <Mountain className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🏔️", description: "Cumbres, valles y aire fresco" },
-      { label: "Bosques", value: "forests", icon: <TreePine className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🌲", description: "Senderos entre la naturaleza" },
-      { label: "Desiertos", value: "deserts", icon: <Sun className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🏜️", description: "Paisajes áridos y majestuosos" },
-      { label: "Caminos Culturales", value: "cultural", icon: <Compass className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🏛️", description: "Historia y tradiciones vivas" },
+      { label: "Montañas", value: "mountains", icon: <Mountain className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Cumbres, valles y aire fresco" },
+      { label: "Bosques", value: "forests", icon: <TreePine className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Senderos entre la naturaleza" },
+      { label: "Desiertos", value: "deserts", icon: <Sun className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Paisajes áridos y majestuosos" },
+      { label: "Caminos Culturales", value: "cultural", icon: <Compass className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Historia y tradiciones vivas" },
     ],
   },
   {
@@ -71,9 +69,20 @@ const steps: QuizStep[] = [
     subtitle: "Hay aventuras para cada agenda",
     key: "trip_duration",
     options: [
-      { label: "Un fin de semana", value: "weekend", icon: <Sun className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "📅", description: "2-3 días de aventura" },
-      { label: "Una semana", value: "one_week", icon: <Compass className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🗓️", description: "5-7 días para explorar" },
-      { label: "Dos semanas o más", value: "two_weeks", icon: <Map className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "🌍", description: "Viaje largo e inmersivo" },
+      { label: "Un fin de semana", value: "weekend", icon: <Sun className="h-6 w-6 sm:h-7 sm:w-7" />, description: "2-3 días de aventura" },
+      { label: "Una semana", value: "one_week", icon: <Compass className="h-6 w-6 sm:h-7 sm:w-7" />, description: "5-7 días para explorar" },
+      { label: "Dos semanas o más", value: "two_weeks", icon: <Map className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Viaje largo e inmersivo" },
+    ],
+  },
+  {
+    question: "¿Qué es lo que más te frena para salir a explorar?",
+    subtitle: "Nomaderia está diseñado para ayudarte con esto",
+    key: "main_barrier",
+    options: [
+      { label: "No saber por dónde empezar", value: "lack_info", icon: <Map className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Miedo a perderme o elegir mal" },
+      { label: "Siento que me falta condición", value: "fitness_doubt", icon: <HeartPulse className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Temor a no aguantar el ritmo" },
+      { label: "No tengo el equipo adecuado", value: "no_gear", icon: <Backpack className="h-6 w-6 sm:h-7 sm:w-7" />, description: "No quiero gastar en ropa técnica" },
+      { label: "Me preocupa la incomodidad", value: "comfort", icon: <Tent className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Temas de baño, clima o dormir mal" },
     ],
   },
   {
@@ -81,10 +90,10 @@ const steps: QuizStep[] = [
     subtitle: "Encuentra destinos que se ajusten a tu bolsillo",
     key: "budget_range",
     options: [
-      { label: "Económico", value: "low", icon: <Wallet className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "💰", description: "Menos de $500 USD" },
-      { label: "Moderado", value: "medium", icon: <DollarSign className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "💵", description: "$500 - $1,500 USD" },
-      { label: "Premium", value: "high", icon: <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "💎", description: "$1,500 - $3,000 USD" },
-      { label: "Sin límite", value: "unlimited", icon: <Sparkles className="h-6 w-6 sm:h-7 sm:w-7" />, emoji: "✨", description: "La aventura no tiene precio" },
+      { label: "Económico", value: "low", icon: <Wallet className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Menos de $500 USD" },
+      { label: "Moderado", value: "medium", icon: <DollarSign className="h-6 w-6 sm:h-7 sm:w-7" />, description: "$500 - $1,500 USD" },
+      { label: "Premium", value: "high", icon: <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />, description: "$1,500 - $3,000 USD" },
+      { label: "Sin límite", value: "unlimited", icon: <Sparkles className="h-6 w-6 sm:h-7 sm:w-7" />, description: "La aventura no tiene precio" },
     ],
   },
   {
@@ -596,12 +605,12 @@ const QuizSection = () => {
                             : "border-border hover:border-primary/40 hover:bg-muted/40"
                         )}
                       >
-                        {/* Emoji tile */}
+                        {/* Icon tile */}
                         <div className={cn(
                           "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-all duration-200",
                           isSelected ? "bg-primary/20" : "bg-muted group-hover:bg-muted/80"
                         )}>
-                          {opt.emoji}
+                          {opt.icon}
                         </div>
 
                         {/* Label + description */}

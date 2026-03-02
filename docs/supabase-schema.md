@@ -77,6 +77,7 @@ interest                text
 trip_duration           text
 travel_style            text
 budget_range            text
+main_barrier            text (nullable)
 recommended_destinations text[]
 created_at              timestamptz
 ```

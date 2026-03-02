@@ -21,11 +21,22 @@ const budgetLabels: Record<string, string> = {
   low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", unlimited: "🚀 Sin límite",
 };
 const originLabels: Record<string, string> = {
-  mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", colombia: "🇨🇴 Colombia", other: "🌎 Otro",
+  // New market keys
+  tijuana_baja: "🇲🇽 Tijuana/Baja", sandiego_socal: "🇺🇸 San Diego/SoCal", cdmx: "🇲🇽 CDMX",
+  resto_mx: "🇲🇽 Resto MX", resto_usa: "🇺🇸 Resto USA", otro: "🌎 Otro",
+  // Legacy keys kept for backward compatibility with historical data
+  mx_border: "🇲🇽 Frontera MX (Legacy)", mx_center: "🇲🇽 Centro MX (Legacy)",
+  mx_south: "🇲🇽 Sur MX (Legacy)", us_southwest: "🇺🇸 Suroeste USA (Legacy)",
+  us_other: "🇺🇸 Resto USA (Legacy)", spain: "🇪🇸 España (Legacy)",
+  south_america: "🌎 Sudamérica (Legacy)", other: "🌎 Otro (Legacy)",
+};
+
+const barrierLabels: Record<string, string> = {
+  lack_info: "🗺️ Falta Info", fitness_doubt: "❤️ Condición", no_gear: "🎒 Equipo", comfort: "⛺ Comodidad",
 };
 
 const exportCSV = (items: QuizResponse[]) => {
-  const headers = ["Email", "Fitness", "Paisaje", "Duración", "Presupuesto", "Origen", "Fecha"];
+  const headers = ["Email", "Fitness", "Paisaje", "Duración", "Presupuesto", "Origen", "Barrera", "Fecha"];
   const rows = items.map((r) => [
     r.email || "",
     fitnessLabels[r.fitness_level || ""] || r.fitness_level || "",
@@ -33,6 +44,7 @@ const exportCSV = (items: QuizResponse[]) => {
     durationLabels[r.trip_duration || ""] || r.trip_duration || "",
     budgetLabels[r.budget_range || ""] || r.budget_range || "",
     originLabels[r.travel_style || ""] || r.travel_style || "",
+    barrierLabels[r.main_barrier || ""] || r.main_barrier || "",
     new Date(r.created_at).toLocaleDateString("es-MX"),
   ]);
   const csv = [headers, ...rows].map((row) => row.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -82,6 +94,7 @@ const AdminQuizResponses = () => {
               <TableHead className="text-foreground">Duración</TableHead>
               <TableHead className="text-foreground">Presupuesto</TableHead>
               <TableHead className="text-foreground">Origen</TableHead>
+              <TableHead className="text-foreground">Barrera</TableHead>
               <TableHead className="text-foreground">Fecha</TableHead>
             </TableRow>
           </TableHeader>
@@ -89,14 +102,14 @@ const AdminQuizResponses = () => {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i} className="border-border">
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 8 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-24" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
                   No hay respuestas del quiz todavía.
                 </TableCell>
               </TableRow>
@@ -109,6 +122,7 @@ const AdminQuizResponses = () => {
                   <TableCell className="text-muted-foreground">{durationLabels[r.trip_duration || ""] || r.trip_duration || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{budgetLabels[r.budget_range || ""] || r.budget_range || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{originLabels[r.travel_style || ""] || r.travel_style || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{barrierLabels[r.main_barrier || ""] || r.main_barrier || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{new Date(r.created_at).toLocaleDateString("es-MX")}</TableCell>
                 </TableRow>
               ))
