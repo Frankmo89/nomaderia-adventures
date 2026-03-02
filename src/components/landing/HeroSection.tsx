@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import MediaSlider from "@/components/landing/MediaSlider";
 
 const WHATSAPP_URL = buildWhatsAppUrl(
   "Hola Frank, quiero planear mi primera aventura"
@@ -10,11 +11,7 @@ const WHATSAPP_URL = buildWhatsAppUrl(
 const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* TODO: Reemplazar con <video> o <img> de hero real cuando esté disponible */}
-      <div className="absolute inset-0 bg-neutral-800" />
-
-      {/* Dark overlay for text legibility */}
-      <div className="absolute inset-0 bg-black/50" />
+      <MediaSlider />
 
       <div className="relative z-10 container mx-auto px-5 text-center">
         <motion.h1

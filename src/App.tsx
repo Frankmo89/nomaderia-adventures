@@ -40,6 +40,7 @@ const AdminItineraryRequests = lazyWithRetry(() => import("./pages/admin/AdminIt
 const AdminBlogPosts = lazyWithRetry(() => import("./pages/admin/AdminBlogPosts"));
 const AdminBlogPostForm = lazyWithRetry(() => import("./pages/admin/AdminBlogPostForm"));
 const AdminEmailLogs = lazyWithRetry(() => import("./pages/admin/AdminEmailLogs"));
+const AdminGallery = lazyWithRetry(() => import("./pages/admin/AdminGallery"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,6 +95,7 @@ const App = () => (
                 <Route path="blog-posts/new" element={<AdminBlogPostForm />} />
                 <Route path="blog-posts/:id/edit" element={<AdminBlogPostForm />} />
                 <Route path="email-logs" element={<AdminEmailLogs />} />
+                <Route path="gallery" element={<AdminGallery />} />
               </Route>
               <Route path="*" element={<NotFound />} />
               </Routes>
