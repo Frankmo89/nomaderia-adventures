@@ -12,6 +12,8 @@ import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
 import { useCanonical, useJsonLd, SITE_URL } from "@/hooks/use-seo";
 import { useMemo } from "react";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   useCanonical();
@@ -38,14 +40,30 @@ const Index = () => {
     <main className="bg-background min-h-screen">
       <Navbar />
       <HeroSection />
-      <DidYouKnowSection />
+      <SocialProof />
+      <PremiumItinerarySection />
+      <TravelInsuranceSection />
+      <section className="bg-secondary/20 py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-6">
+            ¿Listo para tu primera gran aventura?
+          </h2>
+          <Button asChild size="lg">
+            <a
+              href={buildWhatsAppUrl('¡Hola! Estoy listo para diseñar mi viaje a medida.', '18588996802')}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Diseña tu viaje a medida
+            </a>
+          </Button>
+        </div>
+      </section>
       <QuizSection />
+      <DidYouKnowSection />
       <DestinationsCatalog />
       <GearPreview />
       <BlogPreview />
-      <SocialProof />
-      <TravelInsuranceSection />
-      <PremiumItinerarySection />
       <NewsletterSignup />
       <Footer />
     </main>
