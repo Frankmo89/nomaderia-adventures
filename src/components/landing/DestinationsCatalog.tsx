@@ -122,7 +122,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
           {["all", "easy", "moderate", "challenging"].map((level) => (
             <TabsContent key={level} value={level}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-                {(limit ? filterByDifficulty(level).slice(0, limit) : filterByDifficulty(level)).map((d, i) => (
+                {(limit !== undefined ? filterByDifficulty(level).slice(0, limit) : filterByDifficulty(level)).map((d, i) => (
                   <DestCard key={d.id} d={d} index={i} />
                 ))}
               </div>
@@ -130,7 +130,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
           ))}
         </Tabs>
 
-        {limit && (
+        {limit !== undefined && (
           <div className="flex justify-center mt-10">
             <Button asChild variant="outline" size="lg">
               <Link to="/destinos">Ver todos los destinos →</Link>
