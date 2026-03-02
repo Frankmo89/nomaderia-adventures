@@ -51,6 +51,12 @@
 
 ## Changelog (completados)
 
+### ✅ Fase 1 — Embudo de ventas en Index.tsx (Marzo 2026)
+- [x] El layout de Index.tsx ha sido reordenado para optimizar el embudo de ventas
+- [x] Nuevo orden: Navbar → Hero → SocialProof → PremiumItinerarySection → TravelInsuranceSection → CTA Inline → Quiz → DidYouKnow → Destinos → Gear → Blog → Newsletter → Footer
+- [x] Nuevo bloque CTA inline con fondo `bg-secondary/20`, heading "¿Listo para tu primera gran aventura?" y botón WhatsApp "Diseña tu viaje a medida"
+- `src/pages/Index.tsx` — Reordenado y CTA inline añadido
+
 ### ✅ Tarea 1.4 — Componente ArticleWhatsAppCTA reutilizable (Marzo 2026)
 - [x] Nuevo componente `src/components/ArticleWhatsAppCTA.tsx` con diseño editorial limpio
   - Fondo sutil Light Sand (`#F5F0EB`), bordes finos, animación Framer Motion
