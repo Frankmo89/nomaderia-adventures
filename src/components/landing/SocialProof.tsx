@@ -4,8 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, MapPin, ShieldCheck } from "lucide-react";
 
-/** Animated counter that counts from 0 to `target` when visible */
-const AnimatedCounter = ({ target, suffix = "" }: { target: number; suffix?: string }) => {
+/** Animated counter that counts from 0 to `target` when visible and loaded */
+const AnimatedCounter = ({
+  target,
+  suffix = "",
+  isLoading = false,
+}: {
+  target: number;
+  suffix?: string;
+  isLoading?: boolean;
+}) => {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   const motionVal = useMotionValue(0);
@@ -13,18 +21,19 @@ const AnimatedCounter = ({ target, suffix = "" }: { target: number; suffix?: str
   const display = useTransform(springVal, (v) => `${Math.round(v)}${suffix}`);
 
   useEffect(() => {
-    if (isInView && target > 0) {
+    if (isInView && !isLoading && target > 0) {
       motionVal.set(target);
     }
-  }, [isInView, target, motionVal]);
+  }, [isInView, isLoading, target, motionVal]);
 
+  if (isLoading) return <span ref={ref} className="text-muted-foreground/40" aria-label="Cargando">···</span>;
   if (target <= 0) return <span ref={ref}>—</span>;
 
   return <motion.span ref={ref}>{display}</motion.span>;
 };
 
 const SocialProof = () => {
-  const { data: quizCount = 0 } = useQuery({
+  const { data: quizCount = 0, isLoading: quizLoading } = useQuery({
     queryKey: ["quiz-count"],
     queryFn: async () => {
       const { count } = await supabase
@@ -34,7 +43,7 @@ const SocialProof = () => {
     },
   });
 
-  const { data: destCount = 0 } = useQuery({
+  const { data: destCount = 0, isLoading: destLoading } = useQuery({
     queryKey: ["destinations-count"],
     queryFn: async () => {
       const { count } = await supabase
@@ -53,6 +62,7 @@ const SocialProof = () => {
       label: "Aventureros han encontrado su destino ideal",
       sublabel: "con nuestro quiz personalizado",
       isTap: false,
+      isLoading: quizLoading,
     },
     {
       icon: MapPin,
@@ -61,6 +71,7 @@ const SocialProof = () => {
       label: "Destinos documentados con guías completas",
       sublabel: "desde fin de semana hasta expediciones",
       isTap: false,
+      isLoading: destLoading,
     },
     {
       icon: ShieldCheck,
@@ -69,16 +80,12 @@ const SocialProof = () => {
       label: "Agente de viajes certificada",
       sublabel: "National TAP Test — The Travel Institute, USA",
       isTap: true,
+      isLoading: false,
     },
   ];
 
   return (
-    <section className="py-16 sm:py-24 bg-[#1C1917] relative overflow-hidden">
-      {/* Noise texture */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
-      }} />
-
+    <section className="py-16 sm:py-24 bg-background relative overflow-hidden">
       <div className="container mx-auto px-5 relative z-10">
         {/* Header */}
         <motion.div
@@ -90,7 +97,7 @@ const SocialProof = () => {
           <span className="text-[#D97706] text-sm font-semibold tracking-wider uppercase mb-3 block">
             Respaldado por datos reales
           </span>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#F5F0EB]">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
             ¿Por Qué Confiar en Nomaderia?
           </h2>
         </motion.div>
@@ -104,11 +111,11 @@ const SocialProof = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15, duration: 0.5 }}
-              whileHover={{ y: -10, borderColor: "#D97706" }}
-              className="bg-white/5 rounded-2xl p-8 text-center border border-[#D97706]/20 transition-shadow hover:shadow-xl"
+              whileHover={{ y: -4, borderColor: "#D97706" }}
+              className="bg-white rounded-2xl p-8 text-center border border-amber-100 shadow-sm transition-shadow hover:shadow-md"
             >
               {/* Icon */}
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#D97706]/15 mb-5">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-50 mb-5">
                 {stat.isTap ? (
                   <motion.div
                     animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
@@ -122,19 +129,23 @@ const SocialProof = () => {
               </div>
 
               {/* Value */}
-              <p className="font-serif text-4xl sm:text-5xl font-bold text-[#F5F0EB] mb-2">
+              <p className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-2">
                 {stat.isTap ? (
                   "TAP"
                 ) : (
-                  <AnimatedCounter target={stat.value} suffix={stat.suffix} />
+                  <AnimatedCounter
+                    target={stat.value}
+                    suffix={stat.suffix}
+                    isLoading={stat.isLoading}
+                  />
                 )}
               </p>
 
               {/* Label */}
-              <p className="text-[#F5F0EB] font-medium text-sm sm:text-base mb-1">
+              <p className="text-foreground/80 font-medium text-sm sm:text-base mb-1">
                 {stat.label}
               </p>
-              <p className="text-[#F5F0EB]/60 text-xs sm:text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 {stat.sublabel}
               </p>
             </motion.div>
@@ -150,7 +161,7 @@ const SocialProof = () => {
         >
           <a
             href="#quiz"
-            className="inline-flex items-center gap-2 bg-[#D97706] hover:bg-[#D97706]/90 text-[#F5F0EB] px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+            className="inline-flex items-center gap-2 bg-[#D97706] hover:bg-[#D97706]/90 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
           >
             🧭 Descubre tu destino ideal
           </a>
