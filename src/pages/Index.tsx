@@ -66,7 +66,7 @@ const Index = () => {
       </section>
       <QuizSection />
       <DidYouKnowSection />
-      <DestinationsCatalog />
+      <DestinationsCatalog limit={3} />
       <GearPreview />
       <BlogPreview />
       <NewsletterSignup />

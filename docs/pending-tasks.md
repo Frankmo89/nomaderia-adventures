@@ -51,6 +51,18 @@
 
 ## Changelog (completados)
 
+### ✅ Fase 4 — Página índice /destinos (Marzo 2026)
+- [x] Creada nueva página `src/pages/Destinations.tsx` con Navbar, título "Todos Nuestros Destinos", catálogo completo y Footer
+- [x] `DestinationsCatalog` refactorizado para aceptar prop opcional `limit?: number`
+- [x] Si `limit` existe, se aplica `.slice(0, limit)` y se muestra botón "Ver todos los destinos →"
+- [x] Si `limit` no existe, se muestran todos los destinos sin botón
+- [x] `Index.tsx` ahora usa `<DestinationsCatalog limit={3} />`
+- [x] Ruta `/destinos` registrada en `App.tsx` con lazy loading
+- [x] `src/pages/Destinations.tsx` — Nueva página índice de destinos
+- [x] `src/components/landing/DestinationsCatalog.tsx` — Prop `limit` opcional
+- [x] `src/pages/Index.tsx` — Pasa `limit={3}` al catálogo
+- [x] `src/App.tsx` — Ruta `/destinos`
+
 ### ✅ Fase 3 — Compactar catálogo de destinos en Homepage (Marzo 2026)
 - [x] Se compactó el catálogo de destinos en el Home a 3 items con botón de Ver Todos
 - [x] `.slice(0, 3)` aplicado después de `filterByDifficulty(level)` para limitar a 3 destinos por pestaña
