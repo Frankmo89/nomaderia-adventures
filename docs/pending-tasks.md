@@ -51,6 +51,13 @@
 
 ## Changelog (completados)
 
+### ✅ Fase 3 — Compactar catálogo de destinos en Homepage (Marzo 2026)
+- [x] Se compactó el catálogo de destinos en el Home a 3 items con botón de Ver Todos
+- [x] `.slice(0, 3)` aplicado después de `filterByDifficulty(level)` para limitar a 3 destinos por pestaña
+- [x] Botón "Ver todos los destinos →" con `variant="outline"` y `size="lg"` debajo de las Tabs
+- [x] Botón usa `<Link to="/destinos">` envuelto en `<Button asChild>`
+- `src/components/landing/DestinationsCatalog.tsx` — Catálogo compactado + botón Ver Todos
+
 ### ✅ Fase 2 — Design System (modo oscuro) en TravelInsuranceSection (Marzo 2026)
 - [x] Se aplicó el Design System (modo oscuro) a la sección de Seguros para mejorar el contraste
 - [x] Contenedor `<section>` con fondo Charcoal `bg-[#1C1917]`

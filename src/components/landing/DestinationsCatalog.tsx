@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { MapPin, Clock, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useDestinations } from "@/hooks/use-destinations";
@@ -117,13 +118,19 @@ const DestinationsCatalog = () => {
           {["all", "easy", "moderate", "challenging"].map((level) => (
             <TabsContent key={level} value={level}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-                {filterByDifficulty(level).map((d, i) => (
+                {filterByDifficulty(level).slice(0, 3).map((d, i) => (
                   <DestCard key={d.id} d={d} index={i} />
                 ))}
               </div>
             </TabsContent>
           ))}
         </Tabs>
+
+        <div className="flex justify-center mt-10">
+          <Button asChild variant="outline" size="lg">
+            <Link to="/destinos">Ver todos los destinos →</Link>
+          </Button>
+        </div>
       </div>
     </section>
   );
