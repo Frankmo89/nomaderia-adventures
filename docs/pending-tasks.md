@@ -58,6 +58,13 @@ https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
 
 ## Changelog (completados)
 
+### ✅ Botones de Pricing en PremiumItinerarySection conectados a WhatsApp (Marzo 2026)
+- [x] Botones "Pedir Escapada/Aventura/Nómada" en la sección de precios del homepage ahora abren WhatsApp en nueva pestaña
+- [x] Número hardcodeado: `18588996802` (consistente con el resto del sitio)
+- [x] Mensajes prellenados específicos por paquete con precio incluido
+- [x] Tercer paquete renombrado de "Expedición $49" a "Nómada $75" según requerimiento
+- `src/components/landing/PremiumItinerarySection.tsx` — Botones de pricing funcionales con WhatsApp
+
 ### ✅ Configuración Comercial — Link de pago oficial (Marzo 2026)
 - [x] Creado link de pago oficial **paypal.me/Nomaderia** para recibir pagos de itinerarios personalizados
 - [x] Link listo para compartir con clientes en WhatsApp y en la página `/servicios`

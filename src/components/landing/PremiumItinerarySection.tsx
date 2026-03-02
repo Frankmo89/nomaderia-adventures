@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
+const WHATSAPP_NUMBER = "18588996802";
+
 const benefits = [
   {
     icon: Map,
@@ -42,7 +44,7 @@ const packages = [
       "Presupuesto desglosado",
     ],
     cta: "Pedir Escapada →",
-    message: "Hola Frank, me interesa el paquete Escapada para [destino]",
+    message: "Hola! Me interesa el paquete Escapada ($9 USD)",
   },
   {
     name: "Aventura",
@@ -55,11 +57,11 @@ const packages = [
       "Tips de transporte y alojamiento",
     ],
     cta: "Pedir Aventura →",
-    message: "Hola Frank, me interesa el paquete Aventura para [destino]",
+    message: "Hola! Me interesa el paquete Aventura ($25 USD)",
   },
   {
-    name: "Expedición",
-    priceUsd: "$49",
+    name: "Nómada",
+    priceUsd: "$75",
     duration: "8+ días",
     popular: false,
     features: [
@@ -67,8 +69,8 @@ const packages = [
       "Soporte WhatsApp durante el viaje",
       "Itinerario alternativo (Plan B)",
     ],
-    cta: "Pedir Expedición →",
-    message: "Hola Frank, me interesa el paquete Expedición para [destino]",
+    cta: "Pedir Nómada →",
+    message: "Hola! Me interesa el paquete Nómada ($75 USD)",
   },
 ];
 
@@ -132,7 +134,7 @@ const PremiumItinerarySection = () => {
           {/* Pricing cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {packages.map((pkg, i) => {
-              const url = buildWhatsAppUrl(pkg.message);
+              const url = buildWhatsAppUrl(pkg.message, WHATSAPP_NUMBER);
               return (
               <motion.div
                 key={pkg.name}
