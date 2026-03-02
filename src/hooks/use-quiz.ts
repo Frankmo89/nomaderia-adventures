@@ -144,7 +144,7 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
     return { points: 0, reason: "" };
   },
 
-  budget: (answer, dest) => {
+  budget_range: (answer, dest) => {
     const budget = dest.estimated_budget_usd;
     if (budget == null) return { points: 0, reason: "" };
     if (answer === "low" && budget <= 500) return { points: 2, reason: "Dentro de tu presupuesto" };
@@ -214,7 +214,7 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
   },
 };
 
-// Maximum achievable score: fitness:3 + interest:5 + trip_duration:2 + budget:2 + season:3 + origin:2
+// Maximum achievable score: fitness:3 + interest:5 + trip_duration:2 + budget_range:2 + season:3 + origin:2
 const MAX_SCORE = 17;
 
 function scoreDestination(

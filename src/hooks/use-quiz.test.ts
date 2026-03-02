@@ -101,7 +101,7 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
     return { points: 0, reason: "" };
   },
 
-  budget: (answer, dest) => {
+  budget_range: (answer, dest) => {
     const budget = dest.estimated_budget_usd;
     if (budget == null) return { points: 0, reason: "" };
     if (answer === "low" && budget <= 500) return { points: 2, reason: "Dentro de tu presupuesto" };
@@ -280,34 +280,34 @@ describe("SCORING_RULES — trip_duration", () => {
   });
 });
 
-describe("SCORING_RULES — budget", () => {
+describe("SCORING_RULES — budget_range", () => {
   it("low + $400 destination → 2 points", () => {
-    const { points } = SCORING_RULES.budget("low", makeDestination({ estimated_budget_usd: 400 }));
+    const { points } = SCORING_RULES.budget_range("low", makeDestination({ estimated_budget_usd: 400 }));
     expect(points).toBe(2);
   });
 
   it("medium + $1000 destination → 2 points", () => {
-    const { points } = SCORING_RULES.budget("medium", makeDestination({ estimated_budget_usd: 1000 }));
+    const { points } = SCORING_RULES.budget_range("medium", makeDestination({ estimated_budget_usd: 1000 }));
     expect(points).toBe(2);
   });
 
   it("high + $2000 destination → 2 points", () => {
-    const { points } = SCORING_RULES.budget("high", makeDestination({ estimated_budget_usd: 2000 }));
+    const { points } = SCORING_RULES.budget_range("high", makeDestination({ estimated_budget_usd: 2000 }));
     expect(points).toBe(2);
   });
 
   it("unlimited + $5000 destination → 1 point", () => {
-    const { points } = SCORING_RULES.budget("unlimited", makeDestination({ estimated_budget_usd: 5000 }));
+    const { points } = SCORING_RULES.budget_range("unlimited", makeDestination({ estimated_budget_usd: 5000 }));
     expect(points).toBe(1);
   });
 
   it("low + $2000 destination → 0 points (over budget)", () => {
-    const { points } = SCORING_RULES.budget("low", makeDestination({ estimated_budget_usd: 2000 }));
+    const { points } = SCORING_RULES.budget_range("low", makeDestination({ estimated_budget_usd: 2000 }));
     expect(points).toBe(0);
   });
 
   it("null budget → 0 points", () => {
-    const { points } = SCORING_RULES.budget("medium", makeDestination({ estimated_budget_usd: null }));
+    const { points } = SCORING_RULES.budget_range("medium", makeDestination({ estimated_budget_usd: null }));
     expect(points).toBe(0);
   });
 });

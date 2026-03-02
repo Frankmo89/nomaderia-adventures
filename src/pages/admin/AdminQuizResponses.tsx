@@ -21,8 +21,14 @@ const budgetLabels: Record<string, string> = {
   low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", unlimited: "🚀 Sin límite",
 };
 const originLabels: Record<string, string> = {
+  // New market keys
   tijuana_baja: "🇲🇽 Tijuana/Baja", sandiego_socal: "🇺🇸 San Diego/SoCal", cdmx: "🇲🇽 CDMX",
   resto_mx: "🇲🇽 Resto MX", resto_usa: "🇺🇸 Resto USA", otro: "🌎 Otro",
+  // Legacy keys kept for backward compatibility with historical data
+  mx_border: "🇲🇽 Frontera MX (Legacy)", mx_center: "🇲🇽 Centro MX (Legacy)",
+  mx_south: "🇲🇽 Sur MX (Legacy)", us_southwest: "🇺🇸 Suroeste USA (Legacy)",
+  us_other: "🇺🇸 Resto USA (Legacy)", spain: "🇪🇸 España (Legacy)",
+  south_america: "🌎 Sudamérica (Legacy)", other: "🌎 Otro (Legacy)",
 };
 
 const barrierLabels: Record<string, string> = {
