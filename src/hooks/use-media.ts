@@ -43,8 +43,12 @@ export function useMediaSlider() {
 export async function uploadMediaItem(file: File): Promise<MediaItem> {
   const isVideo = file.type.startsWith("video/");
   const mediaType: "image" | "video" = isVideo ? "video" : "image";
-  const ext = file.name.split(".").pop() ?? "bin";
-  const storagePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp", "avif", "mp4", "webm"];
+  if (!allowedExtensions.includes(ext)) {
+    throw new Error(`Tipo de archivo no permitido: .${ext}`);
+  }
+  const storagePath = `${crypto.randomUUID()}.${ext}`;
 
   const { error: uploadError } = await supabase.storage
     .from("media_gallery")

@@ -53,12 +53,14 @@ const MediaSlider = () => {
               loop
               muted
               playsInline
+              aria-hidden="true"
               className="w-full h-full object-cover"
             />
           ) : (
             <img
               src={current.public_url}
               alt=""
+              role="presentation"
               className="w-full h-full object-cover"
             />
           )}
