@@ -133,11 +133,12 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
     const region = (dest.region || "").toLowerCase();
     const title = (dest.title || "").toLowerCase();
     const proximityMap: Record<string, string[]> = {
-      mexico: ["méxico", "estados unidos", "usa", "joshua", "gran cañón", "yosemite"],
-      usa: ["estados unidos", "usa", "joshua", "yosemite", "gran cañón", "méxico"],
-      colombia: ["colombia", "perú", "ecuador", "chile", "patagonia"],
-      spain: ["españa", "camino", "santiago", "europa"],
-      other: [],
+      tijuana_baja: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
+      sandiego_socal: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
+      cdmx: ["méxico", "nevado", "toluca"],
+      resto_mx: ["méxico"],
+      resto_usa: ["estados unidos", "usa"],
+      otro: [],
     };
     const nearby = proximityMap[answer] || [];
     const destText = `${country} ${region} ${title}`;
@@ -359,33 +360,38 @@ describe("SCORING_RULES — season", () => {
 });
 
 describe("SCORING_RULES — origin", () => {
-  it("mexico + destination in México → 2 points", () => {
-    const { points } = SCORING_RULES.origin("mexico", makeDestination({ country: "México" }));
+  it("tijuana_baja + destination in México → 2 points", () => {
+    const { points } = SCORING_RULES.origin("tijuana_baja", makeDestination({ country: "México" }));
     expect(points).toBe(2);
   });
 
-  it("usa + destination in Estados Unidos → 2 points", () => {
-    const { points } = SCORING_RULES.origin("usa", makeDestination({ country: "Estados Unidos" }));
+  it("sandiego_socal + destination in Estados Unidos → 2 points", () => {
+    const { points } = SCORING_RULES.origin("sandiego_socal", makeDestination({ country: "Estados Unidos" }));
     expect(points).toBe(2);
   });
 
-  it("spain + destination in España → 2 points", () => {
-    const { points } = SCORING_RULES.origin("spain", makeDestination({ country: "España" }));
+  it("cdmx + destination in México → 2 points", () => {
+    const { points } = SCORING_RULES.origin("cdmx", makeDestination({ country: "México" }));
     expect(points).toBe(2);
   });
 
-  it("colombia + destination in Chile (nearby) → 2 points", () => {
-    const { points } = SCORING_RULES.origin("colombia", makeDestination({ country: "Chile" }));
+  it("resto_mx + destination in México → 2 points", () => {
+    const { points } = SCORING_RULES.origin("resto_mx", makeDestination({ country: "México" }));
     expect(points).toBe(2);
   });
 
-  it("other + any destination → 0 points", () => {
-    const { points } = SCORING_RULES.origin("other", makeDestination({ country: "Nepal" }));
+  it("resto_usa + destination in Estados Unidos → 2 points", () => {
+    const { points } = SCORING_RULES.origin("resto_usa", makeDestination({ country: "Estados Unidos" }));
+    expect(points).toBe(2);
+  });
+
+  it("otro + any destination → 0 points", () => {
+    const { points } = SCORING_RULES.origin("otro", makeDestination({ country: "Nepal" }));
     expect(points).toBe(0);
   });
 
-  it("mexico + destination in Nepal (no proximity) → 0 points", () => {
-    const { points } = SCORING_RULES.origin("mexico", makeDestination({ country: "Nepal" }));
+  it("cdmx + destination in Nepal (no proximity) → 0 points", () => {
+    const { points } = SCORING_RULES.origin("cdmx", makeDestination({ country: "Nepal" }));
     expect(points).toBe(0);
   });
 });
@@ -398,14 +404,14 @@ describe("scoreDestination — aggregate scoring", () => {
       trip_duration: "one_week",
       budget_range: "medium",
       season: "flexible",
-      origin: "spain",
+      origin: "cdmx",
     };
     const dest = makeDestination({
       difficulty_level: "moderate",
       experience_type: "trekking",
       estimated_budget_usd: 1200,
       days_needed: 7,
-      country: "España",
+      country: "México",
       best_season: null,
     });
     const { score, matchReasons } = scoreDestination(answers, dest);

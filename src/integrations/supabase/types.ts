@@ -262,6 +262,7 @@ export type Database = {
           fitness_level: string | null
           id: string
           interest: string | null
+          main_barrier: string | null
           recommended_destinations: string[] | null
           travel_style: string | null
           trip_duration: string | null
@@ -273,6 +274,7 @@ export type Database = {
           fitness_level?: string | null
           id?: string
           interest?: string | null
+          main_barrier?: string | null
           recommended_destinations?: string[] | null
           travel_style?: string | null
           trip_duration?: string | null
@@ -284,6 +286,7 @@ export type Database = {
           fitness_level?: string | null
           id?: string
           interest?: string | null
+          main_barrier?: string | null
           recommended_destinations?: string[] | null
           travel_style?: string | null
           trip_duration?: string | null

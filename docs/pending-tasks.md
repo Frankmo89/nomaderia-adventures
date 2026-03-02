@@ -58,6 +58,25 @@ https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
 
 ## Changelog (completados)
 
+### ✅ Quiz Refactor: Mercado principal, Lucide icons, y pregunta de barreras (Marzo 2026)
+- [x] **docs/supabase-schema.md** — Columna `main_barrier text` (nullable) documentada en `quiz_responses`
+- [x] **src/integrations/supabase/types.ts** — `main_barrier` agregado a Row/Insert/Update de `quiz_responses`
+- [x] **src/hooks/use-quiz.ts** — `proximityMap` actualizado con nuevas llaves de mercado principal: `tijuana_baja`, `sandiego_socal`, `cdmx`, `resto_mx`, `resto_usa`, `otro`
+- [x] **src/hooks/use-quiz.ts** — `main_barrier` insertado en `quiz_responses` desde `handleEmailSubmit`
+- [x] **src/hooks/use-quiz.ts** — Propiedad `emoji` eliminada de la interfaz `QuizOption`
+- [x] **src/components/landing/QuizSection.tsx** — Emojis reemplazados por íconos de Lucide React (`opt.icon`) en todas las opciones
+- [x] **src/components/landing/QuizSection.tsx** — Nueva pregunta `main_barrier` ("¿Qué es lo que más te frena para salir a explorar?") con 4 opciones: `lack_info`, `fitness_doubt`, `no_gear`, `comfort` usando iconos Map, HeartPulse, Backpack, Tent
+- [x] **src/components/landing/QuizSection.tsx** — `originOptions` actualizado: Tijuana/Baja, San Diego/SoCal, CDMX, Resto MX, Resto USA, Otro
+- [x] **src/pages/admin/AdminQuizResponses.tsx** — `barrierLabels` agregado, `originLabels` actualizado, columna "Barrera" en CSV y tabla visual
+- [x] **src/hooks/use-quiz.test.ts** — Tests de origin actualizados con nuevas llaves de mercado
+- **Pendiente del dueño:** Ejecutar migración SQL para agregar `main_barrier text` a `quiz_responses` en Supabase Dashboard
+- `src/hooks/use-quiz.ts` — Scoring + insert actualizados
+- `src/components/landing/QuizSection.tsx` — UI refactorizada
+- `src/pages/admin/AdminQuizResponses.tsx` — Dashboard actualizado
+- `src/hooks/use-quiz.test.ts` — Tests actualizados
+- `docs/supabase-schema.md` — Schema documentado
+- `src/integrations/supabase/types.ts` — Tipos TypeScript actualizados
+
 ### ✅ Contadores de SocialProof conectados a Supabase via hook dedicado (Marzo 2026)
 - [x] Creado hook `src/hooks/use-stats.ts` con `useQuizCount()` y `useDestinationsCount()` — TanStack Query con `{ count: 'exact', head: true }` para conteo eficiente sin descargar data
 - [x] `SocialProof.tsx` refactorizado para usar los hooks dedicados en lugar de queries inline (cumple patrón: fetch público siempre via custom hooks en `src/hooks/`)

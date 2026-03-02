@@ -6,7 +6,6 @@ export interface QuizOption {
   label: string;
   value: string;
   icon: React.ReactNode;
-  emoji: string;
   description?: string;
 }
 
@@ -197,14 +196,12 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
 
     // Proximity scoring by origin zone
     const proximityMap: Record<string, string[]> = {
-      mx_border: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california"],
-      mx_center: ["méxico", "nevado", "toluca"],
-      mx_south: ["méxico"],
-      us_southwest: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california"],
-      us_other: ["estados unidos", "usa"],
-      spain: ["españa", "camino", "santiago", "europa"],
-      south_america: ["chile", "argentina", "patagonia", "torres del paine", "ushuaia", "perú", "colombia"],
-      other: [],
+      tijuana_baja: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
+      sandiego_socal: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
+      cdmx: ["méxico", "nevado", "toluca"],
+      resto_mx: ["méxico"],
+      resto_usa: ["estados unidos", "usa"],
+      otro: [],
     };
 
     const nearby = proximityMap[answer] || [];
@@ -345,6 +342,7 @@ export function useQuiz(totalSteps: number) {
         trip_duration: answers.trip_duration,
         travel_style: answers.origin || null,
         budget_range: answers.budget_range ?? answers.budget ?? null,
+        main_barrier: answers.main_barrier || null,
         recommended_destinations: results.map((d) => d.id),
       });
       // Enviar email con resultados del quiz
