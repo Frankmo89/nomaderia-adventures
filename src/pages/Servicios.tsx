@@ -39,7 +39,19 @@ const steps = [
   },
 ];
 
-const packages = [
+interface Package {
+  name: string;
+  priceUsd: string;
+  priceMxn: string;
+  duration: string;
+  popular: boolean;
+  highlight?: string;
+  features: string[];
+  cta: string;
+  message: string;
+}
+
+const packages: Package[] = [
   {
     name: "Weekend",
     priceUsd: "$19 USD",
@@ -247,7 +259,7 @@ const Servicios = () => {
                     <p className="text-sm text-foreground/70 mt-2">
                       {pkg.duration}
                     </p>
-                    {"highlight" in pkg && pkg.highlight && (
+                    {pkg.highlight && (
                       <p className="text-xs font-medium text-primary mt-2">
                         ✦ {pkg.highlight}
                       </p>
