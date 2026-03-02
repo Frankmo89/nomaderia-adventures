@@ -2,37 +2,38 @@
 
 > **Para agentes AI:** Si el usuario pide algo que depende de una tarea pendiente aquí, recuérdale que primero debe completarla.
 
-### 📝 TAREAS MANUALES PARA FRANK (Dueño)
+---
 
-- [ ] Descargar WhatsApp Business y configurar el número de Nomaderia.
-- [ ] Reemplazar VITE_WHATSAPP_NUMBER en el archivo .env con el número real.
-- [ ] Subir la foto/video estrella a la carpeta `/public` y actualizar el src en `HeroSection.tsx`.
-- [ ] Entrar al panel de admin de Nomaderia y subir imágenes de portada (hero images) a los destinos que falten.
-- [ ] Crear cuenta en Facebook Business Manager para obtener el Pixel ID y reemplazar el placeholder en index.html.
-- [ ] Crear cuenta en Google Analytics para obtener el Measurement ID y reemplazar el placeholder en index.html.
-- [ ] Guardar las 4 Respuestas Rápidas en la configuración de WhatsApp Business.
+## ⚠️ Tareas Pendientes (requieren acción humana)
 
-## Tareas del Dueño (requieren acción humana)
+### 🔴 Prioridad Alta
 
-### 🌐 Dominio y Hosting
-- [ ] Comprar dominio (decisión: nomaderia.com vs nomaderia.mx — inclinación hacia .com por alcance)
-- [ ] Configurar DNS y hosting de producción
-- [ ] Preview actual: https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
-
-### 📊 Analytics y Monetización
-- [x] Scripts de Meta Pixel y Google Analytics (GA4) agregados en `index.html` con IDs placeholder
-- [ ] **Reemplazar IDs placeholder** en `index.html`: `XXXXXXXXXXXXXXXXX` → tu Meta Pixel ID real, `G-XXXXXXXXXX` → tu GA4 Measurement ID real
+#### 📊 Analítica
+- [ ] **Configurar** `VITE_GA_MEASUREMENT_ID="G-CK9STWJDFM"` en el archivo `.env` local
+- [ ] **Ejecutar** el componente de Google Analytics (`gtag.js`) una vez configurado el `.env` — verificar que el ID real aparece en Network tab del navegador
+- [ ] **Reemplazar IDs placeholder** en `index.html`: `XXXXXXXXXXXXXXXXX` → tu Meta Pixel ID real, `G-XXXXXXXXXX` → `G-CK9STWJDFM`
+- [ ] Crear cuenta en Facebook Business Manager para obtener el Pixel ID y reemplazar el placeholder en `index.html`
 - [ ] Verificar sitio en Google Search Console (requiere dominio)
 - [ ] Enviar sitemap.xml (pendiente de implementar)
+
+#### 💼 Negocio / Comercial
+- [ ] **Deshabilitar el Sign-up público** en Supabase Dashboard → Authentication → Settings → desactivar "Enable email signups"
+- [ ] Comprar dominio (decisión: nomaderia.com vs nomaderia.mx — inclinación hacia .com por alcance)
+- [ ] Configurar DNS y hosting de producción
 - [ ] Re-aplicar a programas Travelpayouts rechazados cuando tráfico > 1,000/mes:
   - GetYourGuide, Booking, Expedia, Trip.com, DiscoverCars
 
-### 📝 Contenido
-- [ ] Subir imagen del diploma de agente de viajes → `public/diploma.jpg`
+#### 📝 Contenido
+- [ ] **Subir imagen de certificación TAP** → `public/diploma.jpg`
+- [ ] Descargar WhatsApp Business y configurar el número de Nomaderia
+- [ ] Reemplazar `VITE_WHATSAPP_NUMBER` en el archivo `.env` con el número real
+- [ ] Subir la foto/video estrella a la carpeta `/public` y actualizar el `src` en `HeroSection.tsx`
+- [ ] Entrar al panel de admin y subir imágenes de portada (hero images) a los destinos que falten
+- [ ] Guardar las 4 Respuestas Rápidas en la configuración de WhatsApp Business
 - [ ] Agregar hero images a destinos sin imagen
 - [ ] Completar affiliate links reales en destinos desde `/admin`
 
-### 🔑 Secrets de Supabase (requieren acción)
+#### 🔑 Supabase Secrets
 - [ ] Configurar `RESEND_API_KEY` en Supabase Dashboard > Edge Functions > Secrets
   - Obtener en https://resend.com/api-keys
   - Comando: `supabase secrets set RESEND_API_KEY=re_xxxxx`
@@ -41,7 +42,8 @@
 - [ ] Habilitar extensión `pg_cron` en Supabase Dashboard > Database > Extensions
   - Alternativa sin pg_cron: usar cron-job.org (gratis) con POST diario a la Edge Function
 
-### 🔧 Código Pendiente
+### 🟡 Backlog — Código
+
 - [ ] Eliminar `supabase as any` en:
   - `src/pages/admin/AdminItineraryRequests.tsx:56`
   - `src/pages/admin/AdminDashboard.tsx:50`
@@ -49,7 +51,16 @@
 - [ ] Integrar compartir en redes sociales (botones share)
 - [ ] Resolver issues de contraste texto para WCAG AA compliance
 
+### 🟢 Preview actual
+https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
+
+---
+
 ## Changelog (completados)
+
+### ✅ Configuración Comercial — Link de pago oficial (Marzo 2026)
+- [x] Creado link de pago oficial **paypal.me/Nomaderia** para recibir pagos de itinerarios personalizados
+- [x] Link listo para compartir con clientes en WhatsApp y en la página `/servicios`
 
 ### ✅ Fase 4 — Página índice /destinos (Marzo 2026)
 - [x] Creada nueva página `src/pages/Destinations.tsx` con Navbar, título "Todos Nuestros Destinos", catálogo completo y Footer
@@ -236,28 +247,18 @@ Siempre que hagas cambios al código:
 2. Agrega recomendaciones de próximos pasos si aplica
 3. Si creas archivos nuevos, actualiza la estructura en `CLAUDE.md` si es necesario
 
-## Pendientes Futuros
+---
+
+## 🔮 Pendientes Futuros (backlog)
 
 ### 📧 Emails Futuros
 - Email 4 — Re-engagement a los 30 días para usuarios que no han vuelto al sitio
 - Tracking de opens/clicks con Resend webhooks → tabla `email_events`
-
-### 📧 Emails Futuros (pendientes — archivo histórico)
 - Email 2 (3 días post-quiz): "5 cosas que desearía saber antes de mi primera aventura" — contenido educativo + gear
 - Email 3 (7 días post-quiz): Oferta directa itinerario personalizado con precios
 - Requiere: tabla email_queue + Supabase scheduled function o pg_cron
 
-### 💰 ~~Página de Pricing: Itinerarios Personalizados~~ ✅ (completado)
-- [x] Página `/servicios` con 3 paquetes Travel Concierge (Escapada, Aventura, Expedición)
-- [x] Hero section con badge TAP + título + subtítulo
-- [x] Sección "Cómo Funciona" con 3 pasos (MessageCircle, Map, Smile)
-- [x] 3 tarjetas de precio con Card de shadcn/ui, Framer Motion stagger
-- [x] Botones WhatsApp directos por paquete con mensaje prellenado
-- [x] FAQ con Accordion de shadcn/ui (5 preguntas)
-- [x] Ruta eager load en App.tsx
-- [x] Link "Servicios" en Navbar entre "Blog" y "Calculadora"
-
-### 🚀 Mejoras Técnicas (backlog)
+### 🚀 Mejoras Técnicas
 - Performance: lazy loading imágenes, hero images WebP/srcset, más skeleton loaders
 - Dashboard avanzado: top destinos recomendados, conversión quiz→email, trends con Recharts
 - PWA/offline: service worker, manifest.json, cache de guías para trail sin señal
