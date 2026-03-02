@@ -30,7 +30,7 @@ const AFFILIATE_URL =
 
 const TravelInsuranceSection = () => {
   return (
-    <section className="py-16 sm:py-24 bg-background relative overflow-hidden">
+    <section className="py-16 sm:py-24 bg-[#1C1917] relative overflow-hidden">
       {/* Accent gradient */}
       <div
         className="absolute inset-0"
@@ -49,14 +49,14 @@ const TravelInsuranceSection = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 sm:mb-14 max-w-3xl mx-auto"
         >
-          <span className="text-accent text-sm font-semibold tracking-wider uppercase mb-3 block">
+          <span className="text-[#F5F0EB] text-sm font-semibold tracking-wider uppercase mb-3 block">
             No salgas sin esto
           </span>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#F5F0EB] mb-4">
             Protege Tu{" "}
-            <span className="text-accent">Aventura</span>
+            <span className="text-[#D97706]">Aventura</span>
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          <p className="text-[#F5F0EB]/70 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
             Muchos principiantes viajan sin seguro y un accidente en montaña puede implicar gastos médicos muy altos.
             Cotiza en segundos y viaja tranquilo con una cobertura pensada para tus aventuras.
           </p>
@@ -71,15 +71,15 @@ const TravelInsuranceSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="bg-card/60 border border-accent/15 hover:border-accent/30 rounded-2xl p-6 text-center transition-colors"
+              className="bg-white/5 border border-white/10 hover:border-white/20 rounded-2xl p-6 text-center transition-colors"
             >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-accent/15 mb-4">
-                <b.icon className="h-6 w-6 text-accent" />
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#D97706]/15 mb-4">
+                <b.icon className="h-6 w-6 text-[#D97706]" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">
+              <h3 className="font-semibold text-[#F5F0EB] mb-2 text-sm sm:text-base">
                 {b.title}
               </h3>
-              <p className="text-xs sm:text-sm text-foreground/70 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#F5F0EB]/70 leading-relaxed">
                 {b.desc}
               </p>
             </motion.div>
@@ -96,7 +96,7 @@ const TravelInsuranceSection = () => {
           <Button
             asChild
             size="lg"
-            className="bg-accent hover:bg-accent/90 text-accent-foreground text-base px-10 py-6 rounded-2xl font-semibold shadow-lg shadow-accent/20 hover:shadow-accent/30 transition-all"
+            className="bg-[#D97706] hover:bg-[#D97706]/90 text-[#F5F0EB] text-base px-10 py-6 rounded-2xl font-semibold shadow-lg shadow-[#D97706]/20 hover:shadow-[#D97706]/30 transition-all"
           >
             <a
               href={AFFILIATE_URL}
@@ -107,7 +107,7 @@ const TravelInsuranceSection = () => {
               <ArrowRight className="ml-2 h-4 w-4" />
             </a>
           </Button>
-          <p className="text-xs text-muted-foreground mt-3">
+          <p className="text-xs text-[#F5F0EB]/70 mt-3">
             Desde $2 USD/día · Compara aseguradoras en minutos · Enlace de afiliado
           </p>
         </motion.div>
