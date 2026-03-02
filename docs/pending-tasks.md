@@ -58,6 +58,22 @@ https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
 
 ## Changelog (completados)
 
+### ✅ Media Slider Dinámico — Gestor Multimedia para Landing Page (Marzo 2026)
+- [x] Creado hook `src/hooks/use-media.ts` con `useMediaSlider()` (TanStack Query, filtra `is_active: true`, ordena por `display_order`) y helpers `uploadMediaItem()`, `toggleMediaActive()`, `deleteMediaItem()`
+- [x] Creada página admin `src/pages/admin/AdminGallery.tsx` — subida de archivos (imagen/video), grid con preview, toggle activo/inactivo, eliminar con confirmación (tabla + storage)
+- [x] Creado componente `src/components/landing/MediaSlider.tsx` — carrusel con Framer Motion `AnimatePresence` crossfade cada 6 segundos, renderiza `<video>` o `<img>` según `media_type`, overlay oscuro `bg-black/30`
+- [x] `HeroSection.tsx` — Reemplazado fondo estático `bg-neutral-800` + overlay por `<MediaSlider />` dinámico (fallback al fondo original si no hay media)
+- [x] `AdminLayout.tsx` — Enlace "Galería" con ícono `ImageIcon` agregado al sidebar
+- [x] `App.tsx` — Ruta `/admin/gallery` registrada con lazy loading
+- [x] Bucket `media_gallery` (público) en Supabase Storage y tabla `media_slider` creados por el dueño
+- **Pendiente del dueño:** Regenerar tipos con `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts` para eliminar cast de tipo en `use-media.ts`
+- `src/hooks/use-media.ts` — Hook público + helpers admin
+- `src/pages/admin/AdminGallery.tsx` — Panel admin de galería
+- `src/components/landing/MediaSlider.tsx` — Carrusel público
+- `src/components/landing/HeroSection.tsx` — Integración MediaSlider
+- `src/pages/admin/AdminLayout.tsx` — Enlace Galería en sidebar
+- `src/App.tsx` — Ruta /admin/gallery
+
 ### ✅ Tarea 1.3 — Página /servicios rediseñada con nuevos precios y estructura (Marzo 2026)
 - [x] Hero actualizado: headline "Tu aventura, armada paso a paso" con subtítulo motivador para principiantes
 - [x] 3 tarjetas de precios con shadcn/ui Card: Weekend $19/$299 (1-3 días), Aventura $35/$549 (4-7 días, badge "Más popular"), Expedición $59/$899 (8+ días, highlight "Soporte por WhatsApp durante el viaje")
