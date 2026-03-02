@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, useSpring, useInView } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Users, MapPin, ShieldCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuizCount, useDestinationsCount } from "@/hooks/use-stats";
 
 /** Animated counter that counts from 0 to `target` when visible and loaded */
 const AnimatedCounter = ({
@@ -28,15 +28,8 @@ const AnimatedCounter = ({
 
   if (isLoading) {
     return (
-      <span
-        ref={ref}
-        className="text-muted-foreground/40"
-        aria-label="Cargando"
-        aria-live="polite"
-        aria-atomic="true"
-        role="status"
-      >
-        ···
+      <span ref={ref} aria-label="Cargando" role="status">
+        <span className="inline-block h-10 w-16 rounded-md animate-pulse bg-muted" />
       </span>
     );
   }
@@ -56,28 +49,8 @@ const AnimatedCounter = ({
 };
 
 const SocialProof = () => {
-  const { data: quizCount = 0, isLoading: quizLoading } = useQuery({
-    queryKey: ["quiz-count"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("quiz_responses")
-        .select("*", { count: "exact", head: true });
-      if (error) throw error;
-      return count || 0;
-    },
-  });
-
-  const { data: destCount = 0, isLoading: destLoading } = useQuery({
-    queryKey: ["destinations-count"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("destinations")
-        .select("*", { count: "exact", head: true })
-        .eq("is_published", true);
-      if (error) throw error;
-      return count || 0;
-    },
-  });
+  const { data: quizCount = 0, isLoading: quizLoading } = useQuizCount();
+  const { data: destCount = 0, isLoading: destLoading } = useDestinationsCount();
 
   const stats = [
     {
