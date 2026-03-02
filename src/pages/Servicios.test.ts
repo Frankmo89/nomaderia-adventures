@@ -11,9 +11,9 @@ describe("Servicios WhatsApp URLs", () => {
 
   it("should encode the package messages correctly", () => {
     const messages = [
-      "¡Hola! Me interesa diseñar mi viaje con el paquete Escapada de $9 USD. ¿Cuáles son los siguientes pasos?",
-      "¡Hola! Me interesa diseñar mi viaje con el paquete Aventura de $25 USD. ¿Cuáles son los siguientes pasos?",
-      "¡Hola! Me interesa diseñar mi viaje con el paquete Expedición de $49 USD. ¿Cuáles son los siguientes pasos?",
+      "Hola Nomaderia, me interesa el paquete Weekend para un viaje de 1-3 días. ¿Cuáles son los siguientes pasos?",
+      "Hola Nomaderia, me interesa el paquete Aventura para un viaje de 4-7 días. ¿Cuáles son los siguientes pasos?",
+      "Hola Nomaderia, me interesa el paquete Expedición para un viaje de 8+ días. ¿Cuáles son los siguientes pasos?",
     ];
 
     for (const msg of messages) {
@@ -27,7 +27,7 @@ describe("Servicios WhatsApp URLs", () => {
 
   it("should generate a valid URL for the Hero CTA message", () => {
     const heroMessage =
-      "¡Hola! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?";
+      "¡Hola Nomaderia! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?";
     const url = buildWhatsAppUrl(heroMessage, SERVICIOS_WHATSAPP_NUMBER);
     expect(url).toContain("https://wa.me/18588996802?text=");
     expect(url).toBe(

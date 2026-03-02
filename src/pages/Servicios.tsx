@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { MessageCircle, Map, Smile, Check, BadgeCheck } from "lucide-react";
+import { MessageCircle, Check, BadgeCheck, ClipboardList, Route, Palmtree } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -20,31 +20,43 @@ const SERVICIOS_WHATSAPP_NUMBER = "18588996802";
 
 const steps = [
   {
-    icon: MessageCircle,
-    title: "Cuéntame tu sueño",
+    icon: ClipboardList,
+    title: "1. Cuéntanos tu plan",
     description:
-      "Mándame un WhatsApp y platícame: ¿a dónde quieres ir? ¿cuántos van? ¿cuál es tu presupuesto?",
+      "Escríbenos por WhatsApp: ¿a dónde quieres ir? ¿cuántos van? ¿cuántos días? ¿cuál es tu presupuesto?",
   },
   {
-    icon: Map,
-    title: "Te armo todo",
+    icon: Route,
+    title: "2. Diseñamos tu ruta",
     description:
       "En 24-48 horas recibes tu itinerario personalizado con rutas, equipo, presupuesto y tips de preparación física.",
   },
   {
-    icon: Smile,
-    title: "Solo disfruta",
+    icon: Palmtree,
+    title: "3. Viaja sin estrés",
     description:
-      "Llega a tu aventura preparado y sin estrés. Con Expedición, te acompaño por WhatsApp durante todo el viaje.",
+      "Llega a tu aventura preparado y seguro. Con Expedición, te acompañamos por WhatsApp durante todo el viaje.",
   },
 ];
 
-const packages = [
+interface Package {
+  name: string;
+  priceUsd: string;
+  priceMxn: string;
+  duration: string;
+  popular: boolean;
+  highlight?: string;
+  features: string[];
+  cta: string;
+  message: string;
+}
+
+const packages: Package[] = [
   {
-    name: "Escapada",
-    priceUsd: "$9 USD",
-    priceMxn: "$149 MXN",
-    duration: "Viajes de 1-3 días",
+    name: "Weekend",
+    priceUsd: "$19 USD",
+    priceMxn: "$299 MXN",
+    duration: "1-3 días",
     popular: false,
     features: [
       "Itinerario día a día",
@@ -52,56 +64,53 @@ const packages = [
       "Presupuesto desglosado",
       "Mapa interactivo",
     ],
-    cta: "Pedir mi Escapada →",
-    message: "¡Hola! Me interesa diseñar mi viaje con el paquete Escapada de $9 USD. ¿Cuáles son los siguientes pasos?",
+    cta: "Pedir mi Weekend",
+    message: "Hola Nomaderia, me interesa el paquete Weekend para un viaje de 1-3 días. ¿Cuáles son los siguientes pasos?",
   },
   {
     name: "Aventura",
-    priceUsd: "$25 USD",
-    priceMxn: "$449 MXN",
-    duration: "Viajes de 4-7 días",
+    priceUsd: "$35 USD",
+    priceMxn: "$549 MXN",
+    duration: "4-7 días",
     popular: true,
     features: [
-      "Todo de Escapada +",
+      "Todo de Weekend +",
       "Plan de preparación física (4-8 semanas)",
       "FAQ personalizado",
       "Tips de transporte",
       "Opciones de alojamiento comparadas",
     ],
-    cta: "Pedir mi Aventura →",
-    message: "¡Hola! Me interesa diseñar mi viaje con el paquete Aventura de $25 USD. ¿Cuáles son los siguientes pasos?",
+    cta: "Pedir mi Aventura",
+    message: "Hola Nomaderia, me interesa el paquete Aventura para un viaje de 4-7 días. ¿Cuáles son los siguientes pasos?",
   },
   {
     name: "Expedición",
-    priceUsd: "$49 USD",
-    priceMxn: "$849 MXN",
-    duration: "Viajes de 8+ días",
+    priceUsd: "$59 USD",
+    priceMxn: "$899 MXN",
+    duration: "8+ días",
     popular: false,
+    highlight: "Soporte por WhatsApp durante el viaje",
     features: [
       "Todo de Aventura +",
-      "Soporte WhatsApp durante el viaje",
+      "Soporte por WhatsApp durante el viaje",
       "Itinerario alternativo (Plan B clima)",
       "Checklist pre-viaje completo",
     ],
-    cta: "Pedir mi Expedición →",
-    message: "¡Hola! Me interesa diseñar mi viaje con el paquete Expedición de $49 USD. ¿Cuáles son los siguientes pasos?",
+    cta: "Pedir mi Expedición",
+    message: "Hola Nomaderia, me interesa el paquete Expedición para un viaje de 8+ días. ¿Cuáles son los siguientes pasos?",
   },
 ];
 
 const faqs = [
   {
-    question: "¿Qué tan personalizado es el itinerario?",
+    question: "¿Qué incluye exactamente un itinerario?",
     answer:
-      "100%. No uso plantillas. Cada itinerario se diseña desde cero basado en tu nivel de experiencia, presupuesto, fechas y grupo.",
+      "Cada itinerario incluye una ruta día a día con horarios sugeridos, lista de equipo con enlaces de compra, presupuesto desglosado, mapa interactivo y tips de preparación física adaptados a tu nivel.",
   },
   {
-    question: "¿En cuánto tiempo recibo mi itinerario?",
-    answer: "24-48 horas después de confirmar tu pago.",
-  },
-  {
-    question: "¿Cómo pago?",
+    question: "¿Qué tan personalizado es?",
     answer:
-      "PayPal (USD) o transferencia bancaria SPEI (MXN). Te envío las instrucciones por WhatsApp.",
+      "100%. No usamos plantillas. Cada itinerario se diseña desde cero basado en tu nivel de experiencia, presupuesto, fechas y grupo.",
   },
   {
     question: "¿Qué pasa si nunca he hecho hiking?",
@@ -111,9 +120,23 @@ const faqs = [
   {
     question: "¿Puedo pedir cambios al itinerario?",
     answer:
-      "Sí, una ronda de ajustes está incluida en todos los paquetes.",
+      "Sí, una ronda de ajustes está incluida en todos los paquetes. Queremos que tu plan quede perfecto.",
   },
 ];
+
+const cardContainerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.15,
+    },
+  },
+};
+
+const cardItemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
 
 const Servicios = () => {
   useCanonical();
@@ -141,20 +164,21 @@ const Servicios = () => {
             Agente de Viajes Certificado TAP
           </Badge>
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground mb-6">
-            Tu Concierge de Aventuras en Español
+            Tu aventura, armada paso a paso
           </h1>
           <p className="text-lg md:text-xl text-foreground/70 leading-relaxed max-w-2xl mx-auto">
-            Te armo tu viaje completo — itinerario, equipo, presupuesto —
-            adaptado a ti.
+            ¿Primera vez en una aventura outdoor? No te preocupes. Te diseñamos
+            un itinerario completo — ruta, equipo, presupuesto — adaptado a tu
+            nivel y estilo.
           </p>
           <Button asChild size="lg" className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground">
             <a
-              href={buildWhatsAppUrl("¡Hola! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?", SERVICIOS_WHATSAPP_NUMBER)}
+              href={buildWhatsAppUrl("¡Hola Nomaderia! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?", SERVICIOS_WHATSAPP_NUMBER)}
               target="_blank"
               rel="noopener noreferrer"
             >
               <MessageCircle className="h-5 w-5 mr-2" />
-              Escríbeme por WhatsApp
+              Escríbenos por WhatsApp
             </a>
           </Button>
         </motion.div>
@@ -196,77 +220,83 @@ const Servicios = () => {
 
       {/* Paquetes */}
       <section className="container mx-auto px-4 pb-20 max-w-6xl">
-        <div className="grid md:grid-cols-3 gap-8 items-start">
-          {packages.map((pkg, i) => {
-            const url = buildWhatsAppUrl(pkg.message, SERVICIOS_WHATSAPP_NUMBER) ?? "#";
+        <motion.div
+          className="grid md:grid-cols-3 gap-8 items-start"
+          variants={cardContainerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
+          {packages.map((pkg) => {
+            const url = buildWhatsAppUrl(pkg.message, SERVICIOS_WHATSAPP_NUMBER);
             return (
-            <motion.div
-              key={pkg.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-            >
-              <Card
-                className={cn(
-                  "relative flex flex-col h-full bg-white shadow-lg",
-                  pkg.popular
-                    ? "border-2 border-primary shadow-primary/10 md:scale-105"
-                    : "border-border"
-                )}
-              >
-                {pkg.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground hover:bg-primary">
-                      Más Popular
-                    </Badge>
-                  </div>
-                )}
-                <CardHeader className="text-center pt-8">
-                  <h3 className="font-serif text-2xl text-foreground mb-2">
-                    {pkg.name}
-                  </h3>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-bold text-foreground">
-                      {pkg.priceUsd}
+              <motion.div key={pkg.name} variants={cardItemVariants}>
+                <Card
+                  className={cn(
+                    "relative flex flex-col h-full bg-card shadow-lg",
+                    pkg.popular
+                      ? "border-2 border-primary shadow-primary/10 md:scale-105"
+                      : "border-border"
+                  )}
+                >
+                  {pkg.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-primary text-primary-foreground hover:bg-primary">
+                        Más popular
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className="text-center pt-8">
+                    <h3 className="font-serif text-2xl text-foreground mb-2">
+                      {pkg.name}
+                    </h3>
+                    <div className="space-y-1">
+                      <p className="text-3xl font-bold text-foreground">
+                        {pkg.priceUsd}
+                      </p>
+                      <p className="text-sm text-foreground/50">{pkg.priceMxn}</p>
+                    </div>
+                    <p className="text-sm text-foreground/70 mt-2">
+                      {pkg.duration}
                     </p>
-                    <p className="text-sm text-foreground/50">{pkg.priceMxn}</p>
-                  </div>
-                  <p className="text-sm text-foreground/70 mt-2">
-                    {pkg.duration}
-                  </p>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <ul className="space-y-3">
-                    {pkg.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                        <span className="text-foreground/70 text-sm">
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    asChild
-                    className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    {pkg.highlight && (
+                      <p className="text-xs font-medium text-primary mt-2">
+                        ✦ {pkg.highlight}
+                      </p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <ul className="space-y-3">
+                      {pkg.features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-3">
+                          <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                          <span className="text-foreground/70 text-sm">
+                            {feature}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      asChild
+                      className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
-                      {pkg.cta}
-                    </a>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MessageCircle className="h-5 w-5 mr-2" />
+                        {pkg.cta}
+                      </a>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </section>
 
       {/* FAQ */}
