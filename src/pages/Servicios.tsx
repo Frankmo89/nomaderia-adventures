@@ -228,7 +228,7 @@ const Servicios = () => {
           viewport={{ once: true }}
         >
           {packages.map((pkg) => {
-            const url = buildWhatsAppUrl(pkg.message, SERVICIOS_WHATSAPP_NUMBER) ?? "#";
+            const url = buildWhatsAppUrl(pkg.message, SERVICIOS_WHATSAPP_NUMBER);
             return (
               <motion.div key={pkg.name} variants={cardItemVariants}>
                 <Card
