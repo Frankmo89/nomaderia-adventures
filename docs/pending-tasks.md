@@ -51,6 +51,15 @@
 
 ## Changelog (completados)
 
+### ✅ Fase 2 — Design System (modo oscuro) en TravelInsuranceSection (Marzo 2026)
+- [x] Se aplicó el Design System (modo oscuro) a la sección de Seguros para mejorar el contraste
+- [x] Contenedor `<section>` con fondo Charcoal `bg-[#1C1917]`
+- [x] Textos principales (h2, span, p) en Light Sand `text-[#F5F0EB]` con opacidades `/70` para jerarquía
+- [x] Tarjetas de beneficios con fondo translúcido `bg-white/5` y borde `border-white/10`
+- [x] Íconos y acento "Aventura" en Sunset Orange `text-[#D97706]`, fondos `bg-[#D97706]/15`
+- [x] Botón CTA con `bg-[#D97706] text-[#F5F0EB] hover:bg-[#D97706]/90`
+- `src/components/landing/TravelInsuranceSection.tsx` — Inversión de colores completa
+
 ### ✅ Fase 1 — Embudo de ventas en Index.tsx (Marzo 2026)
 - [x] El layout de Index.tsx ha sido reordenado para optimizar el embudo de ventas
 - [x] Nuevo orden: Navbar → Hero → SocialProof → PremiumItinerarySection → TravelInsuranceSection → CTA Inline → Quiz → DidYouKnow → Destinos → Gear → Blog → Newsletter → Footer
