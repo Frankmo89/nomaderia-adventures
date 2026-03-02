@@ -9,7 +9,7 @@ const AnimatedCounter = ({ target, suffix = "" }: { target: number; suffix?: str
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   const motionVal = useMotionValue(0);
-  const springVal = useSpring(motionVal, { stiffness: 60, damping: 20, duration: 1.5 });
+  const springVal = useSpring(motionVal, { stiffness: 60, damping: 20 });
   const display = useTransform(springVal, (v) => `${Math.round(v)}${suffix}`);
 
   useEffect(() => {
