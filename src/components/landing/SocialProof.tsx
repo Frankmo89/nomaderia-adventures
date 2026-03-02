@@ -1,7 +1,27 @@
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { motion, useMotionValue, useTransform, useSpring, useInView } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, MapPin, ShieldCheck } from "lucide-react";
+
+/** Animated counter that counts from 0 to `target` when visible */
+const AnimatedCounter = ({ target, suffix = "" }: { target: number; suffix?: string }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const motionVal = useMotionValue(0);
+  const springVal = useSpring(motionVal, { stiffness: 60, damping: 20 });
+  const display = useTransform(springVal, (v) => `${Math.round(v)}${suffix}`);
+
+  useEffect(() => {
+    if (isInView && target > 0) {
+      motionVal.set(target);
+    }
+  }, [isInView, target, motionVal]);
+
+  if (target <= 0) return <span ref={ref}>—</span>;
+
+  return <motion.span ref={ref}>{display}</motion.span>;
+};
 
 const SocialProof = () => {
   const { data: quizCount = 0 } = useQuery({
@@ -28,26 +48,32 @@ const SocialProof = () => {
   const stats = [
     {
       icon: Users,
-      value: quizCount > 0 ? `${quizCount}+` : "—",
+      value: quizCount,
+      suffix: "+",
       label: "Aventureros han encontrado su destino ideal",
       sublabel: "con nuestro quiz personalizado",
+      isTap: false,
     },
     {
       icon: MapPin,
-      value: destCount > 0 ? `${destCount}` : "—",
+      value: destCount,
+      suffix: "",
       label: "Destinos documentados con guías completas",
       sublabel: "desde fin de semana hasta expediciones",
+      isTap: false,
     },
     {
       icon: ShieldCheck,
-      value: "TAP",
+      value: 0,
+      suffix: "",
       label: "Agente de viajes certificada",
       sublabel: "National TAP Test — The Travel Institute, USA",
+      isTap: true,
     },
   ];
 
   return (
-    <section className="py-16 sm:py-24 bg-muted relative overflow-hidden">
+    <section className="py-16 sm:py-24 bg-[#1C1917] relative overflow-hidden">
       {/* Noise texture */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
@@ -61,10 +87,10 @@ const SocialProof = () => {
           viewport={{ once: true }}
           className="text-center mb-12 sm:mb-16"
         >
-          <span className="text-primary text-sm font-semibold tracking-wider uppercase mb-3 block">
+          <span className="text-[#D97706] text-sm font-semibold tracking-wider uppercase mb-3 block">
             Respaldado por datos reales
           </span>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#F5F0EB]">
             ¿Por Qué Confiar en Nomaderia?
           </h2>
         </motion.div>
@@ -78,23 +104,37 @@ const SocialProof = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15, duration: 0.5 }}
-              className="bg-card rounded-2xl p-8 text-center shadow-lg border border-border/50"
+              whileHover={{ y: -10, borderColor: "#D97706" }}
+              className="bg-white/5 rounded-2xl p-8 text-center border border-[#D97706]/20 transition-shadow hover:shadow-xl"
             >
               {/* Icon */}
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-5">
-                <stat.icon className="h-7 w-7 text-primary" />
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#D97706]/15 mb-5">
+                {stat.isTap ? (
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <ShieldCheck className="h-7 w-7 text-[#D97706]" />
+                  </motion.div>
+                ) : (
+                  <stat.icon className="h-7 w-7 text-[#D97706]" />
+                )}
               </div>
 
               {/* Value */}
-              <p className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-2">
-                {stat.value}
+              <p className="font-serif text-4xl sm:text-5xl font-bold text-[#F5F0EB] mb-2">
+                {stat.isTap ? (
+                  "TAP"
+                ) : (
+                  <AnimatedCounter target={stat.value} suffix={stat.suffix} />
+                )}
               </p>
 
               {/* Label */}
-              <p className="text-foreground font-medium text-sm sm:text-base mb-1">
+              <p className="text-[#F5F0EB] font-medium text-sm sm:text-base mb-1">
                 {stat.label}
               </p>
-              <p className="text-muted-foreground text-xs sm:text-sm">
+              <p className="text-[#F5F0EB]/60 text-xs sm:text-sm">
                 {stat.sublabel}
               </p>
             </motion.div>
@@ -110,7 +150,7 @@ const SocialProof = () => {
         >
           <a
             href="#quiz"
-            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+            className="inline-flex items-center gap-2 bg-[#D97706] hover:bg-[#D97706]/90 text-[#F5F0EB] px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
           >
             🧭 Descubre tu destino ideal
           </a>
