@@ -18,7 +18,11 @@ const countryFlag: Record<string, string> = {
   México: "🇲🇽", "Estados Unidos": "🇺🇸", España: "🇪🇸", Argentina: "🇦🇷", Nepal: "🇳🇵",
 };
 
-const DestinationsCatalog = () => {
+interface DestinationsCatalogProps {
+  limit?: number;
+}
+
+const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
   const { data: destinations = [], isLoading, error } = useDestinations();
 
   const filterByDifficulty = (level: string) =>
@@ -118,7 +122,7 @@ const DestinationsCatalog = () => {
           {["all", "easy", "moderate", "challenging"].map((level) => (
             <TabsContent key={level} value={level}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-                {filterByDifficulty(level).slice(0, 3).map((d, i) => (
+                {(limit ? filterByDifficulty(level).slice(0, limit) : filterByDifficulty(level)).map((d, i) => (
                   <DestCard key={d.id} d={d} index={i} />
                 ))}
               </div>
@@ -126,11 +130,13 @@ const DestinationsCatalog = () => {
           ))}
         </Tabs>
 
-        <div className="flex justify-center mt-10">
-          <Button asChild variant="outline" size="lg">
-            <Link to="/destinos">Ver todos los destinos →</Link>
-          </Button>
-        </div>
+        {limit && (
+          <div className="flex justify-center mt-10">
+            <Button asChild variant="outline" size="lg">
+              <Link to="/destinos">Ver todos los destinos →</Link>
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

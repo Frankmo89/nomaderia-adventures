@@ -17,6 +17,7 @@ import Servicios from "./pages/Servicios";
 
 // Rutas públicas secundarias — lazy load con retry automático
 const DestinationDetail = lazyWithRetry(() => import("./pages/DestinationDetail"));
+const Destinations = lazyWithRetry(() => import("./pages/Destinations"));
 const GearListing = lazyWithRetry(() => import("./pages/GearListing"));
 const GearArticleDetail = lazyWithRetry(() => import("./pages/GearArticleDetail"));
 const BlogListing = lazyWithRetry(() => import("./pages/BlogListing"));
@@ -67,6 +68,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
               <Route path="/" element={<ErrorBoundary><Index /></ErrorBoundary>} />
+              <Route path="/destinos" element={<ErrorBoundary><Destinations /></ErrorBoundary>} />
               <Route path="/destinos/:slug" element={<ErrorBoundary><DestinationDetail /></ErrorBoundary>} />
               <Route path="/gear" element={<ErrorBoundary><GearListing /></ErrorBoundary>} />
               <Route path="/gear/:slug" element={<ErrorBoundary><GearArticleDetail /></ErrorBoundary>} />
