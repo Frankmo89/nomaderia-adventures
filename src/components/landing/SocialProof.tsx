@@ -26,10 +26,33 @@ const AnimatedCounter = ({
     }
   }, [isInView, isLoading, target, motionVal]);
 
-  if (isLoading) return <span ref={ref} className="text-muted-foreground/40" aria-label="Cargando">···</span>;
-  if (target <= 0) return <span ref={ref}>—</span>;
+  if (isLoading) {
+    return (
+      <span
+        ref={ref}
+        className="text-muted-foreground/40"
+        aria-label="Cargando"
+        aria-live="polite"
+        aria-atomic="true"
+        role="status"
+      >
+        ···
+      </span>
+    );
+  }
+  if (target <= 0) {
+    return (
+      <span ref={ref} aria-live="polite" aria-atomic="true" role="status">
+        —
+      </span>
+    );
+  }
 
-  return <motion.span ref={ref}>{display}</motion.span>;
+  return (
+    <motion.span ref={ref} aria-live="polite" aria-atomic="true" role="status">
+      {display}
+    </motion.span>
+  );
 };
 
 const SocialProof = () => {
