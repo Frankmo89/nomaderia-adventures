@@ -15,8 +15,13 @@ import { useMemo } from "react";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 
+const CTA_WHATSAPP_NUMBER = '18588996802';
+const CTA_WHATSAPP_MESSAGE = '¡Hola! Estoy listo para diseñar mi viaje a medida.';
+
 const Index = () => {
   useCanonical();
+
+  const ctaWhatsAppUrl = buildWhatsAppUrl(CTA_WHATSAPP_MESSAGE, CTA_WHATSAPP_NUMBER);
 
   const jsonLdData = useMemo(
     () => ({
@@ -50,7 +55,7 @@ const Index = () => {
           </h2>
           <Button asChild size="lg">
             <a
-              href={buildWhatsAppUrl('¡Hola! Estoy listo para diseñar mi viaje a medida.', '18588996802')}
+              href={ctaWhatsAppUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
