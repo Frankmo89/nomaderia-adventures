@@ -29,7 +29,7 @@ const AnimatedCounter = ({
   if (isLoading) {
     return (
       <span ref={ref} aria-label="Cargando" role="status">
-        <Skeleton className="inline-block h-10 w-16 rounded-md" />
+        <span className="inline-block h-10 w-16 rounded-md animate-pulse bg-muted" />
       </span>
     );
   }
