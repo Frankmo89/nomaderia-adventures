@@ -61,11 +61,12 @@ export async function uploadMediaItem(file: File): Promise<MediaItem> {
   const publicUrl = urlData.publicUrl;
 
   // Get next display_order
-  const { data: maxOrderData } = await db
+  const { data: maxOrderData, error: maxOrderError } = await db
     .from("media_slider")
     .select("display_order")
     .order("display_order", { ascending: false })
     .limit(1);
+  if (maxOrderError) throw maxOrderError;
   const nextOrder = (maxOrderData && maxOrderData.length > 0
     ? (maxOrderData[0] as { display_order: number }).display_order
     : 0) + 1;
@@ -81,7 +82,15 @@ export async function uploadMediaItem(file: File): Promise<MediaItem> {
     })
     .select()
     .single();
-  if (insertError) throw insertError;
+  if (insertError) {
+    // Best-effort cleanup to avoid leaving an orphaned file in storage
+    try {
+      await supabase.storage.from("media_gallery").remove([storagePath]);
+    } catch {
+      // Ignore cleanup errors so we don't mask the original insert error
+    }
+    throw insertError;
+  }
 
   return data as MediaItem;
 }
@@ -101,14 +110,15 @@ export async function toggleMediaActive(id: string, currentActive: boolean) {
  * Delete a media_slider item and its file from storage.
  */
 export async function deleteMediaItem(id: string, storagePath: string) {
-  const { error: storageError } = await supabase.storage
-    .from("media_gallery")
-    .remove([storagePath]);
-  if (storageError) throw storageError;
-
+  // Delete DB record first so a failed storage removal doesn't leave a broken reference
   const { error: dbError } = await db
     .from("media_slider")
     .delete()
     .eq("id", id);
   if (dbError) throw dbError;
+
+  const { error: storageError } = await supabase.storage
+    .from("media_gallery")
+    .remove([storagePath]);
+  if (storageError) throw storageError;
 }

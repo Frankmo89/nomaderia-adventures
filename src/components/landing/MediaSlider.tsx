@@ -28,8 +28,13 @@ const MediaSlider = () => {
   }, [activeItems.length, index]);
 
   if (activeItems.length === 0) {
-    // Fallback: plain dark background (matches original HeroSection)
-    return <div className="absolute inset-0 bg-neutral-800" />;
+    // Fallback: matches original HeroSection (dark bg + overlay for text legibility)
+    return (
+      <>
+        <div className="absolute inset-0 bg-neutral-800" />
+        <div className="absolute inset-0 bg-black/50" />
+      </>
+    );
   }
 
   const current = activeItems[index];

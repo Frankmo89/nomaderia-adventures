@@ -125,7 +125,17 @@ const AdminGallery = () => {
                     loop
                     playsInline
                     className="w-full h-full object-cover"
-                    onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
+                    onMouseEnter={(e) => {
+                      const video = e.currentTarget as HTMLVideoElement;
+                      if (video.readyState >= 2) {
+                        const playPromise = video.play();
+                        if (playPromise !== undefined) {
+                          playPromise.catch(() => {
+                            // Ignore play errors (e.g. autoplay restrictions)
+                          });
+                        }
+                      }
+                    }}
                     onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
                   />
                 ) : (
