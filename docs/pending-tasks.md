@@ -58,6 +58,15 @@ https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
 
 ## Changelog (completados)
 
+### ✅ Contadores de SocialProof conectados a Supabase via hook dedicado (Marzo 2026)
+- [x] Creado hook `src/hooks/use-stats.ts` con `useQuizCount()` y `useDestinationsCount()` — TanStack Query con `{ count: 'exact', head: true }` para conteo eficiente sin descargar data
+- [x] `SocialProof.tsx` refactorizado para usar los hooks dedicados en lugar de queries inline (cumple patrón: fetch público siempre via custom hooks en `src/hooks/`)
+- [x] Estado de carga usa `Skeleton` de shadcn/ui en lugar de texto plano "···"
+- [x] Animación Framer Motion (`AnimatedCounter`) cuenta de 0 al valor real cuando el componente es visible
+- [x] Verificado: no hay elementos de video en el componente
+- `src/hooks/use-stats.ts` — Nuevo hook de conteos
+- `src/components/landing/SocialProof.tsx` — Usa hooks dedicados + Skeleton loading
+
 ### ✅ Botones de Pricing en PremiumItinerarySection conectados a WhatsApp (Marzo 2026)
 - [x] Botones "Pedir Escapada/Aventura/Nómada" en la sección de precios del homepage ahora abren WhatsApp en nueva pestaña
 - [x] Número hardcodeado: `18588996802` (consistente con el resto del sitio)
