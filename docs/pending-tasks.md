@@ -58,6 +58,18 @@ https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
 
 ## Changelog (completados)
 
+### ✅ Tarea 1.3 — Página /servicios rediseñada con nuevos precios y estructura (Marzo 2026)
+- [x] Hero actualizado: headline "Tu aventura, armada paso a paso" con subtítulo motivador para principiantes
+- [x] 3 tarjetas de precios con shadcn/ui Card: Weekend $19/$299 (1-3 días), Aventura $35/$549 (4-7 días, badge "Más popular"), Expedición $59/$899 (8+ días, highlight "Soporte por WhatsApp durante el viaje")
+- [x] CTAs con ícono WhatsApp (MessageCircle de lucide-react) y mensajes prellenados dinámicos por paquete
+- [x] Sección "Cómo Funciona" con 3 pasos: Cuéntanos tu plan, Diseñamos tu ruta, Viaja sin estrés — íconos Lucide (ClipboardList, Route, Palmtree)
+- [x] FAQ con Accordion de shadcn/ui — 4 preguntas frecuentes sobre qué incluye un itinerario
+- [x] Animaciones Framer Motion con `staggerChildren` para entrada suave de tarjetas de precios
+- [x] Dark mode compatible: usa variables CSS (bg-background, text-foreground, bg-card, border-border) en vez de colores hardcodeados
+- [x] Ruta `/servicios` ya registrada en `App.tsx` y enlace en Navbar
+- `src/pages/Servicios.tsx` — Página rediseñada completa
+- `docs/pending-tasks.md` — Changelog actualizado
+
 ### ✅ Quiz Refactor: Mercado principal, Lucide icons, y pregunta de barreras (Marzo 2026)
 - [x] **docs/supabase-schema.md** — Columna `main_barrier text` (nullable) documentada en `quiz_responses`
 - [x] **src/integrations/supabase/types.ts** — `main_barrier` agregado a Row/Insert/Update de `quiz_responses`
