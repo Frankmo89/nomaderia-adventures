@@ -192,6 +192,17 @@ https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
 - Integrado en Index.tsx entre GearPreview y SocialProof
 - Si no hay posts publicados, la sección no se renderiza
 
+### ✅ SocialProof: Alto Impacto Visual con Contadores Animados (Marzo 2026)
+- [x] Sección de Prueba Social ahora es dinámica con datos reales de Supabase y contadores animados
+- [x] `AnimatedCounter` interno usa `useMotionValue`, `useTransform`, `useSpring` y `useInView` de Framer Motion para contar de 0 al valor real cuando la sección es visible
+- [x] Fondo Charcoal (`bg-[#1C1917]`) como bloque de interrupción visual en el scroll
+- [x] Tarjetas oscuras con borde naranja sutil: `bg-white/5 border border-[#D97706]/20`
+- [x] Texto principal en Light Sand: `text-[#F5F0EB]`
+- [x] Hover interactivo: `whileHover={{ y: -10, borderColor: "#D97706" }}`
+- [x] Tarjeta TAP sin número animado, con ícono ShieldCheck pulsante en naranja
+- [x] CTA y badge en Sunset Orange (`#D97706`)
+- `src/components/landing/SocialProof.tsx` — Rediseño completo con contadores animados
+
 ### ✅ SocialProof: Estadísticas Reales (Febrero 2026)
 - Reemplazó testimonios falsos con 3 tarjetas de datos reales
 - Contador de quiz_responses desde Supabase (crece automáticamente)
