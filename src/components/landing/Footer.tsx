@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Mountain, Instagram, Facebook } from "lucide-react";
+import { BRAND_ASSETS } from "@/config/assets";
 
 const Footer = forwardRef<HTMLElement>((_, ref) => {
   return (
@@ -10,8 +11,14 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2 mb-3">
-              <Mountain className="h-5 w-5 text-primary" />
-              <span className="font-serif text-lg font-bold text-foreground">NOMADERIA</span>
+              {BRAND_ASSETS.logo ? (
+                <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-7 w-auto" />
+              ) : (
+                <>
+                  <Mountain className="h-5 w-5 text-primary" />
+                  <span className="font-serif text-lg font-bold text-foreground">NOMADERIA</span>
+                </>
+              )}
             </Link>
             <p className="text-sm text-muted-foreground">Tu primera aventura empieza aquí.</p>
           </div>
