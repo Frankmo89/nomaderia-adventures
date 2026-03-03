@@ -1,8 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { SITE_URL } from "@/hooks/use-seo";
-
-const DEFAULT_OG_IMAGE =
-  "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/destinations/1772502898883-4w9ykr.jpeg";
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/hooks/use-seo";
 
 interface SEOProps {
   title: string;
@@ -13,7 +10,8 @@ interface SEOProps {
 
 const SEO = ({ title, description, image, slug }: SEOProps) => {
   const fullTitle = `${title} | Nomaderia Adventures`;
-  const pageUrl = `${SITE_URL}/${slug}`;
+  const normalizedSlug = slug.replace(/^\/+/, "");
+  const pageUrl = new URL(normalizedSlug, SITE_URL).toString();
   const ogImage = image || DEFAULT_OG_IMAGE;
 
   return (

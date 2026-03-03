@@ -17,7 +17,7 @@ import PremiumItinerarySection from "@/components/landing/PremiumItinerarySectio
 import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
 import SEO from "@/components/SEO";
 import ShareButtons from "@/components/ShareButtons";
-import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
+import { useJsonLd, SITE_URL } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 
 const difficultyColor: Record<string, string> = {
@@ -110,14 +110,6 @@ const DestinationDetail = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [lightboxOpen, lightboxPrev, lightboxNext]);
 
-  useCanonical();
-
-  usePageMeta({
-    title: dest?.title || "Destino",
-    description: dest?.short_description || "Guía completa de aventura outdoor",
-    image: dest?.hero_image_url || undefined,
-    type: "article",
-  });
 
   const fears = useMemo(() => {
     if (!dest) return [];
