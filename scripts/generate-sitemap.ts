@@ -87,13 +87,15 @@ function url(
   return `  <url>\n    <loc>${loc}</loc>${lastmodTag}\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
 
+const today = new Date().toISOString();
+
 const staticPages = [
-  url(`${SITE_URL}/`, "daily", "1.0"),
-  url(`${SITE_URL}/gear`, "weekly", "0.8"),
-  url(`${SITE_URL}/blog`, "weekly", "0.8"),
-  url(`${SITE_URL}/calculadora`, "monthly", "0.5"),
-  url(`${SITE_URL}/sobre-nosotros`, "monthly", "0.5"),
-  url(`${SITE_URL}/privacidad`, "yearly", "0.5"),
+  url(`${SITE_URL}/`, "daily", "1.0", today),
+  url(`${SITE_URL}/gear`, "weekly", "0.8", today),
+  url(`${SITE_URL}/blog`, "weekly", "0.8", today),
+  url(`${SITE_URL}/calculadora`, "monthly", "0.5", today),
+  url(`${SITE_URL}/sobre-nosotros`, "monthly", "0.5", today),
+  url(`${SITE_URL}/privacidad`, "yearly", "0.5", today),
 ];
 
 const lines: string[] = [
