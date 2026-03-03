@@ -65,7 +65,7 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
 
       const { error } = await supabase.storage
         .from(BUCKET)
-        .upload(fileName, file, { cacheControl: "3600", upsert: false });
+        .upload(fileName, file, { cacheControl: "3600", upsert: false, contentType: file.type });
 
       if (error) {
         toast({
@@ -101,7 +101,15 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
       if (parsed.hostname === supabaseHost) {
         const path = parsed.pathname.split(`/${BUCKET}/`)[1];
         if (path) {
-          await supabase.storage.from(BUCKET).remove([path]);
+          const { error } = await supabase.storage.from(BUCKET).remove([path]);
+          if (error) {
+            toast({
+              title: "Error al eliminar archivo",
+              description: error.message,
+              variant: "destructive",
+            });
+            return;
+          }
         }
       }
     } catch {
@@ -117,7 +125,7 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
       {currentUrls.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {currentUrls.map((url, i) => (
-            <div key={url} className="relative group rounded-lg overflow-hidden border border-border">
+            <div key={`${url}-${i}`} className="relative group rounded-lg overflow-hidden border border-border">
               {isVideo(url) ? (
                 <video
                   src={url}
@@ -125,13 +133,17 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
                   playsInline
                   preload="none"
                   className="w-full h-32 object-cover"
-                  onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play()}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget as HTMLVideoElement).play().catch(() => {})
+                  }
                   onMouseOut={(e) => {
                     const v = e.currentTarget as HTMLVideoElement;
                     v.pause();
                     v.currentTime = 0;
                   }}
-                  onFocus={(e) => (e.currentTarget as HTMLVideoElement).play()}
+                  onFocus={(e) =>
+                    (e.currentTarget as HTMLVideoElement).play().catch(() => {})
+                  }
                   onBlur={(e) => {
                     const v = e.currentTarget as HTMLVideoElement;
                     v.pause();
@@ -150,7 +162,8 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
                 type="button"
                 variant="destructive"
                 size="icon"
-                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                aria-label="Eliminar elemento"
                 onClick={() => handleRemove(i)}
               >
                 <X className="h-3 w-3" />
@@ -178,7 +191,7 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
         {uploading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
       </div>
       <p className="text-xs text-muted-foreground">
-        Formatos: JPG, PNG, WebP, GIF, AVIF, MP4, WebM, MOV · Máximo 50 MB por archivo · La primera imagen se usa como principal del carrusel.
+        Formatos: JPG, PNG, WebP, GIF, AVIF, MP4, WebM, MOV · Máximo 50 MB por archivo · El primer elemento se usa como principal del carrusel.
       </p>
     </div>
   );
