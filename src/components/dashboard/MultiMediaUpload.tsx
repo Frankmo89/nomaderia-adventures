@@ -94,14 +94,18 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
 
   const handleRemove = async (index: number) => {
     const url = currentUrls[index];
-    // Try to remove from storage (best-effort)
+    // Only attempt storage deletion for URLs from our Supabase bucket
     try {
-      const path = new URL(url).pathname.split(`/${BUCKET}/`)[1];
-      if (path) {
-        await supabase.storage.from(BUCKET).remove([path]);
+      const parsed = new URL(url);
+      const supabaseHost = new URL(import.meta.env.VITE_SUPABASE_URL).hostname;
+      if (parsed.hostname === supabaseHost) {
+        const path = parsed.pathname.split(`/${BUCKET}/`)[1];
+        if (path) {
+          await supabase.storage.from(BUCKET).remove([path]);
+        }
       }
     } catch {
-      // Ignore removal errors for external URLs
+      // Ignore errors for malformed or external URLs
     }
     onChange(currentUrls.filter((_, i) => i !== index));
   };
@@ -119,7 +123,7 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
                   src={url}
                   muted
                   playsInline
-                  preload="metadata"
+                  preload="none"
                   className="w-full h-32 object-cover"
                   onMouseOver={(e) => (e.currentTarget as HTMLVideoElement).play()}
                   onMouseOut={(e) => {
@@ -127,6 +131,13 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
                     v.pause();
                     v.currentTime = 0;
                   }}
+                  onFocus={(e) => (e.currentTarget as HTMLVideoElement).play()}
+                  onBlur={(e) => {
+                    const v = e.currentTarget as HTMLVideoElement;
+                    v.pause();
+                    v.currentTime = 0;
+                  }}
+                  tabIndex={0}
                 />
               ) : (
                 <img
