@@ -82,7 +82,7 @@ function url(
   lastmod?: string
 ): string {
   const lastmodTag = lastmod
-    ? `\n    <lastmod>${lastmod.slice(0, 10)}</lastmod>`
+    ? `\n    <lastmod>${lastmod}</lastmod>`
     : "";
   return `  <url>\n    <loc>${loc}</loc>${lastmodTag}\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }

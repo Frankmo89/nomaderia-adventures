@@ -15,7 +15,7 @@
 - [x] **Reemplazar ID placeholder de Meta Pixel** en `index.html`: `XXXXXXXXXXXXXXXXX` → `TU_PIXEL_ID_AQUI` (infraestructura lista; reemplazar con Pixel ID real cuando esté disponible) ✅
 - [ ] Crear cuenta en Facebook Business Manager para obtener el Pixel ID y reemplazar el placeholder en `index.html`
 - [ ] Verificar sitio en Google Search Console (requiere dominio)
-- [ ] Enviar sitemap.xml (pendiente de implementar)
+- [x] Enviar sitemap.xml (implementado: generación automática en build)
 
 #### 💼 Negocio / Comercial
 - [ ] **Deshabilitar el Sign-up público** en Supabase Dashboard → Authentication → Settings → desactivar "Enable email signups"
