@@ -34,43 +34,51 @@ const benefits = [
 
 const packages = [
   {
-    name: "Escapada",
-    priceUsd: "$9",
+    name: "Weekend",
+    priceUsd: "$19 USD",
+    priceMxn: "$299 MXN",
     duration: "1-3 días",
     popular: false,
     features: [
       "Itinerario día a día",
       "Lista de equipo con links",
       "Presupuesto desglosado",
+      "Mapa interactivo",
     ],
-    cta: "Pedir Escapada →",
-    message: "Hola! Me interesa el paquete Escapada ($9 USD)",
+    cta: "Pedir mi Weekend",
+    message: "Hola Nomaderia, me interesa el paquete Weekend para un viaje de 1-3 días. ¿Cuáles son los siguientes pasos?",
   },
   {
     name: "Aventura",
-    priceUsd: "$25",
+    priceUsd: "$35 USD",
+    priceMxn: "$549 MXN",
     duration: "4-7 días",
     popular: true,
     features: [
-      "Todo de Escapada +",
-      "Plan de preparación física",
-      "Tips de transporte y alojamiento",
+      "Todo de Weekend +",
+      "Plan de preparación física (4-8 semanas)",
+      "FAQ personalizado",
+      "Tips de transporte",
+      "Opciones de alojamiento comparadas",
     ],
-    cta: "Pedir Aventura →",
-    message: "Hola! Me interesa el paquete Aventura ($25 USD)",
+    cta: "Pedir mi Aventura",
+    message: "Hola Nomaderia, me interesa el paquete Aventura para un viaje de 4-7 días. ¿Cuáles son los siguientes pasos?",
   },
   {
-    name: "Nómada",
-    priceUsd: "$75",
+    name: "Expedición",
+    priceUsd: "$59 USD",
+    priceMxn: "$899 MXN",
     duration: "8+ días",
     popular: false,
+    highlight: "Soporte por WhatsApp durante el viaje",
     features: [
       "Todo de Aventura +",
-      "Soporte WhatsApp durante el viaje",
-      "Itinerario alternativo (Plan B)",
+      "Soporte por WhatsApp durante el viaje",
+      "Itinerario alternativo (Plan B clima)",
+      "Checklist pre-viaje completo",
     ],
-    cta: "Pedir Nómada →",
-    message: "Hola! Me interesa el paquete Nómada ($75 USD)",
+    cta: "Pedir mi Expedición",
+    message: "Hola Nomaderia, me interesa el paquete Expedición para un viaje de 8+ días. ¿Cuáles son los siguientes pasos?",
   },
 ];
 
@@ -162,12 +170,20 @@ const PremiumItinerarySection = () => {
                     <h3 className="font-serif text-xl text-foreground mb-1">
                       {pkg.name}
                     </h3>
-                    <p className="text-2xl font-bold text-foreground">
-                      {pkg.priceUsd} <span className="text-sm font-normal text-foreground/50">USD</span>
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-2xl font-bold text-foreground">
+                        {pkg.priceUsd}
+                      </p>
+                      <p className="text-sm text-foreground/50">{pkg.priceMxn}</p>
+                    </div>
                     <p className="text-xs text-foreground/60 mt-1">
                       {pkg.duration}
                     </p>
+                    {pkg.highlight && (
+                      <p className="text-xs font-medium text-primary mt-2">
+                        ✦ {pkg.highlight}
+                      </p>
+                    )}
                   </CardHeader>
                   <CardContent className="flex-1 pt-0">
                     <ul className="space-y-2">
