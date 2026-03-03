@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
-
-const WHATSAPP_NUMBER = "18588996802";
+import { packages, WHATSAPP_NUMBER } from "@/config/pricing";
 
 const benefits = [
   {
@@ -29,48 +28,6 @@ const benefits = [
     icon: Zap,
     title: "Respuesta en 24h",
     desc: "Tu propuesta personalizada lista en menos de un día hábil",
-  },
-];
-
-const packages = [
-  {
-    name: "Escapada",
-    priceUsd: "$9",
-    duration: "1-3 días",
-    popular: false,
-    features: [
-      "Itinerario día a día",
-      "Lista de equipo con links",
-      "Presupuesto desglosado",
-    ],
-    cta: "Pedir Escapada →",
-    message: "Hola! Me interesa el paquete Escapada ($9 USD)",
-  },
-  {
-    name: "Aventura",
-    priceUsd: "$25",
-    duration: "4-7 días",
-    popular: true,
-    features: [
-      "Todo de Escapada +",
-      "Plan de preparación física",
-      "Tips de transporte y alojamiento",
-    ],
-    cta: "Pedir Aventura →",
-    message: "Hola! Me interesa el paquete Aventura ($25 USD)",
-  },
-  {
-    name: "Nómada",
-    priceUsd: "$75",
-    duration: "8+ días",
-    popular: false,
-    features: [
-      "Todo de Aventura +",
-      "Soporte WhatsApp durante el viaje",
-      "Itinerario alternativo (Plan B)",
-    ],
-    cta: "Pedir Nómada →",
-    message: "Hola! Me interesa el paquete Nómada ($75 USD)",
   },
 ];
 
@@ -162,12 +119,20 @@ const PremiumItinerarySection = () => {
                     <h3 className="font-serif text-xl text-foreground mb-1">
                       {pkg.name}
                     </h3>
-                    <p className="text-2xl font-bold text-foreground">
-                      {pkg.priceUsd} <span className="text-sm font-normal text-foreground/50">USD</span>
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-2xl font-bold text-foreground">
+                        {pkg.priceUsd}
+                      </p>
+                      <p className="text-sm text-foreground/50">{pkg.priceMxn}</p>
+                    </div>
                     <p className="text-xs text-foreground/60 mt-1">
                       {pkg.duration}
                     </p>
+                    {pkg.highlight && (
+                      <p className="text-xs font-medium text-primary mt-2">
+                        ✦ {pkg.highlight}
+                      </p>
+                    )}
                   </CardHeader>
                   <CardContent className="flex-1 pt-0">
                     <ul className="space-y-2">

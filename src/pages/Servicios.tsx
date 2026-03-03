@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
-
-const SERVICIOS_WHATSAPP_NUMBER = "18588996802";
+import { packages, WHATSAPP_NUMBER } from "@/config/pricing";
 
 const steps = [
   {
@@ -36,68 +35,6 @@ const steps = [
     title: "3. Viaja sin estrés",
     description:
       "Llega a tu aventura preparado y seguro. Con Expedición, te acompañamos por WhatsApp durante todo el viaje.",
-  },
-];
-
-interface Package {
-  name: string;
-  priceUsd: string;
-  priceMxn: string;
-  duration: string;
-  popular: boolean;
-  highlight?: string;
-  features: string[];
-  cta: string;
-  message: string;
-}
-
-const packages: Package[] = [
-  {
-    name: "Weekend",
-    priceUsd: "$19 USD",
-    priceMxn: "$299 MXN",
-    duration: "1-3 días",
-    popular: false,
-    features: [
-      "Itinerario día a día",
-      "Lista de equipo con links",
-      "Presupuesto desglosado",
-      "Mapa interactivo",
-    ],
-    cta: "Pedir mi Weekend",
-    message: "Hola Nomaderia, me interesa el paquete Weekend para un viaje de 1-3 días. ¿Cuáles son los siguientes pasos?",
-  },
-  {
-    name: "Aventura",
-    priceUsd: "$35 USD",
-    priceMxn: "$549 MXN",
-    duration: "4-7 días",
-    popular: true,
-    features: [
-      "Todo de Weekend +",
-      "Plan de preparación física (4-8 semanas)",
-      "FAQ personalizado",
-      "Tips de transporte",
-      "Opciones de alojamiento comparadas",
-    ],
-    cta: "Pedir mi Aventura",
-    message: "Hola Nomaderia, me interesa el paquete Aventura para un viaje de 4-7 días. ¿Cuáles son los siguientes pasos?",
-  },
-  {
-    name: "Expedición",
-    priceUsd: "$59 USD",
-    priceMxn: "$899 MXN",
-    duration: "8+ días",
-    popular: false,
-    highlight: "Soporte por WhatsApp durante el viaje",
-    features: [
-      "Todo de Aventura +",
-      "Soporte por WhatsApp durante el viaje",
-      "Itinerario alternativo (Plan B clima)",
-      "Checklist pre-viaje completo",
-    ],
-    cta: "Pedir mi Expedición",
-    message: "Hola Nomaderia, me interesa el paquete Expedición para un viaje de 8+ días. ¿Cuáles son los siguientes pasos?",
   },
 ];
 
@@ -173,7 +110,7 @@ const Servicios = () => {
           </p>
           <Button asChild size="lg" className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground">
             <a
-              href={buildWhatsAppUrl("¡Hola Nomaderia! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?", SERVICIOS_WHATSAPP_NUMBER)}
+              href={buildWhatsAppUrl("¡Hola Nomaderia! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?", WHATSAPP_NUMBER)}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -228,7 +165,7 @@ const Servicios = () => {
           viewport={{ once: true }}
         >
           {packages.map((pkg) => {
-            const url = buildWhatsAppUrl(pkg.message, SERVICIOS_WHATSAPP_NUMBER);
+            const url = buildWhatsAppUrl(pkg.message, WHATSAPP_NUMBER);
             return (
               <motion.div key={pkg.name} variants={cardItemVariants}>
                 <Card
