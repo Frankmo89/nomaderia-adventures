@@ -10,10 +10,11 @@ import TravelInsuranceSection from "@/components/landing/TravelInsuranceSection"
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
-import { useCanonical, useJsonLd, SITE_URL } from "@/hooks/use-seo";
+import { useCanonical, SITE_URL } from "@/hooks/use-seo";
 import { useMemo } from "react";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
+import JsonLd from "@/components/JsonLd";
 
 const CTA_WHATSAPP_NUMBER = '18588996802';
 const CTA_WHATSAPP_MESSAGE = '¡Hola! Estoy listo para diseñar mi viaje a medida.';
@@ -40,10 +41,10 @@ const Index = () => {
     []
   );
 
-  useJsonLd(jsonLdData);
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <JsonLd data={jsonLdData} />
       <HeroSection />
       <SocialProof />
       <PremiumItinerarySection />

@@ -6,7 +6,7 @@ interface JsonLdProps {
 
 const JsonLd = ({ data }: JsonLdProps) => (
   <Helmet>
-    <script type="application/ld+json">{JSON.stringify(data)}</script>
+    <script type="application/ld+json" data-jsonld="true">{JSON.stringify(data)}</script>
   </Helmet>
 );
 

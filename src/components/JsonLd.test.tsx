@@ -59,6 +59,21 @@ describe("JsonLd", () => {
         'script[type="application/ld+json"]'
       );
       expect(scripts.length).toBeGreaterThanOrEqual(2);
+
+      const parsed = Array.from(scripts)
+        .map((script) => script.textContent)
+        .filter((content): content is string => Boolean(content))
+        .map((content) => JSON.parse(content));
+
+      const hasDestination = parsed.some(
+        (schema) => schema["@type"] === "TouristDestination"
+      );
+      const hasBreadcrumb = parsed.some(
+        (schema) => schema["@type"] === "BreadcrumbList"
+      );
+
+      expect(hasDestination).toBe(true);
+      expect(hasBreadcrumb).toBe(true);
     });
   });
 });
