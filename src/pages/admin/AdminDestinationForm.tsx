@@ -11,6 +11,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ImageUpload from "@/components/dashboard/ImageUpload";
+import MultiMediaUpload from "@/components/dashboard/MultiMediaUpload";
 
 interface Fear { question: string; answer: string; }
 type FormState = typeof emptyForm;
@@ -65,17 +66,7 @@ const GeneralFields = ({ form, set, galleryImages, onGalleryChange }: {
       {field("Descripción Corta", <Textarea value={form.short_description} onChange={(e) => set("short_description", e.target.value)} className={inputCls} />)}
       {field("Descripción de Dificultad", <Textarea value={form.difficulty_description} onChange={(e) => set("difficulty_description", e.target.value)} className={inputCls} />)}
       <ImageUpload bucket="destinations" currentUrl={form.hero_image_url} onUploadComplete={(url) => set("hero_image_url", url)} />
-      <div>
-        <Label className="text-card-foreground">Galería de Imágenes (una URL por línea)</Label>
-        <Textarea
-          rows={5}
-          value={galleryImages.join("\n")}
-          onChange={(e) => onGalleryChange(e.target.value.split("\n").filter((url) => url.trim()))}
-          className={`${inputCls} font-mono text-sm`}
-          placeholder={`https://images.unsplash.com/photo-1?w=1200&q=80\nhttps://images.unsplash.com/photo-2?w=1200&q=80\nhttps://images.unsplash.com/photo-3?w=1200&q=80`}
-        />
-        <p className="text-xs text-muted-foreground mt-1">La primera imagen se usa como principal del carrusel. Usa ?w=1200&q=80 en URLs de Unsplash.</p>
-      </div>
+      <MultiMediaUpload currentUrls={galleryImages} onChange={onGalleryChange} />
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2"><Switch checked={form.is_published} onCheckedChange={(v) => set("is_published", v)} /><Label className="text-card-foreground">Publicado</Label></div>
         <div className="flex items-center gap-2"><Switch checked={form.featured} onCheckedChange={(v) => set("featured", v)} /><Label className="text-card-foreground">Destacado</Label></div>
