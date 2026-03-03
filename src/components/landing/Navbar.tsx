@@ -4,6 +4,7 @@ import { Mountain, Menu, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { BRAND_ASSETS } from "@/config/assets";
 
 const navLinks = [
   { label: "Destinos", href: "#destinos" },
@@ -18,6 +19,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [open, setOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -50,13 +52,19 @@ const Navbar = () => {
       >
         <div className="container mx-auto flex items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <Mountain className="h-6 w-6 text-primary" />
-            <span className={cn(
-              "font-serif text-xl font-bold tracking-wide transition-colors duration-500",
-              scrolled ? "text-foreground" : "text-white"
-            )}>
-              NOMADERIA
-            </span>
+            {BRAND_ASSETS.logo && !logoError ? (
+              <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-8 w-auto" onError={() => setLogoError(true)} />
+            ) : (
+              <>
+                <Mountain className="h-6 w-6 text-primary" />
+                <span className={cn(
+                  "font-serif text-xl font-bold tracking-wide transition-colors duration-500",
+                  scrolled ? "text-foreground" : "text-white"
+                )}>
+                  NOMADERIA
+                </span>
+              </>
+            )}
           </Link>
 
           {/* Desktop nav */}
@@ -116,10 +124,16 @@ const Navbar = () => {
             {/* Close bar */}
             <div className="flex items-center justify-between px-5 py-4">
               <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-                <Mountain className="h-6 w-6 text-primary" />
-                <span className="font-serif text-xl font-bold tracking-wide text-foreground">
-                  NOMADERIA
-                </span>
+                {BRAND_ASSETS.logo && !logoError ? (
+                  <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-8 w-auto" onError={() => setLogoError(true)} />
+                ) : (
+                  <>
+                    <Mountain className="h-6 w-6 text-primary" />
+                    <span className="font-serif text-xl font-bold tracking-wide text-foreground">
+                      NOMADERIA
+                    </span>
+                  </>
+                )}
               </Link>
               <Button
                 variant="ghost"

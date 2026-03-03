@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
-import { SITE_URL, DEFAULT_OG_IMAGE } from "@/hooks/use-seo";
+import { SITE_URL } from "@/hooks/use-seo";
+import { BRAND_ASSETS } from "@/config/assets";
 
 interface SEOProps {
   title: string;
@@ -12,7 +13,7 @@ const SEO = ({ title, description, image, slug }: SEOProps) => {
   const fullTitle = `${title} | Nomaderia Adventures`;
   const normalizedSlug = slug.replace(/^\/+/, "");
   const pageUrl = new URL(normalizedSlug, SITE_URL).toString();
-  const ogImage = image || DEFAULT_OG_IMAGE;
+  const ogImage = image || BRAND_ASSETS.defaultOgImage;
 
   return (
     <Helmet>
