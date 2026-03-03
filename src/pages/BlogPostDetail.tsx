@@ -9,7 +9,8 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
-import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
+import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
 
 const estimateReadingTime = (markdown: string | null): number => {
@@ -103,9 +104,6 @@ const BlogPostDetail = () => {
     };
   }, [post]);
 
-  useJsonLd(jsonLd);
-  useJsonLd(breadcrumbLd);
-
   const pageMeta = useMemo(
     () => {
       if (post) {
@@ -156,6 +154,8 @@ const BlogPostDetail = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      {jsonLd && <JsonLd data={jsonLd} />}
+      {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
       <section className="pt-20">
         <div className="h-[35vh] flex items-end relative overflow-hidden">
           {post.hero_image_url ? (
