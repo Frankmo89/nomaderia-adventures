@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { BRAND_ASSETS } from "@/config/assets";
 
 const envSiteUrl = import.meta.env.VITE_SITE_URL;
 // Treat an empty string (or missing value) as "unset" so we fall back to the production URL.
@@ -85,8 +86,7 @@ export const usePageMeta = ({ title, description, image, type = "website" }: Pag
   }, [title, description, image, type]);
 };
 
-/** Default OG image — matches the value in index.html. Single source of truth. */
-const DEFAULT_OG_IMAGE =
-  "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/destinations/1772502898883-4w9ykr.jpeg";
+/** Re-export the default OG image from the centralised brand-assets config. */
+const DEFAULT_OG_IMAGE = BRAND_ASSETS.defaultOgImage;
 
 export { SITE_URL, DEFAULT_OG_IMAGE };

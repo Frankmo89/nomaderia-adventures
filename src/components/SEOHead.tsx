@@ -1,6 +1,5 @@
 import { Helmet } from "react-helmet-async";
-
-const DEFAULT_OG_IMAGE = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80";
+import { BRAND_ASSETS } from "@/config/assets";
 
 interface SEOHeadProps {
   title: string;
@@ -13,7 +12,7 @@ interface SEOHeadProps {
 const SEOHead = ({
   title,
   description,
-  image = DEFAULT_OG_IMAGE,
+  image = BRAND_ASSETS.defaultOgImage,
   url,
   type = "article",
 }: SEOHeadProps) => {
