@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
+    fbq?: (...args: unknown[]) => void;
   }
 }
 
@@ -17,6 +18,9 @@ export default function AnalyticsRouteTracker() {
       window.gtag("config", GA_MEASUREMENT_ID, {
         page_path: location.pathname + location.search,
       });
+    }
+    if (window.fbq) {
+      window.fbq("track", "PageView");
     }
   }, [location]);
 
