@@ -6,9 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
-import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { useBlogPosts } from "@/hooks/use-blog-posts";
 import FeaturedBlogPost from "@/components/blog/FeaturedBlogPost";
+import JsonLd from "@/components/JsonLd";
 
 const categories = [
   "Todo",
@@ -32,7 +33,7 @@ const BlogListing = () => {
     description: "Artículos, consejos y guías para preparar tu primera aventura al aire libre.",
   });
 
-  useJsonLd({
+  const collectionLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: "Blog — Nomaderia Adventures",
@@ -40,7 +41,7 @@ const BlogListing = () => {
     url: `${SITE_URL}/blog`,
     inLanguage: "es",
     isPartOf: { "@type": "WebSite", name: "Nomaderia Adventures", url: SITE_URL },
-  });
+  };
 
   const filter = (cat: string) =>
     cat === "Todo" ? posts : posts.filter((p) => p.category === cat);
@@ -48,6 +49,7 @@ const BlogListing = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <JsonLd data={collectionLd} />
       <section className="pt-32 pb-20">
         <div className="container mx-auto px-4">
           <motion.h1

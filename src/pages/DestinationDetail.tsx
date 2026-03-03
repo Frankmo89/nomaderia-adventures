@@ -16,8 +16,9 @@ import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
 import SEO from "@/components/SEO";
+import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
-import { useJsonLd, SITE_URL } from "@/hooks/use-seo";
+import { SITE_URL } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 
 const difficultyColor: Record<string, string> = {
@@ -118,7 +119,7 @@ const DestinationDetail = () => {
 
   const jsonLd = useMemo(() => {
     if (!dest) return null;
-    return {
+    const schema: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "TouristDestination",
       name: dest.title,
@@ -129,9 +130,21 @@ const DestinationDetail = () => {
       url: `${SITE_URL}/destinos/${dest.slug}`,
       inLanguage: "es",
     };
+    if (dest.estimated_budget_usd != null) {
+      schema.estimatedCost = {
+        "@type": "MonetaryAmount",
+        value: dest.estimated_budget_usd,
+        currency: "USD",
+      };
+    }
+    if (dest.days_needed) {
+      const daysMatch = String(dest.days_needed).match(/\d+/);
+      if (daysMatch) {
+        schema.duration = `P${daysMatch[0]}D`;
+      }
+    }
+    return schema;
   }, [dest]);
-
-  useJsonLd(jsonLd);
 
   const breadcrumbLd = useMemo(() => {
     if (!dest) return null;
@@ -145,8 +158,6 @@ const DestinationDetail = () => {
       ],
     };
   }, [dest]);
-
-  useJsonLd(breadcrumbLd);
 
   const faqLd = useMemo(() => {
     if (!dest || !fears.length) return null;
@@ -163,8 +174,6 @@ const DestinationDetail = () => {
       })),
     };
   }, [dest, fears]);
-
-  useJsonLd(faqLd);
 
   if (isLoading) return (
     <main className="bg-background min-h-screen">
@@ -195,6 +204,9 @@ const DestinationDetail = () => {
         image={dest.hero_image_url || undefined}
         slug={`destinos/${dest.slug}`}
       />
+      {jsonLd && <JsonLd data={jsonLd} />}
+      {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
+      {faqLd && <JsonLd data={faqLd} />}
 
       {/* Hero Carousel */}
       <section className="pt-20">

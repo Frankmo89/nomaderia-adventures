@@ -10,8 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
-import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import SEOHead from "@/components/SEOHead";
+import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -104,9 +105,6 @@ const GearArticleDetail = () => {
     type: "article",
   } : { title: "Gear Guide", description: "Guías de equipo outdoor para aventureros" });
 
-  useJsonLd(jsonLd);
-  useJsonLd(breadcrumbLd);
-
   if (loading) return (
     <main className="bg-background min-h-screen"><Navbar />
       <div className="pt-20"><GearArticleDetailSkeleton /></div>
@@ -132,6 +130,8 @@ const GearArticleDetail = () => {
         description={article.short_description || `${article.title} — Gear Guide de Nomaderia`}
         image={article.hero_image_url || undefined}
       />
+      {jsonLd && <JsonLd data={jsonLd} />}
+      {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
 
       <section className="pt-20">
         <div className="h-[35vh] flex items-end relative overflow-hidden">
