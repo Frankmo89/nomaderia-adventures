@@ -138,7 +138,10 @@ const DestinationDetail = () => {
       };
     }
     if (dest.days_needed) {
-      schema.duration = dest.days_needed;
+      const daysMatch = String(dest.days_needed).match(/\d+/);
+      if (daysMatch) {
+        schema.duration = `P${daysMatch[0]}D`;
+      }
     }
     return schema;
   }, [dest]);
