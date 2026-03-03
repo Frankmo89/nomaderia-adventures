@@ -1,9 +1,11 @@
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Mountain, Instagram, Facebook } from "lucide-react";
 import { BRAND_ASSETS } from "@/config/assets";
 
 const Footer = forwardRef<HTMLElement>((_, ref) => {
+  const [logoError, setLogoError] = useState(false);
+
   return (
     <footer ref={ref} className="py-12 bg-background border-t border-border">
       <div className="container mx-auto px-4">
@@ -11,8 +13,8 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2 mb-3">
-              {BRAND_ASSETS.logo ? (
-                <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-7 w-auto" />
+              {BRAND_ASSETS.logo && !logoError ? (
+                <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-7 w-auto" onError={() => setLogoError(true)} />
               ) : (
                 <>
                   <Mountain className="h-5 w-5 text-primary" />
