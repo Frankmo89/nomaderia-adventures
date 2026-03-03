@@ -15,9 +15,9 @@ import Footer from "@/components/landing/Footer";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
-import SEOHead from "@/components/SEOHead";
+import SEO from "@/components/SEO";
 import ShareButtons from "@/components/ShareButtons";
-import { useCanonical, useJsonLd, usePageMeta, SITE_URL } from "@/hooks/use-seo";
+import { useJsonLd, SITE_URL } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 
 const difficultyColor: Record<string, string> = {
@@ -110,14 +110,6 @@ const DestinationDetail = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [lightboxOpen, lightboxPrev, lightboxNext]);
 
-  useCanonical();
-
-  usePageMeta({
-    title: dest?.title || "Destino",
-    description: dest?.short_description || "Guía completa de aventura outdoor",
-    image: dest?.hero_image_url || undefined,
-    type: "article",
-  });
 
   const fears = useMemo(() => {
     if (!dest) return [];
@@ -197,10 +189,11 @@ const DestinationDetail = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
-      <SEOHead
+      <SEO
         title={dest.title}
         description={dest.short_description || `Guía completa de ${dest.title} para principiantes`}
         image={dest.hero_image_url || undefined}
+        slug={`destinos/${dest.slug}`}
       />
 
       {/* Hero Carousel */}

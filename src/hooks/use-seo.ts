@@ -85,4 +85,8 @@ export const usePageMeta = ({ title, description, image, type = "website" }: Pag
   }, [title, description, image, type]);
 };
 
-export { SITE_URL };
+/** Default OG image — matches the value in index.html. Single source of truth. */
+const DEFAULT_OG_IMAGE =
+  "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/destinations/1772502898883-4w9ykr.jpeg";
+
+export { SITE_URL, DEFAULT_OG_IMAGE };
