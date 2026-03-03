@@ -9,8 +9,8 @@
 ### 🔴 Prioridad Alta
 
 #### 📊 Analítica
-- [ ] **Configurar** `VITE_GA_MEASUREMENT_ID="G-CK9STWJDFM"` en el archivo `.env` local
-- [ ] **Ejecutar** el componente de Google Analytics (`gtag.js`) una vez configurado el `.env` — verificar que el ID real aparece en Network tab del navegador
+- [x] **(OBSOLETO)** Configuración vía `VITE_GA_MEASUREMENT_ID` en `.env` — actualmente GA4 se carga con scripts directos en `index.html` usando `G-CK9STWJDFM`
+- [x] **(OBSOLETO)** Componente de Google Analytics (`gtag.js`) en `src/` — la implementación actual usa únicamente los scripts incluidos en `index.html`
 - [x] **Reemplazar ID placeholder de GA4** en `index.html`: `G-XXXXXXXXXX` → `G-CK9STWJDFM` ✅
 - [ ] **Reemplazar ID placeholder de Meta Pixel** en `index.html`: `XXXXXXXXXXXXXXXXX` → tu Meta Pixel ID real
 - [ ] Crear cuenta en Facebook Business Manager para obtener el Pixel ID y reemplazar el placeholder en `index.html`
