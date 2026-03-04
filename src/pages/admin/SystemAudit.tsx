@@ -99,7 +99,7 @@ const SystemAudit = () => {
 
     const isGtagReady =
       typeof window !== "undefined" &&
-      typeof (window as Window & { gtag?: unknown }).gtag === "function";
+      typeof window.gtag === "function";
     setGtagCheck({ status: isGtagReady ? "ok" : "error" });
   }, []);
 
