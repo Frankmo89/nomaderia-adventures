@@ -36,17 +36,17 @@ const difficultyLabel: Record<string, string> = {
   challenging: "Desafiante",
 };
 
+/** Masks email for safe logging: user@example.com → u***@example.com */
+const maskEmail = (raw: string): string => {
+  const [user, domain] = raw.split("@");
+  if (!domain) return "***";
+  return `${user[0] ?? ""}***@${domain}`;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
-  /** Masks email for safe logging: user@example.com → u***@example.com */
-  const maskEmail = (raw: string): string => {
-    const [user, domain] = raw.split("@");
-    if (!domain) return "***";
-    return `${user[0] ?? ""}***@${domain}`;
-  };
 
   try {
     if (!RESEND_API_KEY) {

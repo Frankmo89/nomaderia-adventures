@@ -65,6 +65,7 @@ interface ImageCheckState {
   results: ImageCheckResult[];
   total: number;
   checked: number;
+  fetchError: string;
 }
 
 const SystemAudit = () => {
@@ -104,6 +105,7 @@ const SystemAudit = () => {
     results: [],
     total: 0,
     checked: 0,
+    fetchError: "",
   });
 
   useEffect(() => {
@@ -170,7 +172,7 @@ const SystemAudit = () => {
   };
 
   const handleCheckImages = async () => {
-    setImageCheck({ running: true, results: [], total: 0, checked: 0 });
+    setImageCheck({ running: true, results: [], total: 0, checked: 0, fetchError: "" });
     try {
       const { data, error } = await supabase
         .from("destinations")
@@ -178,7 +180,13 @@ const SystemAudit = () => {
         .not("hero_image_url", "is", null);
 
       if (error || !data) {
-        setImageCheck({ running: false, results: [], total: 0, checked: 0 });
+        setImageCheck({
+          running: false,
+          results: [],
+          total: 0,
+          checked: 0,
+          fetchError: error?.message ?? "No se pudo obtener los datos de Supabase",
+        });
         return;
       }
 
@@ -186,23 +194,38 @@ const SystemAudit = () => {
         .map((d) => (d as { hero_image_url: string | null }).hero_image_url)
         .filter((u): u is string => !!u);
 
-      setImageCheck({ running: true, results: [], total: urls.length, checked: 0 });
+      setImageCheck({ running: true, results: [], total: urls.length, checked: 0, fetchError: "" });
 
       const results: ImageCheckResult[] = [];
       for (const url of urls) {
-        const ok = await new Promise<boolean>((resolve) => {
+        const imgPromise = new Promise<boolean>((resolve) => {
           const img = new window.Image();
-          img.onload = () => resolve(true);
-          img.onerror = () => resolve(false);
+          let settled = false;
+          const cleanup = () => {
+            img.onload = null;
+            img.onerror = null;
+          };
+          img.onload = () => {
+            if (!settled) { settled = true; cleanup(); resolve(true); }
+          };
+          img.onerror = () => {
+            if (!settled) { settled = true; cleanup(); resolve(false); }
+          };
           img.src = url;
         });
+
+        const timeoutPromise = new Promise<boolean>((resolve) => {
+          window.setTimeout(() => resolve(false), 5000);
+        });
+
+        const ok = await Promise.race([imgPromise, timeoutPromise]);
         results.push({ url, status: ok ? "ok" : "error" });
         setImageCheck((prev) => ({ ...prev, checked: prev.checked + 1, results: [...results] }));
       }
 
-      setImageCheck({ running: false, results, total: urls.length, checked: urls.length });
+      setImageCheck({ running: false, results, total: urls.length, checked: urls.length, fetchError: "" });
     } catch {
-      setImageCheck((prev) => ({ ...prev, running: false }));
+      setImageCheck((prev) => ({ ...prev, running: false, fetchError: "Error inesperado al verificar imágenes" }));
     }
   };
 
@@ -369,6 +392,17 @@ const SystemAudit = () => {
                 </>
               )}
             </Button>
+            {imageCheck.fetchError && !imageCheck.running && (
+              <div>
+                <span className="flex items-center gap-1.5 text-red-600 text-sm font-medium">
+                  <XCircle className="h-4 w-4" />
+                  Error al obtener datos
+                </span>
+                <p className="text-xs text-red-500 font-mono bg-red-50 rounded p-2 break-all mt-1">
+                  {imageCheck.fetchError}
+                </p>
+              </div>
+            )}
             {imageCheck.results.length > 0 && !imageCheck.running && (
               <div className="space-y-1">
                 <div className="flex gap-4 text-sm">

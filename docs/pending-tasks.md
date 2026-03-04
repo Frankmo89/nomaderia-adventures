@@ -61,7 +61,7 @@ https://nomaderia.com/
 
 ### ✅ Fase 4 — Armadura de Titanio: Monitoreo y Auditoría Avanzada (Marzo 2026)
 - [x] **Botón de Prueba en Auditoría** — Nueva tarjeta "Prueba de Ventas" en `SystemAudit.tsx` con botón "Enviar Correo de Prueba" que llama a la Edge Function `send-quiz-email` con datos de prueba (test@nomaderia.com, destino Yosemite). Muestra estados: Enviando…, ✅ Éxito, ❌ Error con mensaje.
-- [x] **Verificador de Imágenes** — Nueva tarjeta "Verificador de Imágenes" en `SystemAudit.tsx` que consulta `hero_image_url` de todos los destinos en Supabase y verifica su accesibilidad (HEAD request + no-cors). Muestra contador OK/Error y URLs fallidas.
+- [x] **Verificador de Imágenes** — Nueva tarjeta "Verificador de Imágenes" en `SystemAudit.tsx` que consulta `hero_image_url` de todos los destinos en Supabase y verifica cada imagen con `new Image()` en el browser (evita restricciones CORS). Timeout de 5 segundos por imagen via `Promise.race`. Muestra contador OK/Error, URLs fallidas, y mensaje de error si la query de Supabase falla.
 - [x] **Monitoreo de Errores (Sentry)** — Instalado `@sentry/react@10.42.0`. `main.tsx` inicializa Sentry si `VITE_SENTRY_DSN` está definida. `ErrorBoundary.tsx` captura errores via `componentDidCatch` → `Sentry.captureException`. Cubre calculadora y quiz automáticamente.
 - [x] **Variable VITE_SENTRY_DSN** — Agregada a `.env.example` y a la tarjeta "Variables de Entorno" de `SystemAudit.tsx`.
 - [x] **Logs de Envío** — Edge Function `send-quiz-email` ahora registra `[send-quiz-email] OK — correo enviado exitosamente` (con destinatario + messageId) en éxito, y `[send-quiz-email] FAIL` / `[send-quiz-email] ERROR` en caso de fallo, visibles en Supabase > Edge Functions > Logs.
