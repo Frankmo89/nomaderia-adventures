@@ -12,18 +12,8 @@ import { Plane, Hotel, UtensilsCrossed, Compass, Backpack, ShieldCheck, ArrowRig
 import type { LucideIcon } from "lucide-react";
 import { calculateBudget } from "@/lib/budget-calc";
 import type { ComfortLevel } from "@/lib/budget-calc";
-
-interface Destination {
-  id: string;
-  title: string;
-  slug: string;
-  country: string;
-  estimated_budget_usd: number | null;
-  hero_image_url: string | null;
-  days_needed: string | null;
-  difficulty_level: string;
-  affiliate_links: Record<string, string> | null;
-}
+import { useDestinations } from "@/hooks/use-destinations";
+import type { DestinationCard } from "@/hooks/use-destinations";
 
 const comfortOptions: { value: ComfortLevel; label: string; icon: LucideIcon }[] = [
   { value: "budget", label: "Mochilero", icon: Tent },
@@ -41,7 +31,7 @@ const originZones = [
 ];
 
 const BudgetCalculator = () => {
-  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const { data: destinations = [] } = useDestinations();
   const [selectedSlug, setSelectedSlug] = useState("");
   const [origin, setOrigin] = useState("");
   const [days, setDays] = useState(5);
@@ -59,9 +49,12 @@ const BudgetCalculator = () => {
   const heroImages = useMemo(
     () =>
       destinations
-        .filter((d) => d.hero_image_url)
+        .filter(
+          (d): d is DestinationCard & { hero_image_url: string } =>
+            !!d.hero_image_url,
+        )
         .slice(0, 5)
-        .map((d) => d.hero_image_url as string),
+        .map((d) => d.hero_image_url),
     [destinations],
   );
 
@@ -77,18 +70,6 @@ const BudgetCalculator = () => {
 
   useEffect(() => {
     document.title = "Calculadora de Presupuesto | Nomaderia";
-    supabase
-      .from("destinations")
-      .select("id, title, slug, country, estimated_budget_usd, hero_image_url, days_needed, difficulty_level, affiliate_links")
-      .eq("is_published", true)
-      .order("title")
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("[BudgetCalculator] Error fetching destinations:", error.message);
-          return;
-        }
-        if (data) setDestinations(data);
-      });
   }, []);
 
   const selectedDest = destinations.find((d) => d.slug === selectedSlug);
