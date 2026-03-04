@@ -1,4 +1,14 @@
 import "./index.css";
+import * as Sentry from "@sentry/react";
+
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: 0,
+  });
+}
 
 async function bootstrap() {
   const container = document.getElementById("root") ?? document.body;
