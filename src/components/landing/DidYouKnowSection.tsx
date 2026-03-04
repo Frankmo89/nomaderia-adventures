@@ -140,12 +140,13 @@ const SkeletonLoader = () => (
 const DidYouKnowSection = () => {
   const { data: allDestinations = [], isLoading } = useDestinations();
 
-  /* Shuffle once when data arrives, then pick 5 */
+  /* Shuffle once when the set of destination IDs changes, then pick 5 */
+  const destinationIds = allDestinations.map((d) => d.id).sort().join(",");
   const destinations = useMemo(() => {
     if (allDestinations.length === 0) return [];
     return shuffle(allDestinations).slice(0, 5);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allDestinations.length]);
+  }, [destinationIds]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -202,25 +203,39 @@ const DidYouKnowSection = () => {
   }, [destinations.length, scrollToIndex]);
 
   /* Pause autoplay on user interaction */
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
 
-    const pause = () => { autoplayPaused.current = true; };
-    const resume = () => {
-      setTimeout(() => { autoplayPaused.current = false; }, AUTOPLAY_INTERVAL_MS);
+    const pause = () => {
+      autoplayPaused.current = true;
+      if (resumeTimer.current) { clearTimeout(resumeTimer.current); resumeTimer.current = null; }
+    };
+    const scheduleResume = () => {
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+      resumeTimer.current = setTimeout(() => { autoplayPaused.current = false; }, AUTOPLAY_INTERVAL_MS);
+    };
+
+    /* Debounced scroll handler as fallback for browsers without scrollend */
+    let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
+    const onScroll = () => {
+      pause();
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(scheduleResume, 150);
     };
 
     el.addEventListener("touchstart", pause, { passive: true });
-    el.addEventListener("touchend", resume, { passive: true });
-    el.addEventListener("scroll", pause, { passive: true });
-    el.addEventListener("scrollend", resume, { passive: true });
+    el.addEventListener("touchend", scheduleResume, { passive: true });
+    el.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       el.removeEventListener("touchstart", pause);
-      el.removeEventListener("touchend", resume);
-      el.removeEventListener("scroll", pause);
-      el.removeEventListener("scrollend", resume);
+      el.removeEventListener("touchend", scheduleResume);
+      el.removeEventListener("scroll", onScroll);
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
     };
   }, []);
 
