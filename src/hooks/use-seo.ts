@@ -63,7 +63,7 @@ interface PageMeta {
  */
 export const usePageMeta = ({ title, description, image, type = "website" }: PageMeta) => {
   useEffect(() => {
-    const fullTitle = `${title} — Nomaderia`;
+    const fullTitle = `${title} — Nomadería`;
     document.title = fullTitle;
 
     const setMeta = (selector: string, attr: string, value: string) => {
@@ -81,7 +81,7 @@ export const usePageMeta = ({ title, description, image, type = "website" }: Pag
     }
 
     return () => {
-      document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando";
+      document.title = "Nomadería - Aventuras y Senderismo";
     };
   }, [title, description, image, type]);
 };
