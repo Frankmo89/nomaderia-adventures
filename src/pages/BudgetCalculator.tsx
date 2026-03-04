@@ -76,12 +76,6 @@ const BudgetCalculator = () => {
   }, [advanceHero, heroImages.length]);
 
   useEffect(() => {
-    if (heroImages.length > 0 && heroIndex >= heroImages.length) {
-      setHeroIndex(0);
-    }
-  }, [heroImages.length, heroIndex]);
-
-  useEffect(() => {
     document.title = "Calculadora de Presupuesto | Nomaderia";
     supabase
       .from("destinations")
