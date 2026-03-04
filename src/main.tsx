@@ -8,7 +8,7 @@ async function bootstrap() {
     const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     if (!url || !key) {
       throw new Error(
-        `Supabase env vars missing — VITE_SUPABASE_URL: ${url ? "✓" : "✗ undefined"} | VITE_SUPABASE_PUBLISHABLE_KEY: ${key ? "✓" : "✗ undefined"}`,
+        `Supabase env vars missing — VITE_SUPABASE_URL: ${url || "missing"} | VITE_SUPABASE_PUBLISHABLE_KEY: ${key || "missing"}`,
       );
     }
 
