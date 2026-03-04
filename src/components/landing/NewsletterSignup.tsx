@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+const UNIQUE_VIOLATION = "23505";
+
 const NewsletterSignup = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,9 +18,19 @@ const NewsletterSignup = () => {
     if (!email) return;
     setLoading(true);
     try {
-      await supabase.from("newsletter_subscribers").insert({ email, source: "footer" });
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .insert({ email, source: "footer" });
+      if (error && error.code !== UNIQUE_VIOLATION) {
+        // 23505 = unique_violation (already subscribed — treat as success)
+        throw error;
+      }
       setDone(true);
       toast({ title: "¡Bienvenido/a! 🎉", description: "Te enviamos aventuras cada semana." });
+      // Fire welcome email — non-blocking, errors are intentionally ignored here
+      supabase.functions
+        .invoke("send-welcome-email", { body: { email } })
+        .catch(() => undefined);
     } catch {
       toast({ title: "Error", description: "Intenta de nuevo.", variant: "destructive" });
     } finally {
