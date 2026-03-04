@@ -7,11 +7,17 @@ const container = document.getElementById("root")!;
 try {
   createRoot(container).render(<App />);
 } catch (err) {
-  // Show the runtime error on screen so it can be diagnosed in production
+  // Catches synchronous module-init errors (e.g. missing dependencies).
+  // React render-phase errors are handled by ErrorBoundary in App.tsx.
   console.error("[Nomaderia] Fatal render error:", err);
-  container.innerHTML = `
-    <div style="padding:2rem;font-family:sans-serif;max-width:600px;margin:auto">
-      <h1 style="color:#b91c1c">Error de inicialización</h1>
-      <p>${err instanceof Error ? err.message : String(err)}</p>
-    </div>`;
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = "padding:2rem;font-family:sans-serif;max-width:600px;margin:auto";
+  const heading = document.createElement("h1");
+  heading.style.color = "#b91c1c";
+  heading.textContent = "Error de inicialización";
+  const msg = document.createElement("p");
+  msg.textContent = err instanceof Error ? err.message : String(err);
+  wrapper.appendChild(heading);
+  wrapper.appendChild(msg);
+  container.appendChild(wrapper);
 }
