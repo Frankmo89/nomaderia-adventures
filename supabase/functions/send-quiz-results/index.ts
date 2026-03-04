@@ -18,6 +18,19 @@ interface QuizResultsRequest {
   destino: string;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function sanitizeSubject(str: string): string {
+  return str.replace(/[\r\n]/g, " ").trim();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,7 +41,20 @@ serve(async (req) => {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    const { email, nombre, destino }: QuizResultsRequest = await req.json();
+    let body: QuizResultsRequest;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "JSON inválido en el cuerpo de la petición" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const { email, nombre, destino } = body;
 
     if (!email || !destino) {
       return new Response(
@@ -40,7 +66,11 @@ serve(async (req) => {
       );
     }
 
-    const greeting = nombre ? `¡Hola, ${nombre}!` : "¡Hola, aventurero/a!";
+    const safeNombre = nombre ? escapeHtml(nombre) : null;
+    const safeDestino = escapeHtml(destino);
+    const safeDestinoSubject = sanitizeSubject(destino);
+
+    const greeting = safeNombre ? `¡Hola, ${safeNombre}!` : "¡Hola, aventurero/a!";
 
     const htmlEmail = `
 <!DOCTYPE html>
@@ -78,7 +108,7 @@ serve(async (req) => {
         Tu destino ideal es
       </p>
       <h3 style="font-family:'Georgia',serif;font-size:32px;color:#FFFFFF;margin:0 0 16px;line-height:1.2;">
-        ${destino}
+        ${safeDestino}
       </h3>
       <p style="color:rgba(255,255,255,0.9);font-size:15px;line-height:1.6;margin:0 0 24px;">
         Prepárate para la aventura. Hemos encontrado el lugar perfecto
@@ -155,12 +185,12 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "Nomaderia Adventures <hola@nomaderia.com>",
         to: [email],
-        subject: `🏔️ Tu destino ideal: ${destino} — Nomaderia`,
+        subject: `🏔️ Tu destino ideal: ${safeDestinoSubject} — Nomaderia`,
         html: htmlEmail,
       }),
     });
 
-    const resendData = await resendResponse.json();
+    const resendData = await resendResponse.json().catch(() => ({}));
 
     if (!resendResponse.ok) {
       console.error("Resend error:", {
