@@ -1,0 +1,99 @@
+import { describe, it, expect, afterEach } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { useCanonical, useJsonLd, usePageMeta } from "./use-seo";
+import type { ReactNode } from "react";
+
+describe("useCanonical", () => {
+  afterEach(() => {
+    const link = document.querySelector('link[rel="canonical"]');
+    if (link) link.remove();
+  });
+
+  it("should create a canonical link element with the correct href", () => {
+    renderHook(() => useCanonical(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <MemoryRouter initialEntries={["/destinos/camino-inca"]}>{children}</MemoryRouter>
+      ),
+    });
+
+    const link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    expect(link).toBeTruthy();
+    // SITE_URL falls back to the production URL when VITE_SITE_URL is not set
+    expect(link?.getAttribute("href")).toMatch(/\/destinos\/camino-inca$/);
+  });
+
+  it("should use the configured SITE_URL as fallback when VITE_SITE_URL is not set", () => {
+    renderHook(() => useCanonical(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <MemoryRouter initialEntries={["/blog"]}>{children}</MemoryRouter>
+      ),
+    });
+
+    const link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    expect(link).toBeTruthy();
+    // In jsdom, window.location.origin is "http://localhost"
+    expect(link?.getAttribute("href")).toMatch(/^https?:\/\/.+\/blog$/);
+  });
+});
+
+describe("useJsonLd", () => {
+  afterEach(() => {
+    document.querySelectorAll('script[data-jsonld]').forEach((el) => el.remove());
+  });
+
+  it("should inject a JSON-LD script tag", () => {
+    const data = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      name: "Test Article",
+    };
+
+    const { unmount } = renderHook(() => useJsonLd(data));
+
+    const script = document.querySelector('script[data-jsonld]');
+    expect(script).toBeTruthy();
+    expect(script?.getAttribute("type")).toBe("application/ld+json");
+    expect(JSON.parse(script?.textContent || "{}")).toEqual(data);
+
+    unmount();
+    expect(document.querySelector('script[data-jsonld]')).toBeNull();
+  });
+
+  it("should not inject a script tag when data is null", () => {
+    renderHook(() => useJsonLd(null));
+    expect(document.querySelector('script[data-jsonld]')).toBeNull();
+  });
+});
+
+describe("usePageMeta", () => {
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <MemoryRouter>{children}</MemoryRouter>
+  );
+
+  afterEach(() => {
+    document.title = "";
+  });
+
+  it("should set document title with brand suffix while mounted", () => {
+    renderHook(
+      () => usePageMeta({ title: "Destinos", description: "Lista de destinos" }),
+      { wrapper },
+    );
+
+    expect(document.title).toBe("Destinos — Nomadería");
+  });
+
+  it("should restore the default title on unmount", () => {
+    const { unmount } = renderHook(
+      () => usePageMeta({ title: "Blog", description: "Artículos del blog" }),
+      { wrapper },
+    );
+
+    expect(document.title).toBe("Blog — Nomadería");
+
+    unmount();
+
+    expect(document.title).toBe("Nomadería - Aventuras y Senderismo");
+  });
+});

@@ -4,59 +4,53 @@
 
 @layer base {
   :root {
-    /* Nomaderia — Campfire Night palette */
-    --background: 20 13% 10%; /* #1C1917 warm dark charcoal */
-    --foreground: 30 28% 95%; /* #F5F0EB light text */
+    /* Nomaderia — Light Editorial palette */
+    --background: 0 0% 98%; /* #FAFAFA off-white */
+    --foreground: 20 13% 10%; /* #1C1917 charcoal text */
 
-    --card: 30 22% 85%; /* #E8DCC8 warm sand */
-    --card-foreground: 30 30% 13%; /* #2C2418 dark text */
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 20 13% 10%;
 
-    --popover: 20 13% 10%;
-    --popover-foreground: 30 28% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 13% 10%;
 
-    --primary: 18 76% 57%; /* #E86C3A sunset orange */
-    --primary-foreground: 30 28% 95%;
+    --primary: 32 95% 44%; /* #D97706 sunset amber */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 140 26% 39%; /* #4A7C59 trail green */
-    --secondary-foreground: 30 28% 95%;
+    --secondary: 143 64% 24%; /* #166534 forest green */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 120 25% 14%; /* #1A2E1A deep forest */
-    --muted-foreground: 30 15% 65%;
+    --muted: 30 10% 94%; /* Light warm gray */
+    --muted-foreground: 20 10% 45%;
 
-    --accent: 195 33% 58%; /* #6BA3BE sky blue */
-    --accent-foreground: 30 28% 95%;
+    --accent: 30 10% 94%; /* Light warm gray */
+    --accent-foreground: 20 13% 10%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 30 28% 95%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 10% 25%;
-    --input: 30 10% 25%;
-    --ring: 18 76% 57%;
+    --border: 20 6% 90%;
+    --input: 20 6% 90%;
+    --ring: 32 95% 44%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 20 13% 8%;
-    --sidebar-foreground: 30 28% 95%;
-    --sidebar-primary: 18 76% 57%;
-    --sidebar-primary-foreground: 30 28% 95%;
-    --sidebar-accent: 120 25% 14%;
-    --sidebar-accent-foreground: 30 28% 95%;
-    --sidebar-border: 30 10% 20%;
-    --sidebar-ring: 18 76% 57%;
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 20 13% 10%;
+    --sidebar-primary: 32 95% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 10% 94%;
+    --sidebar-accent-foreground: 20 13% 10%;
+    --sidebar-border: 20 6% 90%;
+    --sidebar-ring: 32 95% 44%;
 
     /* Custom tokens */
     --sand: 30 22% 85%;
-    --forest: 120 25% 14%;
-    --sunset: 18 76% 57%;
-    --trail: 140 26% 39%;
+    --forest: 143 64% 24%;
+    --sunset: 32 95% 44%;
+    --trail: 143 64% 24%;
     --sky: 195 33% 58%;
     --charcoal: 20 13% 10%;
-  }
-
-  .dark {
-    /* Same palette — the app is dark by default */
-    --background: 20 13% 10%;
-    --foreground: 30 28% 95%;
   }
 }
 

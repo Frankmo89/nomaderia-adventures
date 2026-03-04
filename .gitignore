@@ -1,3 +1,8 @@
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+
 # Logs
 logs
 *.log
@@ -11,6 +16,10 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# Non-npm lockfiles — Cloudflare Pages uses npm install
+bun.lockb
+yarn.lock
 
 # Editor directories and files
 .vscode/*
@@ -26,3 +35,5 @@ dist-ssr
 # Claude Code temp files
 tmpclaude-*
 nul
+.env.local
+.env

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { MapPin, Clock, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useDestinations } from "@/hooks/use-destinations";
@@ -17,7 +18,11 @@ const countryFlag: Record<string, string> = {
   México: "🇲🇽", "Estados Unidos": "🇺🇸", España: "🇪🇸", Argentina: "🇦🇷", Nepal: "🇳🇵",
 };
 
-const DestinationsCatalog = () => {
+interface DestinationsCatalogProps {
+  limit?: number;
+}
+
+const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
   const { data: destinations = [], isLoading, error } = useDestinations();
 
   const filterByDifficulty = (level: string) =>
@@ -40,6 +45,7 @@ const DestinationsCatalog = () => {
               src={d.hero_image_url}
               alt={d.title}
               loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
@@ -47,7 +53,7 @@ const DestinationsCatalog = () => {
               <MapPin className="h-12 w-12 text-primary/40" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           <div className="absolute top-3 left-3 flex gap-2">
             <Badge className={difficultyColor[d.difficulty_level]}>{difficultyLabel[d.difficulty_level]}</Badge>
           </div>
@@ -116,13 +122,21 @@ const DestinationsCatalog = () => {
           {["all", "easy", "moderate", "challenging"].map((level) => (
             <TabsContent key={level} value={level}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-                {filterByDifficulty(level).map((d, i) => (
+                {(limit !== undefined ? filterByDifficulty(level).slice(0, limit) : filterByDifficulty(level)).map((d, i) => (
                   <DestCard key={d.id} d={d} index={i} />
                 ))}
               </div>
             </TabsContent>
           ))}
         </Tabs>
+
+        {limit !== undefined && (
+          <div className="flex justify-center mt-10">
+            <Button asChild variant="outline" size="lg">
+              <Link to="/destinos">Ver todos los destinos →</Link>
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

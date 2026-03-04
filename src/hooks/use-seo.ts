@@ -1,7 +1,13 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { BRAND_ASSETS } from "@/config/assets";
 
-const SITE_URL = "https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app";
+const envSiteUrl = import.meta.env.VITE_SITE_URL;
+// Treat an empty string (or missing value) as "unset" so we fall back to the production URL.
+const SITE_URL =
+  envSiteUrl && envSiteUrl.trim() !== ""
+    ? envSiteUrl
+    : "https://nomaderia.com";
 
 /**
  * Sets a canonical link and cleans up on unmount.
@@ -28,7 +34,7 @@ export const useCanonical = () => {
 /**
  * Injects a JSON-LD script tag and removes it on unmount.
  */
-export const useJsonLd = (data: Record<string, any> | null) => {
+export const useJsonLd = (data: Record<string, unknown> | null) => {
   useEffect(() => {
     if (!data) return;
 
@@ -43,3 +49,44 @@ export const useJsonLd = (data: Record<string, any> | null) => {
     };
   }, [data]);
 };
+
+interface PageMeta {
+  title: string;
+  description: string;
+  image?: string;
+  type?: string;
+}
+
+/**
+ * Updates document title and meta tags for the current page.
+ * Restores the default title on unmount.
+ */
+export const usePageMeta = ({ title, description, image, type = "website" }: PageMeta) => {
+  useEffect(() => {
+    const fullTitle = `${title} — Nomadería`;
+    document.title = fullTitle;
+
+    const setMeta = (selector: string, attr: string, value: string) => {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute(attr, value);
+    };
+
+    setMeta('meta[name="description"]', "content", description);
+    setMeta('meta[property="og:title"]', "content", fullTitle);
+    setMeta('meta[property="og:description"]', "content", description);
+    setMeta('meta[property="og:type"]', "content", type);
+    if (image) {
+      setMeta('meta[property="og:image"]', "content", image);
+      setMeta('meta[name="twitter:image"]', "content", image);
+    }
+
+    return () => {
+      document.title = "Nomadería - Aventuras y Senderismo";
+    };
+  }, [title, description, image, type]);
+};
+
+/** Re-export the default OG image from the centralised brand-assets config. */
+const DEFAULT_OG_IMAGE = BRAND_ASSETS.defaultOgImage;
+
+export { SITE_URL, DEFAULT_OG_IMAGE };

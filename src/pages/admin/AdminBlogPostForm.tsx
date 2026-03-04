@@ -47,27 +47,26 @@ const AdminBlogPostForm = () => {
     const load = async () => {
       const { data } = await supabase.from("blog_posts").select("*").eq("id", id).maybeSingle();
       if (data) {
-        const d = data as any;
         setForm({
-          title: d.title || "",
-          slug: d.slug || "",
-          category: d.category || "Preparación",
-          short_description: d.short_description || "",
-          content_markdown: d.content_markdown || "",
-          hero_image_url: d.hero_image_url || "",
-          author: d.author || "Nomaderia",
-          is_published: d.is_published || false,
-          featured: d.featured || false,
-          reading_time_min: String(d.reading_time_min || "5"),
-          meta_description: d.meta_description || "",
+          title: data.title || "",
+          slug: data.slug || "",
+          category: data.category || "Preparación",
+          short_description: data.short_description || "",
+          content_markdown: data.content_markdown || "",
+          hero_image_url: data.hero_image_url || "",
+          author: data.author || "Nomaderia",
+          is_published: data.is_published || false,
+          featured: data.featured || false,
+          reading_time_min: String(data.reading_time_min || "5"),
+          meta_description: data.meta_description || "",
         });
-        setTags((d.tags as string[]) || []);
+        setTags(data.tags || []);
       }
     };
     load();
   }, [id]);
 
-  const set = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
+  const set = (key: string, value: string | boolean) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,37 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Páginas estáticas -->
   <url>
-    <loc>https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://nomaderia.com/</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/gear</loc>
+    <loc>https://nomaderia.com/gear</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/destinos/nevado-de-toluca</loc>
+    <loc>https://nomaderia.com/blog</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nomaderia.com/calculadora</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nomaderia.com/sobre-nosotros</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nomaderia.com/privacidad</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Destinos -->
+  <url>
+    <loc>https://nomaderia.com/destinos/camino-de-santiago</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/destinos/gran-canon</loc>
+    <loc>https://nomaderia.com/destinos/everest-base-camp</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/destinos/camino-de-santiago</loc>
+    <loc>https://nomaderia.com/destinos/gran-canon</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/destinos/ushuaia-fin-del-mundo</loc>
+    <loc>https://nomaderia.com/destinos/nevado-de-toluca</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/destinos/everest-base-camp</loc>
+    <loc>https://nomaderia.com/destinos/ushuaia-fin-del-mundo</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>

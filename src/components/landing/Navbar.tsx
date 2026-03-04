@@ -4,11 +4,13 @@ import { Mountain, Menu, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { BRAND_ASSETS } from "@/config/assets";
 
 const navLinks = [
   { label: "Destinos", href: "#destinos" },
   { label: "Gear Guide", href: "/gear" },
   { label: "Blog", href: "/blog" },
+  { label: "Servicios", href: "/servicios" },
   { label: "Calculadora", href: "/calculadora" },
   { label: "Sobre Nosotros", href: "/sobre-nosotros" },
 ];
@@ -17,6 +19,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [open, setOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -49,10 +52,19 @@ const Navbar = () => {
       >
         <div className="container mx-auto flex items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <Mountain className="h-6 w-6 text-primary" />
-            <span className="font-serif text-xl font-bold tracking-wide text-foreground">
-              NOMADERIA
-            </span>
+            {BRAND_ASSETS.logo && !logoError ? (
+              <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-8 w-auto" onError={() => setLogoError(true)} />
+            ) : (
+              <>
+                <Mountain className="h-6 w-6 text-primary" />
+                <span className={cn(
+                  "font-serif text-xl font-bold tracking-wide transition-colors duration-500",
+                  scrolled ? "text-foreground" : "text-white"
+                )}>
+                  NOMADERIA
+                </span>
+              </>
+            )}
           </Link>
 
           {/* Desktop nav */}
@@ -62,7 +74,10 @@ const Navbar = () => {
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                  className={cn(
+                    "text-sm font-medium transition-colors",
+                    scrolled ? "text-foreground/80 hover:text-primary" : "text-white/80 hover:text-white"
+                  )}
                 >
                   {link.label}
                 </Link>
@@ -70,7 +85,10 @@ const Navbar = () => {
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+                  className={cn(
+                    "text-sm font-medium transition-colors",
+                    scrolled ? "text-foreground/80 hover:text-primary" : "text-white/80 hover:text-white"
+                  )}
                 >
                   {link.label}
                 </a>
@@ -88,7 +106,7 @@ const Navbar = () => {
             className="md:hidden min-h-[44px] min-w-[44px]"
             onClick={() => setOpen(true)}
           >
-            <Menu className="h-6 w-6 text-foreground" />
+            <Menu className={cn("h-6 w-6", scrolled ? "text-foreground" : "text-white")} />
           </Button>
         </div>
       </header>
@@ -106,10 +124,16 @@ const Navbar = () => {
             {/* Close bar */}
             <div className="flex items-center justify-between px-5 py-4">
               <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-                <Mountain className="h-6 w-6 text-primary" />
-                <span className="font-serif text-xl font-bold tracking-wide text-foreground">
-                  NOMADERIA
-                </span>
+                {BRAND_ASSETS.logo && !logoError ? (
+                  <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-8 w-auto" onError={() => setLogoError(true)} />
+                ) : (
+                  <>
+                    <Mountain className="h-6 w-6 text-primary" />
+                    <span className="font-serif text-xl font-bold tracking-wide text-foreground">
+                      NOMADERIA
+                    </span>
+                  </>
+                )}
               </Link>
               <Button
                 variant="ghost"
@@ -124,8 +148,7 @@ const Navbar = () => {
             {/* Nav links */}
             <nav className="flex-1 flex flex-col justify-center items-center gap-6 px-8">
               {navLinks.map((link, i) => {
-                const Component = link.href.startsWith("/") ? Link : "a";
-                const linkProps = link.href.startsWith("/") ? { to: link.href } : { href: link.href };
+                const className = "text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors min-h-[48px] flex items-center";
                 return (
                   <motion.div
                     key={link.label}
@@ -133,13 +156,15 @@ const Navbar = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08 }}
                   >
-                    <Component
-                      {...(linkProps as any)}
-                      onClick={() => setOpen(false)}
-                      className="text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors min-h-[48px] flex items-center"
-                    >
-                      {link.label}
-                    </Component>
+                    {link.href.startsWith("/") ? (
+                      <Link to={link.href} onClick={() => setOpen(false)} className={className}>
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a href={link.href} onClick={() => setOpen(false)} className={className}>
+                        {link.label}
+                      </a>
+                    )}
                   </motion.div>
                 );
               })}

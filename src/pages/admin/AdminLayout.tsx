@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
-import { Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare, Users, LogOut, FileText, Compass } from "lucide-react";
+import { Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare, Users, LogOut, FileText, Compass, Mail, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,8 @@ const links = [
   { label: "Itinerarios", href: "/admin/itinerary-requests", icon: Compass },
   { label: "Quiz Responses", href: "/admin/quiz-responses", icon: MessageSquare },
   { label: "Subscribers", href: "/admin/subscribers", icon: Users },
+  { label: "Email Logs", href: "/admin/email-logs", icon: Mail },
+  { label: "Galería", href: "/admin/gallery", icon: ImageIcon },
 ];
 
 const AdminLayout = () => {

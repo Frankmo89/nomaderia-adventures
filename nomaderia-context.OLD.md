@@ -44,7 +44,7 @@ Testing:     Vitest + Testing Library
 
 ```
 src/
-├── App.tsx                          → Router central + HelmetProvider — rutas públicas eager, admin + calculadora lazy
+├── App.tsx                          → Router central + HelmetProvider — Index eager, rutas públicas secundarias + admin + calculadora lazy
 ├── main.tsx                         → Entry point, providers globales
 ├── index.css                        → Variables CSS de tema, Tailwind base
 ├── pages/
@@ -76,7 +76,7 @@ src/
 │   │   ├── Navbar.tsx               → Navegación principal (sticky, con scroll effect)
 │   │   ├── HeroSection.tsx          → Hero con parallax (DOM directo via ref, sin re-renders)
 │   │   ├── DidYouKnowSection.tsx    → Carrusel horizontal "¿Sabías que...?"
-│   │   ├── QuizSection.tsx          → Quiz de 4 pasos (lógica en useQuiz, JSX en ResultCard + QuizResults)
+│   │   ├── QuizSection.tsx          → Quiz de 6 pasos con resultados-primero (MatchRing SVG, QuizLoading, EmailCapture post-resultados, CelebrationParticles)
 │   │   ├── DestinationsCatalog.tsx  → Grid de destinos (usa useDestinations hook)
 │   │   ├── GearPreview.tsx          → Preview de gear destacado (usa useFeaturedGearArticles hook)
 │   │   ├── SocialProof.tsx          → Testimonios
@@ -90,6 +90,7 @@ src/
 │   │   ├── FeaturedBlogPost.tsx     → Hero card full-bleed para post destacado (Framer Motion, hover scale)
 │   │   └── ShareButtons.tsx         → [LEGACY, sin importar] Botones compartir originales del blog (reemplazado por src/components/ShareButtons.tsx)
 │   ├── SEOHead.tsx                  → Meta tags dinámicos OG + Twitter Card via react-helmet-async (Helmet)
+│   ├── OptimizedImage.tsx           → Wrapper reutilizable: loading="lazy" + decoding="async" + skeleton placeholder (bg-muted animate-pulse) + onLoad fade-in
 │   ├── ShareButtons.tsx             → Botones compartir: Facebook, X, WhatsApp, Telegram, copiar enlace (popup + toast)
 │   ├── ErrorBoundary.tsx            → Error boundary genérico para wrappear rutas
 │   ├── LoadingSkeletons.tsx         → Skeleton loaders: DestinationDetailSkeleton, GearArticleDetailSkeleton, CardGridSkeleton
@@ -98,7 +99,7 @@ src/
 │   ├── use-destinations.ts          → useDestinations(), useDestinationBySlug(), useRelatedDestinations()
 │   ├── use-gear-articles.ts         → useGearArticles(), useFeaturedGearArticles()
 │   ├── use-blog-posts.ts            → useBlogPosts()
-│   ├── use-quiz.ts                  → useQuiz() — lógica de estado y submit del quiz
+│   ├── use-quiz.ts                  → useQuiz() — scoring por reglas (SCORING_RULES), matchPercent/matchReasons, flujo resultados-primero, email post-resultados
 │   ├── use-seo.ts                   → useCanonical() + useJsonLd() para SEO
 │   ├── use-mobile.tsx               → Hook responsive (< 768px = mobile)
 │   └── use-toast.ts                 → Hook para toasts
@@ -268,7 +269,13 @@ useBlogPosts()                  // lista completa de posts publicados (ordered: 
 // exports BlogPost type with: id, title, slug, category, short_description, hero_image_url, author, created_at, featured, reading_time_min, tags
 
 // src/hooks/use-quiz.ts
-useQuiz(totalSteps)             // toda la lógica de estado del quiz
+useQuiz(totalSteps)             // scoring por SCORING_RULES (objeto de funciones), matchPercent (40-100%), matchReasons[], fetchResults() y handleEmailSubmit() separados
+// exports: step, answers, email, setEmail, showResults, showEmailCapture, emailSubmitted, loading, results, direction, isQuizDone, handleSelect, handleBack, handleSwipe, fetchResults, handleEmailSubmit, handleShowEmailCapture
+// exports types: QuizOption, QuizStep, QuizDestination (incluye matchPercent, matchReasons, experience_type, region, tags, best_season)
+// SCORING_RULES tiene 6 reglas: fitness_level, interest, trip_duration, budget, season, origin
+// MAX_SCORE = 17 (fitness:3 + interest:5 + trip_duration:2 + budget:2 + season:3 + origin:2)
+// El quiz tiene pasos con keys: fitness_level, interest, trip_duration, budget, season, origin
+// handleEmailSubmit guarda en newsletter_subscribers + quiz_responses (con email y todas las respuestas del quiz, p.ej. fitness_level, interest, trip_duration, budget, season, origin)
 ```
 
 ### Formularios
@@ -440,6 +447,7 @@ useJsonLd({
 VITE_SUPABASE_URL=               # URL del proyecto Supabase  (ej: https://vrixiuvnhvqafmxlcyex.supabase.co)
 VITE_SUPABASE_PUBLISHABLE_KEY=   # Publishable key de Supabase (formato: sb_publishable_*)
 VITE_SUPABASE_PROJECT_ID=        # Project ID (ej: vrixiuvnhvqafmxlcyex) — usado para regenerar tipos
+VITE_SITE_URL=                   # URL de producción del sitio (ej: https://nomaderia.com) — usado para canonical URLs y SEO. Si está vacío, usa window.location.origin como fallback.
 ```
 
 Acceso en código: `import.meta.env.VITE_SUPABASE_URL`
@@ -594,7 +602,41 @@ const [loading, setLoading] = useState(true);
 ---
 
 *Última actualización: Febrero 2026*
-*Versión: 1.9*
+*Versión: 2.3*
+
+---
+
+## 17. Cambios Recientes — use-quiz.ts (v2.1)
+
+### Cambios aplicados
+
+1. **SCORING_RULES refactorizado**: de array de objetos a `Record<string, (answer, dest) => { points, reason }>` con 6 reglas:
+   - `fitness_level` — mapea nivel físico a dificultad del destino (0–3 pts)
+   - `interest` — verifica `tags[]`, `experience_type`, `short_description` y geo-hints (0–5 pts)
+   - `trip_duration` — compara duración preferida con `days_needed` (0–2 pts)
+   - `budget` — compara rango de presupuesto con `estimated_budget_usd` (0–2 pts)
+   - `season` — compara mes objetivo con `best_season` del destino (-1–3 pts)
+   - `origin` — da puntos de proximidad según país de origen del viajero (0–2 pts)
+
+2. **MAX_SCORE = 17** — puntuación máxima teórica usada para calcular `matchPercent`
+
+3. **`QuizDestination` y `DestinationFields`** — ahora incluyen los campos `tags: string[] | null` y `best_season: string | null`, así como `id`, `title`, `country`, `region`
+
+4. **Select de Supabase** — actualizado para incluir `tags` y `best_season`
+
+5. **`handleEmailSubmit`** — ahora guarda en dos tablas:
+   - `newsletter_subscribers` (email + source: "quiz")
+   - `quiz_responses` (email + respuestas + destinos recomendados; `travel_style` ← `answers.origin`, `budget_range` ← `answers.budget`)
+
+6. **`fetchResults`** — eliminado el insert anónimo a `quiz_responses` (movido a `handleEmailSubmit` con email)
+
+### Próximas mejoras recomendadas
+
+- **Agregar los pasos `season` y `origin` al quiz en `QuizSection.tsx`**: actualmente el hook soporta estas reglas pero el componente quiz puede que no tenga esos pasos configurados aún
+- **Actualizar `AdminQuizResponses.tsx`** para mostrar la nueva columna `travel_style` como "Origen" en el panel de administración
+- **Migración de DB**: verificar que la columna `email` en `quiz_responses` esté creada (puede requerir `ALTER TABLE quiz_responses ADD COLUMN IF NOT EXISTS email text`)
+- **Considerar índices GIN en `destinations.tags`** para búsquedas eficientes si el catálogo crece
+- **Tests unitarios para `scoreDestination`**: crear tests para las 6 reglas de scoring usando Vitest
 
 ---
 
@@ -608,15 +650,11 @@ const [loading, setLoading] = useState(true);
 
 ### 🌐 Dominio y Hosting
 
-- [ ] **Comprar y configurar dominio** — El sitio aún no tiene URL de producción.
-  - Opciones sugeridas: Namecheap, Google Domains, GoDaddy
-  - Una vez comprado, actualizar `SITE_URL` en `src/hooks/use-seo.ts` (o mejor, moverlo a variable de entorno `VITE_SITE_URL`)
+- ✅ **Comprar y configurar dominio** — Dominio `nomaderia.com` comprado y configurado. DNS configurado en Cloudflare con 4 registros A apuntando a GitHub Pages (185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153) y un CNAME www → nomaderia.com. Todos los registros en modo "DNS Only" (sin proxy Cloudflare).
 
-- [ ] **Configurar hosting** — Dónde se va a desplegar el sitio.
-  - Recomendado: Vercel o Netlify (soportan Vite + SPA routing con `_redirects`)
-  - Al configurar, agregar las variables de entorno: `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`
+- ✅ **Configurar hosting** — Hosting configurado en **GitHub Pages** (NO Vercel/Netlify). Fuente de despliegue: **GitHub Actions**. Workflow en `.github/workflows/deploy.yml`.
 
-- [ ] **Configurar `VITE_SITE_URL`** en el panel del proveedor de hosting una vez que tengas dominio.
+- [ ] **Configurar `VITE_SITE_URL`** — La URL de producción es `https://nomaderia.com` y ya está configurada en `scripts/generate-sitemap.ts` y `public/robots.txt`. Pendiente: configurar como variable de entorno en GitHub Actions secrets o directamente en el workflow.
 
 ---
 
@@ -670,8 +708,10 @@ const [loading, setLoading] = useState(true);
 ### 🔍 SEO Pre-lanzamiento
 
 - [ ] **Verificar el sitio en Google Search Console** una vez que tengas dominio
-- [ ] **Enviar sitemap** — No hay sitemap.xml generado aún. Pendiente de implementar o usar plugin.
+- [x] **Sitemap generado** — `public/sitemap.xml` incluye todas las rutas públicas estáticas (`/`, `/gear`, `/blog`, `/calculadora`, `/sobre-nosotros`, `/privacidad`). Las URLs dinámicas de `/destinos/:slug`, `/gear/:slug` y `/blog/:slug` se deben agregar manualmente o con un generador cuando se publique contenido. **Pendiente:** reemplazar `https://nomaderia.com` por el dominio real.
+- [ ] **Enviar sitemap a Google Search Console** una vez verificado el sitio
 - [x] **Configurar Open Graph image** — `SEOHead.tsx` usa `hero_image_url` dinámicamente en cada página de destino/blog/gear. Fallback a imagen OG genérica de Unsplash si no hay hero. Meta tags OG y Twitter Card se generan via react-helmet-async.
+- [x] **Dominio propio configurado** — `nomaderia.com` activo con HTTPS enforced. `VITE_SITE_URL` debe configurarse como variable de entorno en GitHub Actions secrets o directamente en el workflow si es público.
 
 ---
 
@@ -696,6 +736,8 @@ const [loading, setLoading] = useState(true);
 ---
 
 ### 🛠️ Código — Próximas Mejoras
+
+- [x] **Performance: Lazy loading + image optimization** — Rutas públicas con React.lazy(), imágenes con loading="lazy" + decoding="async", componente OptimizedImage reutilizable. `App.tsx`: DestinationDetail, GearListing, GearArticleDetail, BlogListing, BlogPostDetail, PrivacyPolicy, SobreNosotros convertidas a lazy (solo Index.tsx sigue eager). `decoding="async"` añadido a todos los `<img loading="lazy">` en: DestinationsCatalog, GearPreview, DidYouKnowSection, GearListing, BlogListing, GearArticleDetail (relacionados), BlogPostDetail (relacionados), DestinationDetail (galería + markdown renderer + relacionados). Componente `OptimizedImage.tsx` creado con skeleton placeholder (bg-muted animate-pulse), fade-in onLoad, y soporte de lazy/eager configurable. **Recomendaciones futuras**: implementar `srcset` + `sizes` para imágenes responsive, convertir imágenes a WebP en Supabase Storage, agregar `<link rel="preload">` para fuentes críticas (Playfair Display + Inter), usar `fetchpriority="high"` en la hero image principal de DestinationDetail.
 
 - [x] **Sistema de affiliate links expandido** — Se amplió el sidebar de "Reserva Tu Viaje" en `DestinationDetail.tsx` de 3 a 7 botones condicionales (Vuelos, Hoteles, Tours/Klook, Entradas/Tiqets, Renta Auto/Localrent, Transfer/Welcome Pickups, Seguro). Botones solo renderizados si la URL está presente. `AdminDestinationForm.tsx` actualizado con los 4 campos nuevos (`tours_url`, `tickets_url`, `car_rental_url`, `transfer_url`) + layout grid para los 7 inputs. `BudgetCalculator.tsx` — botón "Ver Hospedaje" reemplazado por "Ver Tours y Actividades" apuntando a `selectedDest?.affiliate_links?.tours_url || "https://www.klook.com/"`. `GearArticleDetail.tsx` — botón Amazon actualizado a `rel="noopener noreferrer sponsored"`. Disclosure de afiliados añadido en `DestinationDetail.tsx` (debajo del sidebar) y `GearArticleDetail.tsx` (antes de "Productos Recomendados"). `PrivacyPolicy.tsx` ya tenía la sección 4 de afiliados, no requirió cambios.
 
@@ -736,9 +778,7 @@ const [loading, setLoading] = useState(true);
   - **Integración en 3 páginas**: `DestinationDetail.tsx`, `BlogPostDetail.tsx`, `GearArticleDetail.tsx` — cada una usa `<SEOHead>` con datos dinámicos y `<ShareButtons>` al final del contenido principal (con `border-t` separator). Se eliminó la manipulación manual de `document.title` y `querySelector` para meta tags (Helmet lo maneja declarativamente).
   - **`src/components/blog/ShareButtons.tsx`** ya no se importa en ningún archivo (reemplazado por `src/components/ShareButtons.tsx` que añade Telegram y usa popup pattern).
 
-- [ ] **Eliminar `supabase as any`** — Dos archivos usan cast temporal hasta que se regeneren los tipos:
-
-- [x] **`ImageUpload.tsx` componente + integración en formularios admin** — Componente reutilizable de subida de imágenes a Supabase Storage (`src/components/dashboard/ImageUpload.tsx`):
+- [x] **Eliminar `supabase as any`** — La tabla `itinerary_requests` fue añadida a `src/integrations/supabase/types.ts` con sus tipos Row/Insert/Update. Los casts `supabase as any` y los comentarios `eslint-disable` fueron eliminados de `AdminItineraryRequests.tsx` y `AdminDashboard.tsx`. — Componente reutilizable de subida de imágenes a Supabase Storage (`src/components/dashboard/ImageUpload.tsx`):
   - **Props**: `bucket` (string), `currentUrl?` (string), `onUploadComplete` (callback con URL pública).
   - **Funcionalidad**: acepta WebP/JPG/PNG (máx 2MB), genera nombres únicos con timestamp, sube a Supabase Storage, muestra preview con botón remove, spinner durante upload, validación de tipo y tamaño, toasts de éxito/error.
   - **Integrado en `AdminDestinationForm.tsx`**: `bucket="destinations"`, reemplaza input de texto para `hero_image_url`.
@@ -747,3 +787,243 @@ const [loading, setLoading] = useState(true);
   - `src/pages/admin/AdminItineraryRequests.tsx:56`
   - `src/pages/admin/AdminDashboard.tsx:50`
   - Fix: regenerar tipos con `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`
+
+- [x] **`VITE_SITE_URL` como variable de entorno** — `src/hooks/use-seo.ts` ya no tiene URL hardcodeada. Usa `import.meta.env.VITE_SITE_URL` con fallback a `window.location.origin`. Variable añadida a `.env` (vacía por defecto). El dueño debe configurar `VITE_SITE_URL` en el hosting cuando tenga dominio.
+
+- [x] **GitHub Pages + CI/CD configurado** — Se migró el despliegue de Jekyll estático a un workflow de GitHub Actions:
+  - `.github/workflows/deploy.yml` — Workflow completo: `npm ci` → `npm run build` (incluye `postbuild` que ejecuta `generate:sitemap`) → deploy de `dist/` via `actions/deploy-pages@v4`.
+  - `public/CNAME` — Archivo movido a `public/` para que Vite lo copie automáticamente a `dist/` durante el build.
+  - `tsx` agregado a `devDependencies` en `package.json` para que `npx tsx` funcione correctamente en CI.
+  - El paso `generate:sitemap` fue eliminado del workflow como paso explícito porque ya lo maneja el script `postbuild` de `package.json` automáticamente después del build.
+  - Fuente de despliegue en GitHub Pages debe estar configurada como **"GitHub Actions"** en Settings → Pages.
+
+- [x] **Sitemap y robots.txt actualizados** — `public/sitemap.xml` ahora incluye todas las rutas públicas estáticas (`/`, `/gear`, `/blog`, `/calculadora`, `/sobre-nosotros`, `/privacidad`). Se eliminaron los slugs de destino hardcodeados (contenido dinámico). `public/robots.txt` actualizado. Ambos usan `https://nomaderia.com` como placeholder — reemplazar con el dominio real.
+
+- [x] **Quiz optimizado — scoring inteligente y flujo resultados-primero** — Reescritura completa de `use-quiz.ts` y `QuizSection.tsx`:
+  - **Scoring por reglas (SCORING_RULES)**: lee `experience_type`, `difficulty_level`, `short_description`, `estimated_budget_usd` de cada destino. Elimina slugs hardcodeados (`camino-de-santiago`, `gran-canon`).
+  - **Nueva pregunta de presupuesto**: reemplaza "¿Con quién irías?" (que no afectaba scoring) con 4 opciones de budget (Económico <$500, Moderado $500-$1500, Premium $1500-$3000, Sin límite).
+  - **matchPercent (40-100%) y matchReasons[]** por destino: porcentaje calculado como proporción del score máximo posible. Razones visibles en badges en cada resultado.
+  - **Flujo resultados-primero**: `fetchResults()` se ejecuta al terminar las 4 preguntas (sin pedir email). `handleEmailSubmit()` es separado, post-resultados. Mejor conversión al mostrar valor antes de capturar email.
+  - **Nuevos componentes**: `MatchRing` (anillo SVG animado con %), `QuizLoading` (spinner + dots animados), `CelebrationParticles` (partículas de colores), `EmailCapture` (formulario post-resultados).
+  - **Botón "Anterior"** visible desde pregunta 2. Subtitles y descriptions en cada opción de cada pregunta.
+  - **Select de Supabase** ahora incluye `experience_type` y `region`.
+  - **Preguntas**: actividad física, paisaje, duración, presupuesto. Cada una con subtitle descriptivo y descriptions por opción.
+
+---
+
+## 18. Changelog — AdminQuizResponses Actualizado (Febrero 2026)
+
+### AdminQuizResponses — Tabla completa
+- 7 columnas: Email, Fitness, Paisaje, Duración, Presupuesto, Origen, Fecha
+- Label maps con emojis para valores legibles (no muestra "sedentary" sino "🚶 Sedentario")
+- CSV export actualizado con los mismos 7 campos y labels
+- travel_style ahora muestra el origen/país del usuario
+- budget_range se muestra correctamente (antes no aparecía en la tabla)
+
+### Recomendaciones Futuras
+- Agregar analytics visuales al AdminDashboard con barras de distribución del quiz
+- Card de "Destinos Más Recomendados" cruzando recommended_destinations con destinations
+- Filtro de rango de fechas para comparar periodos
+- Tasa de conversión quiz→email
+
+---
+
+## 18. Changelog — Quiz Analytics Dashboard (Febrero 2026)
+
+### AdminDashboard — Sección Analytics del Quiz
+- 4 cards con barras horizontales: Paisaje Favorito, Origen de Audiencia, Presupuesto, Nivel Físico
+- Componente `MiniBar` para visualización de distribución de datos con porcentajes
+- Fetch de últimas 200 quiz responses para calcular analytics
+- Labels con emojis para todos los valores del quiz
+- Solo se muestra si hay quiz responses (stats.quiz > 0)
+
+### AdminQuizResponses — Tabla actualizada
+- 7 columnas: Email, Fitness, Paisaje, Duración, Presupuesto, Origen, Fecha
+- Labels legibles con emojis en tabla y CSV export
+- budget_range ahora se guarda correctamente (no en travel_style)
+- travel_style ahora guarda el origen/país del usuario
+
+### Recomendaciones Futuras
+- Card de "Destinos Más Recomendados" cruzando recommended_destinations con tabla destinations
+- Filtro de rango de fechas en analytics para comparar periodos
+- Tasa de conversión quiz→email (completan quiz vs dejan email)
+- Analytics de temporada (campo season) cuando haya suficiente data
+- Gráficas de tendencia con Recharts para ver cambios en audiencia over time
+- Considerar agregar analytics de clics en affiliate links por destino
+
+---
+
+## 19. SEO Técnico — Mejoras Implementadas (Febrero 2026)
+
+### Sitemap Dinámico
+- Script `scripts/generate-sitemap.ts` genera `public/sitemap.xml` desde Supabase
+- Incluye todas las páginas estáticas + destinos + gear + blog publicados
+- Ejecutar con `npm run generate:sitemap` antes de cada deploy
+- Usa `VITE_SITE_URL` como base URL (fallback al preview de Lovable)
+
+### use-seo.ts Mejorado
+- `SITE_URL` ahora usa variable de entorno `VITE_SITE_URL` con fallback
+- Nuevo hook `usePageMeta({ title, description, image, type })` — centraliza meta tags
+- `SITE_URL` exportado para uso en JSON-LD de otros componentes
+
+### JSON-LD Structured Data
+- `Index.tsx`: schema WebSite con SearchAction
+- `DestinationDetail.tsx`: schema TouristDestination (ya existía)
+- `GearArticleDetail.tsx`: schema Article (ya existía)
+- `BlogPostDetail.tsx`: schema BlogPosting (NUEVO) con headline, author, publisher, dates
+
+### Recomendaciones Futuras SEO
+- Cuando haya dominio propio: actualizar VITE_SITE_URL, regenerar sitemap, verificar en Google Search Console
+- Agregar sitemap generation al CI/CD pipeline (GitHub Action pre-deploy)
+- Agregar schema BreadcrumbList en páginas de detalle
+- Considerar agregar schema FAQPage en destinos que tienen common_fears
+- Implementar Open Graph image generator dinámico por destino
+
+---
+
+## 20. Infraestructura y Despliegue — GitHub Pages (Febrero 2026)
+
+### Hosting: GitHub Pages via GitHub Actions
+
+El sitio está desplegado en **GitHub Pages** usando un workflow de GitHub Actions personalizado (NO Jekyll estático, NO Vercel/Netlify).
+
+**Workflow:** `.github/workflows/deploy.yml`
+- Trigger: push a `main` + `workflow_dispatch` (manual)
+- Jobs: `build` → `deploy`
+- Build: `npm ci` → `npm run build` (Vite, output en `dist/`)
+- El script `postbuild` en `package.json` ejecuta `npm run generate:sitemap` automáticamente después del build
+- Deploy: `actions/deploy-pages@v4` desde el artifact `dist/`
+
+**Permisos requeridos en Settings → Actions → General:**
+- Workflow permissions: **Read and write permissions** ✅
+- Allow GitHub Actions to create and approve pull requests ✅
+- Actions permissions: **Allow all actions and reusable workflows** ✅
+
+**Fuente de despliegue:** Settings → Pages → Source → **GitHub Actions** (NO "Deploy from a branch")
+
+### Dominio Personalizado: nomaderia.com
+
+**Registros DNS en Cloudflare (DNS Only — sin proxy):**
+| Tipo | Nombre | Valor |
+|------|--------|-------|
+| A | nomaderia.com | 185.199.108.153 |
+| A | nomaderia.com | 185.199.109.153 |
+| A | nomaderia.com | 185.199.110.153 |
+| A | nomaderia.com | 185.199.111.153 |
+| CNAME | www.nomaderia.com | nomaderia.com |
+
+⚠️ **IMPORTANTE:** Los registros Cloudflare deben estar en modo **"DNS Only"** (nube gris), NO "Proxied" (nube naranja). El proxy de Cloudflare interfiere con la emisión del certificado TLS de GitHub Pages.
+
+**Archivo CNAME:** `public/CNAME` contiene `nomaderia.com` — Vite lo copia a `dist/CNAME` durante el build.
+
+**HTTPS:** Enforce HTTPS activado en Settings → Pages. Certificado TLS gestionado automáticamente por GitHub Pages.
+
+### Dependencias de CI/CD
+
+- `tsx` en `devDependencies` — requerido para ejecutar `scripts/generate-sitemap.ts` via `npx tsx` en el script `postbuild`
+
+### Comandos de Despliegue
+
+```sh
+# El deploy es automático en cada push a main
+# Para forzar un deploy manual:
+# GitHub → Actions → "Deploy to GitHub Pages" → Run workflow
+
+# Para verificar el build localmente:
+npm run build  # Incluye generación de sitemap via postbuild
+```
+
+### Recomendaciones Futuras
+- Agregar `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` como GitHub Actions secrets para el workflow de CI/CD
+- Configurar `VITE_SITE_URL=https://nomaderia.com` en el workflow o como secret
+- Considerar agregar cache de `node_modules` en el workflow para builds más rápidos
+
+---
+
+## 20. Migración a Dominio Propio (Febrero 2026)
+
+### URL de producción
+- Dominio: **https://nomaderia.com**
+- URL anterior (preview): `https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app`
+- Todas las referencias al preview fueron reemplazadas en el codebase
+- sitemap.xml y robots.txt ahora apuntan a nomaderia.com
+
+### Archivos actualizados
+- `src/hooks/use-seo.ts` — SITE_URL fallback
+- `public/sitemap.xml` — todas las URLs
+- `public/robots.txt` — Sitemap URL
+- `index.html` — meta tags (si aplicaba)
+- Cualquier otro archivo que referenciaba el preview
+
+### Pasos post-migración pendientes (dueño del proyecto)
+- Verificar dominio en Google Search Console
+- Enviar sitemap: https://nomaderia.com/sitemap.xml
+- Configurar VITE_SITE_URL=https://nomaderia.com en variables de entorno del hosting
+
+---
+
+## 21. Sitemap Estático (Febrero 2026)
+
+### Enfoque
+- `public/sitemap.xml` es un archivo estático mantenido manualmente
+- Se actualiza cada vez que se publica nuevo contenido (destinos, gear, blog)
+- Para actualizar: pedirle al agent "actualiza el sitemap con el contenido nuevo"
+
+### URLs incluidas
+- 6 páginas estáticas (home, gear, blog, calculadora, sobre-nosotros, privacidad)
+- Todos los destinos publicados en `/destinos/{slug}`
+- Todos los gear articles publicados en `/gear/{slug}`
+- Todos los blog posts publicados en `/blog/{slug}`
+
+### Recomendaciones Futuras
+- Cuando haya muchas páginas (50+), considerar dividir en sitemap index
+- Agregar <lastmod> con la fecha real de updated_at de cada contenido
+- Automatizar actualización del sitemap en un GitHub Action post-merge
+
+---
+
+## 22. Blog SEO Estructural (Febrero 2026)
+
+### BlogPostDetail.tsx — Mejoras
+- `usePageMeta` reemplaza lógica manual de meta tags
+- Tiempo de lectura estimado (palabras / 200)
+- Fecha de publicación formateada en español
+- JSON-LD BlogPosting mejorado con wordCount e inLanguage
+- JSON-LD BreadcrumbList (Inicio > Blog > Post)
+- Breadcrumbs visuales con `aria-label="Breadcrumb"`
+- CTA interno al final del post (quiz + calculadora)
+
+### BlogListing.tsx — Mejoras
+- `usePageMeta` para meta tags centralizados
+- JSON-LD CollectionPage
+- Fecha de publicación en cada card del listado
+
+### Recomendaciones Futuras Blog
+- Agregar Table of Contents (TOC) automático generado desde headings del markdown
+- Implementar internal linking automático (detectar menciones de destinos en el texto y linkear)
+- Agregar schema FAQPage cuando un blog post tenga sección de preguntas frecuentes
+- Agregar botones de compartir en redes sociales (WhatsApp, Facebook, Twitter)
+- Considerar paginación en BlogListing cuando haya 20+ posts
+
+---
+
+## 23. Destinos SEO + Conversión (Febrero 2026)
+
+### DestinationDetail.tsx — Mejoras SEO
+- usePageMeta reemplaza meta tags manuales (elimina querySelector)
+- JSON-LD TouristDestination mejorado con url e inLanguage
+- JSON-LD BreadcrumbList (Inicio > Destinos > Nombre)
+- JSON-LD FAQPage generado dinámicamente desde common_fears
+- Breadcrumbs visuales con aria-label
+
+### DestinationDetail.tsx — Mejoras de Conversión
+- Card "Reserva Tu Viaje" muestra mejor temporada del destino
+- Links internos a gear guide y calculadora debajo de botones de afiliados
+- Cross-linking entre destino → gear → calculadora → quiz
+
+### Recomendaciones Futuras Destinos
+- Agregar schema Offer cuando haya itinerarios premium con precio
+- Agregar botones de compartir en redes sociales
+- Agregar "Destinos cercanos por presupuesto" además de dificultad similar
+- Implementar sticky CTA en mobile para "Reserva Tu Viaje"
+- Tracking de clics en affiliate links (evento custom para analytics)

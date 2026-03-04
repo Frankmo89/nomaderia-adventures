@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { Clock, DollarSign, Plane, Hotel, Shield, ArrowLeft, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,9 +14,11 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
-import SEOHead from "@/components/SEOHead";
+import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
+import SEO from "@/components/SEO";
+import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
-import { useCanonical, useJsonLd } from "@/hooks/use-seo";
+import { SITE_URL } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 
 const difficultyColor: Record<string, string> = {
@@ -37,6 +39,7 @@ const markdownComponents = {
         src={src}
         alt={alt || ""}
         loading="lazy"
+        decoding="async"
         className="w-full h-64 md:h-80 object-cover rounded-xl"
       />
       {alt && (
@@ -108,11 +111,15 @@ const DestinationDetail = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [lightboxOpen, lightboxPrev, lightboxNext]);
 
-  useCanonical();
+
+  const fears = useMemo(() => {
+    if (!dest) return [];
+    return (dest.common_fears as Array<{ question: string; answer: string }>) || [];
+  }, [dest]);
 
   const jsonLd = useMemo(() => {
     if (!dest) return null;
-    return {
+    const schema: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "TouristDestination",
       name: dest.title,
@@ -120,10 +127,53 @@ const DestinationDetail = () => {
       image: dest.hero_image_url || "",
       address: { "@type": "PostalAddress", addressCountry: dest.country },
       touristType: dest.experience_type || "Adventure",
+      url: `${SITE_URL}/destinos/${dest.slug}`,
+      inLanguage: "es",
+    };
+    if (dest.estimated_budget_usd != null) {
+      schema.estimatedCost = {
+        "@type": "MonetaryAmount",
+        value: dest.estimated_budget_usd,
+        currency: "USD",
+      };
+    }
+    if (dest.days_needed) {
+      const daysMatch = String(dest.days_needed).match(/\d+/);
+      if (daysMatch) {
+        schema.duration = `P${daysMatch[0]}D`;
+      }
+    }
+    return schema;
+  }, [dest]);
+
+  const breadcrumbLd = useMemo(() => {
+    if (!dest) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Destinos", item: `${SITE_URL}/#destinos` },
+        { "@type": "ListItem", position: 3, name: dest.title, item: `${SITE_URL}/destinos/${dest.slug}` },
+      ],
     };
   }, [dest]);
 
-  useJsonLd(jsonLd);
+  const faqLd = useMemo(() => {
+    if (!dest || !fears.length) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: fears.map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: f.answer,
+        },
+      })),
+    };
+  }, [dest, fears]);
 
   if (isLoading) return (
     <main className="bg-background min-h-screen">
@@ -143,16 +193,20 @@ const DestinationDetail = () => {
   );
 
   const affiliateLinks = (dest.affiliate_links as Record<string, string>) || {};
-  const fears = (dest.common_fears as Array<{ question: string; answer: string }>) || [];
+  const bookingOutlineBtn = "w-full bg-transparent border-card-foreground/25 text-card-foreground hover:bg-card-foreground/10 hover:text-card-foreground";
 
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
-      <SEOHead
+      <SEO
         title={dest.title}
         description={dest.short_description || `Guía completa de ${dest.title} para principiantes`}
         image={dest.hero_image_url || undefined}
+        slug={`destinos/${dest.slug}`}
       />
+      {jsonLd && <JsonLd data={jsonLd} />}
+      {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
+      {faqLd && <JsonLd data={faqLd} />}
 
       {/* Hero Carousel */}
       <section className="pt-20">
@@ -176,7 +230,7 @@ const DestinationDetail = () => {
           </div>
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
 
           {/* Dot indicators */}
           {heroImages.length > 1 && (
@@ -196,22 +250,26 @@ const DestinationDetail = () => {
 
           {/* Hero text content */}
           <div className="container mx-auto px-4 pb-10 relative z-10">
-            <Link to="/#destinos" className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 mb-4">
-              <ArrowLeft className="h-4 w-4" /> Volver a destinos
-            </Link>
+            <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
+              <Link to="/" className="text-white/60 hover:text-white">Inicio</Link>
+              <span className="text-white/40">/</span>
+              <Link to="/#destinos" className="text-white/60 hover:text-white">Destinos</Link>
+              <span className="text-white/40">/</span>
+              <span className="text-white/70 truncate max-w-[200px]" aria-current="page">{dest.title}</span>
+            </nav>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="font-serif text-4xl md:text-6xl font-bold text-foreground mb-3"
+              className="font-serif text-4xl md:text-6xl font-bold text-white mb-3"
               style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
               {dest.title}
             </motion.h1>
-            <p className="text-lg text-muted-foreground mb-4">
+            <p className="text-lg text-white/70 mb-4">
               {countryFlag[dest.country] || ""} {dest.country} {dest.region ? `· ${dest.region}` : ""}
             </p>
             <div className="flex flex-wrap gap-3">
               <Badge className={difficultyColor[dest.difficulty_level]}>{difficultyLabel[dest.difficulty_level]}</Badge>
-              <Badge variant="outline" className="border-foreground/20 text-foreground"><Clock className="h-3 w-3 mr-1" /> {dest.days_needed}</Badge>
-              {dest.estimated_budget_usd && <Badge variant="outline" className="border-foreground/20 text-foreground"><DollarSign className="h-3 w-3 mr-1" /> ~${dest.estimated_budget_usd} USD</Badge>}
-              {dest.best_season && <Badge variant="outline" className="border-foreground/20 text-foreground">🗓 {dest.best_season}</Badge>}
+              <Badge variant="outline" className="border-white/20 text-white"><Clock className="h-3 w-3 mr-1" /> {dest.days_needed}</Badge>
+              {dest.estimated_budget_usd && <Badge variant="outline" className="border-white/20 text-white"><DollarSign className="h-3 w-3 mr-1" /> ~${dest.estimated_budget_usd} USD</Badge>}
+              {dest.best_season && <Badge variant="outline" className="border-white/20 text-white">🗓 {dest.best_season}</Badge>}
             </div>
           </div>
         </div>
@@ -230,7 +288,7 @@ const DestinationDetail = () => {
               </TabsList>
               <TabsContent value="can-i">
                 {dest.difficulty_description && (
-                  <div className="prose prose-invert max-w-none mb-8">
+                  <div className="prose max-w-none mb-8">
                     <p className="text-foreground/90 text-lg leading-relaxed">{dest.difficulty_description}</p>
                   </div>
                 )}
@@ -249,17 +307,17 @@ const DestinationDetail = () => {
                 )}
               </TabsContent>
               <TabsContent value="prep">
-                <div className="prose prose-invert max-w-none text-foreground/90">
+                <div className="prose max-w-none text-foreground/90">
                   <ReactMarkdown components={markdownComponents}>{dest.preparation_plan || "Contenido próximamente."}</ReactMarkdown>
                 </div>
               </TabsContent>
               <TabsContent value="itinerary">
-                <div className="prose prose-invert max-w-none text-foreground/90">
+                <div className="prose max-w-none text-foreground/90">
                   <ReactMarkdown components={markdownComponents}>{dest.itinerary_markdown || "Contenido próximamente."}</ReactMarkdown>
                 </div>
               </TabsContent>
               <TabsContent value="gear">
-                <div className="prose prose-invert max-w-none text-foreground/90">
+                <div className="prose max-w-none text-foreground/90">
                   <ReactMarkdown components={markdownComponents}>{dest.gear_list_markdown || "Contenido próximamente."}</ReactMarkdown>
                 </div>
               </TabsContent>
@@ -269,9 +327,10 @@ const DestinationDetail = () => {
             <div className="lg:sticky lg:top-24 space-y-4">
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="font-serif text-xl text-card-foreground">
-                    Reserva Tu Viaje
-                  </CardTitle>
+                  <CardTitle className="font-serif text-xl text-card-foreground">Reserva Tu Viaje</CardTitle>
+                  {dest.best_season && (
+                    <p className="text-xs text-primary mt-1">🗓️ Mejor temporada: {dest.best_season}</p>
+                  )}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                   {affiliateLinks.flights_url && (
@@ -282,7 +341,7 @@ const DestinationDetail = () => {
                     </Button>
                   )}
                   {affiliateLinks.hotels_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.hotels_url} target="_blank" rel="noopener noreferrer">
                         <Hotel className="mr-2 h-4 w-4" /> Buscar Hoteles
                       </a>
@@ -296,28 +355,28 @@ const DestinationDetail = () => {
                     </Button>
                   )}
                   {affiliateLinks.tickets_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.tickets_url} target="_blank" rel="noopener noreferrer">
                         <Ticket className="mr-2 h-4 w-4" /> Entradas y Atracciones
                       </a>
                     </Button>
                   )}
                   {affiliateLinks.car_rental_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.car_rental_url} target="_blank" rel="noopener noreferrer">
                         <Car className="mr-2 h-4 w-4" /> Rentar Auto
                       </a>
                     </Button>
                   )}
                   {affiliateLinks.transfer_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.transfer_url} target="_blank" rel="noopener noreferrer">
                         <Bus className="mr-2 h-4 w-4" /> Transfer Aeropuerto
                       </a>
                     </Button>
                   )}
                   {affiliateLinks.insurance_url && (
-                    <Button asChild variant="outline" className="w-full border-border text-card-foreground hover:bg-muted">
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
                       <a href={affiliateLinks.insurance_url} target="_blank" rel="noopener noreferrer">
                         <Shield className="mr-2 h-4 w-4" /> Seguro de Viaje
                       </a>
@@ -328,6 +387,14 @@ const DestinationDetail = () => {
                       Enlaces de reserva próximamente.
                     </p>
                   )}
+                  <div className="border-t border-border pt-3 mt-3 flex flex-col gap-2">
+                    <Link to="/gear" className="text-sm text-primary hover:underline flex items-center gap-1">
+                      🎒 Ver guía de equipo recomendado
+                    </Link>
+                    <Link to="/calculadora" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      💰 Calcular presupuesto detallado
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
               <p className="text-xs text-muted-foreground/50 text-center mt-2 px-2">
@@ -368,6 +435,7 @@ const DestinationDetail = () => {
                     src={src}
                     alt={`${dest.title} — galería ${i + 1}`}
                     loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                   />
                 </motion.div>
@@ -440,11 +508,11 @@ const DestinationDetail = () => {
                 <Link key={r.id} to={`/destinos/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-40 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <img src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <img src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   </div>
                   <div className="p-4">
                     <Badge className={difficultyColor[r.difficulty_level] + " mb-2"}>{difficultyLabel[r.difficulty_level]}</Badge>
@@ -458,7 +526,10 @@ const DestinationDetail = () => {
         </section>
       )}
 
-      <PremiumItinerarySection destinationName={dest.title} />
+      {/* WhatsApp CTA */}
+      <ArticleWhatsAppCTA title={dest.title} />
+
+      <PremiumItinerarySection />
 
       <div className="container mx-auto px-4 py-8 text-center">
         <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>↑ Volver arriba</Button>

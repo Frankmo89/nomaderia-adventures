@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, Star, ExternalLink, BookOpen } from "lucide-react";
+import { Star, ExternalLink, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,8 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
-import { useCanonical, useJsonLd } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import SEOHead from "@/components/SEOHead";
+import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -67,14 +68,42 @@ const GearArticleDetail = () => {
       headline: article.title,
       description: article.short_description || "",
       image: article.hero_image_url || "",
-      author: { "@type": "Organization", name: "Nomaderia" },
+      author: { "@type": "Organization", name: "Nomaderia Adventures" },
+      publisher: {
+        "@type": "Organization",
+        name: "Nomaderia Adventures",
+        url: SITE_URL,
+      },
       datePublished: article.created_at,
       dateModified: article.updated_at,
-      publisher: { "@type": "Organization", name: "Nomaderia" },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/gear/${article.slug}`,
+      },
+      articleSection: article.category,
+      inLanguage: "es",
     };
   }, [article]);
 
-  useJsonLd(jsonLd);
+  const breadcrumbLd = useMemo(() => {
+    if (!article) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Gear Guide", item: `${SITE_URL}/gear` },
+        { "@type": "ListItem", position: 3, name: article.title, item: `${SITE_URL}/gear/${article.slug}` },
+      ],
+    };
+  }, [article]);
+
+  usePageMeta(article ? {
+    title: article.title,
+    description: article.short_description || `${article.title} — Gear Guide de Nomaderia`,
+    image: article.hero_image_url || undefined,
+    type: "article",
+  } : { title: "Gear Guide", description: "Guías de equipo outdoor para aventureros" });
 
   if (loading) return (
     <main className="bg-background min-h-screen"><Navbar />
@@ -101,6 +130,8 @@ const GearArticleDetail = () => {
         description={article.short_description || `${article.title} — Gear Guide de Nomaderia`}
         image={article.hero_image_url || undefined}
       />
+      {jsonLd && <JsonLd data={jsonLd} />}
+      {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
 
       <section className="pt-20">
         <div className="h-[35vh] flex items-end relative overflow-hidden">
@@ -109,24 +140,31 @@ const GearArticleDetail = () => {
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-secondary/20" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
           <div className="container mx-auto px-4 pb-8 relative z-10">
-            <Link to="/gear" className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 mb-4">
-              <ArrowLeft className="h-4 w-4" /> Volver a Gear Guide
-            </Link>
-            <Badge variant="outline" className="border-foreground/20 text-foreground mb-3">{article.category}</Badge>
+            <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
+              <Link to="/" className="text-white/60 hover:text-white">Inicio</Link>
+              <span className="text-white/40">/</span>
+              <Link to="/gear" className="text-white/60 hover:text-white">Gear Guide</Link>
+              <span className="text-white/40">/</span>
+              <span className="text-white/70 truncate max-w-[200px]" aria-current="page">{article.title}</span>
+            </nav>
+            <Badge variant="outline" className="border-white/20 text-white mb-3">{article.category}</Badge>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="font-serif text-3xl md:text-5xl font-bold text-foreground"
+              className="font-serif text-3xl md:text-5xl font-bold text-white"
               style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
               {article.title}
             </motion.h1>
+            <p className="text-white/60 mt-2">
+              {new Date(article.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
           </div>
         </div>
       </section>
 
       <section className="py-12">
         <div className="container mx-auto px-4 max-w-3xl">
-          <div className="prose prose-invert max-w-none text-foreground/90 mb-12">
+          <div className="prose max-w-none text-foreground/90 mb-12">
             <ReactMarkdown>{article.content_markdown || ""}</ReactMarkdown>
           </div>
           {products.length > 0 && (
@@ -186,6 +224,22 @@ const GearArticleDetail = () => {
         </div>
       </section>
 
+      {/* CTA interno */}
+      <div className="container mx-auto px-4 max-w-3xl pb-8">
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center">
+          <p className="text-foreground font-serif text-lg mb-2">¿Necesitas ayuda eligiendo tu equipo?</p>
+          <p className="text-muted-foreground text-sm mb-4">Nuestro quiz de 1 minuto te ayuda a elegir el equipo ideal según tu nivel, estilo y presupuesto.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/#quiz" className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              Hacer el Quiz
+            </Link>
+            <Link to="/calculadora" className="inline-flex items-center justify-center border border-border hover:bg-muted text-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              Calcular Presupuesto
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {related.length > 0 && (
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
@@ -195,11 +249,11 @@ const GearArticleDetail = () => {
                 <Link key={r.id} to={`/gear/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-32 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <img src={r.hero_image_url} alt={r.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <img src={r.hero_image_url} alt={r.title} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center"><BookOpen className="h-8 w-8 text-accent/40" /></div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   </div>
                   <div className="p-4">
                     <Badge variant="outline" className="mb-2 border-card-foreground/20 text-card-foreground">{r.category}</Badge>

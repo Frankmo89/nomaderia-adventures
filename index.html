@@ -2,21 +2,60 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="https://emojicdn.elk.sh/%F0%9F%8F%94%EF%B8%8F" type="image/png" sizes="32x32" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nomaderia — Tu Primera Aventura Te Está Esperando</title>
-    <meta name="description" content="Descubre aventuras al aire libre para principiantes. Guías, equipo y destinos para tu primera caminata, trek o acampada." />
-    <meta name="author" content="Nomaderia" />
-    <meta property="og:title" content="Nomaderia — Tu Primera Aventura Te Está Esperando" />
-    <meta property="og:description" content="Descubre aventuras al aire libre para principiantes." />
+    <title>Nomadería - Aventuras y Senderismo</title>
+    <meta name="description" content="Descubre destinos de aventura, itinerarios personalizados y guías de senderismo para explorar Parques Nacionales. Planifica tu próxima aventura con Nomadería." />
+    <meta name="author" content="Nomadería" />
+    <meta property="og:title" content="Nomadería - Aventuras y Senderismo" />
+    <meta property="og:description" content="Descubre destinos de aventura, itinerarios personalizados y guías de senderismo para explorar Parques Nacionales. Planifica tu próxima aventura con Nomadería." />
+    <meta property="og:url" content="https://nomaderia.com" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80" />
+    <!-- ⚠️ OG IMAGE — Fuente de verdad: src/config/assets.ts → BRAND_ASSETS.defaultOgImage -->
+    <!-- Si cambias la imagen allá, actualiza también esta línea manualmente.              -->
+    <meta property="og:image" content="https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/destinations/1772502898883-4w9ykr.jpeg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80" />
+    <meta name="twitter:title" content="Nomadería - Aventuras y Senderismo" />
+    <meta name="twitter:description" content="Descubre destinos de aventura, itinerarios personalizados y guías de senderismo para explorar Parques Nacionales. Planifica tu próxima aventura con Nomadería." />
+    <!-- ⚠️ TWITTER IMAGE — Misma fuente de verdad: src/config/assets.ts → BRAND_ASSETS.defaultOgImage -->
+    <meta name="twitter:image" content="https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/destinations/1772502898883-4w9ykr.jpeg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- ========================== -->
+    <!-- META PIXEL — Reemplaza TU_PIXEL_ID_AQUI con tu Pixel ID real -->
+    <!-- ========================== -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', 'TU_PIXEL_ID_AQUI');
+      fbq('track', 'PageView');
+    </script>
+
+    <!-- ========================== -->
+    <!-- GOOGLE ANALYTICS (GA4) — Measurement ID: G-CK9STWJDFM -->
+    <!-- ========================== -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CK9STWJDFM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-CK9STWJDFM');
+    </script>
   </head>
   <body>
+    <!-- Meta Pixel noscript fallback -->
+    <noscript>
+      <img height="1" width="1" alt="" style="display:none"
+        src="https://www.facebook.com/tr?id=TU_PIXEL_ID_AQUI&ev=PageView&noscript=1" />
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
