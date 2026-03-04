@@ -63,7 +63,7 @@ interface PageMeta {
  */
 export const usePageMeta = ({ title, description, image, type = "website" }: PageMeta) => {
   useEffect(() => {
-    const fullTitle = `${title} — Nomaderia`;
+    const fullTitle = `${title} — Nomadería`;
     document.title = fullTitle;
 
     const setMeta = (selector: string, attr: string, value: string) => {

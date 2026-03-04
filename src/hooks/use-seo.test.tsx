@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { useCanonical, useJsonLd } from "./use-seo";
+import { useCanonical, useJsonLd, usePageMeta } from "./use-seo";
 import type { ReactNode } from "react";
 
 describe("useCanonical", () => {
@@ -63,5 +63,37 @@ describe("useJsonLd", () => {
   it("should not inject a script tag when data is null", () => {
     renderHook(() => useJsonLd(null));
     expect(document.querySelector('script[data-jsonld]')).toBeNull();
+  });
+});
+
+describe("usePageMeta", () => {
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <MemoryRouter>{children}</MemoryRouter>
+  );
+
+  afterEach(() => {
+    document.title = "";
+  });
+
+  it("should set document title with brand suffix while mounted", () => {
+    renderHook(
+      () => usePageMeta({ title: "Destinos", description: "Lista de destinos" }),
+      { wrapper },
+    );
+
+    expect(document.title).toBe("Destinos — Nomadería");
+  });
+
+  it("should restore the default title on unmount", () => {
+    const { unmount } = renderHook(
+      () => usePageMeta({ title: "Blog", description: "Artículos del blog" }),
+      { wrapper },
+    );
+
+    expect(document.title).toBe("Blog — Nomadería");
+
+    unmount();
+
+    expect(document.title).toBe("Nomadería - Aventuras y Senderismo");
   });
 });

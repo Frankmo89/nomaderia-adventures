@@ -52,7 +52,7 @@
 - [ ] Integrar compartir en redes sociales (botones share)
 - [ ] Resolver issues de contraste texto para WCAG AA compliance
 
-### 🟢 Preview actual
+### 🟢 Sitio en vivo (producción)
 https://nomaderia.com/
 
 ---
