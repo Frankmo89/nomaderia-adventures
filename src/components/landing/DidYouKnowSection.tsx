@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useDestinations, type DestinationCard } from "@/hooks/use-destinations";
 
 const didYouKnowText: Record<string, string> = {
   "ushuaia-fin-del-mundo": "¿Sabías que puedes caminar hasta un glaciar en el fin del mundo?",
@@ -16,25 +15,26 @@ const didYouKnowText: Record<string, string> = {
   "sierra-san-pedro-martir": "¿Sabías que puedes ver las estrellas más brillantes de México en Baja California?",
 };
 
-const getDidYouKnowText = (slug: string, title: string) => {
-  return didYouKnowText[slug] || `¿Sabías que puedes explorar ${title}?`;
+const getDidYouKnowText = (slug: string, title: string, country: string) => {
+  return didYouKnowText[slug] || `¿Sabías que puedes vivir una aventura increíble en ${title}, ${country}?`;
 };
 
 const difficultyLabel: Record<string, string> = { easy: "Fácil", moderate: "Moderado", challenging: "Desafiante" };
 const difficultyColor: Record<string, string> = { easy: "bg-secondary/80", moderate: "bg-primary/80", challenging: "bg-destructive/80" };
 
-type Destination = {
-  title: string;
-  slug: string;
-  country: string;
-  hero_image_url: string | null;
-  short_description: string | null;
-  difficulty_level: string;
-  estimated_budget_usd: number | null;
-  days_needed: string | null;
-};
+/** Fisher-Yates shuffle (returns a new array). */
+function shuffle<T>(arr: readonly T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
-const CardContent = ({ dest, isLarge = false }: { dest: Destination; isLarge?: boolean }) => (
+const AUTOPLAY_INTERVAL_MS = 5000;
+
+const CardContent = ({ dest, isLarge = false }: { dest: DestinationCard; isLarge?: boolean }) => (
   <Link
     to={`/destinos/${dest.slug}`}
     className="block relative rounded-2xl overflow-hidden group h-full"
@@ -45,13 +45,13 @@ const CardContent = ({ dest, isLarge = false }: { dest: Destination; isLarge?: b
         alt={dest.title}
         loading="lazy"
         decoding="async"
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10000ms] ease-linear group-hover:scale-110"
       />
     ) : (
       <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 to-primary/20" />
     )}
 
-    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
     <div className="absolute top-4 left-4 z-10">
       <span className={`text-xs font-semibold text-white px-2.5 py-1 rounded-full ${difficultyColor[dest.difficulty_level] || "bg-primary/80"}`}>
@@ -64,7 +64,7 @@ const CardContent = ({ dest, isLarge = false }: { dest: Destination; isLarge?: b
         className={`font-serif font-bold text-white leading-tight mb-2 ${isLarge ? "text-xl sm:text-2xl md:text-3xl" : "text-base sm:text-lg"}`}
         style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
       >
-        {getDidYouKnowText(dest.slug, dest.title)}
+        {getDidYouKnowText(dest.slug, dest.title, dest.country)}
       </p>
 
       <div className="flex items-center gap-2 flex-wrap mb-3">
@@ -102,27 +102,58 @@ const CardContent = ({ dest, isLarge = false }: { dest: Destination; isLarge?: b
   </Link>
 );
 
+/* ─── Skeleton loader ─── */
+const SkeletonCard = ({ className = "" }: { className?: string }) => (
+  <div className={`animate-pulse bg-muted-foreground/10 rounded-2xl ${className}`} />
+);
+
+const SkeletonLoader = () => (
+  <section className="py-16 sm:py-24 bg-muted relative overflow-hidden">
+    <div className="relative z-10">
+      <div className="container mx-auto px-5 mb-10 sm:mb-14">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-pulse bg-muted-foreground/10 rounded-lg h-4 w-48" />
+          <div className="animate-pulse bg-muted-foreground/10 rounded-lg h-10 w-72" />
+        </div>
+      </div>
+
+      {/* Mobile skeleton */}
+      <div className="flex lg:hidden gap-4 overflow-hidden px-5 pb-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="animate-pulse bg-muted-foreground/10 rounded-2xl shrink-0" style={{ width: "85vw", height: "420px" }} />
+        ))}
+      </div>
+
+      {/* Desktop skeleton */}
+      <div className="container mx-auto px-5">
+        <div className="hidden lg:grid lg:grid-cols-3 lg:grid-rows-2 gap-4" style={{ minHeight: "600px" }}>
+          <SkeletonCard className="col-span-1 row-span-2" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 const DidYouKnowSection = () => {
-  const { data: destinations = [], isLoading } = useQuery({
-    queryKey: ["didyouknow-destinations"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("destinations")
-        .select("title, slug, country, hero_image_url, short_description, difficulty_level, estimated_budget_usd, days_needed")
-        .eq("is_published", true)
-        .order("featured", { ascending: false })
-        .limit(5);
-      if (error) {
-        throw error;
-      }
-      return (data || []) as Destination[];
-    },
-  });
+  const { data: allDestinations = [], isLoading } = useDestinations();
+
+  /* Shuffle once when data arrives, then pick 5 */
+  const destinations = useMemo(() => {
+    if (allDestinations.length === 0) return [];
+    return shuffle(allDestinations).slice(0, 5);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDestinations.length]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const autoplayPaused = useRef(false);
+  const autoplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  /* ─── Intersection Observer for active dot ─── */
   useEffect(() => {
     const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
     if (cards.length === 0 || !scrollRef.current) return;
@@ -141,7 +172,60 @@ const DidYouKnowSection = () => {
     return () => observer.disconnect();
   }, [destinations.length]);
 
-  if (isLoading || destinations.length === 0) return null;
+  /* ─── Auto-play on mobile ─── */
+  const scrollToIndex = useCallback((index: number) => {
+    const card = cardRefs.current[index];
+    if (card && scrollRef.current) {
+      card.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (destinations.length === 0) return;
+
+    const startAutoplay = () => {
+      if (autoplayTimer.current) clearInterval(autoplayTimer.current);
+      autoplayTimer.current = setInterval(() => {
+        if (autoplayPaused.current) return;
+        setActiveIndex((prev) => {
+          const next = (prev + 1) % destinations.length;
+          scrollToIndex(next);
+          return next;
+        });
+      }, AUTOPLAY_INTERVAL_MS);
+    };
+
+    startAutoplay();
+    return () => {
+      if (autoplayTimer.current) clearInterval(autoplayTimer.current);
+    };
+  }, [destinations.length, scrollToIndex]);
+
+  /* Pause autoplay on user interaction */
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const pause = () => { autoplayPaused.current = true; };
+    const resume = () => {
+      setTimeout(() => { autoplayPaused.current = false; }, AUTOPLAY_INTERVAL_MS);
+    };
+
+    el.addEventListener("touchstart", pause, { passive: true });
+    el.addEventListener("touchend", resume, { passive: true });
+    el.addEventListener("scroll", pause, { passive: true });
+    el.addEventListener("scrollend", resume, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", pause);
+      el.removeEventListener("touchend", resume);
+      el.removeEventListener("scroll", pause);
+      el.removeEventListener("scrollend", resume);
+    };
+  }, []);
+
+  if (isLoading) return <SkeletonLoader />;
+  if (destinations.length === 0) return null;
 
   return (
     <section className="py-16 sm:py-24 bg-muted relative overflow-hidden">
