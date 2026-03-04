@@ -4,7 +4,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Destination = Tables<"destinations">;
 
-interface DestinationCard {
+export interface DestinationCard {
   id: string;
   title: string;
   slug: string;
@@ -15,6 +15,7 @@ interface DestinationCard {
   estimated_budget_usd: number;
   hero_image_url: string;
   tags: string[];
+  affiliate_links: Record<string, string> | null;
 }
 
 export function useDestinations() {
@@ -24,7 +25,7 @@ export function useDestinations() {
       const { data, error } = await supabase
         .from("destinations")
         .select(
-          "id, title, slug, country, short_description, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, tags"
+          "id, title, slug, country, short_description, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, tags, affiliate_links"
         )
         .eq("is_published", true);
       if (error) throw error;

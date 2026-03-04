@@ -36,3 +36,4 @@ yarn.lock
 tmpclaude-*
 nul
 .env.local
+.env
