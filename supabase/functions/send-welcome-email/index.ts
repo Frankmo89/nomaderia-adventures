@@ -209,7 +209,8 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Nomaderia Adventures <hola@nomaderia.com>",
+        from: "Nomaderia <hola@nomaderia.com>",
+        reply_to: "nomaderia.travel@gmail.com",
         to: [email],
         subject: "🏔️ ¡Bienvenido/a a la comunidad Nomaderia!",
         html: htmlEmail,
