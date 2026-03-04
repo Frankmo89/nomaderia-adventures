@@ -1,8 +1,8 @@
 /**
  * Unit tests for the budget calculator pricing logic.
  *
- * These tests validate the new `calculateBudget` function exported from
- * BudgetCalculator.tsx which uses real Supabase data (estimated_budget_usd)
+ * These tests validate the `calculateBudget` function imported from
+ * `@/lib/budget-calc`, which uses real Supabase data (estimated_budget_usd)
  * and a simplified comfort multiplier model.
  */
 import { describe, it, expect } from "vitest";

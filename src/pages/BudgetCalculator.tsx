@@ -60,8 +60,12 @@ const BudgetCalculator = () => {
       .select("id, title, slug, country, estimated_budget_usd, hero_image_url, days_needed, difficulty_level, affiliate_links")
       .eq("is_published", true)
       .order("title")
-      .then(({ data }) => {
-        if (data) setDestinations(data as Destination[]);
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("[BudgetCalculator] Error fetching destinations:", error.message);
+          return;
+        }
+        if (data) setDestinations(data);
       });
   }, []);
 
@@ -252,6 +256,8 @@ const BudgetCalculator = () => {
                     src={selectedDest.hero_image_url}
                     alt={selectedDest.title}
                     className="w-full h-48 object-cover rounded-xl mb-6"
+                    loading="lazy"
+                    decoding="async"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6 }}
@@ -267,6 +273,7 @@ const BudgetCalculator = () => {
                   {selectedDest && (
                     <p className="text-muted-foreground mt-2">
                       {selectedDest.title}, {selectedDest.country}
+                      {origin && <> · Desde: {origin}</>}
                     </p>
                   )}
                 </div>

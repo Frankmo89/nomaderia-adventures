@@ -15,10 +15,10 @@ export function calculateBudget(
   days: number,
   flightCost: number,
 ) {
-  const baseCostPerDay = (estimatedBudgetUsd || 500) / 5;
+  const baseCostPerDay = (estimatedBudgetUsd ?? 500) / 5;
   const comfortMult = comfortMultipliers[comfort];
   const landCost = Math.round(baseCostPerDay * comfortMult * days);
-  const flights = Math.round(flightCost);
+  const flights = flightCost;
   const gear = GEAR_ESTIMATE;
   const insurance = INSURANCE_ESTIMATE;
 
