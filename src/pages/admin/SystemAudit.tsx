@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, Loader2, ShieldAlert } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, ShieldAlert, Send, Image } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 type CheckStatus = "pending" | "ok" | "error";
@@ -52,6 +53,20 @@ const StatusBadge = ({
   );
 };
 
+type TestEmailStatus = "idle" | "sending" | "ok" | "error";
+
+interface ImageCheckResult {
+  url: string;
+  status: "ok" | "error";
+}
+
+interface ImageCheckState {
+  running: boolean;
+  results: ImageCheckResult[];
+  total: number;
+  checked: number;
+}
+
 const SystemAudit = () => {
   const envChecks: EnvCheck[] = [
     {
@@ -66,6 +81,10 @@ const SystemAudit = () => {
       name: "VITE_GA_MEASUREMENT_ID",
       value: import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined,
     },
+    {
+      name: "VITE_SENTRY_DSN",
+      value: import.meta.env.VITE_SENTRY_DSN as string | undefined,
+    },
   ];
 
   const [supabaseCheck, setSupabaseCheck] = useState<SupabaseCheck>({
@@ -74,6 +93,18 @@ const SystemAudit = () => {
   });
 
   const [gtagCheck, setGtagCheck] = useState<GtagCheck>({ status: "pending" });
+
+  // Prueba de Ventas state
+  const [testEmailStatus, setTestEmailStatus] = useState<TestEmailStatus>("idle");
+  const [testEmailError, setTestEmailError] = useState("");
+
+  // Verificador de Imágenes state
+  const [imageCheck, setImageCheck] = useState<ImageCheckState>({
+    running: false,
+    results: [],
+    total: 0,
+    checked: 0,
+  });
 
   useEffect(() => {
     const checkSupabase = async () => {
@@ -102,6 +133,81 @@ const SystemAudit = () => {
       typeof window.gtag === "function";
     setGtagCheck({ status: isGtagReady ? "ok" : "error" });
   }, []);
+
+  const handleSendTestEmail = async () => {
+    setTestEmailStatus("sending");
+    setTestEmailError("");
+    try {
+      const { error } = await supabase.functions.invoke("send-quiz-email", {
+        body: {
+          email: "test@nomaderia.com",
+          destinations: [
+            {
+              title: "Yosemite National Park",
+              slug: "yosemite",
+              short_description: "Destino de prueba para verificar el flujo de envío de emails.",
+              country: "EE.UU.",
+              estimated_budget_usd: 800,
+              days_needed: "5-7",
+              hero_image_url: null,
+              difficulty_level: "moderate",
+            },
+          ],
+          fitness_level: "moderate",
+          interest: "adventure",
+        },
+      });
+      if (error) {
+        setTestEmailStatus("error");
+        setTestEmailError(error.message);
+      } else {
+        setTestEmailStatus("ok");
+      }
+    } catch (err) {
+      setTestEmailStatus("error");
+      setTestEmailError(err instanceof Error ? err.message : "Error desconocido");
+    }
+  };
+
+  const handleCheckImages = async () => {
+    setImageCheck({ running: true, results: [], total: 0, checked: 0 });
+    try {
+      const { data, error } = await supabase
+        .from("destinations")
+        .select("hero_image_url")
+        .not("hero_image_url", "is", null);
+
+      if (error || !data) {
+        setImageCheck({ running: false, results: [], total: 0, checked: 0 });
+        return;
+      }
+
+      const urls = data
+        .map((d) => (d as { hero_image_url: string | null }).hero_image_url)
+        .filter((u): u is string => !!u);
+
+      setImageCheck({ running: true, results: [], total: urls.length, checked: 0 });
+
+      const results: ImageCheckResult[] = [];
+      for (const url of urls) {
+        const ok = await new Promise<boolean>((resolve) => {
+          const img = new window.Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = url;
+        });
+        results.push({ url, status: ok ? "ok" : "error" });
+        setImageCheck((prev) => ({ ...prev, checked: prev.checked + 1, results: [...results] }));
+      }
+
+      setImageCheck({ running: false, results, total: urls.length, checked: urls.length });
+    } catch {
+      setImageCheck((prev) => ({ ...prev, running: false }));
+    }
+  };
+
+  const imageOk = imageCheck.results.filter((r) => r.status === "ok").length;
+  const imageErr = imageCheck.results.filter((r) => r.status === "error").length;
 
   return (
     <div>
@@ -176,6 +282,116 @@ const SystemAudit = () => {
               okLabel="Inyectado correctamente"
               errorLabel="Falta inicializar"
             />
+          </CardContent>
+        </Card>
+
+        {/* Prueba de Ventas */}
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-card-foreground flex items-center gap-2">
+              <Send className="h-4 w-4 text-primary" />
+              Prueba de Ventas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Envía un correo de prueba via la Edge Function{" "}
+              <code className="font-mono bg-muted px-1 rounded">send-quiz-email</code>.
+            </p>
+            <Button
+              size="sm"
+              onClick={handleSendTestEmail}
+              disabled={testEmailStatus === "sending"}
+              className="w-full"
+            >
+              {testEmailStatus === "sending" ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando…
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar Correo de Prueba
+                </>
+              )}
+            </Button>
+            {testEmailStatus === "ok" && (
+              <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+                <CheckCircle className="h-4 w-4" />
+                ¡Correo enviado con éxito!
+              </span>
+            )}
+            {testEmailStatus === "error" && (
+              <div>
+                <span className="flex items-center gap-1.5 text-red-600 text-sm font-medium">
+                  <XCircle className="h-4 w-4" />
+                  Error al enviar
+                </span>
+                {testEmailError && (
+                  <p className="text-xs text-red-500 font-mono bg-red-50 rounded p-2 break-all mt-1">
+                    {testEmailError}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Verificador de Imágenes */}
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-card-foreground flex items-center gap-2">
+              <Image className="h-4 w-4 text-primary" />
+              Verificador de Imágenes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Verifica que las imágenes principales de los destinos carguen correctamente.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCheckImages}
+              disabled={imageCheck.running}
+              className="w-full"
+            >
+              {imageCheck.running ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Verificando… ({imageCheck.checked}/{imageCheck.total})
+                </>
+              ) : (
+                <>
+                  <Image className="h-4 w-4 mr-2" />
+                  Verificar Imágenes
+                </>
+              )}
+            </Button>
+            {imageCheck.results.length > 0 && !imageCheck.running && (
+              <div className="space-y-1">
+                <div className="flex gap-4 text-sm">
+                  <span className="flex items-center gap-1 text-green-600">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    {imageOk} OK
+                  </span>
+                  {imageErr > 0 && (
+                    <span className="flex items-center gap-1 text-red-600">
+                      <XCircle className="h-3.5 w-3.5" />
+                      {imageErr} Error
+                    </span>
+                  )}
+                </div>
+                {imageCheck.results
+                  .filter((r) => r.status === "error")
+                  .map((r) => (
+                    <p key={r.url} className="text-xs text-red-500 font-mono bg-red-50 rounded p-1.5 break-all">
+                      {r.url}
+                    </p>
+                  ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -41,6 +41,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  /** Masks email for safe logging: user@example.com → u***@example.com */
+  const maskEmail = (raw: string): string => {
+    const [user, domain] = raw.split("@");
+    if (!domain) return "***";
+    return `${user[0] ?? ""}***@${domain}`;
+  };
+
   try {
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY not configured");
@@ -225,7 +232,8 @@ serve(async (req) => {
           break;
       }
 
-      console.error("Resend error:", {
+      console.error("[send-quiz-email] FAIL — email no enviado", {
+        to: maskEmail(email),
         status: resendResponse.status,
         body: resendData,
       });
@@ -233,13 +241,19 @@ serve(async (req) => {
       throw new Error(errorMessage);
     }
 
+    console.log("[send-quiz-email] OK — correo enviado exitosamente", {
+      to: maskEmail(email),
+      messageId: resendData.id,
+      destination: topDest.title,
+    });
+
     return new Response(
       JSON.stringify({ success: true, id: resendData.id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: unknown) {
-    console.error("Email error:", error);
+    console.error("[send-quiz-email] ERROR — excepción no controlada:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

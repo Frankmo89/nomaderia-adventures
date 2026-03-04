@@ -59,6 +59,18 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Fase 4 — Armadura de Titanio: Monitoreo y Auditoría Avanzada (Marzo 2026)
+- [x] **Botón de Prueba en Auditoría** — Nueva tarjeta "Prueba de Ventas" en `SystemAudit.tsx` con botón "Enviar Correo de Prueba" que llama a la Edge Function `send-quiz-email` con datos de prueba (test@nomaderia.com, destino Yosemite). Muestra estados: Enviando…, ✅ Éxito, ❌ Error con mensaje.
+- [x] **Verificador de Imágenes** — Nueva tarjeta "Verificador de Imágenes" en `SystemAudit.tsx` que consulta `hero_image_url` de todos los destinos en Supabase y verifica su accesibilidad (HEAD request + no-cors). Muestra contador OK/Error y URLs fallidas.
+- [x] **Monitoreo de Errores (Sentry)** — Instalado `@sentry/react@10.42.0`. `main.tsx` inicializa Sentry si `VITE_SENTRY_DSN` está definida. `ErrorBoundary.tsx` captura errores via `componentDidCatch` → `Sentry.captureException`. Cubre calculadora y quiz automáticamente.
+- [x] **Variable VITE_SENTRY_DSN** — Agregada a `.env.example` y a la tarjeta "Variables de Entorno" de `SystemAudit.tsx`.
+- [x] **Logs de Envío** — Edge Function `send-quiz-email` ahora registra `[send-quiz-email] OK — correo enviado exitosamente` (con destinatario + messageId) en éxito, y `[send-quiz-email] FAIL` / `[send-quiz-email] ERROR` en caso de fallo, visibles en Supabase > Edge Functions > Logs.
+- `src/pages/admin/SystemAudit.tsx` — 2 nuevas tarjetas (Prueba de Ventas + Verificador de Imágenes) + VITE_SENTRY_DSN en env checks
+- `src/components/ErrorBoundary.tsx` — `componentDidCatch` con `Sentry.captureException`
+- `src/main.tsx` — Inicialización condicional de Sentry
+- `.env.example` — `VITE_SENTRY_DSN` agregada
+- `supabase/functions/send-quiz-email/index.ts` — Logs estructurados con prefijo `[send-quiz-email]`
+
 ### ✅ Media Slider Dinámico — Gestor Multimedia para Landing Page (Marzo 2026)
 - [x] Creado hook `src/hooks/use-media.ts` con `useMediaSlider()` (TanStack Query, filtra `is_active: true`, ordena por `display_order`) y helpers `uploadMediaItem()`, `toggleMediaActive()`, `deleteMediaItem()`
 - [x] Creada página admin `src/pages/admin/AdminGallery.tsx` — subida de archivos (imagen/video), grid con preview, toggle activo/inactivo, eliminar con confirmación (tabla + storage)
