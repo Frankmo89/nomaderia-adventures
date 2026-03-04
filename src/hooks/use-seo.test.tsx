@@ -19,7 +19,7 @@ describe("useCanonical", () => {
 
     const link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     expect(link).toBeTruthy();
-    // SITE_URL falls back to the Lovable preview URL when VITE_SITE_URL is not set
+    // SITE_URL falls back to https://nomaderia.com when VITE_SITE_URL is not set
     expect(link?.getAttribute("href")).toMatch(/\/destinos\/camino-inca$/);
   });
 
