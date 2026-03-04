@@ -140,19 +140,26 @@ const SkeletonLoader = () => (
 const DidYouKnowSection = () => {
   const { data: allDestinations = [], isLoading } = useDestinations();
 
-  /* Shuffle once when the set of destination IDs changes, then pick 5 */
+  /* Shuffle once when the set of destinations changes, then pick 5 */
   const destinationIds = allDestinations.map((d) => d.id).sort().join(",");
   const destinations = useMemo(() => {
     if (allDestinations.length === 0) return [];
     return shuffle(allDestinations).slice(0, 5);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [destinationIds]);
+  }, [allDestinations, destinationIds]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const autoplayPaused = useRef(false);
   const autoplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /* Clamp activeIndex when the number of destinations changes */
+  useEffect(() => {
+    setActiveIndex((prev) => {
+      if (destinations.length === 0) return 0;
+      return Math.min(prev, destinations.length - 1);
+    });
+  }, [destinations.length]);
 
   /* ─── Intersection Observer for active dot ─── */
   useEffect(() => {
@@ -171,9 +178,9 @@ const DidYouKnowSection = () => {
     );
     cards.forEach((card) => observer.observe(card));
     return () => observer.disconnect();
-  }, [destinations.length]);
+  }, [destinationIds]);
 
-  /* ─── Auto-play on mobile ─── */
+  /* ─── Auto-play on mobile only ─── */
   const scrollToIndex = useCallback((index: number) => {
     const card = cardRefs.current[index];
     if (card && scrollRef.current) {
@@ -183,11 +190,13 @@ const DidYouKnowSection = () => {
 
   useEffect(() => {
     if (destinations.length === 0) return;
+    const isMobile = () => window.innerWidth < 1024;
+    if (!isMobile()) return;
 
     const startAutoplay = () => {
       if (autoplayTimer.current) clearInterval(autoplayTimer.current);
       autoplayTimer.current = setInterval(() => {
-        if (autoplayPaused.current) return;
+        if (autoplayPaused.current || !isMobile()) return;
         setActiveIndex((prev) => {
           const next = (prev + 1) % destinations.length;
           scrollToIndex(next);
@@ -202,12 +211,12 @@ const DidYouKnowSection = () => {
     };
   }, [destinations.length, scrollToIndex]);
 
-  /* Pause autoplay on user interaction */
+  /* Pause autoplay on user interaction (mobile only) */
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el || window.innerWidth >= 1024) return;
 
     const pause = () => {
       autoplayPaused.current = true;
