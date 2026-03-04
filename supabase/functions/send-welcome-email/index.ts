@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SITE_URL =
   Deno.env.get("VITE_SITE_URL") ||
   Deno.env.get("SITE_URL") ||
   "https://nomaderia.com";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+/** Maximum age (in ms) of a subscriber record to be eligible for a welcome email. */
+const MAX_SUBSCRIPTION_AGE_MS = 10 * 60 * 1000; // 10 minutes
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,6 +55,48 @@ serve(async (req) => {
         JSON.stringify({ error: "El campo email es requerido" }),
         {
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Verify the email was recently added to newsletter_subscribers using
+    // the service-role client (bypasses RLS). Reject if not found or too old
+    // to prevent this endpoint from being used to spam arbitrary addresses.
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Supabase service-role credentials not configured");
+    }
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data: subscriber, error: dbError } = await supabase
+      .from("newsletter_subscribers")
+      .select("created_at")
+      .eq("email", email)
+      .single();
+
+    if (dbError || !subscriber) {
+      console.warn("[send-welcome-email] BLOCKED — email not in subscribers", {
+        to: maskEmail(email),
+      });
+      return new Response(
+        JSON.stringify({ error: "No se pudo enviar el correo de bienvenida" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Parse created_at as UTC to avoid timezone-offset issues
+    const subscriptionAge = Date.now() - Date.parse(subscriber.created_at);
+    if (subscriptionAge > MAX_SUBSCRIPTION_AGE_MS) {
+      console.warn("[send-welcome-email] BLOCKED — subscription too old", {
+        to: maskEmail(email),
+        ageMs: subscriptionAge,
+      });
+      return new Response(
+        JSON.stringify({ error: "No se pudo enviar el correo de bienvenida" }),
+        {
+          status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );

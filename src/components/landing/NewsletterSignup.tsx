@@ -27,10 +27,12 @@ const NewsletterSignup = () => {
       }
       setDone(true);
       toast({ title: "¡Bienvenido/a! 🎉", description: "Te enviamos aventuras cada semana." });
-      // Fire welcome email — non-blocking, errors are intentionally ignored here
-      supabase.functions
-        .invoke("send-welcome-email", { body: { email } })
-        .catch(() => undefined);
+      // Fire welcome email only for genuinely new subscriptions — non-blocking
+      if (!error) {
+        supabase.functions
+          .invoke("send-welcome-email", { body: { email } })
+          .catch(() => undefined);
+      }
     } catch {
       toast({ title: "Error", description: "Intenta de nuevo.", variant: "destructive" });
     } finally {
