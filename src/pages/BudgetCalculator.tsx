@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, Plane, Hotel, UtensilsCrossed, Compass, Backpack, ShieldCheck, ArrowRight, Mail, Tent, Star } from "lucide-react";
+import { Plane, Hotel, UtensilsCrossed, Compass, Backpack, ShieldCheck, ArrowRight, Mail, Tent, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { calculateBudget } from "@/lib/budget-calc";
 import type { ComfortLevel } from "@/lib/budget-calc";
@@ -52,6 +52,34 @@ const BudgetCalculator = () => {
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailDone, setEmailDone] = useState(false);
   const { toast } = useToast();
+
+  /* ---------- Hero image slider ---------- */
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  const heroImages = useMemo(
+    () =>
+      destinations
+        .filter((d) => d.hero_image_url)
+        .slice(0, 5)
+        .map((d) => d.hero_image_url as string),
+    [destinations],
+  );
+
+  const advanceHero = useCallback(() => {
+    setHeroIndex((prev) => (heroImages.length > 0 ? (prev + 1) % heroImages.length : 0));
+  }, [heroImages.length]);
+
+  useEffect(() => {
+    if (heroImages.length <= 1) return;
+    const id = setInterval(advanceHero, 5000);
+    return () => clearInterval(id);
+  }, [advanceHero, heroImages.length]);
+
+  useEffect(() => {
+    if (heroImages.length > 0 && heroIndex >= heroImages.length) {
+      setHeroIndex(0);
+    }
+  }, [heroImages.length, heroIndex]);
 
   useEffect(() => {
     document.title = "Calculadora de Presupuesto | Nomaderia";
@@ -133,19 +161,57 @@ const BudgetCalculator = () => {
     <div className="min-h-screen bg-background text-foreground pb-24">
       <Navbar />
 
-      {/* Hero */}
-      <section className="pt-28 pb-12 px-4 text-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <Calculator className="mx-auto h-12 w-12 text-primary mb-4" />
-          <h1 className="text-3xl sm:text-5xl font-bold mb-3">Calculadora de Presupuesto</h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
+      {/* Hero with image slider */}
+      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+        {/* Background image slider */}
+        {heroImages.length === 0 ? (
+          <div className="absolute inset-0 bg-neutral-800" />
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={heroImages[heroIndex]}
+              src={heroImages[heroIndex]}
+              alt=""
+              role="presentation"
+              className="absolute inset-0 w-full h-full object-cover"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
+              loading="eager"
+              decoding="async"
+            />
+          </AnimatePresence>
+        )}
+
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-black/30" />
+
+        {/* Content */}
+        <div className="relative z-10 text-center px-4">
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4"
+            style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
+          >
+            Calculadora de Presupuesto
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-lg md:text-xl text-white/90 max-w-lg mx-auto font-sans"
+            style={{ textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}
+          >
             Estima cuánto costará tu aventura según destino, duración y estilo de viaje.
-          </p>
-        </motion.div>
+          </motion.p>
+        </div>
       </section>
 
       {/* Two-column layout */}
-      <section className="max-w-6xl mx-auto px-4 pb-8 grid lg:grid-cols-2 gap-10">
+      <section className="max-w-6xl mx-auto px-4 pt-10 pb-8 grid lg:grid-cols-2 gap-10">
         {/* Left: Form */}
         <div className="space-y-6">
           <div className="grid sm:grid-cols-2 gap-4">
