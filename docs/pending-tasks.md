@@ -53,7 +53,7 @@
 - [ ] Resolver issues de contraste texto para WCAG AA compliance
 
 ### 🟢 Preview actual
-https://id-preview--119157cf-892e-40be-9417-1be6150581ad.lovable.app/
+https://nomaderia.com/
 
 ---
 

@@ -195,7 +195,7 @@ Tipografías: **Playfair Display** (headings) + **Inter** (body).
 
 ## Despliegue
 
-El proyecto está configurado para desplegarse en **Lovable**. También es compatible con cualquier plataforma estática (Vercel, Netlify, Cloudflare Pages).
+El proyecto es compatible con cualquier plataforma estática (Vercel, Netlify, Cloudflare Pages).
 
 ```sh
 npm run build
