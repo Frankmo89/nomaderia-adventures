@@ -183,9 +183,18 @@ const DidYouKnowSection = () => {
   /* ─── Auto-play on mobile only ─── */
   const scrollToIndex = useCallback((index: number) => {
     const card = cardRefs.current[index];
-    if (card && scrollRef.current) {
-      card.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    }
+    const container = scrollRef.current;
+    if (!card || !container) return;
+    // Use container.scrollTo (horizontal only) instead of scrollIntoView to
+    // avoid triggering page-level vertical scroll on mobile.
+    const containerRect = container.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const cardOffsetWithinContainer = cardRect.left - containerRect.left + container.scrollLeft;
+    const viewportWidth = container.clientWidth;
+    const idealScrollLeft = cardOffsetWithinContainer - (viewportWidth - card.offsetWidth) / 2;
+    const maxScrollLeft = Math.max(0, container.scrollWidth - viewportWidth);
+    const targetScrollLeft = Math.min(Math.max(0, idealScrollLeft), maxScrollLeft);
+    container.scrollTo({ left: targetScrollLeft, behavior: "smooth" });
   }, []);
 
   useEffect(() => {
