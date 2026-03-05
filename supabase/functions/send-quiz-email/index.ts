@@ -6,7 +6,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 // - Fall back to SITE_URL (existing Edge Function secret name)
 // - Finally fall back to the production URL
 const SITE_URL = Deno.env.get("VITE_SITE_URL") || Deno.env.get("SITE_URL") || "https://nomaderia.com";
-const WHATSAPP_PHONE = "18588996802";
+const WHATSAPP_PHONE = Deno.env.get("WHATSAPP_PHONE") || "18588996802";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +44,15 @@ const maskEmail = (raw: string): string => {
   return `${user[0] ?? ""}***@${domain}`;
 };
 
+/** Escapes HTML special characters to prevent injection in email templates */
+const escapeHtml = (str: string): string =>
+  str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -65,6 +74,17 @@ serve(async (req) => {
 
     const topDest = destinations[0];
     const otherDests = destinations.slice(1);
+
+    const safeTitle = escapeHtml(topDest.title);
+    const safeCountry = escapeHtml(topDest.country);
+    const safeSlug = encodeURIComponent(topDest.slug);
+    const safeDescription = topDest.short_description
+      ? escapeHtml(topDest.short_description)
+      : "Un destino increíble que encaja perfectamente con tu perfil.";
+    const safeDifficulty = escapeHtml(difficultyLabel[topDest.difficulty_level] || topDest.difficulty_level);
+
+    const whatsappMessage = `Hola Frank, tengo mi código NOMADA10 y quiero mi itinerario para ${topDest.title}`;
+    const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
 
     const htmlEmail = `
 <!DOCTYPE html>
@@ -90,7 +110,7 @@ serve(async (req) => {
         ¡Hola! Soy Frank 🎉
       </h2>
       <p style="color:#D6D3D1;font-size:15px;line-height:1.6;margin:0;">
-        Vi que tu destino ideal es <strong style="color:#F5F0EB;">${topDest.title}</strong>. ¡Excelente elección!
+        Vi que tu destino ideal es <strong style="color:#F5F0EB;">${safeTitle}</strong>. ¡Excelente elección!
         Aquí tienes tu recomendación #1:
       </p>
     </div>
@@ -106,18 +126,18 @@ serve(async (req) => {
       `}
       <div style="padding:20px;">
         <h3 style="font-family:'Georgia',serif;font-size:24px;color:#F5F0EB;margin:0 0 8px;">
-          ${topDest.title}
+          ${safeTitle}
         </h3>
         <p style="color:#A8A29E;font-size:13px;margin:0 0 12px;">
-          📍 ${topDest.country} · 
-          ${topDest.days_needed ? `⏱️ ${topDest.days_needed} días · ` : ""}
+          📍 ${safeCountry} · 
+          ${topDest.days_needed ? `⏱️ ${escapeHtml(topDest.days_needed)} días · ` : ""}
           ${topDest.estimated_budget_usd ? `💰 ~$${topDest.estimated_budget_usd} USD · ` : ""}
-          🏋️ ${difficultyLabel[topDest.difficulty_level] || topDest.difficulty_level}
+          🏋️ ${safeDifficulty}
         </p>
         <p style="color:#D6D3D1;font-size:14px;line-height:1.5;margin:0 0 16px;">
-          ${topDest.short_description || "Un destino increíble que encaja perfectamente con tu perfil."}
+          ${safeDescription}
         </p>
-        <a href="${SITE_URL}/destinos/${topDest.slug}" 
+        <a href="${SITE_URL}/destinos/${safeSlug}" 
            style="display:inline-block;background-color:#E86C3A;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">
           Ver Guía Completa →
         </a>
@@ -131,13 +151,13 @@ serve(async (req) => {
         También te podrían interesar:
       </h3>
       ${otherDests.map((d) => `
-      <a href="${SITE_URL}/destinos/${d.slug}" 
+      <a href="${SITE_URL}/destinos/${encodeURIComponent(d.slug)}" 
          style="display:block;background-color:#292524;border-radius:8px;padding:16px;margin-bottom:8px;text-decoration:none;">
         <span style="font-family:'Georgia',serif;font-size:16px;color:#F5F0EB;">
-          ${d.title}
+          ${escapeHtml(d.title)}
         </span>
         <span style="display:block;color:#A8A29E;font-size:12px;margin-top:4px;">
-          📍 ${d.country} ${d.estimated_budget_usd ? `· ~$${d.estimated_budget_usd} USD` : ""} · ${difficultyLabel[d.difficulty_level] || d.difficulty_level}
+          📍 ${escapeHtml(d.country)} ${d.estimated_budget_usd ? `· ~$${d.estimated_budget_usd} USD` : ""} · ${escapeHtml(difficultyLabel[d.difficulty_level] || d.difficulty_level)}
         </span>
       </a>
       `).join("")}
@@ -163,7 +183,7 @@ serve(async (req) => {
         <li>✅ Recomendaciones secretas de comida.</li>
         <li>✅ Enlaces directos de reserva.</li>
       </ul>
-      <a href="https://wa.me/${WHATSAPP_PHONE}?text=Hola%20Frank,%20tengo%20mi%20c%C3%B3digo%20NOMADA10%20y%20quiero%20mi%20itinerario%20para%20${encodeURIComponent(topDest.title)}" 
+      <a href="${whatsappUrl}" 
          style="display:inline-block;background-color:#16a34a;color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;">
         💬 Escríbeme a WhatsApp para usar tu descuento
       </a>
