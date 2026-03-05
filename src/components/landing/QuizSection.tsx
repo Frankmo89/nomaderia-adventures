@@ -14,6 +14,17 @@ import { Link } from "react-router-dom";
 import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
+
+const WHATSAPP_PHONE = "18588996802";
+const AGENT_NAME = "Frank";
+const ITINERARY_DISCOUNT = "10%";
+
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 shrink-0">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+  </svg>
+);
 
 const difficultyColor: Record<string, string> = {
   easy: "bg-secondary text-secondary-foreground",
@@ -199,7 +210,7 @@ const EmailCapture = ({
     return (
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-6">
         <span className="text-3xl mb-2 block">🎉</span>
-        <p className="text-foreground font-medium">¡Gracias! Te enviaremos aventuras personalizadas.</p>
+        <p className="text-foreground font-medium">¡Listo! Revisa tu correo. Tu descuento del {ITINERARY_DISCOUNT} está en camino.</p>
       </motion.div>
     );
   }
@@ -208,14 +219,18 @@ const EmailCapture = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mt-8 sm:mt-10 bg-card/50 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-border max-w-md mx-auto"
+      className="bg-amber-50/60 dark:bg-amber-900/10 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border-2 border-amber-400/50 max-w-md mx-auto shadow-lg shadow-amber-500/10"
     >
-      <div className="flex items-center justify-center gap-2 mb-3">
+      <div className="flex items-center justify-center gap-2 mb-2">
         <Mail className="h-5 w-5 text-primary" />
-        <h4 className="font-serif text-lg font-semibold text-foreground">¿Quieres más recomendaciones?</h4>
+        <h4 className="font-serif text-lg font-bold text-foreground text-center leading-tight">
+          📩 Guarda tus resultados y obtén un{" "}
+          <span className="text-primary underline decoration-wavy decoration-primary/60">{ITINERARY_DISCOUNT} de DESCUENTO</span>{" "}
+          en tu Itinerario Personalizado
+        </h4>
       </div>
-      <p className="text-muted-foreground text-sm mb-4">
-        Recibe aventuras personalizadas en tu inbox
+      <p className="text-muted-foreground text-sm mb-5 text-center">
+        Ingresa tu email y te enviamos tus resultados + el código de descuento exclusivo.
       </p>
       <div className="flex flex-col sm:flex-row gap-3">
         <Input
@@ -223,10 +238,10 @@ const EmailCapture = ({
           placeholder="tu@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="bg-muted text-foreground h-11 text-base"
+          className="bg-white dark:bg-muted text-foreground h-12 text-base border-amber-300/60 focus-visible:ring-primary"
         />
-        <Button onClick={onSubmit} disabled={loading} className="bg-primary text-primary-foreground whitespace-nowrap shadow-lg shadow-primary/20 h-11">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />Enviar</>}
+        <Button onClick={onSubmit} disabled={loading} className="bg-primary text-primary-foreground whitespace-nowrap shadow-lg shadow-primary/20 h-12 px-6">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />Quiero mi descuento</>}
         </Button>
       </div>
     </motion.div>
@@ -331,8 +346,6 @@ const QuizResults = ({
   setEmail,
   loading,
   emailSubmitted,
-  showEmailCapture,
-  onShowEmailCapture,
   onEmailSubmit,
 }: {
   results: QuizDestination[];
@@ -340,39 +353,63 @@ const QuizResults = ({
   setEmail: (v: string) => void;
   loading: boolean;
   emailSubmitted: boolean;
-  showEmailCapture: boolean;
-  onShowEmailCapture: () => void;
   onEmailSubmit: () => void;
-}) => (
-  <section id="quiz" className="py-16 sm:py-24 bg-background relative overflow-hidden">
-    <CelebrationParticles />
-    <div className="absolute inset-0 opacity-[0.04] bg-cover bg-center pointer-events-none"
-      style={{ backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=60)` }} />
-    <div className="container mx-auto px-5 max-w-5xl relative z-10">
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }} className="text-center mb-10 sm:mb-14">
-        <span className="text-5xl sm:text-6xl mb-4 block">🏔️</span>
-        <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3">
-          🎉 ¡Tu Aventura Ideal!
-        </h2>
-        <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto">
-          Basado en tus respuestas, estos destinos son perfectos para ti
-        </p>
-      </motion.div>
-      <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-6">
-        {results.map((d, i) => <ResultCard key={d.id} d={d} index={i} />)}
-      </div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
-        className="mt-10 sm:mt-14 text-center space-y-3">
-        <a href="#destinos" className="text-primary hover:underline font-medium text-sm sm:text-base block">
-          ¿Ninguno te convence? Explora todos los destinos →
-        </a>
-        {!showEmailCapture && !emailSubmitted && (
-          <Button variant="ghost" onClick={onShowEmailCapture} className="text-muted-foreground hover:text-foreground text-sm">
-            <Mail className="h-4 w-4 mr-2" />Recibir más recomendaciones por email
-          </Button>
+}) => {
+  const topDestination = results[0];
+  const whatsAppUrl = topDestination
+    ? buildWhatsAppUrl(
+        `Hola ${AGENT_NAME}, acabo de hacer el Quiz, mi destino ideal es ${topDestination.title} y me interesa un itinerario personalizado. ¿Qué paquetes tienes?`,
+        WHATSAPP_PHONE,
+      )
+    : undefined;
+
+  return (
+    <section id="quiz" className="py-16 sm:py-24 bg-background relative overflow-hidden">
+      <CelebrationParticles />
+      <div className="absolute inset-0 opacity-[0.04] bg-cover bg-center pointer-events-none"
+        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=60)` }} />
+      <div className="container mx-auto px-5 max-w-5xl relative z-10">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }} className="text-center mb-10 sm:mb-14">
+          <span className="text-5xl sm:text-6xl mb-4 block">🏔️</span>
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3">
+            🎉 ¡Tu Aventura Ideal!
+          </h2>
+          <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto">
+            Basado en tus respuestas, estos destinos son perfectos para ti
+          </p>
+        </motion.div>
+        <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-6">
+          {results.map((d, i) => <ResultCard key={d.id} d={d} index={i} />)}
+        </div>
+
+        {/* WhatsApp CTA — primary conversion action */}
+        {whatsAppUrl && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.5, ease: "easeOut" }}
+            className="mt-10 sm:mt-12 flex justify-center"
+          >
+            <a
+              href={whatsAppUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-lg sm:text-xl px-8 py-5 rounded-2xl shadow-2xl shadow-green-700/40 transition-all duration-200 active:scale-[0.97] sm:hover:scale-[1.03] w-full max-w-md"
+            >
+              <WhatsAppIcon />
+              Quiero que {AGENT_NAME} planifique mi viaje 💬
+            </a>
+          </motion.div>
         )}
-        {(showEmailCapture || emailSubmitted) && (
+
+        {/* Email capture — always visible, discount offer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.1 }}
+          className="mt-6 sm:mt-8"
+        >
           <EmailCapture
             email={email}
             setEmail={setEmail}
@@ -380,21 +417,28 @@ const QuizResults = ({
             emailSubmitted={emailSubmitted}
             onSubmit={onEmailSubmit}
           />
-        )}
-      </motion.div>
-    </div>
-  </section>
-);
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}
+          className="mt-8 sm:mt-10 text-center">
+          <a href="#destinos" className="text-primary hover:underline font-medium text-sm sm:text-base block">
+            ¿Ninguno te convence? Explora todos los destinos →
+          </a>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 // --- Main component ---
 const QuizSection = () => {
   const {
     step, answers, email, setEmail,
-    showResults, showEmailCapture, emailSubmitted,
+    showResults, emailSubmitted,
     loading, results,
     direction, isQuizDone,
     handleSelect, handleBack, handleSwipe,
-    fetchResults, handleEmailSubmit, handleShowEmailCapture,
+    fetchResults, handleEmailSubmit,
     handleCombinedSubmit,
   } = useQuiz(steps.length);
 
@@ -445,8 +489,6 @@ const QuizSection = () => {
       setEmail={setEmail}
       loading={loading}
       emailSubmitted={emailSubmitted}
-      showEmailCapture={showEmailCapture}
-      onShowEmailCapture={handleShowEmailCapture}
       onEmailSubmit={handleEmailSubmit}
     />
   );
