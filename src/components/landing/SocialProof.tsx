@@ -1,18 +1,14 @@
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, useSpring, useInView } from "framer-motion";
 import { Users, MapPin, ShieldCheck } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuizCount, useDestinationsCount } from "@/hooks/use-stats";
 
-/** Animated counter that counts from 0 to `target` when visible and loaded */
+/** Animated counter that counts from 0 to `target` when visible */
 const AnimatedCounter = ({
   target,
   suffix = "",
-  isLoading = false,
 }: {
   target: number;
   suffix?: string;
-  isLoading?: boolean;
 }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
@@ -21,25 +17,10 @@ const AnimatedCounter = ({
   const display = useTransform(springVal, (v) => `${Math.round(v)}${suffix}`);
 
   useEffect(() => {
-    if (isInView && !isLoading && target > 0) {
+    if (isInView) {
       motionVal.set(target);
     }
-  }, [isInView, isLoading, target, motionVal]);
-
-  if (isLoading) {
-    return (
-      <span ref={ref} aria-label="Cargando" role="status">
-        <span className="inline-block h-10 w-16 rounded-md animate-pulse bg-muted" />
-      </span>
-    );
-  }
-  if (target <= 0) {
-    return (
-      <span ref={ref} aria-live="polite" aria-atomic="true" role="status">
-        —
-      </span>
-    );
-  }
+  }, [isInView, target, motionVal]);
 
   return (
     <motion.span ref={ref} aria-live="polite" aria-atomic="true" role="status">
@@ -49,27 +30,22 @@ const AnimatedCounter = ({
 };
 
 const SocialProof = () => {
-  const { data: quizCount = 0, isLoading: quizLoading } = useQuizCount();
-  const { data: destCount = 0, isLoading: destLoading } = useDestinationsCount();
-
   const stats = [
     {
       icon: Users,
-      value: quizCount,
+      value: 350,
       suffix: "+",
       label: "Aventureros han encontrado su destino ideal",
       sublabel: "con nuestro quiz personalizado",
       isTap: false,
-      isLoading: quizLoading,
     },
     {
       icon: MapPin,
-      value: destCount,
+      value: 12,
       suffix: "",
       label: "Destinos documentados con guías completas",
       sublabel: "desde fin de semana hasta expediciones",
       isTap: false,
-      isLoading: destLoading,
     },
     {
       icon: ShieldCheck,
@@ -78,7 +54,6 @@ const SocialProof = () => {
       label: "Agente de viajes certificada",
       sublabel: "National TAP Test — The Travel Institute, USA",
       isTap: true,
-      isLoading: false,
     },
   ];
 
@@ -134,7 +109,6 @@ const SocialProof = () => {
                   <AnimatedCounter
                     target={stat.value}
                     suffix={stat.suffix}
-                    isLoading={stat.isLoading}
                   />
                 )}
               </p>
