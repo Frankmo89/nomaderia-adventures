@@ -83,7 +83,7 @@ serve(async (req) => {
       : "Un destino increíble que encaja perfectamente con tu perfil.";
     const safeDifficulty = escapeHtml(difficultyLabel[topDest.difficulty_level] || topDest.difficulty_level);
 
-    const whatsappMessage = `Hola Nomaderia, tengo mi código NOMADA10 y quiero mi itinerario para ${topDest.title}`;
+    const whatsappMessage = `Hola equipo de Nomaderia, tengo mi código NOMADA10 y quiero que planifiquen mi itinerario para ${topDest.title}.`;
     const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
 
     const htmlEmail = `
@@ -107,10 +107,9 @@ serve(async (req) => {
     <!-- Greeting -->
     <div style="padding:20px 0;">
       <h2 style="font-family:'Georgia',serif;font-size:22px;color:#F5F0EB;margin:0 0 12px;">
-        ¡Hola! Somos Nomaderia 🎉
+        ¡Hola! Somos el equipo de Nomaderia. Vimos que tu destino ideal es <strong style="color:#F5F0EB;">${safeTitle}</strong>. ¡Excelente elección!
       </h2>
       <p style="color:#D6D3D1;font-size:15px;line-height:1.6;margin:0;">
-        Vimos que tu destino ideal es <strong style="color:#F5F0EB;">${safeTitle}</strong>. ¡Excelente elección!
         Aquí tienes tu recomendación #1:
       </p>
     </div>
@@ -170,7 +169,7 @@ serve(async (req) => {
         🎁 Tu descuento exclusivo
       </h3>
       <p style="color:#D6D3D1;font-size:14px;line-height:1.5;margin:0 0 16px;">
-        Como lo prometimos en la web, aquí tienes tu código con un <strong style="color:#F5F0EB;">10% de DESCUENTO</strong> para que planifiquemos tu itinerario personalizado:
+        Como lo prometimos en la web, aquí tienes tu código con un <strong style="color:#F5F0EB;">10% de DESCUENTO</strong> para el diseño de tu itinerario personalizado:
       </p>
       <div style="background-color:#44403C;border-radius:8px;padding:16px;margin:0 0 20px;">
         <span style="font-family:'Georgia',serif;font-size:28px;font-weight:700;color:#E86C3A;letter-spacing:4px;">NOMADA10</span>
@@ -185,7 +184,7 @@ serve(async (req) => {
       </ul>
       <a href="${whatsappUrl}" 
          style="display:inline-block;background-color:#16a34a;color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;">
-        💬 Escríbenos a WhatsApp para usar tu descuento
+        💬 Escríbenos a WhatsApp para planificar tu itinerario
       </a>
     </div>
 

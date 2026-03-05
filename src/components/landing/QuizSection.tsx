@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const WHATSAPP_PHONE = "18588996802";
-const AGENT_NAME = "Frank";
 const ITINERARY_DISCOUNT = "10%";
 
 const WhatsAppIcon = () => (
@@ -369,7 +368,7 @@ const QuizResults = ({
   const topDestination = results[0];
   const whatsAppUrl = topDestination
     ? buildWhatsAppUrl(
-        `Hola ${AGENT_NAME}, acabo de hacer el Quiz, mi destino ideal es ${topDestination.title} y me interesa un itinerario personalizado. ¿Qué paquetes tienes?`,
+        `Hola equipo de Nomaderia, acabo de hacer el Quiz, mi destino ideal es ${topDestination.title} y quiero que planifiquen mi itinerario personalizado. ¿Qué paquetes tienen?`,
         WHATSAPP_PHONE,
       )
     : undefined;
@@ -409,7 +408,7 @@ const QuizResults = ({
               className="inline-flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-bold text-lg sm:text-xl px-8 py-5 rounded-2xl shadow-2xl shadow-green-700/40 transition-all duration-200 active:scale-[0.97] sm:hover:scale-[1.03] w-full max-w-md"
             >
               <WhatsAppIcon />
-              Quiero que {AGENT_NAME} planifique mi viaje 💬
+              Planifica mi itinerario 🗺️
             </a>
           </motion.div>
         )}
