@@ -6,6 +6,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 // - Fall back to SITE_URL (existing Edge Function secret name)
 // - Finally fall back to the production URL
 const SITE_URL = Deno.env.get("VITE_SITE_URL") || Deno.env.get("SITE_URL") || "https://nomaderia.com";
+const WHATSAPP_PHONE = "18588996802";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,11 +87,11 @@ serve(async (req) => {
     <!-- Greeting -->
     <div style="padding:20px 0;">
       <h2 style="font-family:'Georgia',serif;font-size:22px;color:#F5F0EB;margin:0 0 12px;">
-        ¡Hola, aventurero/a! 🎉
+        ¡Hola! Soy Frank 🎉
       </h2>
       <p style="color:#D6D3D1;font-size:15px;line-height:1.6;margin:0;">
-        Completaste el quiz de Nomaderia y encontramos el destino perfecto para ti. 
-        Basado en tus preferencias, aquí está tu recomendación #1:
+        Vi que tu destino ideal es <strong style="color:#F5F0EB;">${topDest.title}</strong>. ¡Excelente elección!
+        Aquí tienes tu recomendación #1:
       </p>
     </div>
 
@@ -143,21 +144,28 @@ serve(async (req) => {
     </div>
     ` : ""}
 
-    <!-- CTA: Itinerario Personalizado -->
+    <!-- CTA: Descuento + Servicios + WhatsApp -->
     <div style="background-color:#292524;border-radius:12px;padding:24px;margin:20px 0;text-align:center;">
       <h3 style="font-family:'Georgia',serif;font-size:18px;color:#F5F0EB;margin:0 0 8px;">
-        ¿Quieres que planifiquemos tu viaje?
+        🎁 Tu descuento exclusivo
       </h3>
       <p style="color:#D6D3D1;font-size:14px;line-height:1.5;margin:0 0 16px;">
-        Nuestros itinerarios personalizados incluyen plan día a día, 
-        presupuesto detallado, checklist de equipo y tips de seguridad.
+        Como lo prometí en la web, aquí tienes tu código con un <strong style="color:#F5F0EB;">10% de DESCUENTO</strong> para que yo planifique tu itinerario personalizado:
       </p>
-      <p style="color:#A8A29E;font-size:13px;margin:0 0 16px;">
-        Desde $299 MXN / $19 USD
+      <div style="background-color:#44403C;border-radius:8px;padding:16px;margin:0 0 20px;">
+        <span style="font-family:'Georgia',serif;font-size:28px;font-weight:700;color:#E86C3A;letter-spacing:4px;">NOMADA10</span>
+      </div>
+      <p style="color:#D6D3D1;font-size:14px;line-height:1.5;margin:0 0 4px;text-align:left;">
+        Con tu itinerario personalizado recibirás:
       </p>
-      <a href="${SITE_URL}/calculadora" 
-         style="display:inline-block;border:1px solid #E86C3A;color:#E86C3A;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;">
-        Calcular Mi Presupuesto
+      <ul style="color:#D6D3D1;font-size:14px;line-height:1.8;margin:0 0 20px;padding-left:20px;text-align:left;">
+        <li>✅ Ruta día a día optimizada.</li>
+        <li>✅ Recomendaciones secretas de comida.</li>
+        <li>✅ Enlaces directos de reserva.</li>
+      </ul>
+      <a href="https://wa.me/${WHATSAPP_PHONE}?text=Hola%20Frank,%20tengo%20mi%20c%C3%B3digo%20NOMADA10%20y%20quiero%20mi%20itinerario%20para%20${encodeURIComponent(topDest.title)}" 
+         style="display:inline-block;background-color:#16a34a;color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+        💬 Escríbeme a WhatsApp para usar tu descuento
       </a>
     </div>
 
