@@ -187,8 +187,14 @@ const DidYouKnowSection = () => {
     if (!card || !container) return;
     // Use container.scrollTo (horizontal only) instead of scrollIntoView to
     // avoid triggering page-level vertical scroll on mobile.
-    const targetScrollLeft = card.offsetLeft - (container.offsetWidth - card.offsetWidth) / 2;
-    container.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: "smooth" });
+    const containerRect = container.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const cardOffsetWithinContainer = cardRect.left - containerRect.left + container.scrollLeft;
+    const viewportWidth = container.clientWidth;
+    const idealScrollLeft = cardOffsetWithinContainer - (viewportWidth - card.offsetWidth) / 2;
+    const maxScrollLeft = Math.max(0, container.scrollWidth - viewportWidth);
+    const targetScrollLeft = Math.min(Math.max(0, idealScrollLeft), maxScrollLeft);
+    container.scrollTo({ left: targetScrollLeft, behavior: "smooth" });
   }, []);
 
   useEffect(() => {
