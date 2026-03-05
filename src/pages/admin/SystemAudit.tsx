@@ -142,7 +142,7 @@ const SystemAudit = () => {
     try {
       const { error } = await supabase.functions.invoke("send-quiz-email", {
         body: {
-          email: "test@nomaderia.com",
+          email: "nomaderia.travel@gmail.com",
           destinations: [
             {
               title: "Yosemite National Park",
