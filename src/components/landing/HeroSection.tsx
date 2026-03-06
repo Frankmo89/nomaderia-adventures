@@ -43,17 +43,15 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          {WHATSAPP_URL && (
-            <Button
-              asChild
-              size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 h-14 shadow-lg shadow-primary/30 w-full sm:w-auto"
-            >
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                Plática Conmigo
-              </a>
-            </Button>
-          )}
+          <Button
+            asChild
+            size="lg"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 h-14 shadow-lg shadow-primary/30 w-full sm:w-auto"
+          >
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+              Plática Conmigo
+            </a>
+          </Button>
           <Button
             asChild
             size="lg"
