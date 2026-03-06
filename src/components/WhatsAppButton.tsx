@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
-const WHATSAPP_PHONE = "18588996802";
+const WHATSAPP_PHONE = WHATSAPP_NUMBER;
 
 function getPageLabel(pathname: string): string {
   if (pathname === "/") return "la página principal";

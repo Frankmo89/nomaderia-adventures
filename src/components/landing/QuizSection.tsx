@@ -14,9 +14,9 @@ import { Link } from "react-router-dom";
 import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
-const WHATSAPP_PHONE = "18588996802";
+const WHATSAPP_PHONE = WHATSAPP_NUMBER;
 const ITINERARY_DISCOUNT = "10%";
 
 const WhatsAppIcon = () => (
