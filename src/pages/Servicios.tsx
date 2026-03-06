@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Check, BadgeCheck, ClipboardList, Route, Palmtree } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { useCanonical } from "@/hooks/use-seo";
+import { useMediaSlider, type MediaItem } from "@/hooks/use-media";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,69 @@ import {
 import { cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { packages, WHATSAPP_NUMBER } from "@/config/pricing";
+
+const SLIDESHOW_INTERVAL_MS = 6000;
+
+const HeroBackgroundSlideshow = ({ items }: { items: MediaItem[] }) => {
+  const [index, setIndex] = useState(0);
+
+  const advance = useCallback(() => {
+    setIndex((prev) => (items.length > 0 ? (prev + 1) % items.length : 0));
+  }, [items.length]);
+
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const id = setInterval(advance, SLIDESHOW_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [advance, items.length]);
+
+  useEffect(() => {
+    if (items.length > 0 && index >= items.length) {
+      setIndex(0);
+    }
+  }, [items.length, index]);
+
+  if (items.length === 0) return null;
+
+  const current = items[index];
+
+  return (
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current.id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1, ease: "easeInOut" }}
+          className="absolute inset-0"
+        >
+          {current.media_type === "video" ? (
+            <video
+              src={current.public_url}
+              autoPlay
+              loop
+              muted
+              playsInline
+              aria-hidden="true"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <img
+              src={current.public_url}
+              alt=""
+              role="presentation"
+              className="w-full h-full object-cover"
+            />
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Dark overlay for text legibility */}
+      <div className="absolute inset-0 bg-black/60" />
+    </>
+  );
+};
 
 const steps = [
   {
@@ -77,6 +141,7 @@ const cardItemVariants = {
 
 const Servicios = () => {
   useCanonical();
+  const { data: mediaItems } = useMediaSlider();
 
   useEffect(() => {
     document.title = "Servicios — Nomaderia";
@@ -90,35 +155,38 @@ const Servicios = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="container mx-auto px-4 pt-28 pb-16 max-w-3xl text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <Badge className="mb-6 bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary/10">
-            <BadgeCheck className="h-3.5 w-3.5 mr-1" />
-            Agente de Viajes Certificado TAP
-          </Badge>
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground mb-6">
-            Tu aventura, armada paso a paso
-          </h1>
-          <p className="text-lg md:text-xl text-foreground/70 leading-relaxed max-w-2xl mx-auto">
-            ¿Primera vez en una aventura outdoor? No te preocupes. Te diseñamos
-            un itinerario completo — ruta, equipo, presupuesto — adaptado a tu
-            nivel y estilo.
-          </p>
-          <Button asChild size="lg" className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground">
-            <a
-              href={buildWhatsAppUrl("¡Hola Nomaderia! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?", WHATSAPP_NUMBER)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MessageCircle className="h-5 w-5 mr-2" />
-              Escríbenos por WhatsApp
-            </a>
-          </Button>
-        </motion.div>
+      <section className="relative overflow-hidden pt-32 pb-20 min-h-[60vh] flex flex-col justify-center bg-zinc-900">
+        <HeroBackgroundSlideshow items={mediaItems ?? []} />
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Badge className="mb-6 bg-white/10 text-white border-white/20 hover:bg-white/10">
+              <BadgeCheck className="h-3.5 w-3.5 mr-1" />
+              Agente de Viajes Certificado TAP
+            </Badge>
+            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-6">
+              Tu aventura, armada paso a paso
+            </h1>
+            <p className="text-lg md:text-xl text-white/80 leading-relaxed max-w-2xl mx-auto">
+              ¿Primera vez en una aventura outdoor? No te preocupes. Te diseñamos
+              un itinerario completo — ruta, equipo, presupuesto — adaptado a tu
+              nivel y estilo.
+            </p>
+            <Button asChild size="lg" className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground">
+              <a
+                href={buildWhatsAppUrl("¡Hola Nomaderia! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?", WHATSAPP_NUMBER)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MessageCircle className="h-5 w-5 mr-2" />
+                Escríbenos por WhatsApp
+              </a>
+            </Button>
+          </motion.div>
+        </div>
       </section>
 
       {/* Cómo Funciona */}
