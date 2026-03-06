@@ -43,16 +43,16 @@ const SobreNosotros = () => {
             </div>
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Credencial oficial</p>
-              <h2 className="font-serif text-2xl text-foreground mb-2">Agente de Viajes Certificado</h2>
+              <h2 className="font-serif text-2xl text-foreground mb-2">Plataforma respaldada por Agentes Certificados</h2>
               <p className="text-stone-800 leading-relaxed">
-                Cuento con diploma oficial como Agente de Viajes, lo que me permite orientarte con fundamentos reales: desde cómo conseguir los mejores precios en vuelos hasta qué equipaje llevar según el clima del destino.
+                Contamos con certificación oficial como Agentes de Viajes, lo que nos permite orientarte con fundamentos reales: desde cómo conseguir los mejores precios en vuelos hasta qué equipaje llevar según el clima del destino.
               </p>
             </div>
           </div>
 
           {/* Imagen del diploma */}
           <div>
-            <p className="text-sm font-medium text-foreground mb-3">Mi diploma como Agente de Viajes:</p>
+            <p className="text-sm font-medium text-foreground mb-3">Nuestra certificación como Agentes de Viajes:</p>
             <div className="rounded-xl overflow-hidden border border-border bg-muted">
               <img
                 src="/diploma.jpg"
@@ -109,7 +109,7 @@ const SobreNosotros = () => {
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-8 text-center">
           <h2 className="font-serif text-2xl text-foreground mb-3">¿Tienes alguna pregunta?</h2>
           <p className="text-foreground/70 mb-6">
-            Escríbeme directamente. Estoy aquí para ayudarte a planear tu próxima aventura.
+            Escríbenos directamente. Estamos aquí para ayudarte a planear tu próxima aventura.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">

@@ -96,6 +96,7 @@ const staticPages = [
   url(`${SITE_URL}/calculadora`, "monthly", "0.5", today),
   url(`${SITE_URL}/sobre-nosotros`, "monthly", "0.5", today),
   url(`${SITE_URL}/privacidad`, "yearly", "0.5", today),
+  url(`${SITE_URL}/terminos`, "yearly", "0.5", today),
 ];
 
 const lines: string[] = [
