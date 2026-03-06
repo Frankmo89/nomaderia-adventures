@@ -1,4 +1,4 @@
-export const WHATSAPP_NUMBER = "18588996802";
+export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
 export interface Package {
   name: string;

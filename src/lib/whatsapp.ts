@@ -1,4 +1,4 @@
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
+export const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "18588996802";
 
 /**
  * Builds a WhatsApp `wa.me` URL with a pre-filled message.
