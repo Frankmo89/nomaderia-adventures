@@ -62,7 +62,7 @@ const PremiumItinerarySection = () => {
           </div>
 
           <p className="text-center text-foreground/70 text-lg max-w-2xl mx-auto mb-16 leading-relaxed">
-            Diseño tu itinerario de trekking desde cero, adaptado a tu cuerpo, presupuesto y sueños.
+            Diseñamos tu itinerario de trekking desde cero, adaptado a tu nivel, presupuesto y objetivos.
             Sin plantillas genéricas. Sin rutas de turista.
           </p>
 
