@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { MessageCircle, Check, BadgeCheck, ClipboardList, Route, Palmtree } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { useCanonical } from "@/hooks/use-seo";
-import { useMediaSlider, type MediaItem } from "@/hooks/use-media";
+import { useMediaSlider } from "@/hooks/use-media";
+import BackgroundSlideshow from "@/components/shared/BackgroundSlideshow";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,69 +18,6 @@ import {
 import { cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { packages, WHATSAPP_NUMBER } from "@/config/pricing";
-
-const SLIDESHOW_INTERVAL_MS = 6000;
-
-const HeroBackgroundSlideshow = ({ items }: { items: MediaItem[] }) => {
-  const [index, setIndex] = useState(0);
-
-  const advance = useCallback(() => {
-    setIndex((prev) => (items.length > 0 ? (prev + 1) % items.length : 0));
-  }, [items.length]);
-
-  useEffect(() => {
-    if (items.length <= 1) return;
-    const id = setInterval(advance, SLIDESHOW_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [advance, items.length]);
-
-  useEffect(() => {
-    if (items.length > 0 && index >= items.length) {
-      setIndex(0);
-    }
-  }, [items.length, index]);
-
-  if (items.length === 0) return null;
-
-  const current = items[index];
-
-  return (
-    <>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={current.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1, ease: "easeInOut" }}
-          className="absolute inset-0"
-        >
-          {current.media_type === "video" ? (
-            <video
-              src={current.public_url}
-              autoPlay
-              loop
-              muted
-              playsInline
-              aria-hidden="true"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src={current.public_url}
-              alt=""
-              role="presentation"
-              className="w-full h-full object-cover"
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Dark overlay for text legibility */}
-      <div className="absolute inset-0 bg-black/60" />
-    </>
-  );
-};
 
 const steps = [
   {
@@ -156,7 +94,7 @@ const Servicios = () => {
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-32 pb-20 min-h-[60vh] flex flex-col justify-center bg-zinc-900">
-        <HeroBackgroundSlideshow items={mediaItems ?? []} />
+        <BackgroundSlideshow items={mediaItems ?? []} overlayClassName="bg-black/60" />
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
