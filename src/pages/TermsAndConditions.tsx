@@ -75,7 +75,7 @@ const TermsAndConditions = () => {
           <section>
             <h2 className="font-serif text-xl text-foreground mb-3">8. Legislación aplicable</h2>
             <p>
-              Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Para cualquier controversia, las partes se someten a los tribunales competentes de México.
+              Estos términos se rigen por las leyes de los Estados Unidos Mexicanos, incluyendo la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP). Para cualquier controversia, las partes se someten a los tribunales competentes de México.
             </p>
           </section>
 

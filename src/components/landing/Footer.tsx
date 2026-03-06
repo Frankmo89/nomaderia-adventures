@@ -55,7 +55,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
 
         <div className="mt-8 pt-8 border-t border-border text-center space-y-2">
           <p className="text-xs text-muted-foreground">Aviso de Afiliados: Nomaderia puede recibir una comisión por las compras realizadas a través de nuestros enlaces recomendados, sin costo adicional para ti.</p>
-          <p className="text-xs text-muted-foreground">© 2025 Nomaderia. Todos los derechos reservados.</p>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Nomaderia. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
