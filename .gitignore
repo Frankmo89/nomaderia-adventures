@@ -3,6 +3,11 @@
 .env.local
 .env.*.local
 
+# Supabase Edge Function local secrets — never commit
+supabase/functions/.env
+supabase/functions/**/.env
+supabase/.env
+
 # Logs
 logs
 *.log
@@ -35,5 +40,3 @@ yarn.lock
 # Claude Code temp files
 tmpclaude-*
 nul
-.env.local
-.env
