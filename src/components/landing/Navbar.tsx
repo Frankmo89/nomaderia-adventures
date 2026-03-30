@@ -8,7 +8,7 @@ import { BRAND_ASSETS } from "@/config/assets";
 
 const navLinks = [
   { label: "Destinos", href: "#destinos" },
-  { label: "Gear Guide", href: "/gear" },
+  { label: "Guía de Equipo", href: "/gear" },
   { label: "Blog", href: "/blog" },
   { label: "Servicios", href: "/servicios" },
   { label: "Calculadora", href: "/calculadora" },

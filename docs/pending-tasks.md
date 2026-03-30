@@ -52,6 +52,28 @@
 - [ ] Integrar compartir en redes sociales (botones share)
 - [ ] Resolver issues de contraste texto para WCAG AA compliance
 
+### 🟠 Auditoría de Contenido (30 marzo 2026)
+
+> Ver reporte completo en `docs/audit-report.md`
+
+#### SEO — Pages sin `usePageMeta()` completo
+- [ ] `src/pages/Index.tsx` — Homepage sin meta description ni og:image dinámico (🔴 Crítico)
+- [ ] `src/pages/Destinations.tsx` — Solo tiene `useCanonical()`, falta título y descripción (🔴 Crítico)
+- [ ] `src/pages/BudgetCalculator.tsx` — Solo `document.title`, falta meta description
+- [ ] `src/pages/Servicios.tsx` — Solo `document.title`, falta meta description
+- [ ] `src/pages/SobreNosotros.tsx` — Solo `document.title`, falta meta description
+- [ ] `src/pages/PrivacyPolicy.tsx` — Solo `document.title`, falta meta description
+- [ ] `src/pages/TermsAndConditions.tsx` — Solo `document.title`, falta meta description
+
+#### Contenido en Supabase (requiere revisión manual en admin)
+- [ ] Auditar cada destino: verificar markdown en español, affiliate links funcionales, campos completos (hero_image_url, difficulty_level, estimated_budget, duration, country)
+- [ ] Auditar cada gear article: verificar productos JSON con nombre/precio/affiliate_url/imagen, tag `nomaderia-20` en Amazon links
+- [ ] Auditar cada blog post: verificar title/excerpt/content en español, category válida, reading_time, tags, links internos
+
+#### Pendientes menores
+- [ ] Subir logo final a Supabase y actualizar `src/config/assets.ts` (resolver TODO en línea 7)
+- [ ] Configurar Meta Pixel ID real en `index.html` (reemplazar `TU_PIXEL_ID_AQUI`)
+
 ### 🟢 Sitio en vivo (producción)
 https://nomaderia.com/
 

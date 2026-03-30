@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,7 +91,7 @@ const ImageUpload = ({ bucket, currentUrl, onUploadComplete }: ImageUploadProps)
         <div className="relative w-full max-w-sm">
           <img
             src={displayUrl}
-            alt="Preview"
+            alt="Vista previa"
             className="w-full h-48 object-cover rounded-lg border border-border"
           />
           <Button

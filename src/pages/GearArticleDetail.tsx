@@ -92,7 +92,7 @@ const GearArticleDetail = () => {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
-        { "@type": "ListItem", position: 2, name: "Gear Guide", item: `${SITE_URL}/gear` },
+        { "@type": "ListItem", position: 2, name: "Guía de Equipo", item: `${SITE_URL}/gear` },
         { "@type": "ListItem", position: 3, name: article.title, item: `${SITE_URL}/gear/${article.slug}` },
       ],
     };
@@ -100,10 +100,10 @@ const GearArticleDetail = () => {
 
   usePageMeta(article ? {
     title: article.title,
-    description: article.short_description || `${article.title} — Gear Guide de Nomaderia`,
+    description: article.short_description || `${article.title} — Guía de Equipo de Nomaderia`,
     image: article.hero_image_url || undefined,
     type: "article",
-  } : { title: "Gear Guide", description: "Guías de equipo outdoor para aventureros" });
+  } : { title: "Guía de Equipo", description: "Guías de equipo outdoor para aventureros" });
 
   if (loading) return (
     <main className="bg-background min-h-screen"><Navbar />
@@ -115,7 +115,7 @@ const GearArticleDetail = () => {
     <main className="bg-background min-h-screen"><Navbar />
       <div className="pt-32 text-center">
         <h1 className="font-serif text-3xl text-foreground mb-4">Artículo no encontrado</h1>
-        <Button asChild><Link to="/gear">← Volver a Gear Guide</Link></Button>
+        <Button asChild><Link to="/gear">← Volver a Guía de Equipo</Link></Button>
       </div>
     </main>
   );
@@ -127,7 +127,7 @@ const GearArticleDetail = () => {
       <Navbar />
       <SEOHead
         title={article.title}
-        description={article.short_description || `${article.title} — Gear Guide de Nomaderia`}
+        description={article.short_description || `${article.title} — Guía de Equipo de Nomaderia`}
         image={article.hero_image_url || undefined}
       />
       {jsonLd && <JsonLd data={jsonLd} />}
@@ -145,7 +145,7 @@ const GearArticleDetail = () => {
             <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
               <Link to="/" className="text-white/60 hover:text-white">Inicio</Link>
               <span className="text-white/40">/</span>
-              <Link to="/gear" className="text-white/60 hover:text-white">Gear Guide</Link>
+              <Link to="/gear" className="text-white/60 hover:text-white">Guía de Equipo</Link>
               <span className="text-white/40">/</span>
               <span className="text-white/70 truncate max-w-[200px]" aria-current="page">{article.title}</span>
             </nav>

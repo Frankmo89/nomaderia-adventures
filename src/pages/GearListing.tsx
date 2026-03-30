@@ -20,14 +20,14 @@ const GearListing = () => {
   useCanonical();
 
   usePageMeta({
-    title: "Gear Guide",
+    title: "Guía de Equipo",
     description: "Todo lo que necesitas para tu aventura, revisado por expertos para principiantes.",
   });
 
   const collectionLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Gear Guide — Nomaderia Adventures",
+    name: "Guía de Equipo — Nomaderia Adventures",
     description: "Todo lo que necesitas para tu aventura, revisado por expertos para principiantes.",
     url: `${SITE_URL}/gear`,
     inLanguage: "es",
@@ -47,7 +47,7 @@ const GearListing = () => {
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="font-serif text-4xl md:text-5xl font-bold text-foreground text-center mb-4"
           >
-            Gear Guide
+            Guía de Equipo
           </motion.h1>
           <p className="text-center text-muted-foreground mb-10 max-w-xl mx-auto">
             Todo lo que necesitas para tu aventura, revisado por expertos para principiantes.
