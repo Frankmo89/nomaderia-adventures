@@ -17,7 +17,7 @@ interface EmailLog {
 
 const typeLabels: Record<string, string> = {
   quiz_results: "Quiz",
-  gear_guide: "Gear Guide",
+  gear_guide: "Guía de Equipo",
   itinerary_cta: "Itinerario CTA",
 };
 
