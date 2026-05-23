@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { MessageCircle, Check, BadgeCheck, ClipboardList, Route, Palmtree } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
@@ -17,7 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
-import { packages, WHATSAPP_NUMBER } from "@/config/pricing";
+import { products, WHATSAPP_NUMBER } from "@/config/pricing";
 
 const steps = [
   {
@@ -80,17 +79,10 @@ const cardItemVariants = {
 const Servicios = () => {
   useCanonical();
   usePageMeta({
-    title: "Servicios",
-    description: "Contrata alerta de permisos, itinerario personalizado o bundle para viajar con un plan claro.",
+    title: "Servicios — Itinerarios y Alertas de Permisos | Nomaderia",
+    description: "Alerta de permisos $29 USD. Itinerario personalizado $29 USD. Revisado por agente TAP certificado. Para hispanos en EE. UU.",
   });
   const { data: mediaItems } = useMediaSlider();
-
-  useEffect(() => {
-    document.title = "Servicios — Nomaderia";
-    return () => {
-      document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando";
-    };
-  }, []);
 
   return (
     <main className="bg-background min-h-screen">
@@ -165,7 +157,7 @@ const Servicios = () => {
         </div>
       </section>
 
-      {/* Paquetes */}
+      {/* Productos */}
       <section className="container mx-auto px-4 pb-20 max-w-6xl">
         <motion.div
           className="grid md:grid-cols-3 gap-8 items-start"
@@ -174,75 +166,71 @@ const Servicios = () => {
           whileInView="visible"
           viewport={{ once: true }}
         >
-          {packages.map((pkg) => {
-            const url = buildWhatsAppUrl(pkg.message, WHATSAPP_NUMBER);
-            return (
-              <motion.div key={pkg.name} variants={cardItemVariants}>
-                <Card
-                  className={cn(
-                    "relative flex flex-col h-full bg-card shadow-lg",
-                    pkg.popular
-                      ? "border-2 border-primary shadow-primary/10 md:scale-105"
-                      : "border-border"
-                  )}
-                >
-                  {pkg.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-primary text-primary-foreground hover:bg-primary">
-                        Más popular
-                      </Badge>
-                    </div>
-                  )}
-                  <CardHeader className="text-center pt-8">
-                    <h3 className="font-serif text-2xl text-foreground mb-2">
-                      {pkg.name}
-                    </h3>
-                    <div className="space-y-1">
-                      <p className="text-3xl font-bold text-foreground">
-                        {pkg.priceUsd}
-                      </p>
-                      <p className="text-sm text-foreground/50">{pkg.priceMxn}</p>
-                    </div>
-                    <p className="text-sm text-foreground/70 mt-2">
-                      {pkg.duration}
-                    </p>
-                    {pkg.highlight && (
-                      <p className="text-xs font-medium text-primary mt-2">
-                        ✦ {pkg.highlight}
-                      </p>
-                    )}
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <ul className="space-y-3">
-                      {pkg.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3">
-                          <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                          <span className="text-foreground/70 text-sm">
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      asChild
-                      className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+          {products.map((product) => (
+            <motion.div key={product.id} variants={cardItemVariants}>
+              <Card
+                className={cn(
+                  "relative flex flex-col h-full bg-card shadow-lg",
+                  product.popular
+                    ? "border-2 border-primary shadow-primary/10 md:scale-105"
+                    : "border-border"
+                )}
+              >
+                {product.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-primary text-primary-foreground hover:bg-primary">
+                      Más popular
+                    </Badge>
+                  </div>
+                )}
+                {product.label && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary">
+                      {product.label}
+                    </Badge>
+                  </div>
+                )}
+                <CardHeader className="text-center pt-8">
+                  <h3 className="font-serif text-2xl text-foreground mb-2">
+                    {product.name}
+                  </h3>
+                  <p className="text-3xl font-bold text-foreground">
+                    {product.price}
+                  </p>
+                  <p className="text-sm text-foreground/70 mt-2">
+                    {product.description}
+                  </p>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <ul className="space-y-3">
+                    {product.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-foreground/70 text-sm">
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    asChild
+                    className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    <a
+                      href={product.ctaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <MessageCircle className="h-5 w-5 mr-2" />
-                        {pkg.cta}
-                      </a>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            );
-          })}
+                      {product.id === "permit_alert" ? null : <MessageCircle className="h-5 w-5 mr-2" />}
+                      {product.cta}
+                    </a>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          ))}
         </motion.div>
       </section>
 

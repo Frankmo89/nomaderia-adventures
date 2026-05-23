@@ -1,59 +1,67 @@
 export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
+import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
-export interface Package {
+export interface Product {
+  id: "permit_alert" | "itinerary" | "bundle";
   name: string;
-  priceUsd: string;
-  priceMxn: string;
-  duration: string;
-  popular: boolean;
-  highlight?: string;
+  price: string;
+  type: "one-time" | "bundle";
+  description: string;
   features: string[];
   cta: string;
-  message: string;
+  ctaUrl: string;
+  label?: string;
+  popular?: boolean;
 }
 
-export const packages: Package[] = [
+const STRIPE_SENTINEL_URL = import.meta.env.VITE_STRIPE_SENTINEL_URL || "#";
+
+export const products: Product[] = [
   {
+    id: "permit_alert",
     name: "Alerta de Permisos",
-    priceUsd: "$29 USD",
-    priceMxn: "Pago único",
-    duration: "Te avisamos cuando se libere tu cupo en Yosemite",
-    popular: false,
+    price: "$29 USD",
+    type: "one-time",
+    description: "Te avisamos cuando se libere tu cupo en el parque",
     features: [
-      "Monitoreo de disponibilidad en tiempo real",
-      "Notificación inmediata por WhatsApp",
-      "Guía rápida para completar tu reserva",
+      "Monitoreo 24/7",
+      "Aviso por WhatsApp",
+      "Yosemite y más parques",
     ],
-    cta: "Quiero mi alerta de permisos",
-    message: "Hola Nomaderia, me interesa la Alerta de Permisos de $29 USD. ¿Cuáles son los siguientes pasos?",
+    cta: "Quiero mi alerta",
+    ctaUrl: STRIPE_SENTINEL_URL,
   },
   {
+    id: "itinerary",
     name: "Itinerario Personalizado",
-    priceUsd: "$29 USD",
-    priceMxn: "Pago único",
-    duration: "Tu plan día a día revisado por agente TAP certificado",
-    popular: true,
+    price: "$29 USD",
+    type: "one-time",
+    description: "Tu plan día a día según tu nivel, revisado por agente TAP",
     features: [
-      "Ruta diaria adaptada a tu nivel",
-      "Checklist de equipo recomendado",
-      "Presupuesto estimado por categoría",
+      "Personalizado por nivel",
+      "Revisado por agente TAP certificado",
+      "Incluye gear y preparación física",
     ],
-    cta: "Quiero mi itinerario personalizado",
-    message: "Hola Nomaderia, me interesa el Itinerario Personalizado de $29 USD. ¿Cuáles son los siguientes pasos?",
+    cta: "Quiero mi itinerario",
+    ctaUrl: buildWhatsAppUrl("Hola, quiero mi itinerario personalizado", WHATSAPP_NUMBER),
+    popular: true,
   },
   {
-    name: "Bundle",
-    priceUsd: "$49 USD",
-    priceMxn: "Pago único",
-    duration: "Alerta de Permisos + Itinerario Personalizado",
-    popular: false,
-    highlight: "Solución Completa",
+    id: "bundle",
+    name: "Solución Completa",
+    price: "$49 USD",
+    type: "bundle",
+    label: "Ahorra $9",
+    description: "Alerta de permisos + itinerario personalizado",
     features: [
-      "Incluye ambos servicios con descuento",
-      "Seguimiento para reservar tu cupo",
-      "Plan día a día listo para viajar",
+      "Monitoreo 24/7",
+      "Aviso por WhatsApp",
+      "Yosemite y más parques",
+      "Personalizado por nivel",
+      "Revisado por agente TAP certificado",
+      "Incluye gear y preparación física",
     ],
-    cta: "Quiero la solución completa",
-    message: "Hola Nomaderia, me interesa el Bundle de $49 USD con ambos servicios. ¿Cuáles son los siguientes pasos?",
+    cta: "Quiero los dos",
+    ctaUrl: buildWhatsAppUrl("Hola, quiero la Solución Completa (alerta + itinerario)", WHATSAPP_NUMBER),
   },
 ];

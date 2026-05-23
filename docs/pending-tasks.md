@@ -57,10 +57,10 @@
 > Ver reporte completo en `docs/audit-report.md`
 
 #### SEO — Pages sin `usePageMeta()` completo
-- [ ] `src/pages/Index.tsx` — Homepage sin meta description ni og:image dinámico (🔴 Crítico)
-- [ ] `src/pages/Destinations.tsx` — Solo tiene `useCanonical()`, falta título y descripción (🔴 Crítico)
-- [ ] `src/pages/BudgetCalculator.tsx` — Solo `document.title`, falta meta description
-- [ ] `src/pages/Servicios.tsx` — Solo `document.title`, falta meta description
+- [x] `src/pages/Index.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
+- [x] `src/pages/Destinations.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
+- [x] `src/pages/BudgetCalculator.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
+- [x] `src/pages/Servicios.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
 - [ ] `src/pages/SobreNosotros.tsx` — Solo `document.title`, falta meta description
 - [ ] `src/pages/PrivacyPolicy.tsx` — Solo `document.title`, falta meta description
 - [ ] `src/pages/TermsAndConditions.tsx` — Solo `document.title`, falta meta description
@@ -74,17 +74,42 @@
 - [ ] Subir logo final a Supabase y actualizar `src/config/assets.ts` (resolver TODO en línea 7)
 - [ ] Configurar Meta Pixel ID real en `index.html` (reemplazar `TU_PIXEL_ID_AQUI`)
 
-#### Reporte automático (23 mayo 2026)
-- [ ] Falta `public/diploma.jpg` (imagen de certificación TAP)
-- [ ] Sigue pendiente reemplazar `TU_PIXEL_ID_AQUI` en `index.html` con el Pixel ID real
-- [ ] Edge Function `send-drip-emails` aún contiene precios en MXN (requiere actualización separada)
-
 ### 🟢 Sitio en vivo (producción)
 https://nomaderia.com/
 
 ---
 
 ## Changelog (completados)
+
+### ✅ Cuatro Fixes Dirigidos — Pricing, Permit Alert, SEO, Admin Form (Mayo 2026)
+
+**FIX 1 — Pricing Restructure:**
+- [x] Reemplazada estructura de 3 paquetes (Weekend/Aventura/Expedición) por 2 productos + 1 bundle
+- [x] Product A: "Alerta de Permisos" — $29 USD (Stripe)
+- [x] Product B: "Itinerario Personalizado" — $29 USD (WhatsApp)
+- [x] Bundle: "Solución Completa" — $49 USD (Ahorra $9)
+- [x] Eliminados precios MXN de `src/config/pricing.ts`, `Servicios.tsx`, `PremiumItinerarySection.tsx`
+- [x] Actualizado test `src/pages/Servicios.test.ts`
+
+**FIX 2 — Permit Alert CTA en Destination Sidebar:**
+- [x] Botón "Alerta de permisos — $29 USD" en sidebar "Reserva Tu Viaje" (`DestinationDetail.tsx`)
+- [x] Condición: solo aparece si `affiliate_links.permit_alert_url` está configurado
+- [x] Estilo: bg-[#D97706] text-white, Bell icon, full width
+
+**FIX 3 — SEO Meta en 4 páginas:**
+- [x] `usePageMeta()` en Index.tsx, Destinations.tsx, BudgetCalculator.tsx, Servicios.tsx
+
+**FIX 4 — Admin Form: Campo permit_alert_url:**
+- [x] Nuevo campo "URL Alerta de Permisos (Stripe)" en `AdminDestinationForm.tsx`
+- [x] Primera posición en sección Affiliate Links, antes de flights_url
+- [x] Help text: "Solo para parques con permisos difíciles (Yosemite, Grand Canyon)"
+
+**REPORT-ONLY (NO implementados, requieren acción humana):**
+- [ ] `public/diploma.jpg` falta — foto de certificación TAP de Frank
+- [ ] Facebook Pixel `TU_PIXEL_ID_AQUI` aún es placeholder en `index.html`
+- [ ] Precios MXN aún presentes en `supabase/functions/send-drip-emails/index.ts`
+- [ ] Precios MXN aún presentes en `supabase/functions/send-quiz-results/index.ts`
+- [ ] Schema drift: tablas `sentinel_leads` y `media_slider` faltan en `src/integrations/supabase/types.ts` (regenerar con CLI)
 
 ### ✅ Fase 4 — Armadura de Titanio: Monitoreo y Auditoría Avanzada (Marzo 2026)
 - [x] **Botón de Prueba en Auditoría** — Nueva tarjeta "Prueba de Ventas" en `SystemAudit.tsx` con botón "Enviar Correo de Prueba" que llama a la Edge Function `send-quiz-email` con datos de prueba (test@nomaderia.com, destino Yosemite). Muestra estados: Enviando…, ✅ Éxito, ❌ Error con mensaje.

@@ -14,7 +14,7 @@ import { calculateBudget } from "@/lib/budget-calc";
 import type { ComfortLevel } from "@/lib/budget-calc";
 import { useDestinations } from "@/hooks/use-destinations";
 import type { DestinationCard } from "@/hooks/use-destinations";
-import { usePageMeta } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 
 const comfortOptions: { value: ComfortLevel; label: string; icon: LucideIcon }[] = [
   { value: "budget", label: "Mochilero", icon: Tent },
@@ -32,11 +32,12 @@ const originZones = [
 ];
 
 const BudgetCalculator = () => {
-  const { data: destinations = [] } = useDestinations();
+  useCanonical();
   usePageMeta({
-    title: "Calculadora de Presupuesto",
-    description: "Estima el costo real de tu viaje por destino, duración y nivel de confort en minutos.",
+    title: "Calculadora de Presupuesto para tu Aventura | Nomaderia",
+    description: "Calcula cuánto cuesta tu viaje a los parques nacionales. Estimados reales en dólares para viajeros hispanos en EE. UU.",
   });
+  const { data: destinations = [] } = useDestinations();
   const [selectedSlug, setSelectedSlug] = useState("");
   const [origin, setOrigin] = useState("");
   const [days, setDays] = useState(5);

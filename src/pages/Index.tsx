@@ -24,8 +24,8 @@ const CTA_WHATSAPP_MESSAGE = '¡Hola! Estoy listo para diseñar mi viaje a medid
 const Index = () => {
   useCanonical();
   usePageMeta({
-    title: "Inicio",
-    description: "Descubre destinos, calcula tu presupuesto y empieza tu primera aventura outdoor con Nomadería.",
+    title: "Nomaderia — Aventuras en Parques Nacionales en Español",
+    description: "Itinerarios personalizados y alertas de permisos para hispanos en EE. UU. Planea tu aventura en Yosemite, Grand Canyon y más. En español.",
   });
 
   const ctaWhatsAppUrl = buildWhatsAppUrl(CTA_WHATSAPP_MESSAGE, CTA_WHATSAPP_NUMBER);

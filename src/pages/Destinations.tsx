@@ -7,8 +7,8 @@ import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 const Destinations = () => {
   useCanonical();
   usePageMeta({
-    title: "Destinos",
-    description: "Explora todos los destinos de Nomadería y encuentra la aventura ideal para tu nivel.",
+    title: "Destinos — Parques Nacionales y Aventuras Outdoor | Nomaderia",
+    description: "Explora destinos por nivel de dificultad. Guías en español para hispanos en Estados Unidos.",
   });
 
   return (
