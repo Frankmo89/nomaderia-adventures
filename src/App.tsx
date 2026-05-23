@@ -28,6 +28,7 @@ const TermsAndConditions = lazyWithRetry(() => import("./pages/TermsAndCondition
 const SobreNosotros = lazyWithRetry(() => import("./pages/SobreNosotros"));
 
 // Rutas secundarias — lazy load con retry automático
+const SentinelLanding = lazyWithRetry(() => import("./pages/SentinelLanding"));
 const BudgetCalculator = lazyWithRetry(() => import("./pages/BudgetCalculator"));
 const AdminLogin = lazyWithRetry(() => import("./pages/admin/AdminLogin"));
 const AdminLayout = lazyWithRetry(() => import("./pages/admin/AdminLayout"));
@@ -81,6 +82,7 @@ const App = () => (
               <Route path="/blog/:slug" element={<ErrorBoundary><BlogPostDetail /></ErrorBoundary>} />
               <Route path="/privacidad" element={<ErrorBoundary><PrivacyPolicy /></ErrorBoundary>} />
               <Route path="/terminos" element={<ErrorBoundary><TermsAndConditions /></ErrorBoundary>} />
+              <Route path="/sentinel" element={<ErrorBoundary><SentinelLanding /></ErrorBoundary>} />
               <Route path="/servicios" element={<ErrorBoundary><Servicios /></ErrorBoundary>} />
               <Route path="/sobre-nosotros" element={<ErrorBoundary><SobreNosotros /></ErrorBoundary>} />
               <Route path="/admin/login" element={<ErrorBoundary><AdminLogin /></ErrorBoundary>} />
