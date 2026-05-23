@@ -43,31 +43,32 @@ const SentinelLanding = () => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase
-        .from("sentinel_leads")
-        .insert({ email: data.email });
+        .from("sentinel_leads" as any)
+        .insert([{ email: data.email, source: "sentinel-landing" }]);
 
       if (error) {
         if (error.code === "23505") {
-          toast({
-            title: "Ya estás en la lista",
-            description: "Este email ya está registrado. Te contactaremos pronto.",
-          });
+          // Duplicate email — treat as success, continue
         } else {
-          throw error;
+          toast({
+            title: "Error",
+            description: "Hubo un problema. Intenta de nuevo.",
+            variant: "destructive",
+          });
+          return;
         }
+      }
+
+      const stripeUrl = import.meta.env.VITE_STRIPE_SENTINEL_URL;
+      if (stripeUrl) {
+        window.location.href = stripeUrl;
       } else {
         setSubmitted(true);
         toast({
-          title: "¡Listo!",
-          description: "Te contactaremos por WhatsApp para confirmar tu cupo.",
+          title: "¡Registrado!",
+          description: "Tu email fue guardado exitosamente. Te contactaremos pronto.",
         });
       }
-    } catch {
-      toast({
-        title: "Error",
-        description: "Hubo un problema. Intenta de nuevo.",
-        variant: "destructive",
-      });
     } finally {
       setIsSubmitting(false);
     }
