@@ -3,7 +3,7 @@ import { MessageCircle, Check, BadgeCheck, ClipboardList, Route, Palmtree } from
 import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { useCanonical } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 import { useMediaSlider } from "@/hooks/use-media";
 import BackgroundSlideshow from "@/components/shared/BackgroundSlideshow";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +79,10 @@ const cardItemVariants = {
 
 const Servicios = () => {
   useCanonical();
+  usePageMeta({
+    title: "Servicios",
+    description: "Contrata alerta de permisos, itinerario personalizado o bundle para viajar con un plan claro.",
+  });
   const { data: mediaItems } = useMediaSlider();
 
   useEffect(() => {

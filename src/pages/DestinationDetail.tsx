@@ -333,6 +333,13 @@ const DestinationDetail = () => {
                   )}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
+                  {affiliateLinks.permit_alert_url && (
+                    <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full">
+                      <a href={affiliateLinks.permit_alert_url} target="_blank" rel="noopener noreferrer">
+                        Quiero mi alerta de permisos — $29 USD
+                      </a>
+                    </Button>
+                  )}
                   {affiliateLinks.flights_url && (
                     <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full">
                       <a href={affiliateLinks.flights_url} target="_blank" rel="noopener noreferrer">
