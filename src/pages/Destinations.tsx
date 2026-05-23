@@ -2,10 +2,14 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import DestinationsCatalog from "@/components/landing/DestinationsCatalog";
-import { useCanonical } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 
 const Destinations = () => {
   useCanonical();
+  usePageMeta({
+    title: "Destinos",
+    description: "Explora todos los destinos de Nomadería y encuentra la aventura ideal para tu nivel.",
+  });
 
   return (
     <main className="bg-background min-h-screen">

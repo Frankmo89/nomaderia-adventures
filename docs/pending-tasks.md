@@ -74,6 +74,11 @@
 - [ ] Subir logo final a Supabase y actualizar `src/config/assets.ts` (resolver TODO en línea 7)
 - [ ] Configurar Meta Pixel ID real en `index.html` (reemplazar `TU_PIXEL_ID_AQUI`)
 
+#### Reporte automático (23 mayo 2026)
+- [ ] Falta `public/diploma.jpg` (imagen de certificación TAP)
+- [ ] Sigue pendiente reemplazar `TU_PIXEL_ID_AQUI` en `index.html` con el Pixel ID real
+- [ ] Edge Function `send-drip-emails` aún contiene precios en MXN (requiere actualización separada)
+
 ### 🟢 Sitio en vivo (producción)
 https://nomaderia.com/
 
