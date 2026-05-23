@@ -2,10 +2,14 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import DestinationsCatalog from "@/components/landing/DestinationsCatalog";
-import { useCanonical } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 
 const Destinations = () => {
   useCanonical();
+  usePageMeta({
+    title: "Destinos — Parques Nacionales y Aventuras Outdoor | Nomaderia",
+    description: "Explora destinos por nivel de dificultad. Guías en español para hispanos en Estados Unidos.",
+  });
 
   return (
     <main className="bg-background min-h-screen">

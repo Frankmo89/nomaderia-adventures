@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -333,6 +333,13 @@ const DestinationDetail = () => {
                   )}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
+                  {affiliateLinks.permit_alert_url && (
+                    <Button asChild className="bg-[#D97706] hover:bg-[#D97706]/90 text-white w-full font-semibold">
+                      <a href={affiliateLinks.permit_alert_url} target="_blank" rel="noopener noreferrer">
+                        <Bell className="mr-2 h-4 w-4" /> Alerta de permisos — $29 USD
+                      </a>
+                    </Button>
+                  )}
                   {affiliateLinks.flights_url && (
                     <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full">
                       <a href={affiliateLinks.flights_url} target="_blank" rel="noopener noreferrer">

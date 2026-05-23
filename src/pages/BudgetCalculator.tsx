@@ -14,6 +14,7 @@ import { calculateBudget } from "@/lib/budget-calc";
 import type { ComfortLevel } from "@/lib/budget-calc";
 import { useDestinations } from "@/hooks/use-destinations";
 import type { DestinationCard } from "@/hooks/use-destinations";
+import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 
 const comfortOptions: { value: ComfortLevel; label: string; icon: LucideIcon }[] = [
   { value: "budget", label: "Mochilero", icon: Tent },
@@ -31,6 +32,11 @@ const originZones = [
 ];
 
 const BudgetCalculator = () => {
+  useCanonical();
+  usePageMeta({
+    title: "Calculadora de Presupuesto para tu Aventura | Nomaderia",
+    description: "Calcula cuánto cuesta tu viaje a los parques nacionales. Estimados reales en dólares para viajeros hispanos en EE. UU.",
+  });
   const { data: destinations = [] } = useDestinations();
   const [selectedSlug, setSelectedSlug] = useState("");
   const [origin, setOrigin] = useState("");

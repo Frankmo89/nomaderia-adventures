@@ -1,63 +1,67 @@
 export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
+import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
-export interface Package {
+export interface Product {
+  id: "permit_alert" | "itinerary" | "bundle";
   name: string;
-  priceUsd: string;
-  priceMxn: string;
-  duration: string;
-  popular: boolean;
-  highlight?: string;
+  price: string;
+  type: "one-time" | "bundle";
+  description: string;
   features: string[];
   cta: string;
-  message: string;
+  ctaUrl: string;
+  label?: string;
+  popular?: boolean;
 }
 
-export const packages: Package[] = [
+const STRIPE_SENTINEL_URL = import.meta.env.VITE_STRIPE_SENTINEL_URL || "#";
+
+export const products: Product[] = [
   {
-    name: "Weekend",
-    priceUsd: "$19 USD",
-    priceMxn: "$299 MXN",
-    duration: "1-3 días",
-    popular: false,
+    id: "permit_alert",
+    name: "Alerta de Permisos",
+    price: "$29 USD",
+    type: "one-time",
+    description: "Te avisamos cuando se libere tu cupo en el parque",
     features: [
-      "Diseño de ruta 100% personalizada",
-      "Guía de equipo técnico optimizado",
-      "Presupuesto estratégico detallado",
-      "Mapa interactivo offline",
+      "Monitoreo 24/7",
+      "Aviso por WhatsApp",
+      "Yosemite y más parques",
     ],
-    cta: "Planificar mi Weekend",
-    message: "Hola Nomaderia, me interesa el paquete Weekend para un viaje de 1-3 días. ¿Cuáles son los siguientes pasos?",
+    cta: "Quiero mi alerta",
+    ctaUrl: STRIPE_SENTINEL_URL,
   },
   {
-    name: "Aventura",
-    priceUsd: "$35 USD",
-    priceMxn: "$549 MXN",
-    duration: "4-7 días",
+    id: "itinerary",
+    name: "Itinerario Personalizado",
+    price: "$29 USD",
+    type: "one-time",
+    description: "Tu plan día a día según tu nivel, revisado por agente TAP",
+    features: [
+      "Personalizado por nivel",
+      "Revisado por agente TAP certificado",
+      "Incluye gear y preparación física",
+    ],
+    cta: "Quiero mi itinerario",
+    ctaUrl: buildWhatsAppUrl("Hola, quiero mi itinerario personalizado", WHATSAPP_NUMBER),
     popular: true,
-    features: [
-      "Todo lo del plan Weekend +",
-      "Plan de acondicionamiento físico",
-      "Comparativa de alojamientos seguros",
-      "Logística de transportes locales",
-      "Soporte de dudas pre-viaje",
-    ],
-    cta: "Diseñar mi Aventura",
-    message: "Hola Nomaderia, me interesa el paquete Aventura para un viaje de 4-7 días. ¿Cuáles son los siguientes pasos?",
   },
   {
-    name: "Expedición",
-    priceUsd: "$59 USD",
-    priceMxn: "$899 MXN",
-    duration: "8+ días",
-    popular: false,
-    highlight: "Soporte por WhatsApp durante el viaje",
+    id: "bundle",
+    name: "Solución Completa",
+    price: "$49 USD",
+    type: "bundle",
+    label: "Ahorra $9",
+    description: "Alerta de permisos + itinerario personalizado",
     features: [
-      "Todo lo del plan Aventura +",
-      "Acompañamiento 24/7 en ruta (WhatsApp)",
-      "Plan B garantizado (Ruta alternativa por clima)",
-      "Checklist de seguridad premium",
+      "Monitoreo 24/7",
+      "Aviso por WhatsApp",
+      "Yosemite y más parques",
+      "Personalizado por nivel",
+      "Revisado por agente TAP certificado",
+      "Incluye gear y preparación física",
     ],
-    cta: "Crear mi Expedición",
-    message: "Hola Nomaderia, me interesa el paquete Expedición para un viaje de 8+ días. ¿Cuáles son los siguientes pasos?",
+    cta: "Quiero los dos",
+    ctaUrl: buildWhatsAppUrl("Hola, quiero la Solución Completa (alerta + itinerario)", WHATSAPP_NUMBER),
   },
 ];

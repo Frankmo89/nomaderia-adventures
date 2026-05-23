@@ -5,8 +5,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
-import { packages, WHATSAPP_NUMBER } from "@/config/pricing";
+import { products } from "@/config/pricing";
 
 const benefits = [
   {
@@ -90,11 +89,9 @@ const PremiumItinerarySection = () => {
 
           {/* Pricing cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {packages.map((pkg, i) => {
-              const url = buildWhatsAppUrl(pkg.message, WHATSAPP_NUMBER);
-              return (
+            {products.map((product, i) => (
               <motion.div
-                key={pkg.name}
+                key={product.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -103,40 +100,39 @@ const PremiumItinerarySection = () => {
                 <Card
                   className={cn(
                     "relative flex flex-col h-full bg-white shadow-lg",
-                    pkg.popular
+                    product.popular
                       ? "border-2 border-primary shadow-primary/10"
                       : "border-border"
                   )}
                 >
-                  {pkg.popular && (
+                  {product.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <Badge className="bg-primary text-primary-foreground hover:bg-primary">
                         Más Popular
                       </Badge>
                     </div>
                   )}
+                  {product.label && !product.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary">
+                        {product.label}
+                      </Badge>
+                    </div>
+                  )}
                   <CardHeader className="text-center pt-7 pb-3">
                     <h3 className="font-serif text-xl text-foreground mb-1">
-                      {pkg.name}
+                      {product.name}
                     </h3>
-                    <div className="space-y-1">
-                      <p className="text-2xl font-bold text-foreground">
-                        {pkg.priceUsd}
-                      </p>
-                      <p className="text-sm text-foreground/50">{pkg.priceMxn}</p>
-                    </div>
-                    <p className="text-xs text-foreground/60 mt-1">
-                      {pkg.duration}
+                    <p className="text-2xl font-bold text-foreground">
+                      {product.price}
                     </p>
-                    {pkg.highlight && (
-                      <p className="text-xs font-medium text-primary mt-2">
-                        ✦ {pkg.highlight}
-                      </p>
-                    )}
+                    <p className="text-xs text-foreground/60 mt-1">
+                      {product.description}
+                    </p>
                   </CardHeader>
                   <CardContent className="flex-1 pt-0">
                     <ul className="space-y-2">
-                      {pkg.features.map((feature) => (
+                      {product.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-2">
                           <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                           <span className="text-foreground/70 text-sm">
@@ -147,29 +143,22 @@ const PremiumItinerarySection = () => {
                     </ul>
                   </CardContent>
                   <CardFooter>
-                    {url ? (
-                      <Button
-                        asChild
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                    <Button
+                      asChild
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                      <a
+                        href={product.ctaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {pkg.cta}
-                        </a>
-                      </Button>
-                    ) : (
-                      <Button disabled className="w-full">
-                        {pkg.cta}
-                      </Button>
-                    )}
+                        {product.cta}
+                      </a>
+                    </Button>
                   </CardFooter>
                 </Card>
               </motion.div>
-              );
-            })}
+            ))}
           </div>
 
           {/* Link to full details */}

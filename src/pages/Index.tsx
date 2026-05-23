@@ -12,7 +12,7 @@ import TravelInsuranceSection from "@/components/landing/TravelInsuranceSection"
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
-import { useCanonical, SITE_URL } from "@/hooks/use-seo";
+import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useMemo } from "react";
 import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,10 @@ const CTA_WHATSAPP_MESSAGE = '¡Hola! Estoy listo para diseñar mi viaje a medid
 
 const Index = () => {
   useCanonical();
+  usePageMeta({
+    title: "Nomaderia — Aventuras en Parques Nacionales en Español",
+    description: "Itinerarios personalizados y alertas de permisos para hispanos en EE. UU. Planea tu aventura en Yosemite, Grand Canyon y más. En español.",
+  });
 
   const ctaWhatsAppUrl = buildWhatsAppUrl(CTA_WHATSAPP_MESSAGE, CTA_WHATSAPP_NUMBER);
 
