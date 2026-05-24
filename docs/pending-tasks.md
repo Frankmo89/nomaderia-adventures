@@ -82,6 +82,15 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Mantenimiento SEO — sitemap y robots (Mayo 2026)
+- [x] `public/sitemap.xml` actualizado con rutas públicas faltantes indexables: `/destinos`, `/terminos`, `/servicios` y `/sentinel`
+- [x] Se mantuvieron intactas las entradas existentes y se dejó fuera `/gracias` por ser una página de post-pago no indexable
+- [x] `public/robots.txt` ahora bloquea `/admin`, `/admin/*` y `/gracias` para todos los crawlers
+- [x] `scripts/generate-sitemap.ts` alineado para que futuros builds vuelvan a incluir las rutas estáticas faltantes y los nuevos metadatos SEO requeridos
+- [x] Verificaciones ejecutadas: `./node_modules/.bin/tsc --noEmit` ✅ y `npm run build` ✅
+- [x] Hallazgos preexistentes no relacionados: `npm run lint` falla en `src/components/ui/command.tsx` y `src/components/ui/textarea.tsx`; `npm run test` falla en `src/lib/lazy-with-retry.test.ts`
+- [x] Recomendación siguiente: ejecutar `npm run generate-sitemap` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` configurados para regenerar también los slugs dinámicos antes del siguiente deploy
+
 ### ✅ Página de post-pago Stripe `/gracias` (Mayo 2026)
 - [x] Creada `src/pages/Gracias.tsx` con copy en español, tema claro (`bg-background`, `text-foreground`) y enfoque mobile-first
 - [x] Agregado `usePageMeta()` con título y descripción de confirmación post-pago

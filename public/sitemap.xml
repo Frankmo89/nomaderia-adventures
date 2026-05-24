@@ -37,6 +37,30 @@
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
+  <url>
+    <loc>https://nomaderia.com/terminos</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nomaderia.com/servicios</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://nomaderia.com/sentinel</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://nomaderia.com/destinos</loc>
+    <lastmod>2026-03-03T07:34:43.068Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
 
   <!-- Destinos -->
   <url>
