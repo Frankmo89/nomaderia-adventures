@@ -14,7 +14,9 @@ export interface Product {
   popular?: boolean;
 }
 
-const STRIPE_SENTINEL_URL = import.meta.env.VITE_STRIPE_SENTINEL_URL || "#";
+const STRIPE_SENTINEL_URL =
+  import.meta.env.VITE_STRIPE_SENTINEL_URL ||
+  "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
 
 export const products: Product[] = [
   {
