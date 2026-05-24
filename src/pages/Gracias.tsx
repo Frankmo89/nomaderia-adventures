@@ -8,6 +8,7 @@ const Gracias = () => {
   usePageMeta({
     title: "¡Gracias por tu compra!",
     description: "Confirmación de compra de la alerta de permisos de Nomaderia.",
+    robots: "noindex, nofollow",
   });
 
   return (

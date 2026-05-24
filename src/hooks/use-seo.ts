@@ -55,35 +55,53 @@ interface PageMeta {
   description: string;
   image?: string;
   type?: string;
+  robots?: string;
 }
 
 /**
  * Updates document title and meta tags for the current page.
  * Restores the default title on unmount.
  */
-export const usePageMeta = ({ title, description, image, type = "website" }: PageMeta) => {
+export const usePageMeta = ({
+  title,
+  description,
+  image,
+  type = "website",
+  robots = "index, follow",
+}: PageMeta) => {
   useEffect(() => {
     const fullTitle = `${title} — Nomadería`;
     document.title = fullTitle;
 
-    const setMeta = (selector: string, attr: string, value: string) => {
-      const el = document.querySelector(selector);
-      if (el) el.setAttribute(attr, value);
+    const setMeta = (
+      selector: string,
+      metaAttr: "name" | "property",
+      key: string,
+      value: string,
+    ) => {
+      let el = document.querySelector<HTMLMetaElement>(selector);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(metaAttr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", value);
     };
 
-    setMeta('meta[name="description"]', "content", description);
-    setMeta('meta[property="og:title"]', "content", fullTitle);
-    setMeta('meta[property="og:description"]', "content", description);
-    setMeta('meta[property="og:type"]', "content", type);
+    setMeta('meta[name="description"]', "name", "description", description);
+    setMeta('meta[name="robots"]', "name", "robots", robots);
+    setMeta('meta[property="og:title"]', "property", "og:title", fullTitle);
+    setMeta('meta[property="og:description"]', "property", "og:description", description);
+    setMeta('meta[property="og:type"]', "property", "og:type", type);
     if (image) {
-      setMeta('meta[property="og:image"]', "content", image);
-      setMeta('meta[name="twitter:image"]', "content", image);
+      setMeta('meta[property="og:image"]', "property", "og:image", image);
+      setMeta('meta[name="twitter:image"]', "name", "twitter:image", image);
     }
 
     return () => {
       document.title = "Nomadería - Aventuras y Senderismo";
     };
-  }, [title, description, image, type]);
+  }, [title, description, image, type, robots]);
 };
 
 /** Re-export the default OG image from the centralised brand-assets config. */
