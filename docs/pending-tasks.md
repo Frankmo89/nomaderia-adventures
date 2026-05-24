@@ -82,6 +82,12 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Dashboard admin — stat card de Sentinel Leads (Mayo 2026)
+- [x] `src/pages/admin/AdminDashboard.tsx` ahora incluye la stat card **"Leads de Alerta"** con ícono `Bell` y conteo exacto desde `sentinel_leads`
+- [x] Se agregó el query usando `(supabase as unknown as SupabaseClient).from("sentinel_leads").select("*", { count: "exact", head: true })`
+- [x] La nueva card quedó ubicada antes de **Suscriptores**, manteniendo intacta la lógica de las cards existentes
+- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
+
 ### ✅ Auditoría de precios en email post-quiz (Mayo 2026)
 - [x] Revisión completa de `supabase/functions/send-quiz-email/index.ts` para detectar precios MXN, nombres legacy (Escapada/Aventura/Expedición) y referencias al modelo anterior de 3 tiers
 - [x] Resultado: **sin hallazgos**; el contenido actual no usa precios MXN ni estructura legacy, por lo que no se aplicaron cambios en la Edge Function

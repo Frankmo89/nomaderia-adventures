@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ interface Stats {
   blog: number;
   blogDrafts: number;
   quiz: number;
+  sentinelLeads: number;
   subscribers: number;
   itineraryRequests: number;
   emailsSent: number;
@@ -70,7 +71,7 @@ const AdminDashboard = () => {
     destinations: 0, destinationDrafts: 0,
     gear: 0, gearDrafts: 0,
     blog: 0, blogDrafts: 0,
-    quiz: 0, subscribers: 0, itineraryRequests: 0, emailsSent: 0,
+    quiz: 0, sentinelLeads: 0, subscribers: 0, itineraryRequests: 0, emailsSent: 0,
   });
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [quizAnalytics, setQuizAnalytics] = useState<{
@@ -82,7 +83,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [dPub, dDraft, gPub, gDraft, bPub, bDraft, q, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
+      const [dPub, dDraft, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", false),
         supabase.from("gear_articles").select("id", { count: "exact", head: true }).eq("is_published", true),
@@ -90,6 +91,7 @@ const AdminDashboard = () => {
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("is_published", false),
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }),
+        (supabase as unknown as SupabaseClient).from("sentinel_leads").select("*", { count: "exact", head: true }),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
         supabase.from("itinerary_requests").select("id", { count: "exact", head: true }),
         db.from("email_drip_log").select("id", { count: "exact", head: true }),
@@ -105,6 +107,7 @@ const AdminDashboard = () => {
         blog: bPub.count || 0,
         blogDrafts: bDraft.count || 0,
         quiz: q.count || 0,
+        sentinelLeads: sentinelLeads.count || 0,
         subscribers: s.count || 0,
         itineraryRequests: ir.count || 0,
         emailsSent: emailsSent.count || 0,
@@ -190,6 +193,17 @@ const AdminDashboard = () => {
           <CardContent>
             <p className="text-3xl font-bold text-card-foreground">{stats.itineraryRequests}</p>
             <p className="text-xs text-muted-foreground mt-1">solicitud{stats.itineraryRequests !== 1 ? "es" : ""} recibida{stats.itineraryRequests !== 1 ? "s" : ""}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-card-foreground/70">Leads de Alerta</CardTitle>
+            <Bell className="h-5 w-5 text-secondary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-card-foreground">{stats.sentinelLeads}</p>
+            <p className="text-xs text-muted-foreground mt-1">sentinel_leads</p>
           </CardContent>
         </Card>
 
