@@ -24,6 +24,9 @@ const SentinelLanding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
+  const stripeUrl =
+    import.meta.env.VITE_STRIPE_SENTINEL_URL ||
+    "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
 
   usePageMeta({
     title: "Sentinel — Alertas de Yosemite en WhatsApp",
@@ -59,7 +62,6 @@ const SentinelLanding = () => {
         }
       }
 
-      const stripeUrl = import.meta.env.VITE_STRIPE_SENTINEL_URL;
       if (stripeUrl) {
         window.location.href = stripeUrl;
       } else {
@@ -204,7 +206,7 @@ const SentinelLanding = () => {
             <Card className="bg-white/5 border-[#D97706]/40 overflow-hidden">
               <CardContent className="p-8 text-center">
                 <h2 className="font-serif text-2xl font-bold text-[#F5F0EB] mb-2">
-                  Acceso de Fundador
+                  Acceso Anticipado
                 </h2>
                 <p className="text-4xl font-bold text-[#D97706] mb-2">$29 USD</p>
                 <p className="text-[#F5F0EB]/80 mb-6">
@@ -258,7 +260,7 @@ const SentinelLanding = () => {
             </Card>
 
             <p className="text-center text-sm text-[#F5F0EB]/60 mt-4 italic">
-              Cupos de fundador limitados.
+              Cupos de Acceso Anticipado limitados.
             </p>
           </motion.div>
         </div>
