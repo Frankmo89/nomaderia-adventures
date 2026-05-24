@@ -459,6 +459,7 @@ const DestinationDetail = () => {
             <img
               src={galleryImages[lightboxIndex]}
               alt={`${dest.title} — imagen ${lightboxIndex + 1}`}
+              loading="lazy"
               className="max-h-[80vh] max-w-full object-contain"
             />
             <button

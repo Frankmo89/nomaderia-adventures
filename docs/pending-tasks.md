@@ -379,6 +379,13 @@ https://nomaderia.com/
 - Eliminado el tipo/import no usado detectado por TypeScript en `src/pages/GearListing.tsx`
 - Hardening de enlaces externos (`<a href="https://...">`) auditado en `src/**/*.tsx`: **0 enlaces corregidos** (todos ya tenían `target="_blank"` + `rel="noopener noreferrer"`; sin cambios de lógica)
 
+### ✅ Performance pass de imágenes (Mayo 2026)
+- Auditadas todas las etiquetas `<img>` en `src/**/*.tsx` (sin cambios en `src/components/OptimizedImage.tsx` ni en `src/components/ui/`)
+- Agregado `loading="lazy"` en imágenes que no lo tenían (`Navbar`, `Footer`, `SobreNosotros`, `AdminGallery`, `ImageUpload`, `MultiMediaUpload`, `DestinationDetail` lightbox)
+- En el flujo de hero de home (`HeroSection` → `MediaSlider` → `BackgroundSlideshow`), se prioriza la primera imagen visible con `fetchPriority="high"` y `loading="eager"`; el resto queda en lazy
+- Verificación TypeScript ejecutada con `node node_modules/typescript/bin/tsc --noEmit` (0 errores)
+- Recomendación siguiente: convertir imágenes hero de detalle (`blog/gear`) a formatos responsive (`srcset`/WebP) en una tarea separada
+
 - ✅ **Quiz de 6 preguntas** con matching de destinos + analytics en admin
 - ✅ **8 destinos** insertados (Yosemite a Torres del Paine)
 - ✅ **PrivacyPolicy.tsx** — `/privacidad` con LFPDPPP completa
