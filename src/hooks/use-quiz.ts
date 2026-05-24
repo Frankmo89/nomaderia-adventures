@@ -346,10 +346,7 @@ export function useQuiz(totalSteps: number) {
         recommended_destinations: results.map((d) => d.id),
       });
       // Enviar email con resultados del quiz
-      if (!results || results.length === 0) {
-        // Evitar llamar a la Edge Function sin destinos válidos
-        console.warn("Omitiendo envío de email: no hay destinos recomendados para incluir.");
-      } else {
+      if (results.length > 0) {
         try {
           await supabase.functions.invoke("send-quiz-email", {
             body: {
@@ -368,9 +365,8 @@ export function useQuiz(totalSteps: number) {
               interest: answers.interest,
             },
           });
-        } catch (emailError) {
+        } catch {
           // No bloquear la UI si el email falla
-          console.error("Error enviando email:", emailError);
         }
       }
       setEmailSubmitted(true);

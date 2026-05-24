@@ -7,10 +7,7 @@ import Footer from "@/components/landing/Footer";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useGearArticles } from "@/hooks/use-gear-articles";
-import type { Tables } from "@/integrations/supabase/types";
 import JsonLd from "@/components/JsonLd";
-
-type GearArticle = Tables<"gear_articles">;
 
 const categories = ["Todo", "Botas", "Bastones", "Mochilas", "Fotografía", "Ropa", "Accesorios"];
 

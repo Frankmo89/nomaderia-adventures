@@ -372,6 +372,12 @@ https://nomaderia.com/
 - From: hola@nomaderia.com (dominio verificado en Resend)
 - Secrets: RESEND_API_KEY + SITE_URL configurados en Supabase Edge Functions
 
+### ✅ Cleanup de higiene (Mayo 2026)
+- Eliminado `src/components/ui/tmpclaude-b035-cwd`, un archivo de texto suelto que no pertenecía a `src/components/ui/`
+- Removidos los `console.log()`/`console.error()` sobrantes en `src/`; se conservan solo el fatal bootstrap de `main.tsx`, los `Sentry.captureException()` y el `console.warn()` de `NotFound.tsx`
+- `src/pages/NotFound.tsx` ahora registra rutas 404 con `console.warn()` en lugar de `console.error()`
+- Eliminado el tipo/import no usado detectado por TypeScript en `src/pages/GearListing.tsx`
+
 - ✅ **Quiz de 6 preguntas** con matching de destinos + analytics en admin
 - ✅ **8 destinos** insertados (Yosemite a Torres del Paine)
 - ✅ **PrivacyPolicy.tsx** — `/privacidad` con LFPDPPP completa
