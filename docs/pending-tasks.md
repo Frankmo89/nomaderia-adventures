@@ -83,6 +83,15 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Exit-intent / scroll-depth modal hacia Sentinel (Mayo 2026)
+- [x] Creado `src/components/ExitIntentModal.tsx` con `Dialog` de shadcn y copy en español orientado a la propuesta de valor de Sentinel
+- [x] Trigger único por sesión con `sessionStorage` (`exit_intent_shown`): desktop por `mouseleave` hacia el borde superior y mobile al alcanzar 60% de scroll
+- [x] Exclusiones activas para no mostrar el modal en `/sentinel`, `/gracias` ni rutas `/admin*`
+- [x] Eventos analytics implementados: `trackEvent("exit_intent_shown")` y `trackEvent("exit_intent_cta_click")`
+- [x] Montado globalmente una sola vez en `src/App.tsx`
+- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅, `npm run build` ✅ y `npm run test` ✅
+- [x] Hallazgo preexistente no relacionado: `npm run lint` sigue fallando por errores en `src/components/ui/command.tsx` y `src/components/ui/textarea.tsx`
+
 ### ✅ Sticky Mobile CTA en páginas de destino (Mayo 2026)
 - [x] **Nueva barra sticky mobile-first** — `src/components/StickyMobileCTA.tsx` fija al fondo solo en mobile (`md:hidden`), con `bg-background`, borde superior, sombra sutil y padding con safe-area para mantener visible la conversión principal durante el scroll.
 - [x] **Conversión contextual** — `DestinationDetail.tsx` reutiliza el mismo mensaje contextual de WhatsApp del CTA editorial y pasa `destination.affiliate_links?.permit_alert_url` para mostrar el botón secundario “Alerta de permisos” solo cuando aplica.
