@@ -4,7 +4,7 @@ import { MapPin, Clock, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CardGridSkeleton } from "@/components/LoadingSkeletons";
+import { DestinationCardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useDestinations } from "@/hooks/use-destinations";
 
 const difficultyColor: Record<string, string> = {
@@ -82,7 +82,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
     return (
       <section id="destinos" className="py-16 sm:py-20 bg-background">
         <div className="container mx-auto px-5">
-          <CardGridSkeleton count={6} />
+          <DestinationCardGridSkeleton count={6} />
         </div>
       </section>
     );
