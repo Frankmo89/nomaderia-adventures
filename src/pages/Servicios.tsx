@@ -15,8 +15,9 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
-import { products, WHATSAPP_NUMBER } from "@/config/pricing";
+import { trackEvent } from "@/lib/analytics";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { products } from "@/config/pricing";
 
 const steps = [
   {
@@ -111,9 +112,10 @@ const Servicios = () => {
             </p>
             <Button asChild size="lg" className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground">
               <a
-                href={buildWhatsAppUrl("¡Hola Nomaderia! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?", WHATSAPP_NUMBER)}
+                href={buildWhatsAppLink("Hola Nomaderia 👋 Tengo una pregunta sobre mis próximas aventuras.")}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackEvent("cta_itinerario_whatsapp_click", { source: "servicios_hero" })}
               >
                 <MessageCircle className="h-5 w-5 mr-2" />
                 Escríbenos por WhatsApp
@@ -222,6 +224,11 @@ const Servicios = () => {
                       href={product.ctaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        if (product.id === "itinerary" || product.id === "bundle") {
+                          trackEvent("cta_itinerario_whatsapp_click", { source: `servicios_${product.id}` });
+                        }
+                      }}
                     >
                       {product.id === "permit_alert" ? null : <MessageCircle className="h-5 w-5 mr-2" />}
                       {product.cta}

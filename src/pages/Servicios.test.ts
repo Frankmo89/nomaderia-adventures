@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { WHATSAPP_NUMBER, products } from "@/config/pricing";
 
 describe("Servicios WhatsApp URLs", () => {
   it("should generate a valid wa.me URL with the hardcoded phone number", () => {
-    const url = buildWhatsAppUrl("Hola", WHATSAPP_NUMBER);
-    expect(url).toBe("https://wa.me/18588996802?text=Hola");
+    const url = buildWhatsAppLink("Hola");
+    expect(url).toBe(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola`);
   });
 
   it("products should have valid ctaUrl for WhatsApp-based products", () => {
@@ -19,10 +19,10 @@ describe("Servicios WhatsApp URLs", () => {
   it("should generate a valid URL for the Hero CTA message", () => {
     const heroMessage =
       "¡Hola Nomaderia! Me interesa diseñar mi próxima aventura. ¿Cuáles son los siguientes pasos?";
-    const url = buildWhatsAppUrl(heroMessage, WHATSAPP_NUMBER);
-    expect(url).toContain("https://wa.me/18588996802?text=");
+    const url = buildWhatsAppLink(heroMessage);
+    expect(url).toContain(`https://wa.me/${WHATSAPP_NUMBER}?text=`);
     expect(url).toBe(
-      `https://wa.me/18588996802?text=${encodeURIComponent(heroMessage)}`
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(heroMessage)}`
     );
   });
 });
