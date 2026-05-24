@@ -10,6 +10,7 @@ import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import AnalyticsRouteTracker from "@/components/AnalyticsRouteTracker";
+import ExitIntentModal from "@/components/ExitIntentModal";
 
 // Rutas públicas críticas — carga inmediata
 import Index from "./pages/Index";
@@ -111,6 +112,7 @@ const App = () => (
             </Suspense>
           </ErrorBoundary>
           <AnalyticsRouteTracker />
+          <ExitIntentModal />
           <WhatsAppButton />
         </BrowserRouter>
       </TooltipProvider>
