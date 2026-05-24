@@ -377,6 +377,7 @@ https://nomaderia.com/
 - Removidos los `console.log()`/`console.error()` sobrantes en `src/`; se conservan solo el fatal bootstrap de `main.tsx`, los `Sentry.captureException()` y el `console.warn()` de `NotFound.tsx`
 - `src/pages/NotFound.tsx` ahora registra rutas 404 con `console.warn()` en lugar de `console.error()`
 - Eliminado el tipo/import no usado detectado por TypeScript en `src/pages/GearListing.tsx`
+- Hardening de enlaces externos (`<a href="https://...">`) auditado en `src/**/*.tsx`: **0 enlaces corregidos** (todos ya tenían `target="_blank"` + `rel="noopener noreferrer"`; sin cambios de lógica)
 
 - ✅ **Quiz de 6 preguntas** con matching de destinos + analytics en admin
 - ✅ **8 destinos** insertados (Yosemite a Torres del Paine)
