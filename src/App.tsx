@@ -25,6 +25,7 @@ const BlogListing = lazyWithRetry(() => import("./pages/BlogListing"));
 const BlogPostDetail = lazyWithRetry(() => import("./pages/BlogPostDetail"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
 const TermsAndConditions = lazyWithRetry(() => import("./pages/TermsAndConditions"));
+const Gracias = lazyWithRetry(() => import("./pages/Gracias"));
 const SobreNosotros = lazyWithRetry(() => import("./pages/SobreNosotros"));
 
 // Rutas secundarias — lazy load con retry automático
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/blog/:slug" element={<ErrorBoundary><BlogPostDetail /></ErrorBoundary>} />
               <Route path="/privacidad" element={<ErrorBoundary><PrivacyPolicy /></ErrorBoundary>} />
               <Route path="/terminos" element={<ErrorBoundary><TermsAndConditions /></ErrorBoundary>} />
+              <Route path="/gracias" element={<ErrorBoundary><Gracias /></ErrorBoundary>} />
               <Route path="/sentinel" element={<ErrorBoundary><SentinelLanding /></ErrorBoundary>} />
               <Route path="/servicios" element={<ErrorBoundary><Servicios /></ErrorBoundary>} />
               <Route path="/sobre-nosotros" element={<ErrorBoundary><SobreNosotros /></ErrorBoundary>} />
