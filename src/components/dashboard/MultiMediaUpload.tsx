@@ -155,6 +155,7 @@ const MultiMediaUpload = ({ currentUrls, onChange }: MultiMediaUploadProps) => {
                 <img
                   src={url}
                   alt={`Media ${i + 1}`}
+                  loading="lazy"
                   className="w-full h-32 object-cover"
                 />
               )}

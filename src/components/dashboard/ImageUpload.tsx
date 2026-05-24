@@ -92,6 +92,7 @@ const ImageUpload = ({ bucket, currentUrl, onUploadComplete }: ImageUploadProps)
           <img
             src={displayUrl}
             alt="Vista previa"
+            loading="lazy"
             className="w-full h-48 object-cover rounded-lg border border-border"
           />
           <Button

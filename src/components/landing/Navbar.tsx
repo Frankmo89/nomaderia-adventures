@@ -53,7 +53,7 @@ const Navbar = () => {
         <div className="container mx-auto flex items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2">
             {BRAND_ASSETS.logo && !logoError ? (
-              <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-8 w-auto" onError={() => setLogoError(true)} />
+              <img src={BRAND_ASSETS.logo} alt="Nomaderia" loading="lazy" className="h-8 w-auto" onError={() => setLogoError(true)} />
             ) : (
               <>
                 <Mountain className="h-6 w-6 text-primary" />
@@ -125,7 +125,7 @@ const Navbar = () => {
             <div className="flex items-center justify-between px-5 py-4">
               <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
                 {BRAND_ASSETS.logo && !logoError ? (
-                  <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-8 w-auto" onError={() => setLogoError(true)} />
+                  <img src={BRAND_ASSETS.logo} alt="Nomaderia" loading="lazy" className="h-8 w-auto" onError={() => setLogoError(true)} />
                 ) : (
                   <>
                     <Mountain className="h-6 w-6 text-primary" />
