@@ -85,6 +85,17 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Admin Sidebar — rediseño visual (Mayo 2026)
+- [x] `src/index.css`: variables `--sidebar-*` actualizadas a paleta oscura: fondo `#1C1917`, texto `#E7E5E4`, primario amber `#D97706`, hover `#2A2724`, borde `rgba(255,255,255,0.06)`
+- [x] `src/pages/admin/AdminLayout.tsx`:
+  - Logo: ícono naranja 30×30 `rounded-lg bg-primary` con `Mountain` dentro + "NOMADERIA" `tracking-widest` + "Admin" `text-[10px] uppercase tracking-[0.18em]`
+  - Workspace pill: píldora "Producción" con dot verde `#166534` + ring sutil + `ChevronDown`
+  - Nav activo: `bg-[rgba(217,119,6,0.10)]` + texto `#FBBF24 font-semibold` + indicador izquierdo `w-0.5 bg-primary`; inactivo: `text-sidebar-foreground/55`
+  - Nav "Leads de Alerta" añadido (`/admin/sentinel-leads`, ícono `Bell`) con badge estático naranja `1` — `TODO: wire to live sentinel_leads count`
+  - Sección usuario: avatar "FR" + nombre "Frank" + email antes del botón de logout
+  - Logo mobile top bar también actualizado para consistencia
+- [x] `tsc --noEmit` ✅, `npm run build` ✅
+
 ### ✅ Admin Dashboard — fix sentinel_leads + panel "Atención hoy" (Mayo 2026)
 - [x] `supabase/migrations/20260524000000_sentinel_leads_admin_select.sql`: nueva política RLS `"Admins can view sentinel leads"` (FOR SELECT TO authenticated USING has_role) — la tabla solo tenía INSERT anon, sin SELECT para admin, causando que el contador siempre mostrara 0
 - [x] `src/pages/admin/AdminDashboard.tsx`: corregida query de sentinel count (`select("*", ...)` → `select("id", ...)` con `count: exact, head: true`)

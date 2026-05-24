@@ -35,13 +35,13 @@
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 97%;
-    --sidebar-foreground: 20 13% 10%;
-    --sidebar-primary: 32 95% 44%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 10% 94%;
-    --sidebar-accent-foreground: 20 13% 10%;
-    --sidebar-border: 20 6% 90%;
+    --sidebar-background: 20 14% 9%;        /* #1C1917 */
+    --sidebar-foreground: 20 6% 90%;        /* #E7E5E4 */
+    --sidebar-primary: 38 92% 50%;          /* #D97706 orange */
+    --sidebar-primary-foreground: 20 14% 9%;
+    --sidebar-accent: 20 14% 15%;           /* #2A2724 hover */
+    --sidebar-accent-foreground: 20 6% 90%;
+    --sidebar-border: 0 0% 100% / 0.06;    /* rgba(255,255,255,0.06) */
     --sidebar-ring: 32 95% 44%;
 
     /* Custom tokens */
