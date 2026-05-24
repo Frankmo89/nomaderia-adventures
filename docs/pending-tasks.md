@@ -51,7 +51,7 @@
   - `src/pages/admin/AdminDashboard.tsx` y `src/pages/SentinelLanding.tsx` ahora usan `supabase as unknown as SupabaseClient` para tablas aún ausentes en `src/integrations/supabase/types.ts`
   - Intento de regenerar `src/integrations/supabase/types.ts` con `npx supabase gen types ... --schema public` bloqueado por falta de `SUPABASE_ACCESS_TOKEN`
   - Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
-- [ ] Integrar compartir en redes sociales (botones share)
+- [x] Integrar compartir en redes sociales (botones share) — ✅ `ShareButtons.tsx` montado en DestinationDetail, GearArticleDetail y BlogPostDetail
 - [ ] Resolver issues de contraste texto para WCAG AA compliance
 
 ### 🟠 Auditoría de Contenido (30 marzo 2026)
@@ -63,9 +63,9 @@
 - [x] `src/pages/Destinations.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
 - [x] `src/pages/BudgetCalculator.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
 - [x] `src/pages/Servicios.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
-- [ ] `src/pages/SobreNosotros.tsx` — Solo `document.title`, falta meta description
-- [ ] `src/pages/PrivacyPolicy.tsx` — Solo `document.title`, falta meta description
-- [ ] `src/pages/TermsAndConditions.tsx` — Solo `document.title`, falta meta description
+- [x] `src/pages/SobreNosotros.tsx` — ✅ `usePageMeta()` completo
+- [x] `src/pages/PrivacyPolicy.tsx` — ✅ `usePageMeta()` completo
+- [x] `src/pages/TermsAndConditions.tsx` — ✅ `usePageMeta()` completo
 
 #### Contenido en Supabase (requiere revisión manual en admin)
 - [ ] Auditar cada destino: verificar markdown en español, affiliate links funcionales, campos completos (hero_image_url, difficulty_level, estimated_budget, duration, country)
