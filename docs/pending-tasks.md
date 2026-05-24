@@ -391,6 +391,15 @@ https://nomaderia.com/
 - Verificación TypeScript ejecutada con `node node_modules/typescript/bin/tsc --noEmit` (0 errores)
 - Recomendación siguiente: convertir imágenes hero de detalle (`blog/gear`) a formatos responsive (`srcset`/WebP) en una tarea separada
 
+### ✅ Verificación de CTAs de servicios (Mayo 2026)
+- Auditados `src/config/pricing.ts`, `src/pages/Servicios.tsx` y `src/components/landing/PremiumItinerarySection.tsx`
+- `Servicios` y `PremiumItinerarySection` ya consumían `products[].ctaUrl` en enlaces externos con `target="_blank"` + `rel="noopener noreferrer"`; sin cambios en los componentes
+- `Itinerario Personalizado` y `Solución Completa` ya abrían WhatsApp vía `buildWhatsAppUrl()`
+- **Corregido:** `Alerta de Permisos` usaba `VITE_STRIPE_SENTINEL_URL || "#"`; ahora cae al Stripe real `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`
+- Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
+- Hallazgos preexistentes no relacionados: `npm run lint` falla por errores en `src/components/ui/command.tsx`, `src/components/ui/textarea.tsx` y `src/pages/SentinelLanding.tsx`; `npm run test` falla en `src/lib/lazy-with-retry.test.ts`
+- Recomendación siguiente: resolver esos errores preexistentes de lint/test en una tarea separada
+
 - ✅ **Quiz de 6 preguntas** con matching de destinos + analytics en admin
 - ✅ **8 destinos** insertados (Yosemite a Torres del Paine)
 - ✅ **PrivacyPolicy.tsx** — `/privacidad` con LFPDPPP completa
