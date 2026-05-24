@@ -486,6 +486,21 @@ https://nomaderia.com/
 - Hallazgos preexistentes no relacionados: `npm run lint` falla por errores en `src/components/ui/command.tsx`, `src/components/ui/textarea.tsx` y `src/pages/SentinelLanding.tsx`; `npm run test` falla en `src/lib/lazy-with-retry.test.ts`
 - Recomendación siguiente: resolver esos errores preexistentes de lint/test en una tarea separada
 
+### ✅ WhatsApp CTAs contextuales + helper central (Mayo 2026)
+- `src/lib/whatsapp.ts` ahora expone helper único `buildWhatsAppLink(message)` con `WHATSAPP_NUMBER = "18588996802"` hardcodeado
+- Migración completada de `buildWhatsAppUrl(...)` a `buildWhatsAppLink(...)` en páginas/componentes/tests
+- `DestinationDetail` (vía `ArticleWhatsAppCTA`) ahora precarga mensaje contextual:  
+  `Hola Nomaderia 👋 Me interesa el itinerario personalizado de {destino}. ¿Me ayudas a planearlo?`
+- `Servicios` usa mensajes contextuales para:
+  - `Itinerario Personalizado` ($29 USD)
+  - `Solución Completa` ($49 USD: alerta + itinerario)
+- Botón global flotante de WhatsApp (`WhatsAppButton`) usa mensaje contextual:
+  `Hola Nomaderia 👋 Tengo una pregunta sobre mis próximas aventuras.`
+- Tracking agregado en CTAs de itinerario:  
+  `trackEvent("cta_itinerario_whatsapp_click", { source })`
+- Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
+- Recomendación siguiente: agregar dashboard/event report para desglosar conversiones por `source`
+
 ### ✅ Meta previews en detalles dinámicos (Mayo 2026)
 - `src/pages/DestinationDetail.tsx` ahora monta `usePageMeta()` solo cuando el destino cargó, con `title`, `description` e `image` derivados de Supabase para mejorar previews en WhatsApp/Facebook
 - `src/pages/BlogPostDetail.tsx` ahora monta `usePageMeta()` solo cuando el post cargó, usando `post.title`, `post.short_description` y `post.hero_image_url`

@@ -1,5 +1,5 @@
 export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
-import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 export interface Product {
   id: "permit_alert" | "itinerary" | "bundle";
@@ -45,7 +45,7 @@ export const products: Product[] = [
       "Incluye gear y preparación física",
     ],
     cta: "Quiero mi itinerario",
-    ctaUrl: buildWhatsAppUrl("Hola, quiero mi itinerario personalizado", WHATSAPP_NUMBER),
+    ctaUrl: buildWhatsAppLink("Hola Nomaderia 👋 Quiero contratar el Itinerario Personalizado ($29 USD)."),
     popular: true,
   },
   {
@@ -64,6 +64,6 @@ export const products: Product[] = [
       "Incluye gear y preparación física",
     ],
     cta: "Quiero los dos",
-    ctaUrl: buildWhatsAppUrl("Hola, quiero la Solución Completa (alerta + itinerario)", WHATSAPP_NUMBER),
+    ctaUrl: buildWhatsAppLink("Hola Nomaderia 👋 Quiero la Solución Completa ($49 USD): alerta + itinerario."),
   },
 ];

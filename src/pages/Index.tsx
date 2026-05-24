@@ -14,11 +14,10 @@ import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useMemo } from "react";
-import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import JsonLd from "@/components/JsonLd";
 
-const CTA_WHATSAPP_NUMBER = WHATSAPP_NUMBER;
 const CTA_WHATSAPP_MESSAGE = '¡Hola! Estoy listo para diseñar mi viaje a medida.';
 
 const Index = () => {
@@ -28,7 +27,7 @@ const Index = () => {
     description: "Itinerarios personalizados y alertas de permisos para hispanos en EE. UU. Planea tu aventura en Yosemite, Grand Canyon y más. En español.",
   });
 
-  const ctaWhatsAppUrl = buildWhatsAppUrl(CTA_WHATSAPP_MESSAGE, CTA_WHATSAPP_NUMBER);
+  const ctaWhatsAppUrl = buildWhatsAppLink(CTA_WHATSAPP_MESSAGE);
 
   const jsonLdData = useMemo(
     () => ({

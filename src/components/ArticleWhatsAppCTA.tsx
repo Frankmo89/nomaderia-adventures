@@ -1,15 +1,16 @@
 import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
+import { trackEvent } from "@/lib/analytics";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 interface ArticleWhatsAppCTAProps {
   title: string;
 }
 
 const ArticleWhatsAppCTA = ({ title }: ArticleWhatsAppCTAProps) => {
-  const message = `¡Hola! Acabo de leer sobre ${title} y me gustaría que me ayudes a armar mi viaje.`;
-  const url = buildWhatsAppUrl(message, WHATSAPP_NUMBER);
+  const message = `Hola Nomaderia 👋 Me interesa el itinerario personalizado de ${title}. ¿Me ayudas a planearlo?`;
+  const url = buildWhatsAppLink(message);
 
   return (
     <motion.div
@@ -30,7 +31,12 @@ const ArticleWhatsAppCTA = ({ title }: ArticleWhatsAppCTAProps) => {
           size="lg"
           className="bg-primary hover:bg-primary/90 text-primary-foreground"
         >
-          <a href={url} target="_blank" rel="noopener noreferrer">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackEvent("cta_itinerario_whatsapp_click", { source: "destination_detail" })}
+          >
             <MessageCircle className="mr-2 h-5 w-5" />
             Dise&ntilde;a mi viaje a medida
           </a>

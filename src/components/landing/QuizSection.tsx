@@ -14,9 +14,7 @@ import { Link } from "react-router-dom";
 import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
-import { buildWhatsAppUrl, WHATSAPP_NUMBER } from "@/lib/whatsapp";
-
-const WHATSAPP_PHONE = WHATSAPP_NUMBER;
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 const ITINERARY_DISCOUNT = "10%";
 
 const WhatsAppIcon = () => (
@@ -367,9 +365,8 @@ const QuizResults = ({
 }) => {
   const topDestination = results[0];
   const whatsAppUrl = topDestination
-    ? buildWhatsAppUrl(
+    ? buildWhatsAppLink(
         `Hola equipo de Nomaderia, acabo de hacer el Quiz, mi destino ideal es ${topDestination.title} y quiero que planifiquen mi itinerario personalizado. ¿Qué paquetes tienen?`,
-        WHATSAPP_PHONE,
       )
     : undefined;
 

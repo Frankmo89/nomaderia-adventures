@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import MediaSlider from "@/components/landing/MediaSlider";
 
-const WHATSAPP_URL = buildWhatsAppUrl(
+const WHATSAPP_URL = buildWhatsAppLink(
   "Hola Frank, quiero planear mi primera aventura"
 );
 
