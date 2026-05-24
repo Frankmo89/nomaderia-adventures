@@ -96,7 +96,7 @@ const AdminLayout = () => {
             </Link>
           ))}
         </div>
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-sidebar-foreground/70 shrink-0">
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-sidebar-foreground/70 shrink-0" aria-label="Cerrar sesión" title="Cerrar sesión">
           <LogOut className="h-4 w-4" />
         </Button>
       </div>

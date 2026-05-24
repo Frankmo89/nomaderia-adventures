@@ -100,6 +100,8 @@ const ImageUpload = ({ bucket, currentUrl, onUploadComplete }: ImageUploadProps)
             variant="destructive"
             size="icon"
             className="absolute top-2 right-2 h-7 w-7"
+            aria-label="Eliminar imagen"
+            title="Eliminar imagen"
             onClick={handleRemove}
           >
             <X className="h-4 w-4" />

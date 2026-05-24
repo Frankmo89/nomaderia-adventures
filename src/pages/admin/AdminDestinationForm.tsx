@@ -90,7 +90,7 @@ const FaqFields = ({ fears, onAdd, onRemove, onUpdate }: {
             <Input placeholder="Pregunta" value={f.question} onChange={(e) => onUpdate(i, "question", e.target.value)} className={inputCls} />
             <Textarea placeholder="Respuesta" value={f.answer} onChange={(e) => onUpdate(i, "answer", e.target.value)} className={inputCls} />
           </div>
-          <Button type="button" variant="ghost" size="icon" onClick={() => onRemove(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+          <Button type="button" variant="ghost" size="icon" aria-label={`Eliminar pregunta ${i + 1}`} title={`Eliminar pregunta ${i + 1}`} onClick={() => onRemove(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={onAdd} className="border-border text-foreground"><Plus className="h-4 w-4 mr-1" /> Agregar Pregunta</Button>
