@@ -82,6 +82,15 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Página de post-pago Stripe `/gracias` (Mayo 2026)
+- [x] Creada `src/pages/Gracias.tsx` con copy en español, tema claro (`bg-background`, `text-foreground`) y enfoque mobile-first
+- [x] Agregado `usePageMeta()` con título y descripción de confirmación post-pago
+- [x] Hero implementado: **"¡Listo, eres parte de Nomaderia!"**
+- [x] Copy de seguimiento: contacto por WhatsApp en menos de 24h para iniciar gestión de spot en Yosemite
+- [x] CTA secundaria agregada hacia `https://nomaderia.com/sentinel` para compartir la alerta
+- [x] Registrada ruta lazy `/gracias` en `src/App.tsx` siguiendo el patrón existente con `lazyWithRetry`
+- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
+
 ### ✅ Accessibility pass — Icon-only buttons (Mayo 2026)
 - [x] Auditados controles icon-only en `src/components/landing/Navbar.tsx`, `src/components/dashboard/ImageUpload.tsx` y páginas admin
 - [x] Agregados `aria-label` + `title` descriptivos en botones de abrir/cerrar menú, eliminar, editar y cerrar sesión
