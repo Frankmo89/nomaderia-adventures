@@ -18,8 +18,11 @@ import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
 import SEO from "@/components/SEO";
 import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
-import { SITE_URL } from "@/hooks/use-seo";
+import { SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Destination = Tables<"destinations">;
 
 const difficultyColor: Record<string, string> = {
   easy: "bg-secondary text-secondary-foreground",
@@ -49,6 +52,18 @@ const markdownComponents = {
       )}
     </figure>
   ),
+};
+
+const DestinationPageMeta = ({ destination }: { destination: Destination }) => {
+  usePageMeta({
+    title: `${destination.title} | Nomaderia`,
+    description:
+      destination.short_description ||
+      "Guía completa en español para tu aventura en parques nacionales.",
+    image: destination.hero_image_url || undefined,
+  });
+
+  return null;
 };
 
 const DestinationDetail = () => {
@@ -198,6 +213,7 @@ const DestinationDetail = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <DestinationPageMeta destination={dest} />
       <SEO
         title={dest.title}
         description={dest.short_description || `Guía completa de ${dest.title} para principiantes`}

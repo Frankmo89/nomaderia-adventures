@@ -400,6 +400,13 @@ https://nomaderia.com/
 - Hallazgos preexistentes no relacionados: `npm run lint` falla por errores en `src/components/ui/command.tsx`, `src/components/ui/textarea.tsx` y `src/pages/SentinelLanding.tsx`; `npm run test` falla en `src/lib/lazy-with-retry.test.ts`
 - Recomendación siguiente: resolver esos errores preexistentes de lint/test en una tarea separada
 
+### ✅ Meta previews en detalles dinámicos (Mayo 2026)
+- `src/pages/DestinationDetail.tsx` ahora monta `usePageMeta()` solo cuando el destino cargó, con `title`, `description` e `image` derivados de Supabase para mejorar previews en WhatsApp/Facebook
+- `src/pages/BlogPostDetail.tsx` ahora monta `usePageMeta()` solo cuando el post cargó, usando `post.title`, `post.short_description` y `post.hero_image_url`
+- Verificación ejecutada: `node node_modules/typescript/bin/tsc --noEmit` ✅
+- Hallazgos preexistentes no relacionados: `npm run lint` sigue fallando en `src/components/ui/command.tsx`, `src/components/ui/textarea.tsx` y `src/pages/SentinelLanding.tsx`; `npm run test` sigue fallando en `src/lib/lazy-with-retry.test.ts`
+- Recomendación siguiente: corregir esos errores preexistentes de lint/test en una tarea separada
+
 - ✅ **Quiz de 6 preguntas** con matching de destinos + analytics en admin
 - ✅ **8 destinos** insertados (Yosemite a Torres del Paine)
 - ✅ **PrivacyPolicy.tsx** — `/privacidad` con LFPDPPP completa
