@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
 import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,8 @@ const budgetLabels: Record<string, string> = {
 const fitnessLabels: Record<string, string> = {
   sedentary: "🚶 Sedentario", light_activity: "🏃 Activo casual", moderate: "💪 Regular", active: "🔥 Muy activo",
 };
+
+const db = supabase as unknown as SupabaseClient;
 
 const MiniBar = ({ data, labels }: { data: Record<string, number>; labels: Record<string, string> }) => {
   const total = Object.values(data).reduce((a, b) => a + b, 0);
@@ -89,7 +92,7 @@ const AdminDashboard = () => {
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
         supabase.from("itinerary_requests").select("id", { count: "exact", head: true }),
-        (supabase as unknown as { from: (t: string) => { select: (q: string, opts: object) => Promise<{ count: number | null }> } }).from("email_drip_log").select("id", { count: "exact", head: true }),
+        db.from("email_drip_log").select("id", { count: "exact", head: true }),
         supabase.from("destinations").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
         supabase.from("gear_articles").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
         supabase.from("blog_posts").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
