@@ -25,6 +25,7 @@ const db = supabase as unknown as ReturnType<typeof createClient>;
 export function useMediaSlider() {
   return useQuery<MediaItem[]>({
     queryKey: ["media_slider"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await db
         .from("media_slider")

@@ -82,6 +82,15 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Cache tuning de React Query para contenido estático (Mayo 2026)
+- [x] `src/App.tsx` mantiene el `staleTime` global por defecto en **5 min** (`5 * 60 * 1000`)
+- [x] `src/hooks/use-destinations.ts` ahora define `staleTime: 30 * 60 * 1000` en `useDestinations`, `useDestinationBySlug` y `useRelatedDestinations`
+- [x] `src/hooks/use-gear-articles.ts` ahora define `staleTime: 30 * 60 * 1000` en `useGearArticles` y `useFeaturedGearArticles`
+- [x] `src/hooks/use-blog-posts.ts` ahora define `staleTime: 30 * 60 * 1000` en `useBlogPosts`
+- [x] `src/hooks/use-media.ts` (`useMediaSlider`) ahora define `staleTime: 10 * 60 * 1000`
+- [x] Sin cambios en hooks admin, quiz ni stats para mantener frescura de datos donde aplica
+- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
+
 ### ✅ Dashboard admin — stat card de Sentinel Leads (Mayo 2026)
 - [x] `src/pages/admin/AdminDashboard.tsx` ahora incluye la stat card **"Leads de Alerta"** con ícono `Bell` y conteo exacto desde `sentinel_leads`
 - [x] Se agregó el query usando `(supabase as unknown as SupabaseClient).from("sentinel_leads").select("*", { count: "exact", head: true })`

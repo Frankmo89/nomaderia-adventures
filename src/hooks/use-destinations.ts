@@ -21,6 +21,7 @@ export interface DestinationCard {
 export function useDestinations() {
   return useQuery<DestinationCard[]>({
     queryKey: ["destinations"],
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("destinations")
@@ -37,6 +38,7 @@ export function useDestinations() {
 export function useDestinationBySlug(slug: string | undefined) {
   return useQuery<Destination | null>({
     queryKey: ["destination", slug],
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       if (!slug) return null;
       const { data, error } = await supabase
@@ -58,6 +60,7 @@ export function useRelatedDestinations(
 ) {
   return useQuery<Destination[]>({
     queryKey: ["destinations", "related", difficultyLevel, excludeId],
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       if (!difficultyLevel || !excludeId) return [];
       const { data, error } = await supabase
