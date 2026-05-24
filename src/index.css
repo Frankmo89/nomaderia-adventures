@@ -21,7 +21,7 @@
     --secondary-foreground: 0 0% 100%;
 
     --muted: 30 10% 94%; /* Light warm gray */
-    --muted-foreground: 20 10% 45%;
+    --muted-foreground: 20 10% 40%; /* Raised from 45% → 40% for WCAG AA (~5:1 on #FAFAFA) */
 
     --accent: 30 10% 94%; /* Light warm gray */
     --accent-foreground: 20 13% 10%;

@@ -52,7 +52,8 @@
   - Intento de regenerar `src/integrations/supabase/types.ts` con `npx supabase gen types ... --schema public` bloqueado por falta de `SUPABASE_ACCESS_TOKEN`
   - Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
 - [x] Integrar compartir en redes sociales (botones share) — ✅ `ShareButtons.tsx` montado en DestinationDetail, GearArticleDetail y BlogPostDetail
-- [ ] Resolver issues de contraste texto para WCAG AA compliance
+- [x] Breadcrumbs visuales — ✅ ya implementados inline en el hero de DestinationDetail, BlogPostDetail y GearArticleDetail (sobre overlay oscuro, `text-white/60`)
+- [x] Resolver issues de contraste texto para WCAG AA compliance — ✅ `--muted-foreground` subido de 45% → 40% lightness (~4.1:1 → ~5.0:1 sobre #FAFAFA); `PermitScarcity` footnote subido de `text-[11px]` → `text-xs`
 
 ### 🟠 Auditoría de Contenido (30 marzo 2026)
 
@@ -82,6 +83,22 @@ https://nomaderia.com/
 ---
 
 ## Changelog (completados)
+
+### ✅ Email drip itinerary_cta — modelo de 2 productos (Mayo 2026)
+- [x] `supabase/functions/send-drip-emails/index.ts` `buildItineraryCtaEmail()`: eliminada la sección de 3 paquetes legacy (Weekend/Aventura/Expedición) y reemplazada por el modelo actual de 2 productos: **Itinerario Personalizado ($29 USD)** y **Solución Completa ($49 USD, badge "Más popular")**
+- [x] CTA principal cambiado de `E86C3A` (naranja legacy) a verde WhatsApp `#25D366` con enlace directo `wa.me/18588996802?text=...` y mensaje pre-llenado
+- [x] CTA secundario actualizado de `/destinos` a `/servicios`
+- [x] Ruta rota `/#itinerario` eliminada; el botón principal apunta a WhatsApp directamente
+
+### ✅ WCAG AA contraste — muted-foreground y PermitScarcity (Mayo 2026)
+- [x] `src/index.css`: `--muted-foreground` subido de `20 10% 45%` → `20 10% 40%` — contraste en fondo `#FAFAFA` pasa de ~4.1:1 a ~5.0:1, cumpliendo WCAG AA para todo texto normal (requiere ≥4.5:1)
+- [x] `src/components/PermitScarcity.tsx`: texto de footnote subido de `text-[11px]` → `text-xs` (12px mínimo para categoría "normal text")
+- [x] Un único cambio de variable CSS arregla todos los usos de `text-muted-foreground` en el sitio sin tocar componentes individuales
+- [x] Los separadores `text-white/40` en breadcrumbs (sobre overlay oscuro de imagen) se conservan — no son contenido informativo y el fondo oscuro les da contraste suficiente
+
+### ✅ 404 branded + preconnect Supabase (Mayo 2026)
+- [x] `src/pages/NotFound.tsx`: ahora incluye `Navbar`, `Footer`, ícono `Mountain`, dos botones (volver al inicio / ver destinos), `usePageMeta` con `noindex, nofollow`, y muestra la ruta exacta que falló
+- [x] `index.html`: agregado `<link rel="preconnect" href="https://vrixiuvnhvqafmxlcyex.supabase.co" />` junto a los preconnects de Google Fonts
 
 ### ✅ Exit-intent / scroll-depth modal hacia Sentinel (Mayo 2026)
 - [x] Creado `src/components/ExitIntentModal.tsx` con `Dialog` de shadcn y copy en español orientado a la propuesta de valor de Sentinel

@@ -54,7 +54,7 @@ const PermitScarcity = ({ destinationSlug }: PermitScarcityProps) => {
         ⏰ {info.window}
       </p>
 
-      <p className="text-[11px] text-muted-foreground italic">
+      <p className="text-xs text-muted-foreground italic">
         Datos públicos de NPS / Recreation.gov.
       </p>
     </div>
