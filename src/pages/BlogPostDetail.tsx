@@ -33,6 +33,18 @@ interface BlogPost {
   reading_time_min: number | null;
 }
 
+const BlogPostPageMeta = ({ post }: { post: BlogPost }) => {
+  usePageMeta({
+    title: `${post.title} | Nomaderia`,
+    description:
+      post.short_description ||
+      "Guía completa en español para tu aventura en parques nacionales.",
+    image: post.hero_image_url || undefined,
+  });
+
+  return null;
+};
+
 const BlogPostDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
@@ -104,38 +116,6 @@ const BlogPostDetail = () => {
     };
   }, [post]);
 
-  const pageMeta = useMemo(
-    () => {
-      if (post) {
-        return {
-          title: post.title,
-          description:
-            post.short_description ||
-            "Explora guías y artículos de viaje en Nomaderia.",
-          image: post.hero_image_url || undefined,
-          type: "article" as const,
-        };
-      }
-
-      if (loading) {
-        return {
-          title: "Cargando artículo del blog",
-          description: "Explora guías y artículos de viaje en Nomaderia.",
-          type: "article" as const,
-        };
-      }
-
-      return {
-        title: "Artículo no encontrado",
-        description:
-          "El artículo que buscas no existe o ha sido movido. Explora otros contenidos en el blog de Nomaderia.",
-        type: "article" as const,
-      };
-    },
-    [post, loading]
-  );
-
-  usePageMeta(pageMeta);
   if (loading) return (
     <main className="bg-background min-h-screen"><Navbar />
       <div className="pt-20"><GearArticleDetailSkeleton /></div>
@@ -154,6 +134,7 @@ const BlogPostDetail = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <BlogPostPageMeta post={post} />
       {jsonLd && <JsonLd data={jsonLd} />}
       {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
       <section className="pt-20">
