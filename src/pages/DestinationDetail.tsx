@@ -18,6 +18,7 @@ import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
 import SEO from "@/components/SEO";
 import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
+import PermitScarcity from "@/components/PermitScarcity";
 import { SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 import type { Tables } from "@/integrations/supabase/types";
@@ -341,6 +342,7 @@ const DestinationDetail = () => {
           </div>
           <aside className="w-full lg:w-80 shrink-0">
             <div className="lg:sticky lg:top-24 space-y-4">
+              <PermitScarcity destinationSlug={slug || ""} />
               <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle className="font-serif text-xl text-card-foreground">Reserva Tu Viaje</CardTitle>
