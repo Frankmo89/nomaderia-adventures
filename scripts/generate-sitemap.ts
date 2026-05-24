@@ -91,10 +91,13 @@ const today = new Date().toISOString();
 
 const staticPages = [
   url(`${SITE_URL}/`, "daily", "1.0", today),
+  url(`${SITE_URL}/destinos`, "weekly", "0.8", today),
   url(`${SITE_URL}/gear`, "weekly", "0.8", today),
   url(`${SITE_URL}/blog`, "weekly", "0.8", today),
-  url(`${SITE_URL}/calculadora`, "monthly", "0.5", today),
-  url(`${SITE_URL}/sobre-nosotros`, "monthly", "0.5", today),
+  url(`${SITE_URL}/calculadora`, "monthly", "0.7", today),
+  url(`${SITE_URL}/servicios`, "monthly", "0.9", today),
+  url(`${SITE_URL}/sentinel`, "monthly", "0.9", today),
+  url(`${SITE_URL}/sobre-nosotros`, "yearly", "0.6", today),
   url(`${SITE_URL}/privacidad`, "yearly", "0.5", today),
   url(`${SITE_URL}/terminos`, "yearly", "0.5", today),
 ];

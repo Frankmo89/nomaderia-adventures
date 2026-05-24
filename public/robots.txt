@@ -2,5 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /admin
+Disallow: /admin/*
+Disallow: /gracias
 
 Sitemap: https://nomaderia.com/sitemap.xml
