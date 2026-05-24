@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BadgeCheck, Mail, Mountain } from "lucide-react";
+import { BadgeCheck, Mail, Mountain, ShieldCheck } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { usePageMeta } from "@/hooks/use-seo";
@@ -50,28 +50,18 @@ const SobreNosotros = () => {
           {/* Imagen del diploma */}
           <div>
             <p className="text-sm font-medium text-foreground mb-3">Nuestra certificación como Agentes de Viajes:</p>
-            <div className="rounded-xl overflow-hidden border border-border bg-muted">
-              <img
-                src="/diploma.jpg"
-                alt="Diploma de Agente de Viajes — Nomaderia"
-                loading="lazy"
-                className="w-full object-contain max-h-[480px]"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  target.style.display = "none";
-                  const placeholder = target.nextElementSibling as HTMLElement;
-                  if (placeholder) placeholder.style.display = "flex";
-                }}
-              />
-              {/* Placeholder visible solo si la imagen no carga */}
-              <div
-                className="hidden items-center justify-center py-16 px-8 text-center"
-                aria-hidden="true"
-              >
+            {/* TODO: replace with <img> once Frank uploads the file */}
+            <div className="rounded-xl border border-secondary bg-secondary/10 p-6 md:p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 rounded-full bg-secondary/20 p-3">
+                  <ShieldCheck className="h-7 w-7 text-secondary" />
+                </div>
                 <div>
-                  <BadgeCheck className="h-12 w-12 text-primary/30 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    Coloca tu imagen en <code className="bg-muted-foreground/10 px-1 rounded text-xs">public/diploma.jpg</code> para que aparezca aquí.
+                  <h3 className="font-serif text-xl text-foreground mb-1">
+                    Agente de Viajes Certificado TAP
+                  </h3>
+                  <p className="text-foreground/80">
+                    The Travel Institute — National TAP Test
                   </p>
                 </div>
               </div>

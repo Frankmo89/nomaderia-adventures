@@ -82,6 +82,14 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Fixes pequeños — credencial TAP y noindex en /gracias (Mayo 2026)
+- [x] `src/pages/SobreNosotros.tsx` ya no depende de `public/diploma.jpg`; se reemplazó el bloque roto por una tarjeta/badge estilizada con `ShieldCheck`, texto "Agente de Viajes Certificado TAP" y subtítulo "The Travel Institute — National TAP Test"
+- [x] Se agregó comentario de seguimiento en `SobreNosotros.tsx`: `TODO` para volver a `<img>` cuando Frank suba el archivo
+- [x] `src/hooks/use-seo.ts` ahora soporta `robots` en `usePageMeta()` y asegura creación/actualización de metas faltantes
+- [x] `src/pages/Gracias.tsx` actualizado con `robots: "noindex, nofollow"` para evitar indexación de la página de confirmación post-pago
+- [x] Verificación ejecutada: `node node_modules/typescript/bin/tsc --noEmit` ✅
+- [x] Recomendación siguiente: subir `public/diploma.jpg` para reactivar la versión con imagen real cuando esté disponible
+
 ### ✅ Fix tests Vitest — `window.location.reload` en `lazy-with-retry` (Mayo 2026)
 - [x] `src/lib/lazy-with-retry.test.ts` dejó de usar redefinición/spy directa sobre `window.location.reload`, incompatible con entornos nuevos de Vitest
 - [x] El mock ahora usa `vi.stubGlobal("location", { ...window.location, reload: vi.fn() })`
