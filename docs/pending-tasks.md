@@ -383,6 +383,7 @@ https://nomaderia.com/
 - ✅ **Auditoría Radix** — 12 paquetes no usados eliminados
 - ✅ **LoadingSkeletons** — Skeleton loaders para destination, gear, card grid
 - ✅ **ErrorBoundary** — Wrapper genérico para rutas
+- ✅ **Precios USD-only en Edge Functions** — Eliminadas referencias MXN ($299/$549/$899 MXN) en `send-drip-emails` y `send-quiz-results`; precios actualizados a $29 USD (itinerario básico) y $49 USD (bundle/expedición)
 
 ## Instrucciones para Copilot Agent
 

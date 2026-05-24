@@ -153,7 +153,7 @@ serve(async (req) => {
       </h3>
       <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 18px;">
         Itinerarios personalizados con plan día a día, presupuesto detallado,
-        checklist de equipo y tips de seguridad. Desde $299 MXN / $19 USD.
+        checklist de equipo y tips de seguridad. Desde $29 USD.
       </p>
       <a href="${SITE_URL}/calculadora"
          style="display:inline-block;background-color:#D97706;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">
