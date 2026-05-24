@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { cn } from "@/lib/utils";
 
 interface Stats {
   destinations: number;
@@ -74,13 +75,21 @@ const MiniBar = ({ data, labels }: { data: Record<string, number>; labels: Recor
   const sorted = Object.entries(data).sort(([, a], [, b]) => b - a);
   return (
     <div className="space-y-2">
-      {sorted.map(([key, count]) => {
+      {sorted.map(([key, count], idx) => {
         const pct = Math.round((count / total) * 100);
         return (
           <div key={key} className="flex items-center gap-3">
             <span className="text-sm w-32 truncate">{labels[key] || key}</span>
-            <div className="flex-1 bg-border/50 rounded-full h-2.5 overflow-hidden">
-              <div className="bg-primary h-2.5 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+            <div className="flex-1 overflow-hidden" style={{ background: '#F0EBE0', height: 7, borderRadius: 4 }}>
+              <div
+                className="transition-all duration-500"
+                style={{
+                  width: `${pct}%`,
+                  height: 7,
+                  borderRadius: 4,
+                  background: idx === 0 ? 'linear-gradient(90deg,#D97706,#F59E0B)' : '#E2D9C5',
+                }}
+              />
             </div>
             <span className="text-xs text-muted-foreground w-16 text-right">{count} ({pct}%)</span>
           </div>
@@ -187,91 +196,154 @@ const AdminDashboard = () => {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-foreground mb-8">Dashboard</h1>
-
-      {/* Atención hoy */}
-      <div className="mb-8 border-l-4 border-primary rounded-r-lg bg-primary/5 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Bell className="h-5 w-5 text-primary" />
-          <h2 className="font-serif text-xl text-foreground">Atención hoy</h2>
-        </div>
-
-        {/* a) Sentinel leads últimas 48h */}
-        <div className="mb-5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-            Leads de alerta · últimas 48h · {sentinelRecent.length}
-          </p>
-          {sentinelRecent.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sin leads nuevos · Buen trabajo 👌</p>
-          ) : (
-            <div className="space-y-2">
-              {sentinelRecent.map((lead) => (
-                <div key={lead.email} className="flex items-center justify-between bg-background rounded-md px-3 py-2.5 border border-border gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{lead.email}</p>
-                    <p className="text-xs text-muted-foreground">{timeAgo(lead.created_at)}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="bg-[#25D366] hover:bg-[#25D366]/90 text-white shrink-0"
-                    onClick={() =>
-                      window.open(
-                        buildWhatsAppLink(
-                          `Hola, vi que te interesaste en la alerta de permisos de Yosemite. ¿Tienes dudas? Con gusto te ayudo. — Frank, Nomaderia`
-                        ),
-                        "_blank",
-                        "noopener,noreferrer"
-                      )
-                    }
-                  >
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    Abrir WhatsApp
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* b) Quiz completados últimas 48h */}
+      {/* CHANGE 1: Top header bar */}
+      <header className="flex items-center justify-between -mx-4 md:-mx-8 -mt-4 md:-mt-8 mb-6 md:mb-8 px-7 py-5 border-b border-[#E7E2D9] bg-[#FAFAFA]">
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-            Quiz completados · últimas 48h · {quizRecent.length}
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-[22px] font-semibold text-[#1C1917] tracking-tight">Buenos días, Frank</h1>
+            <span className="text-[10.5px] font-bold px-2 py-0.5 rounded bg-[#E6F0E9] text-[#166534] border border-[rgba(22,101,52,0.18)] tracking-widest">NOMADERIA · PRODUCCIÓN</span>
+          </div>
+          <p className="text-[12.5px] text-[#6B6660] mt-0.5">
+            {new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}
           </p>
-          {quizRecent.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sin quizzes nuevos · Buen trabajo 👌</p>
-          ) : (
-            <div className="space-y-2">
-              {quizRecent.map((q) => (
-                <div key={q.id} className="flex items-center justify-between bg-background rounded-md px-3 py-2.5 border border-border gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{q.email ?? "Sin email"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {q.recommended_destinations?.[0] ?? interestLabels[q.interest ?? ""] ?? q.interest ?? "—"} · {timeAgo(q.created_at)}
-                    </p>
-                  </div>
-                  {q.email && (
+        </div>
+      </header>
+
+      {/* CHANGE 2: Atención hoy — restyled */}
+      <div
+        className="mb-8"
+        style={{
+          border: '1px solid #F5C36B',
+          borderLeft: '4px solid #F59E0B',
+          background: 'linear-gradient(180deg,#FFF8EE,#FFFCF5)',
+          borderRadius: 12,
+          padding: '18px 20px 20px',
+          boxShadow: '0 1px 0 rgba(245,158,11,0.12), 0 8px 24px -16px rgba(245,158,11,0.25)',
+        }}
+      >
+        {/* Header row */}
+        <div className="flex items-center justify-between mb-3.5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#F59E0B] flex items-center justify-center shrink-0">
+              <Bell className="h-4 w-4 text-[#1C1917]" />
+            </div>
+            <span className="text-base font-bold text-[#1C1917]">Atención hoy</span>
+            <span className="text-[11.5px] text-[#6B6660]">· {sentinelRecent.length + quizRecent.length} cosas pendientes</span>
+          </div>
+          <span className="text-[11px] text-[#9A938B]">Actualizado hace 2 min</span>
+        </div>
+
+        {/* Two-column grid */}
+        <div className="grid grid-cols-2 gap-[18px]">
+          {/* a) Sentinel leads últimas 48h */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10.5px] font-bold text-[#6B6660] tracking-[0.14em] uppercase">Leads de alerta · últimas 48h</p>
+              <span className="text-[10.5px] font-bold px-1.5 py-0.5 rounded-full bg-[#F59E0B] text-[#1C1917]">{sentinelRecent.length}</span>
+            </div>
+            {sentinelRecent.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sin leads nuevos · Buen trabajo 👌</p>
+            ) : (
+              <div className="space-y-2">
+                {sentinelRecent.map((lead) => (
+                  <div
+                    key={lead.email}
+                    className="grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 bg-white border border-[#E7E2D9] rounded-lg"
+                    style={{ padding: '10px 12px' }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{ background: 'linear-gradient(135deg,#F59E0B,#D97706)' }}
+                    >
+                      {lead.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-[#1C1917] truncate">{lead.email}</p>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-[#6B6660]" />
+                        <p className="text-[11.5px] text-[#6B6660]">{timeAgo(lead.created_at)}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-[#FEF3E2] text-[#B45309] border border-[#F5C36B] animate-pulse shrink-0">Sin contactar</span>
                     <Button
                       size="sm"
-                      className="bg-[#25D366] hover:bg-[#25D366]/90 text-white shrink-0"
+                      className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-[11.5px] font-semibold px-3 py-1.5 rounded-lg border border-[#15803D] shrink-0"
                       onClick={() =>
                         window.open(
                           buildWhatsAppLink(
-                            `Hola 👋 Vi que completaste el quiz de Nomaderia y tu destino ideal es ${q.recommended_destinations?.[0] ?? q.interest ?? "un parque nacional"}. ¿Te ayudo a planear tu aventura? — Frank, Nomaderia`
+                            `Hola, vi que te interesaste en la alerta de permisos de Yosemite. ¿Tienes dudas? Con gusto te ayudo. — Frank, Nomaderia`
                           ),
                           "_blank",
                           "noopener,noreferrer"
                         )
                       }
                     >
-                      <MessageCircle className="h-4 w-4 mr-1" />
-                      Abrir WhatsApp
+                      <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                      WhatsApp
                     </Button>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* b) Quiz completados últimas 48h */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10.5px] font-bold text-[#6B6660] tracking-[0.14em] uppercase">Quiz completados · últimas 48h</p>
+              <span className="text-[10.5px] font-bold px-1.5 py-0.5 rounded-full bg-[#1C1917] text-white">{quizRecent.length}</span>
             </div>
-          )}
+            {quizRecent.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sin quizzes nuevos · Buen trabajo 👌</p>
+            ) : (
+              <div className="space-y-2">
+                {quizRecent.map((q) => (
+                  <div
+                    key={q.id}
+                    className="grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 bg-white border border-[#E7E2D9] rounded-lg"
+                    style={{ padding: '10px 12px' }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{ background: 'linear-gradient(135deg,#1C1917,#374151)' }}
+                    >
+                      {(q.email ?? "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-[#1C1917] truncate">{q.email ?? "Sin email"}</p>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-[#6B6660]" />
+                        <p className="text-[11.5px] text-[#6B6660]">
+                          {q.recommended_destinations?.[0] ?? interestLabels[q.interest ?? ""] ?? q.interest ?? "—"} · {timeAgo(q.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-[#FEF3E2] text-[#B45309] border border-[#F5C36B] animate-pulse shrink-0">Sin contactar</span>
+                    {q.email ? (
+                      <Button
+                        size="sm"
+                        className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-[11.5px] font-semibold px-3 py-1.5 rounded-lg border border-[#15803D] shrink-0"
+                        onClick={() =>
+                          window.open(
+                            buildWhatsAppLink(
+                              `Hola 👋 Vi que completaste el quiz de Nomaderia y tu destino ideal es ${q.recommended_destinations?.[0] ?? q.interest ?? "un parque nacional"}. ¿Te ayudo a planear tu aventura? — Frank, Nomaderia`
+                            ),
+                            "_blank",
+                            "noopener,noreferrer"
+                          )
+                        }
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                        WhatsApp
+                      </Button>
+                    ) : (
+                      <div />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -327,13 +399,21 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card
+          className={cn("border", stats.sentinelLeads > 0 ? "bg-[#FFF8EE] border-[#F5C36B]" : "bg-card border-border")}
+          style={stats.sentinelLeads > 0 ? { boxShadow: '0 1px 0 rgba(245,158,11,0.15)' } : undefined}
+        >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-card-foreground/70">Leads de Alerta</CardTitle>
             <Bell className="h-5 w-5 text-secondary" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-card-foreground">{stats.sentinelLeads}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-3xl font-bold text-card-foreground">{stats.sentinelLeads}</p>
+              {stats.sentinelLeads > 0 && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#F59E0B] text-[#1C1917] tracking-wide">NUEVO</span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">sentinel_leads</p>
           </CardContent>
         </Card>
@@ -363,71 +443,86 @@ const AdminDashboard = () => {
 
       {/* Quick actions */}
       <div className="flex gap-3 flex-wrap mb-8">
-        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <Button asChild className="bg-[#D97706] hover:bg-[#D97706]/90 text-white">
           <Link to="/admin/destinations/new"><Plus className="h-4 w-4 mr-2" /> Nuevo Destino</Link>
         </Button>
-        <Button asChild variant="outline" className="border-border text-foreground hover:bg-muted">
+        <Button asChild variant="outline" className="bg-white border border-[#E7E2D9] text-[#1C1917] hover:bg-[#F5F0E8]">
           <Link to="/admin/gear-articles/new"><Plus className="h-4 w-4 mr-2" /> Nuevo Artículo</Link>
         </Button>
-        <Button asChild variant="outline" className="border-border text-foreground hover:bg-muted">
+        <Button asChild variant="outline" className="bg-white border border-[#E7E2D9] text-[#1C1917] hover:bg-[#F5F0E8]">
           <Link to="/admin/blog-posts/new"><Plus className="h-4 w-4 mr-2" /> Nuevo Post</Link>
         </Button>
       </div>
 
-      {/* Recent activity */}
-      {recent.length > 0 && (
-        <div>
-          <h2 className="font-serif text-xl text-foreground mb-3">Actividad Reciente</h2>
-          <div className="rounded-lg border border-border overflow-hidden">
-            {recent.map((item) => (
-              <div key={`${item.type}-${item.id}`} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Badge variant="outline" className="text-xs shrink-0 border-border">{typeLabel[item.type]}</Badge>
-                  <Link to={`${typeHref[item.type]}/${item.id}/edit`} className="text-sm text-foreground truncate hover:underline">
-                    {item.title}
-                  </Link>
-                </div>
-                <div className="flex items-center gap-3 shrink-0 ml-4">
-                  <Badge className={item.is_published ? "bg-secondary text-secondary-foreground text-xs" : "bg-muted text-muted-foreground text-xs"}>
-                    {item.is_published ? "Publicado" : "Borrador"}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground hidden sm:inline">
-                    {new Date(item.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}
-                  </span>
-                </div>
+      {/* CHANGE 5: Activity + Analytics side by side */}
+      <div className="grid grid-cols-[1.15fr_1fr] gap-4">
+        {/* CHANGE 4: Analytics 2×2 grid */}
+        {stats.quiz > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              <h2 className="font-serif text-xl text-foreground">Analytics del Quiz</h2>
+              <span className="text-xs text-muted-foreground">({stats.quiz} respuestas)</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white border border-[#E7E2D9] rounded-xl p-3.5">
+                <p className="text-sm font-medium text-card-foreground/70 mb-3">Paisaje Favorito</p>
+                <MiniBar data={quizAnalytics.interests} labels={interestLabels} />
               </div>
-            ))}
+              <div className="bg-white border border-[#E7E2D9] rounded-xl p-3.5">
+                <p className="text-sm font-medium text-card-foreground/70 mb-3">Origen de Audiencia</p>
+                <MiniBar data={quizAnalytics.origins} labels={originLabels} />
+              </div>
+              <div className="bg-white border border-[#E7E2D9] rounded-xl p-3.5">
+                <p className="text-sm font-medium text-card-foreground/70 mb-3">Presupuesto</p>
+                <MiniBar data={quizAnalytics.budgets} labels={budgetLabels} />
+              </div>
+              <div className="bg-white border border-[#E7E2D9] rounded-xl p-3.5">
+                <p className="text-sm font-medium text-card-foreground/70 mb-3">Nivel Físico</p>
+                <MiniBar data={quizAnalytics.fitness} labels={fitnessLabels} />
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {stats.quiz > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            <h2 className="font-serif text-xl text-foreground">Analytics del Quiz</h2>
-            <span className="text-xs text-muted-foreground">({stats.quiz} respuestas)</span>
+        {/* Recent activity */}
+        {recent.length > 0 && (
+          <div>
+            <h2 className="font-serif text-xl text-foreground mb-3">Actividad Reciente</h2>
+            <div className="rounded-lg border border-border overflow-hidden">
+              {recent.map((item) => (
+                <div key={`${item.type}-${item.id}`} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* CHANGE 6: type badge colors */}
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-xs shrink-0",
+                        item.type === "blog" && "bg-[#F0EBE0] text-[#78350F] border-transparent",
+                        item.type === "destination" && "bg-[#FEF3E2] text-[#B45309] border-transparent",
+                        item.type === "gear" && "bg-[#E6F0E9] text-[#166534] border-transparent",
+                      )}
+                    >
+                      {typeLabel[item.type]}
+                    </Badge>
+                    <Link to={`${typeHref[item.type]}/${item.id}/edit`} className="text-sm text-foreground truncate hover:underline">
+                      {item.title}
+                    </Link>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 ml-4">
+                    <Badge className={item.is_published ? "bg-secondary text-secondary-foreground text-xs" : "bg-muted text-muted-foreground text-xs"}>
+                      {item.is_published ? "Publicado" : "Borrador"}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">
+                      {new Date(item.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-card-foreground/70">Paisaje Favorito</CardTitle></CardHeader>
-              <CardContent><MiniBar data={quizAnalytics.interests} labels={interestLabels} /></CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-card-foreground/70">Origen de Audiencia</CardTitle></CardHeader>
-              <CardContent><MiniBar data={quizAnalytics.origins} labels={originLabels} /></CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-card-foreground/70">Presupuesto</CardTitle></CardHeader>
-              <CardContent><MiniBar data={quizAnalytics.budgets} labels={budgetLabels} /></CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-card-foreground/70">Nivel Físico</CardTitle></CardHeader>
-              <CardContent><MiniBar data={quizAnalytics.fitness} labels={fitnessLabels} /></CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

@@ -83,7 +83,16 @@ https://nomaderia.com/
 
 ---
 
-## Changelog (completados)
+### ✅ Admin Dashboard — rediseño visual (Mayo 2026)
+- [x] **CHANGE 1** — Header bar fijo en tope del dashboard: "Buenos días, Frank" + badge "NOMADERIA · PRODUCCIÓN" + fecha en español; breakout negativo (`-mx-4 md:-mx-8 -mt-4 md:-mt-8`) para cubrir borde a borde con `border-b border-[#E7E2D9] bg-[#FAFAFA]`
+- [x] **CHANGE 2** — Panel "Atención hoy" restyled: borde amber `border-[#F5C36B]` / `borderLeft #F59E0B`, fondo degradado `#FFF8EE → #FFFCF5`, header con ícono en cuadro amber 28×28, conteo de pendientes, timestamp "Actualizado hace 2 min"; layout de dos columnas `grid-cols-2 gap-[18px]`; cada fila con avatar de iniciales, ícono Clock, pill "Sin contactar" pulsante, botón WhatsApp verde `#16A34A`
+- [x] **CHANGE 3** — Tarjeta "Leads de Alerta": fondo `#FFF8EE` y borde `#F5C36B` cuando `sentinelLeads > 0`; badge "NUEVO" amber junto al número
+- [x] **CHANGE 4** — Analytics del Quiz: 4 tarjetas en grilla `grid-cols-2 gap-3` con `bg-white border-[#E7E2D9] rounded-xl p-3.5`; barras con track `#F0EBE0` h=7px, top bar gradiente `#D97706→#F59E0B`, resto `#E2D9C5`
+- [x] **CHANGE 5** — Analytics + Actividad Reciente en columnas laterales `grid-cols-[1.15fr_1fr] gap-4`
+- [x] **CHANGE 6** — Badges de tipo de contenido: Blog `bg-[#F0EBE0] text-[#78350F]`, Destino `bg-[#FEF3E2] text-[#B45309]`, Gear `bg-[#E6F0E9] text-[#166534]`
+- [x] **CHANGE 7** — Quick actions: "Nuevo Destino" `bg-[#D97706] text-white`; otros `bg-white border-[#E7E2D9] text-[#1C1917]`
+- [x] Importados `Clock` (lucide-react) y `cn` (`@/lib/utils`) en AdminDashboard
+- [x] `tsc --noEmit` ✅, `npm run build` ✅
 
 ### ✅ Admin Sidebar — rediseño visual (Mayo 2026)
 - [x] `src/index.css`: variables `--sidebar-*` actualizadas a paleta oscura: fondo `#1C1917`, texto `#E7E5E4`, primario amber `#D97706`, hover `#2A2724`, borde `rgba(255,255,255,0.06)`
