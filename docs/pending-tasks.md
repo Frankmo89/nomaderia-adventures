@@ -380,6 +380,7 @@ https://nomaderia.com/
 - ✅ **PremiumItinerarySection** — Dialog + form → `itinerary_requests`
 - ✅ **AdminItineraryRequests** — Tabla + CSV export + stat card en dashboard
 - ✅ **SEO hooks** — `useCanonical()` + `useJsonLd()` en todas las páginas de detalle
+- ✅ **usePageMeta()** — Agregado a `SobreNosotros.tsx`, `PrivacyPolicy.tsx` y `TermsAndConditions.tsx` con títulos y descripciones en español
 - ✅ **Auditoría Radix** — 12 paquetes no usados eliminados
 - ✅ **LoadingSkeletons** — Skeleton loaders para destination, gear, card grid
 - ✅ **ErrorBoundary** — Wrapper genérico para rutas

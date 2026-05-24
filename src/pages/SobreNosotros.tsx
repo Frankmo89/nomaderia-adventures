@@ -1,18 +1,15 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BadgeCheck, Mail, Mountain } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { useCanonical } from "@/hooks/use-seo";
+import { usePageMeta } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 
 const SobreNosotros = () => {
-  useCanonical();
-
-  useEffect(() => {
-    document.title = "Sobre Nosotros — Nomaderia";
-    return () => { document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando"; };
-  }, []);
+  usePageMeta({
+    title: "Sobre Nomaderia — Agente de Viajes TAP Certificado",
+    description: "Conoce a Frank, agente TAP certificado que ayuda a hispanos en EE. UU. a planear su primera aventura en parques nacionales. En español.",
+  });
 
   return (
     <main className="bg-background min-h-screen">

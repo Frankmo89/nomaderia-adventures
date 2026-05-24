@@ -1,15 +1,12 @@
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { useCanonical } from "@/hooks/use-seo";
-import { useEffect } from "react";
+import { usePageMeta } from "@/hooks/use-seo";
 
 const TermsAndConditions = () => {
-  useCanonical();
-
-  useEffect(() => {
-    document.title = "Términos y Condiciones — Nomaderia";
-    return () => { document.title = "Nomaderia — Tu Primera Aventura Te Está Esperando"; };
-  }, []);
+  usePageMeta({
+    title: "Términos y Condiciones | Nomaderia",
+    description: "Términos y condiciones de uso de Nomaderia Adventures.",
+  });
 
   return (
     <main className="bg-background min-h-screen">
