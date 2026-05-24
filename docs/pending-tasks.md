@@ -82,6 +82,14 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Componente PermitScarcity — escasez de permisos (Mayo 2026)
+- [x] Creado `src/components/PermitScarcity.tsx` con mapa interno de datos honestos (NPS/Recreation.gov) para parques con sistema de permisos/lotería
+- [x] Soporta `yosemite-valley` y `gran-canon`; retorna `null` para destinos sin sistema de permisos
+- [x] Diseño: card `bg-secondary/5`, ícono `AlertTriangle`, mecanismo como label, dato como body, ventana destacada, footnote de fuente
+- [x] Montado en `DestinationDetail.tsx` en la sidebar, justo arriba del card "Reserva Tu Viaje"
+- [x] TODO incluido para migrar datos a campo jsonb `permit_info` en Supabase
+- [x] Verificaciones ejecutadas: `tsc --noEmit` ✅ y `npm run build` ✅
+
 ### ✅ Cache tuning de React Query para contenido estático (Mayo 2026)
 - [x] `src/App.tsx` mantiene el `staleTime` global por defecto en **5 min** (`5 * 60 * 1000`)
 - [x] `src/hooks/use-destinations.ts` ahora define `staleTime: 30 * 60 * 1000` en `useDestinations`, `useDestinationBySlug` y `useRelatedDestinations`
