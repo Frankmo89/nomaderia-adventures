@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 interface Stats {
   destinations: number;
@@ -27,6 +28,29 @@ interface RecentItem {
   type: "destination" | "gear" | "blog";
   is_published: boolean;
   created_at: string;
+}
+
+interface SentinelLead {
+  email: string;
+  source: string | null;
+  created_at: string;
+}
+
+interface RecentQuizResponse {
+  id: string;
+  email: string | null;
+  interest: string | null;
+  recommended_destinations: string[] | null;
+  created_at: string;
+}
+
+function timeAgo(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 60) return `hace ${diffMins} min`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `hace ${diffHours}h`;
+  return `hace ${Math.floor(diffHours / 24)}d`;
 }
 
 const interestLabels: Record<string, string> = {
@@ -74,6 +98,8 @@ const AdminDashboard = () => {
     quiz: 0, sentinelLeads: 0, subscribers: 0, itineraryRequests: 0, emailsSent: 0,
   });
   const [recent, setRecent] = useState<RecentItem[]>([]);
+  const [sentinelRecent, setSentinelRecent] = useState<SentinelLead[]>([]);
+  const [quizRecent, setQuizRecent] = useState<RecentQuizResponse[]>([]);
   const [quizAnalytics, setQuizAnalytics] = useState<{
     interests: Record<string, number>;
     origins: Record<string, number>;
@@ -91,7 +117,7 @@ const AdminDashboard = () => {
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("is_published", false),
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }),
-        (supabase as unknown as SupabaseClient).from("sentinel_leads").select("*", { count: "exact", head: true }),
+        (supabase as unknown as SupabaseClient).from("sentinel_leads").select("id", { count: "exact", head: true }),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
         supabase.from("itinerary_requests").select("id", { count: "exact", head: true }),
         db.from("email_drip_log").select("id", { count: "exact", head: true }),
@@ -119,6 +145,25 @@ const AdminDashboard = () => {
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 6);
       setRecent(combined);
 
+      // 48h panels
+      const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      const [sentinelRecentRes, quizRecentRes] = await Promise.all([
+        (supabase as unknown as SupabaseClient)
+          .from("sentinel_leads")
+          .select("email, source, created_at")
+          .gte("created_at", cutoff48h)
+          .eq("source", "sentinel-landing")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("quiz_responses")
+          .select("id, email, interest, recommended_destinations, created_at")
+          .gte("created_at", cutoff48h)
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
+      if (sentinelRecentRes.data) setSentinelRecent(sentinelRecentRes.data as SentinelLead[]);
+      if (quizRecentRes.data) setQuizRecent(quizRecentRes.data as RecentQuizResponse[]);
+
       const quizData = await supabase.from("quiz_responses").select("interest, fitness_level, budget_range, travel_style, created_at").order("created_at", { ascending: false }).limit(200);
       if (quizData.data) {
         const interests: Record<string, number> = {};
@@ -143,6 +188,92 @@ const AdminDashboard = () => {
   return (
     <div>
       <h1 className="font-serif text-3xl text-foreground mb-8">Dashboard</h1>
+
+      {/* Atención hoy */}
+      <div className="mb-8 border-l-4 border-primary rounded-r-lg bg-primary/5 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Bell className="h-5 w-5 text-primary" />
+          <h2 className="font-serif text-xl text-foreground">Atención hoy</h2>
+        </div>
+
+        {/* a) Sentinel leads últimas 48h */}
+        <div className="mb-5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            Leads de alerta · últimas 48h · {sentinelRecent.length}
+          </p>
+          {sentinelRecent.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin leads nuevos · Buen trabajo 👌</p>
+          ) : (
+            <div className="space-y-2">
+              {sentinelRecent.map((lead) => (
+                <div key={lead.email} className="flex items-center justify-between bg-background rounded-md px-3 py-2.5 border border-border gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{lead.email}</p>
+                    <p className="text-xs text-muted-foreground">{timeAgo(lead.created_at)}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-[#25D366] hover:bg-[#25D366]/90 text-white shrink-0"
+                    onClick={() =>
+                      window.open(
+                        buildWhatsAppLink(
+                          `Hola, vi que te interesaste en la alerta de permisos de Yosemite. ¿Tienes dudas? Con gusto te ayudo. — Frank, Nomaderia`
+                        ),
+                        "_blank",
+                        "noopener,noreferrer"
+                      )
+                    }
+                  >
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    Abrir WhatsApp
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* b) Quiz completados últimas 48h */}
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            Quiz completados · últimas 48h · {quizRecent.length}
+          </p>
+          {quizRecent.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin quizzes nuevos · Buen trabajo 👌</p>
+          ) : (
+            <div className="space-y-2">
+              {quizRecent.map((q) => (
+                <div key={q.id} className="flex items-center justify-between bg-background rounded-md px-3 py-2.5 border border-border gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{q.email ?? "Sin email"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {q.recommended_destinations?.[0] ?? interestLabels[q.interest ?? ""] ?? q.interest ?? "—"} · {timeAgo(q.created_at)}
+                    </p>
+                  </div>
+                  {q.email && (
+                    <Button
+                      size="sm"
+                      className="bg-[#25D366] hover:bg-[#25D366]/90 text-white shrink-0"
+                      onClick={() =>
+                        window.open(
+                          buildWhatsAppLink(
+                            `Hola 👋 Vi que completaste el quiz de Nomaderia y tu destino ideal es ${q.recommended_destinations?.[0] ?? q.interest ?? "un parque nacional"}. ¿Te ayudo a planear tu aventura? — Frank, Nomaderia`
+                          ),
+                          "_blank",
+                          "noopener,noreferrer"
+                        )
+                      }
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      Abrir WhatsApp
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">

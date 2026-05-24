@@ -46,6 +46,7 @@
 
 ### 🟡 Backlog — Código
 
+- [x] **Fix counter `sentinel_leads` en AdminDashboard + panel "Atención hoy"** — ✅ completado
 - [x] Limpiar casts legacy de Supabase en admin/Sentinel
   - `src/pages/admin/AdminItineraryRequests.tsx` ya usa `supabase.from("itinerary_requests")` tipado; sin cambio adicional requerido
   - `src/pages/admin/AdminDashboard.tsx` y `src/pages/SentinelLanding.tsx` ahora usan `supabase as unknown as SupabaseClient` para tablas aún ausentes en `src/integrations/supabase/types.ts`
@@ -83,6 +84,13 @@ https://nomaderia.com/
 ---
 
 ## Changelog (completados)
+
+### ✅ Admin Dashboard — fix sentinel_leads + panel "Atención hoy" (Mayo 2026)
+- [x] `supabase/migrations/20260524000000_sentinel_leads_admin_select.sql`: nueva política RLS `"Admins can view sentinel leads"` (FOR SELECT TO authenticated USING has_role) — la tabla solo tenía INSERT anon, sin SELECT para admin, causando que el contador siempre mostrara 0
+- [x] `src/pages/admin/AdminDashboard.tsx`: corregida query de sentinel count (`select("*", ...)` → `select("id", ...)` con `count: exact, head: true`)
+- [x] Añadidas interfaces `SentinelLead` y `RecentQuizResponse` + helper `timeAgo()`
+- [x] Panel **"Atención hoy"** (border-left primario, fondo primary/5) insertado sobre el grid de stats — muestra leads de `sentinel_leads` y respuestas de `quiz_responses` de las últimas 48h, cada fila con botón verde WhatsApp que abre mensaje pre-llenado contextual
+- [x] Importados `MessageCircle` (lucide-react) y `buildWhatsAppLink` (`@/lib/whatsapp`) en AdminDashboard
 
 ### ✅ Email drip itinerary_cta — modelo de 2 productos (Mayo 2026)
 - [x] `supabase/functions/send-drip-emails/index.ts` `buildItineraryCtaEmail()`: eliminada la sección de 3 paquetes legacy (Weekend/Aventura/Expedición) y reemplazada por el modelo actual de 2 productos: **Itinerario Personalizado ($29 USD)** y **Solución Completa ($49 USD, badge "Más popular")**
