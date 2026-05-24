@@ -386,6 +386,16 @@ https://nomaderia.com/
 - Integrado en Index.tsx entre GearPreview y SocialProof
 - Si no hay posts publicados, la sección no se renderiza
 
+### ✅ Skeleton Loaders: Layout-Matched Card & Detail Skeletons (Mayo 2026)
+- [x] **`src/components/LoadingSkeletons.tsx`** — Nuevos componentes skeleton con formas que coinciden pixel-a-pixel con el contenido real (sin layout shift):
+  - `DestinationCardGridSkeleton` — imagen `h-56 sm:h-52`, línea de país, fila footer (reloj · dólar · "Ver Guía")
+  - `BlogCardGridSkeleton` — imagen `h-44`, fila badge + reading time + autor, fecha y "Leer más"
+  - `DestinationDetailSkeleton` mejorado — hero `h-[50vh] md:h-[60vh]`, fila de 4 tabs navegables, bloques de cuerpo, placeholder de acordeón FAQ, sidebar `h-64`
+  - `CardGridSkeleton` genérico conservado por compatibilidad con otros usos
+- [x] **`src/components/landing/DestinationsCatalog.tsx`** — Usa `DestinationCardGridSkeleton` en lugar del genérico
+- [x] **`src/pages/BlogListing.tsx`** — Usa `BlogCardGridSkeleton` (count=6) en lugar del genérico (count=3); `DestinationDetail.tsx` ya usaba `DestinationDetailSkeleton`
+- [x] `tsc --noEmit` — 0 errores; `npm run build` — build exitoso
+
 ### ✅ SocialProof: Conteos Reales vía `usePublicStats` (Mayo 2026)
 - [x] **Nuevo hook `src/hooks/use-public-stats.ts`** — consultas `head: true` / `count: "exact"` con `Promise.all` para 4 tablas: `destinations` (is_published=true), `blog_posts` (is_published=true), `quiz_responses` (total), `newsletter_subscribers` (total). `staleTime: 30 min`. Errores lanzados silenciosamente (retorna `undefined`, la UI no renderiza).
 - [x] **`SocialProof.tsx` actualizado** — importa `usePublicStats`; reemplaza los números inventados (350+, 12) con conteos en vivo. Cada tarjeta sólo se renderiza si su conteo es > 0. La tarjeta TAP (certificación real, sin número) siempre se muestra. Mientras se carga, el componente retorna `null` para evitar un parpadeo con ceros.

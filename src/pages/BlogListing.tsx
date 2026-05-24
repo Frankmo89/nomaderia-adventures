@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { CardGridSkeleton } from "@/components/LoadingSkeletons";
+import { BlogCardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { useBlogPosts } from "@/hooks/use-blog-posts";
 import FeaturedBlogPost from "@/components/blog/FeaturedBlogPost";
@@ -66,7 +66,7 @@ const BlogListing = () => {
             <FeaturedBlogPost post={posts[0]} />
           )}
 
-          {isLoading && <CardGridSkeleton count={3} />}
+          {isLoading && <BlogCardGridSkeleton count={6} />}
 
           {error && (
             <p className="text-center text-muted-foreground py-8">
