@@ -4,9 +4,9 @@
 
 ## Qué es
 
-Plataforma web en español para hispanohablantes principiantes en aventura outdoor (25-45 años). Combina guías de destinos, blog, quiz interactivo, calculadora de presupuesto e itinerarios premium de pago.
+Plataforma web en español para hispanos residentes en EE. UU. (25-45 años), principiantes en aventura outdoor, mercado principal: SoCal/San Diego. Combina guías de destinos, blog, quiz interactivo, calculadora de presupuesto e itinerarios premium de pago.
 
-**Monetización:** Travelpayouts (vuelos/hoteles/seguros), Amazon Associates (tag: `nomaderia-20`), itinerarios personalizados (agente de viajes certificada TAP).
+**Monetización:** Travelpayouts (vuelos/hoteles/seguros), Amazon Associates (tag: `nomaderia-20`), alertas de permisos en parques nacionales (Stripe), itinerarios premium ($29 USD, agente TAP certificado).
 
 **Funnel principal:** SEO → Landing → Quiz → Destino → Affiliate links / Itinerario premium.
 
@@ -36,33 +36,51 @@ src/
 │   ├── BlogListing.tsx       # /blog
 │   ├── BlogPostDetail.tsx    # /blog/:slug
 │   ├── BudgetCalculator.tsx  # /calculadora
+│   ├── SentinelLanding.tsx   # /sentinel (alerta permisos Yosemite, dark variant)
+│   ├── Servicios.tsx         # /servicios (productos y precios)
+│   ├── SobreNosotros.tsx     # /sobre-nosotros (about + credencial TAP)
+│   ├── PrivacyPolicy.tsx     # /privacidad
+│   ├── TermsAndConditions.tsx # /terminos
+│   ├── Gracias.tsx           # /gracias (post-pago Stripe redirect)
 │   └── admin/                # Panel protegido (Supabase Auth + rol admin)
 ├── components/
 │   ├── landing/              # Secciones de homepage (Navbar, Hero, Quiz, Footer, etc.)
 │   └── ui/                   # shadcn/ui — NO editar manualmente
+├── config/
+│   ├── pricing.ts            # Productos y precios (2 products + bundle, USD only)
+│   └── assets.ts             # Brand assets URLs
 ├── hooks/                    # Custom hooks con TanStack Query
 │   ├── use-destinations.ts   # useDestinations(), useDestinationBySlug(), useRelatedDestinations()
 │   ├── use-gear-articles.ts  # useGearArticles(), useFeaturedGearArticles()
 │   ├── use-blog-posts.ts     # useBlogPosts()
 │   ├── use-quiz.ts           # useQuiz() — estado + submit del quiz
-│   └── use-seo.ts            # useCanonical() + useJsonLd()
+│   ├── use-seo.ts            # useCanonical() + useJsonLd() + usePageMeta()
+│   ├── use-stats.ts          # useQuizCount(), useDestinationsCount() — conteos reales
+│   └── use-media.ts          # useMediaSlider() + upload/toggle/delete helpers
 ├── integrations/supabase/
 │   ├── client.ts             # Cliente Supabase (instancia única)
 │   └── types.ts              # Tipos auto-generados (NO editar — regenerar con CLI)
-└── lib/
-    ├── utils.ts              # cn() = clsx + tailwind-merge
-    ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
-    └── whatsapp.ts           # buildWhatsAppUrl() — URL centralizada de WhatsApp
+├── lib/
+│   ├── utils.ts              # cn() = clsx + tailwind-merge
+│   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
+│   └── whatsapp.ts           # buildWhatsAppUrl() — URL centralizada de WhatsApp
+└── supabase/functions/       # Edge Functions
+    ├── send-quiz-email/
+    ├── send-welcome-email/
+    ├── send-drip-emails/
+    └── send-quiz-results/
 ```
 
 ## Rutas
 
 ```
-/                    → Index.tsx          /destinos/:slug  → DestinationDetail.tsx
-/gear                → GearListing.tsx    /gear/:slug      → GearArticleDetail.tsx
-/blog                → BlogListing.tsx    /blog/:slug      → BlogPostDetail.tsx
-/calculadora         → BudgetCalculator   /servicios       → Servicios.tsx
-/sobre-nosotros      → SobreNosotros.tsx  /privacidad      → PrivacyPolicy.tsx
+/                    → Index.tsx           /destinos/:slug  → DestinationDetail.tsx
+/gear                → GearListing.tsx     /gear/:slug      → GearArticleDetail.tsx
+/blog                → BlogListing.tsx     /blog/:slug      → BlogPostDetail.tsx
+/calculadora         → BudgetCalculator    /servicios       → Servicios.tsx
+/sobre-nosotros      → SobreNosotros.tsx   /privacidad      → PrivacyPolicy.tsx
+/terminos            → TermsAndConditions  /gracias         → Gracias.tsx
+/sentinel            → SentinelLanding.tsx (alerta permisos Yosemite)
 /admin/*             → AdminLayout (protegido)
 ```
 
@@ -80,6 +98,8 @@ src/
 
 **Clases condicionales:** `cn()` de `@/lib/utils` siempre.
 
+**SEO:** Todas las páginas públicas deben llamar `usePageMeta()` de `@/hooks/use-seo`.
+
 ## Design System
 
 | Token | Hex | Tailwind |
@@ -93,6 +113,8 @@ src/
 Tipografías: `font-serif` → Playfair Display (headings, oscuro sobre fondo claro) · `font-sans` → Inter (body/UI)
 
 Light theme editorial (sin toggle). Mobile-first. Diseño luminoso, limpio y enfocado en fotografía.
+
+> **Excepción:** `SentinelLanding` usa dark variant (`bg-[#1C1917]`) por ser página de conversión. El resto del sitio usa light theme editorial (`bg-background #FAFAFA`).
 
 ## Reglas Críticas (NO violar)
 
@@ -119,6 +141,11 @@ node node_modules/typescript/bin/tsc --noEmit  # Type check (0 errores esperados
 VITE_SUPABASE_URL=               # https://vrixiuvnhvqafmxlcyex.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=   # Publishable key (sb_publishable_*)
 VITE_SUPABASE_PROJECT_ID=        # vrixiuvnhvqafmxlcyex
+VITE_SITE_URL=                   # https://nomaderia.com
+VITE_WHATSAPP_NUMBER=            # 18588996802 (hardcoded fallback en whatsapp.ts)
+VITE_GA_MEASUREMENT_ID=          # Google Analytics 4 ID
+VITE_SENTRY_DSN=                 # Sentry error tracking (opcional)
+VITE_STRIPE_SENTINEL_URL=        # https://buy.stripe.com/... (Stripe Payment Link)
 ```
 
 ## Contacto y Redes
