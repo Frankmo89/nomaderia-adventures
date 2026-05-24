@@ -81,6 +81,11 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Accessibility pass — Icon-only buttons (Mayo 2026)
+- [x] Auditados controles icon-only en `src/components/landing/Navbar.tsx`, `src/components/dashboard/ImageUpload.tsx` y páginas admin
+- [x] Agregados `aria-label` + `title` descriptivos en botones de abrir/cerrar menú, eliminar, editar y cerrar sesión
+- [x] Sin cambios de lógica; solo mejoras de accesibilidad en nombres accesibles
+
 ### ✅ Fix Sentinel Landing — Fallback Stripe + Copy de Acceso Anticipado (Mayo 2026)
 - [x] `src/pages/SentinelLanding.tsx` ahora define `stripeUrl` con fallback hardcodeado a Stripe cuando `VITE_STRIPE_SENTINEL_URL` no está configurada
 - [x] Reemplazado el uso directo de `import.meta.env.VITE_STRIPE_SENTINEL_URL` por la constante `stripeUrl`

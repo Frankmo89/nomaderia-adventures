@@ -104,6 +104,8 @@ const Navbar = () => {
             variant="ghost"
             size="icon"
             className="md:hidden min-h-[44px] min-w-[44px]"
+            aria-label="Abrir menú de navegación"
+            title="Abrir menú de navegación"
             onClick={() => setOpen(true)}
           >
             <Menu className={cn("h-6 w-6", scrolled ? "text-foreground" : "text-white")} />
@@ -139,6 +141,8 @@ const Navbar = () => {
                 variant="ghost"
                 size="icon"
                 className="min-h-[44px] min-w-[44px]"
+                aria-label="Cerrar menú de navegación"
+                title="Cerrar menú de navegación"
                 onClick={() => setOpen(false)}
               >
                 <X className="h-6 w-6 text-foreground" />

@@ -85,7 +85,7 @@ const AdminGearArticleForm = () => {
               <div key={i} className="p-4 border border-border rounded-lg space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-card-foreground">Producto {i + 1}</span>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeProduct(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <Button type="button" variant="ghost" size="icon" aria-label={`Eliminar producto ${i + 1}`} title={`Eliminar producto ${i + 1}`} onClick={() => removeProduct(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Input placeholder="Nombre" value={p.name} onChange={(e) => updateProduct(i, "name", e.target.value)} className="bg-background border-border text-foreground" />

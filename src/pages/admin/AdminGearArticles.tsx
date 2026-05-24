@@ -92,12 +92,12 @@ const AdminGearArticles = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button asChild variant="ghost" size="icon">
+                      <Button asChild variant="ghost" size="icon" aria-label={`Editar artículo ${a.title}`} title={`Editar artículo ${a.title}`}>
                         <Link to={`/admin/gear-articles/${a.id}/edit`}><Pencil className="h-4 w-4" /></Link>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={`Eliminar artículo ${a.title}`} title={`Eliminar artículo ${a.title}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>

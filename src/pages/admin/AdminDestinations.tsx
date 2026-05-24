@@ -95,12 +95,12 @@ const AdminDestinations = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button asChild variant="ghost" size="icon">
+                      <Button asChild variant="ghost" size="icon" aria-label={`Editar destino ${d.title}`} title={`Editar destino ${d.title}`}>
                         <Link to={`/admin/destinations/${d.id}/edit`}><Pencil className="h-4 w-4" /></Link>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={`Eliminar destino ${d.title}`} title={`Eliminar destino ${d.title}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
