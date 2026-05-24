@@ -174,8 +174,7 @@ function buildItineraryCtaEmail(): string {
             <p style="color:#A8A29E;font-size:13px;margin:0;">1–3 días · Escapada rápida</p>
           </div>
           <div style="text-align:right;">
-            <p style="font-size:18px;font-weight:700;color:#E86C3A;margin:0;">$299 MXN</p>
-            <p style="color:#A8A29E;font-size:12px;margin:0;">$19 USD</p>
+            <p style="font-size:18px;font-weight:700;color:#E86C3A;margin:0;">$29 USD</p>
           </div>
         </div>
       </div>
@@ -187,8 +186,7 @@ function buildItineraryCtaEmail(): string {
             <p style="color:#A8A29E;font-size:13px;margin:0;">4–7 días · La más solicitada</p>
           </div>
           <div style="text-align:right;">
-            <p style="font-size:18px;font-weight:700;color:#E86C3A;margin:0;">$549 MXN</p>
-            <p style="color:#A8A29E;font-size:12px;margin:0;">$35 USD</p>
+            <p style="font-size:18px;font-weight:700;color:#E86C3A;margin:0;">$29 USD</p>
           </div>
         </div>
       </div>
@@ -200,8 +198,7 @@ function buildItineraryCtaEmail(): string {
             <p style="color:#A8A29E;font-size:13px;margin:0;">8+ días · Incluye soporte WhatsApp</p>
           </div>
           <div style="text-align:right;">
-            <p style="font-size:18px;font-weight:700;color:#E86C3A;margin:0;">$899 MXN</p>
-            <p style="color:#A8A29E;font-size:12px;margin:0;">$59 USD</p>
+            <p style="font-size:18px;font-weight:700;color:#E86C3A;margin:0;">$49 USD</p>
           </div>
         </div>
       </div>
