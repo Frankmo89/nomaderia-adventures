@@ -82,6 +82,12 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Fix tests Vitest — `window.location.reload` en `lazy-with-retry` (Mayo 2026)
+- [x] `src/lib/lazy-with-retry.test.ts` dejó de usar redefinición/spy directa sobre `window.location.reload`, incompatible con entornos nuevos de Vitest
+- [x] El mock ahora usa `vi.stubGlobal("location", { ...window.location, reload: vi.fn() })`
+- [x] Se agregó restauración explícita al final del test con `vi.unstubAllGlobals()`
+- [x] Verificación ejecutada: `npm run test -- --run` ✅ (77/77 tests pasando, 0 fallos)
+
 ### ✅ Mantenimiento SEO — sitemap y robots (Mayo 2026)
 - [x] `public/sitemap.xml` actualizado con rutas públicas faltantes indexables: `/destinos`, `/terminos`, `/servicios` y `/sentinel`
 - [x] Se mantuvieron intactas las entradas existentes y se dejó fuera `/gracias` por ser una página de post-pago no indexable

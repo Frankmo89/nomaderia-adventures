@@ -54,23 +54,28 @@ describe("lazyWithRetry", () => {
   });
 
   it("should set sessionStorage and call reload after all retries exhausted", async () => {
-    const reloadMock = vi.spyOn(window.location, "reload").mockImplementation(() => {});
+    const reloadMock = vi.fn();
+    vi.stubGlobal("location", { ...window.location, reload: reloadMock });
 
-    const importFn = vi.fn().mockRejectedValue(new Error("Chunk failed"));
+    try {
+      const importFn = vi.fn().mockRejectedValue(new Error("Chunk failed"));
 
-    // With maxRetries=0, it will immediately go to the reload path
-    const promise = retryImport(importFn, 0);
+      // With maxRetries=0, it will immediately go to the reload path
+      const promise = retryImport(importFn, 0);
 
-    // The function should set sessionStorage and call reload,
-    // then return a never-resolving promise
-    const result = await Promise.race([
-      promise,
-      new Promise((resolve) => setTimeout(() => resolve("timeout"), 100)),
-    ]);
+      // The function should set sessionStorage and call reload,
+      // then return a never-resolving promise
+      const result = await Promise.race([
+        promise,
+        new Promise((resolve) => setTimeout(() => resolve("timeout"), 100)),
+      ]);
 
-    expect(result).toBe("timeout");
-    expect(sessionStorage.getItem("chunk-reload")).toBe("1");
-    expect(reloadMock).toHaveBeenCalledOnce();
+      expect(result).toBe("timeout");
+      expect(sessionStorage.getItem("chunk-reload")).toBe("1");
+      expect(reloadMock).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("should throw error if already reloaded once (sessionStorage flag set)", async () => {
