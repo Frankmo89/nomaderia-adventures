@@ -6,10 +6,11 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 interface ArticleWhatsAppCTAProps {
   title: string;
+  whatsappMessage?: string;
 }
 
-const ArticleWhatsAppCTA = ({ title }: ArticleWhatsAppCTAProps) => {
-  const message = `Hola Nomaderia 👋 Me interesa el itinerario personalizado de ${title}. ¿Me ayudas a planearlo?`;
+const ArticleWhatsAppCTA = ({ title, whatsappMessage }: ArticleWhatsAppCTAProps) => {
+  const message = whatsappMessage ?? `Hola Nomaderia 👋 Me interesa el itinerario personalizado de ${title}. ¿Me ayudas a planearlo?`;
   const url = buildWhatsAppLink(message);
 
   return (

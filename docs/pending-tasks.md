@@ -83,6 +83,12 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Sticky Mobile CTA en páginas de destino (Mayo 2026)
+- [x] **Nueva barra sticky mobile-first** — `src/components/StickyMobileCTA.tsx` fija al fondo solo en mobile (`md:hidden`), con `bg-background`, borde superior, sombra sutil y padding con safe-area para mantener visible la conversión principal durante el scroll.
+- [x] **Conversión contextual** — `DestinationDetail.tsx` reutiliza el mismo mensaje contextual de WhatsApp del CTA editorial y pasa `destination.affiliate_links?.permit_alert_url` para mostrar el botón secundario “Alerta de permisos” solo cuando aplica.
+- [x] **Tracking y espacio inferior** — ambos botones disparan `trackEvent`; la página agrega padding inferior móvil para que la barra no tape contenido ni footer.
+- [x] Verificaciones ejecutadas: `npx tsc --noEmit` ✅ y `npm run build` ✅
+
 ### ✅ PWA mínima instalable — manifest + meta (Mayo 2026)
 - [x] Creado `public/manifest.webmanifest` con nombre, descripción, colores base y `display: "standalone"` para habilitar "agregar a inicio" sin service worker ni cache offline
 - [x] `index.html` ahora usa assets locales de `/public` para icono/manifest y agrega meta tags mínimas de installability (`theme-color`, `application-name`, `mobile-web-app-capable`, `apple-mobile-web-app-*`)

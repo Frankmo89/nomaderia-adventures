@@ -15,6 +15,7 @@ import Footer from "@/components/landing/Footer";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
 import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
+import StickyMobileCTA from "@/components/StickyMobileCTA";
 import SEO from "@/components/SEO";
 import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
@@ -210,9 +211,11 @@ const DestinationDetail = () => {
 
   const affiliateLinks = (dest.affiliate_links as Record<string, string>) || {};
   const bookingOutlineBtn = "w-full bg-transparent border-card-foreground/25 text-card-foreground hover:bg-card-foreground/10 hover:text-card-foreground";
+  const permitAlertUrl = affiliateLinks.permit_alert_url || null;
+  const whatsappMessage = `Hola Nomaderia 👋 Me interesa el itinerario personalizado de ${dest.title}. ¿Me ayudas a planearlo?`;
 
   return (
-    <main className="bg-background min-h-screen">
+    <main className="bg-background min-h-screen pb-32 md:pb-0">
       <Navbar />
       <DestinationPageMeta destination={dest} />
       <SEO
@@ -351,9 +354,9 @@ const DestinationDetail = () => {
                   )}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                  {affiliateLinks.permit_alert_url && (
+                  {permitAlertUrl && (
                     <Button asChild className="bg-[#D97706] hover:bg-[#D97706]/90 text-white w-full font-semibold">
-                      <a href={affiliateLinks.permit_alert_url} target="_blank" rel="noopener noreferrer">
+                      <a href={permitAlertUrl} target="_blank" rel="noopener noreferrer">
                         <Bell className="mr-2 h-4 w-4" /> Alerta de permisos — $29 USD
                       </a>
                     </Button>
@@ -553,13 +556,14 @@ const DestinationDetail = () => {
       )}
 
       {/* WhatsApp CTA */}
-      <ArticleWhatsAppCTA title={dest.title} />
+      <ArticleWhatsAppCTA title={dest.title} whatsappMessage={whatsappMessage} />
 
       <PremiumItinerarySection />
 
       <div className="container mx-auto px-4 py-8 text-center">
         <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>↑ Volver arriba</Button>
       </div>
+      <StickyMobileCTA whatsappMessage={whatsappMessage} permitAlertUrl={permitAlertUrl} />
       <Footer />
     </main>
   );
