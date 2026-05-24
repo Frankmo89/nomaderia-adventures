@@ -10,10 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { usePageMeta } from "@/hooks/use-seo";
+import { usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import JsonLd from "@/components/JsonLd";
 
 const emailSchema = z.object({
   email: z.string().email("Ingresa un email válido"),
@@ -79,8 +80,27 @@ const SentinelLanding = () => {
     }
   };
 
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Sentinel — Alertas de Yosemite en WhatsApp",
+    description:
+      "Monitoreamos 24/7 los cupos que se liberan en Yosemite y te alertamos por WhatsApp en segundos. Campgrounds, permisos y timed-entry.",
+    brand: { "@type": "Organization", name: "Nomaderia Adventures" },
+    offers: {
+      "@type": "Offer",
+      price: "29",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+      url: `${SITE_URL}/sentinel`,
+    },
+    category: "National Park Permit Alerts",
+    inLanguage: "es",
+  };
+
   return (
     <main className="min-h-screen bg-[#1C1917] text-[#F5F0EB]">
+      <JsonLd data={productLd} />
       {/* Nav minimal */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#1C1917]/90 backdrop-blur-sm border-b border-white/10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

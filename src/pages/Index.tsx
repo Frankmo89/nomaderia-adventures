@@ -46,10 +46,35 @@ const Index = () => {
     []
   );
 
+  const organizationLd = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "TravelAgency",
+      name: "Nomaderia Adventures",
+      url: SITE_URL,
+      description:
+        "Itinerarios personalizados y alertas de permisos para hispanos en EE. UU. Planea tu aventura en Yosemite, Grand Canyon y más. En español.",
+      email: "nomaderia.travel@gmail.com",
+      sameAs: [
+        "https://www.instagram.com/nomaderia.mx",
+        "https://www.tiktok.com/@nomaderia.mx",
+        "https://www.facebook.com/Nomaderia",
+      ],
+      areaServed: {
+        "@type": "Country",
+        name: "United States",
+      },
+      knowsLanguage: "es",
+      priceRange: "$29-$49 USD",
+    }),
+    []
+  );
+
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
       <JsonLd data={jsonLdData} />
+      <JsonLd data={organizationLd} />
       <HeroSection />
       <section className="bg-primary/10 py-8">
         <div className="container mx-auto px-4 text-center">

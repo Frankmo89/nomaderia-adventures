@@ -2,8 +2,9 @@ import { Link } from "react-router-dom";
 import { BadgeCheck, Mail, Mountain, ShieldCheck } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { usePageMeta } from "@/hooks/use-seo";
+import { usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
+import JsonLd from "@/components/JsonLd";
 
 const SobreNosotros = () => {
   usePageMeta({
@@ -11,9 +12,28 @@ const SobreNosotros = () => {
     description: "Conoce a Frank, agente TAP certificado que ayuda a hispanos en EE. UU. a planear su primera aventura en parques nacionales. En español.",
   });
 
+  const profileLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    mainEntity: {
+      "@type": "Person",
+      name: "Frank",
+      jobTitle: "Agente de Viajes TAP Certificado",
+      worksFor: {
+        "@type": "TravelAgency",
+        name: "Nomaderia Adventures",
+        url: SITE_URL,
+      },
+      knowsAbout: ["Hiking", "Trekking", "National Parks", "Travel Planning"],
+    },
+    url: `${SITE_URL}/sobre-nosotros`,
+    inLanguage: "es",
+  };
+
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <JsonLd data={profileLd} />
 
       {/* Hero */}
       <section className="container mx-auto px-4 pt-28 pb-12 max-w-3xl">

@@ -2,7 +2,7 @@ import { MessageCircle, Check, BadgeCheck, ClipboardList, Route, Palmtree } from
 import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import { useCanonical, usePageMeta } from "@/hooks/use-seo";
+import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { useMediaSlider } from "@/hooks/use-media";
 import BackgroundSlideshow from "@/components/shared/BackgroundSlideshow";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { products } from "@/config/pricing";
+import JsonLd from "@/components/JsonLd";
 
 const steps = [
   {
@@ -85,9 +86,49 @@ const Servicios = () => {
   });
   const { data: mediaItems } = useMediaSlider();
 
+  const serviceLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    serviceType: "Travel Planning",
+    provider: {
+      "@type": "TravelAgency",
+      name: "Nomaderia Adventures",
+      url: SITE_URL,
+    },
+    areaServed: { "@type": "Country", name: "United States" },
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Servicios de Aventura",
+      itemListElement: products.map((p) => ({
+        "@type": "Offer",
+        name: p.name,
+        description: p.description,
+        price: p.price.replace(/[^0-9.]/g, ""),
+        priceCurrency: "USD",
+        url: `${SITE_URL}/servicios`,
+      })),
+    },
+    inLanguage: "es",
+  };
+
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: f.answer,
+      },
+    })),
+  };
+
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
+      <JsonLd data={serviceLd} />
+      <JsonLd data={faqLd} />
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-32 pb-20 min-h-[60vh] flex flex-col justify-center bg-zinc-900">
