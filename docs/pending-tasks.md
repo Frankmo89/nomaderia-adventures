@@ -29,6 +29,7 @@
 - [ ] Descargar WhatsApp Business y configurar el número de Nomaderia
 - [ ] Reemplazar `VITE_WHATSAPP_NUMBER` en el archivo `.env` con el número real
 - [ ] Subir la foto/video estrella a la carpeta `/public` y actualizar el `src` en `HeroSection.tsx`
+- [ ] Proveer iconos PWA dedicados en `/public` con tamaños `192x192` y `512x512` para reemplazar el fallback actual del manifest
 - [ ] Entrar al panel de admin y subir imágenes de portada (hero images) a los destinos que falten
 - [ ] Guardar las 4 Respuestas Rápidas en la configuración de WhatsApp Business
 - [ ] Agregar hero images a destinos sin imagen
@@ -81,6 +82,13 @@ https://nomaderia.com/
 ---
 
 ## Changelog (completados)
+
+### ✅ PWA mínima instalable — manifest + meta (Mayo 2026)
+- [x] Creado `public/manifest.webmanifest` con nombre, descripción, colores base y `display: "standalone"` para habilitar "agregar a inicio" sin service worker ni cache offline
+- [x] `index.html` ahora usa assets locales de `/public` para icono/manifest y agrega meta tags mínimas de installability (`theme-color`, `application-name`, `mobile-web-app-capable`, `apple-mobile-web-app-*`)
+- [x] Reutilizados assets existentes en `/public`: `favicon.ico` (256x256) y `placeholder.svg`; no se generaron nuevos binarios PNG
+- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅, `npm run test` ✅ y `npm run build` ✅
+- [x] Nota: `npm run lint` sigue fallando por issues preexistentes no relacionados en `src/components/ui/*`, `DidYouKnowSection.tsx` y `AdminGallery.tsx`
 
 ### ✅ Componente PermitScarcity — escasez de permisos (Mayo 2026)
 - [x] Creado `src/components/PermitScarcity.tsx` con mapa interno de datos honestos (NPS/Recreation.gov) para parques con sistema de permisos/lotería

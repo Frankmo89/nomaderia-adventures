@@ -1,0 +1,23 @@
+{
+  "name": "Nomaderia Adventures",
+  "short_name": "Nomaderia",
+  "description": "Tu concierge de aventuras en español para parques nacionales.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#D97706",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "256x256",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/placeholder.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
