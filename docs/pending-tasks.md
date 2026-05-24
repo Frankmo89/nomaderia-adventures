@@ -82,6 +82,13 @@ https://nomaderia.com/
 
 ## Changelog (completados)
 
+### ✅ Auditoría de precios en email post-quiz (Mayo 2026)
+- [x] Revisión completa de `supabase/functions/send-quiz-email/index.ts` para detectar precios MXN, nombres legacy (Escapada/Aventura/Expedición) y referencias al modelo anterior de 3 tiers
+- [x] Resultado: **sin hallazgos**; el contenido actual no usa precios MXN ni estructura legacy, por lo que no se aplicaron cambios en la Edge Function
+- [x] Confirmado que se mantiene `from: "Nomaderia <hola@nomaderia.com>"` sin modificaciones
+- [x] Verificación ejecutada: `node node_modules/typescript/bin/tsc --noEmit` ✅
+- [x] Recomendación siguiente: mantener esta misma auditoría cada vez que se actualice el copy de emails en `send-quiz-email`
+
 ### ✅ Fixes pequeños — credencial TAP y noindex en /gracias (Mayo 2026)
 - [x] `src/pages/SobreNosotros.tsx` ya no depende de `public/diploma.jpg`; se reemplazó el bloque roto por una tarjeta/badge estilizada con `ShieldCheck`, texto "Agente de Viajes Certificado TAP" y subtítulo "The Travel Institute — National TAP Test"
 - [x] Se agregó comentario de seguimiento en `SobreNosotros.tsx`: `TODO` para volver a `<img>` cuando Frank suba el archivo
