@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, useSpring, useInView } from "framer-motion";
-import { Users, MapPin, ShieldCheck } from "lucide-react";
+import { Users, MapPin, ShieldCheck, BookOpen } from "lucide-react";
+import { usePublicStats } from "@/hooks/use-public-stats";
 
 /** Animated counter that counts from 0 to `target` when visible */
 const AnimatedCounter = ({
@@ -30,32 +31,63 @@ const AnimatedCounter = ({
 };
 
 const SocialProof = () => {
-  const stats = [
-    {
-      icon: Users,
-      value: 350,
-      suffix: "+",
-      label: "Aventureros han encontrado su destino ideal",
-      sublabel: "con nuestro quiz personalizado",
-      isTap: false,
-    },
-    {
-      icon: MapPin,
-      value: 12,
-      suffix: "",
-      label: "Destinos documentados con guías completas",
-      sublabel: "desde fin de semana hasta expediciones",
-      isTap: false,
-    },
-    {
-      icon: ShieldCheck,
-      value: 0,
-      suffix: "",
-      label: "Agente de viajes certificada",
-      sublabel: "National TAP Test — The Travel Institute, USA",
-      isTap: true,
-    },
-  ];
+  const { data: stats, isLoading } = usePublicStats();
+
+  // Build the list of real data-driven stat cards (only shown when count > 0)
+  const dataStats = [
+    stats?.quizResponses && stats.quizResponses > 0
+      ? {
+          icon: Users,
+          value: stats.quizResponses,
+          suffix: "",
+          label: "Aventureros han hecho el quiz",
+          sublabel: "y encontraron su destino ideal",
+          isTap: false,
+        }
+      : null,
+    stats?.destinations && stats.destinations > 0
+      ? {
+          icon: MapPin,
+          value: stats.destinations,
+          suffix: "",
+          label: "Destinos guiados",
+          sublabel: "con guías completas para principiantes",
+          isTap: false,
+        }
+      : null,
+    stats?.blogPosts && stats.blogPosts > 0
+      ? {
+          icon: BookOpen,
+          value: stats.blogPosts,
+          suffix: "",
+          label: "Guías publicadas",
+          sublabel: "aventura outdoor en español",
+          isTap: false,
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    icon: typeof Users;
+    value: number;
+    suffix: string;
+    label: string;
+    sublabel: string;
+    isTap: boolean;
+  }>;
+
+  // TAP credential is always shown — it is a real certification, not a number
+  const tapCard = {
+    icon: ShieldCheck,
+    value: 0,
+    suffix: "",
+    label: "Agente de viajes certificada",
+    sublabel: "National TAP Test — The Travel Institute, USA",
+    isTap: true,
+  };
+
+  const visibleStats = [...dataStats, tapCard];
+
+  // Show nothing while loading to avoid a flash of stale/zero numbers
+  if (isLoading) return null;
 
   return (
     <section className="py-16 sm:py-24 bg-background relative overflow-hidden">
@@ -77,7 +109,7 @@ const SocialProof = () => {
 
         {/* Stats grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
-          {stats.map((stat, i) => (
+          {visibleStats.map((stat, i) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 30 }}

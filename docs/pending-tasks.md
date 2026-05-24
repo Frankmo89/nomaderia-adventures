@@ -386,6 +386,11 @@ https://nomaderia.com/
 - Integrado en Index.tsx entre GearPreview y SocialProof
 - Si no hay posts publicados, la sección no se renderiza
 
+### ✅ SocialProof: Conteos Reales vía `usePublicStats` (Mayo 2026)
+- [x] **Nuevo hook `src/hooks/use-public-stats.ts`** — consultas `head: true` / `count: "exact"` con `Promise.all` para 4 tablas: `destinations` (is_published=true), `blog_posts` (is_published=true), `quiz_responses` (total), `newsletter_subscribers` (total). `staleTime: 30 min`. Errores lanzados silenciosamente (retorna `undefined`, la UI no renderiza).
+- [x] **`SocialProof.tsx` actualizado** — importa `usePublicStats`; reemplaza los números inventados (350+, 12) con conteos en vivo. Cada tarjeta sólo se renderiza si su conteo es > 0. La tarjeta TAP (certificación real, sin número) siempre se muestra. Mientras se carga, el componente retorna `null` para evitar un parpadeo con ceros.
+- [x] Cero testimonios, cero estrellas, cero números inventados.
+
 ### ✅ SocialProof: Alto Impacto Visual con Contadores Animados (Marzo 2026)
 - [x] Sección de Prueba Social ahora es dinámica con datos reales de Supabase y contadores animados
 - [x] `AnimatedCounter` interno usa `useMotionValue`, `useTransform`, `useSpring` y `useInView` de Framer Motion para contar de 0 al valor real cuando la sección es visible
