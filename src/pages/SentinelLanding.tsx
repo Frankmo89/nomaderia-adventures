@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +20,8 @@ const emailSchema = z.object({
 });
 
 type EmailFormData = z.infer<typeof emailSchema>;
+
+const db = supabase as unknown as SupabaseClient;
 
 const SentinelLanding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,8 +48,8 @@ const SentinelLanding = () => {
   const onSubmit = async (data: EmailFormData) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from("sentinel_leads" as any)
+      const { error } = await db
+        .from("sentinel_leads")
         .insert([{ email: data.email, source: "sentinel-landing" }]);
 
       if (error) {
