@@ -15,6 +15,7 @@ interface GearArticleCard {
 export function useGearArticles() {
   return useQuery<GearArticle[]>({
     queryKey: ["gear_articles"],
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gear_articles")
@@ -30,6 +31,7 @@ export function useGearArticles() {
 export function useFeaturedGearArticles() {
   return useQuery<GearArticleCard[]>({
     queryKey: ["gear_articles", "featured"],
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gear_articles")

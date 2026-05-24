@@ -50,7 +50,7 @@ const SystemAudit = lazyWithRetry(() => import("./pages/admin/SystemAudit"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutos — datos frescos sin refetch innecesario
+      staleTime: 5 * 60 * 1000, // 5 minutos — datos frescos sin refetch innecesario
       retry: 1,                  // 1 reintento en caso de error de red
       refetchOnWindowFocus: false,
     },

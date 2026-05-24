@@ -20,6 +20,7 @@ export type { BlogPost };
 export function useBlogPosts() {
   return useQuery<BlogPost[]>({
     queryKey: ["blog_posts"],
+    staleTime: 30 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_posts")
