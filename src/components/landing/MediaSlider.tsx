@@ -8,6 +8,7 @@ const MediaSlider = () => {
     <BackgroundSlideshow
       items={items ?? []}
       overlayClassName="bg-black/30"
+      prioritizeFirstImage
       fallback={
         <>
           <div className="absolute inset-0 bg-neutral-800" />

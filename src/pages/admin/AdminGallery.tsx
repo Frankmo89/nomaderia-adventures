@@ -139,7 +139,7 @@ const AdminGallery = () => {
                     onMouseLeave={(e) => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
                   />
                 ) : (
-                  <img src={item.public_url} alt="" className="w-full h-full object-cover" />
+                  <img src={item.public_url} alt="" loading="lazy" className="w-full h-full object-cover" />
                 )}
                 <Badge
                   variant="secondary"

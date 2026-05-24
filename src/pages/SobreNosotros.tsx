@@ -54,6 +54,7 @@ const SobreNosotros = () => {
               <img
                 src="/diploma.jpg"
                 alt="Diploma de Agente de Viajes — Nomaderia"
+                loading="lazy"
                 className="w-full object-contain max-h-[480px]"
                 onError={(e) => {
                   const target = e.currentTarget;

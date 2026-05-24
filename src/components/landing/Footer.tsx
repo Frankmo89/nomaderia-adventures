@@ -14,7 +14,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
           <div>
             <Link to="/" className="flex items-center gap-2 mb-3">
               {BRAND_ASSETS.logo && !logoError ? (
-                <img src={BRAND_ASSETS.logo} alt="Nomaderia" className="h-7 w-auto" onError={() => setLogoError(true)} />
+                <img src={BRAND_ASSETS.logo} alt="Nomaderia" loading="lazy" className="h-7 w-auto" onError={() => setLogoError(true)} />
               ) : (
                 <>
                   <Mountain className="h-5 w-5 text-primary" />

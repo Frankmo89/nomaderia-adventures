@@ -9,6 +9,7 @@ interface BackgroundSlideshowProps {
   interval?: number;
   overlayClassName?: string;
   fallback?: React.ReactNode;
+  prioritizeFirstImage?: boolean;
 }
 
 const BackgroundSlideshow = ({
@@ -16,6 +17,7 @@ const BackgroundSlideshow = ({
   interval = DEFAULT_INTERVAL_MS,
   overlayClassName = "bg-black/60",
   fallback,
+  prioritizeFirstImage = false,
 }: BackgroundSlideshowProps) => {
   const [index, setIndex] = useState(0);
 
@@ -64,6 +66,8 @@ const BackgroundSlideshow = ({
               src={current.public_url}
               alt=""
               role="presentation"
+              loading={prioritizeFirstImage && safeIndex === 0 ? "eager" : "lazy"}
+              fetchPriority={prioritizeFirstImage && safeIndex === 0 ? "high" : "auto"}
               className="w-full h-full object-cover"
             />
           )}
