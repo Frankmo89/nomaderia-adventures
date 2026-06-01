@@ -27,6 +27,13 @@ referenciar esta lista primero.
 - [ ] **Regenerar tipos de Supabase** (requiere `SUPABASE_ACCESS_TOKEN`):
       `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`
       → elimina los casts `as unknown as SupabaseClient` (ver ADR-009).
+- [ ] **Aplicar nueva migración `destination_ai_meta` y regenerar tipos**:
+  aplicar migration en Supabase y después correr
+  `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
+- [ ] **Frank: aplicar migración `add_destinations_access_fields` y regenerar tipos**:
+  correr `supabase db push` para subir columnas nuevas de `public.destinations`
+  (`base_city`, `access_type`, `cell_signal_status`) y después regenerar tipos con
+  `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
 - [ ] **Secrets de Edge Functions** en Supabase Dashboard → Edge Functions →
       Secrets:
       - `supabase secrets set RESEND_API_KEY=re_xxxxx`
@@ -95,6 +102,15 @@ Siempre que hagas cambios al código:
 ## Completado
 
 - [2026-06-01] ConciergeChat integrado en DestinationDetail — hook use-concierge.ts + componente ConciergeChat.tsx
+- [2026-06-01] Creado `supabase/functions/_shared/nomaderia-soul.ts` como mirror runtime; `docs/NOMADERIA_SOUL.md` sigue siendo la fuente de verdad.
+- [2026-06-01] Creada `supabase/functions/discover-trending-destinations/index.ts` con OpenAI Responses + web_search para candidatos trending.
+- [2026-06-01] Creada `supabase/functions/generate-destination-draft/index.ts` (Step A research + Step B schema), con auth admin y voz compartida `NOMADERIA_SOUL`.
+- [2026-06-01] Creados hooks tipados `useTrendingDestinations` y `useDestinationDraft` + tipos compartidos en `src/types/ai-destinations.ts` para invocar Edge Functions con React Query.
+- [2026-06-01] Integrado panel AI de discovery en `AdminDestinations` con `useTrendingDestinations`, progreso por etapas cliente y cards reutilizables en `src/components/admin/TrendingDestinationCard.tsx`.
+- [2026-06-01] Flujo admin AI completado end-to-end: discover → elegir candidato → auto-fill en `AdminDestinationForm` → confianza/fuentes privadas → guardar draft → `destination_ai_meta` privado tras crear destino nuevo.
+- [2026-06-01] Añadida card "Generación con IA" en `AdminDashboard` con conteo admin-only de `destination_ai_meta` y horas ahorradas estimadas.
+- [2026-06-01] Actualizado pipeline AI de drafts de destino (`generate-destination-draft` + `src/types/ai-destinations.ts`) para incluir `base_city`, `access_type` y `cell_signal_status` en prompt de investigación y schema estricto.
+- [2026-06-01] `AdminDestinationForm` actualizado para integrar `base_city`, `access_type` y `cell_signal_status` en UI (con `VerifyFieldBadge`), auto-fill de IA y payload de guardado a `public.destinations`.
 
 ---
 

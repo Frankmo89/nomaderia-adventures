@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 interface Stats {
   destinations: number;
   destinationDrafts: number;
+  aiGeneratedDestinations: number;
   gear: number;
   gearDrafts: number;
   blog: number;
@@ -102,6 +103,7 @@ const MiniBar = ({ data, labels }: { data: Record<string, number>; labels: Recor
 const AdminDashboard = () => {
   const [stats, setStats] = useState<Stats>({
     destinations: 0, destinationDrafts: 0,
+    aiGeneratedDestinations: 0,
     gear: 0, gearDrafts: 0,
     blog: 0, blogDrafts: 0,
     quiz: 0, sentinelLeads: 0, subscribers: 0, itineraryRequests: 0, emailsSent: 0,
@@ -118,9 +120,10 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [dPub, dDraft, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
+      const [dPub, dDraft, aiGenerated, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", false),
+        db.from("destination_ai_meta").select("id", { count: "exact", head: true }),
         supabase.from("gear_articles").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("gear_articles").select("id", { count: "exact", head: true }).eq("is_published", false),
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("is_published", true),
@@ -137,6 +140,7 @@ const AdminDashboard = () => {
       setStats({
         destinations: dPub.count || 0,
         destinationDrafts: dDraft.count || 0,
+        aiGeneratedDestinations: aiGenerated.count || 0,
         gear: gPub.count || 0,
         gearDrafts: gDraft.count || 0,
         blog: bPub.count || 0,
@@ -372,6 +376,19 @@ const AdminDashboard = () => {
             {stats.gearDrafts > 0 && (
               <p className="text-xs text-muted-foreground mt-1">{stats.gearDrafts} borrador{stats.gearDrafts !== 1 ? "es" : ""}</p>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-card-foreground/70">Generación con IA</CardTitle>
+            <BarChart3 className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-card-foreground">{stats.aiGeneratedDestinations}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              ≈ {(stats.aiGeneratedDestinations * 2.5).toLocaleString("es-MX", { maximumFractionDigits: 1 })} h ahorradas (estimado)
+            </p>
           </CardContent>
         </Card>
 

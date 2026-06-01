@@ -70,8 +70,11 @@ export type Database = {
       }
       destinations: {
         Row: {
+          access_type: string | null
           affiliate_links: Json | null
+          base_city: string | null
           best_season: string | null
+          cell_signal_status: string | null
           common_fears: Json | null
           country: string
           created_at: string
@@ -99,8 +102,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_type?: string | null
           affiliate_links?: Json | null
+          base_city?: string | null
           best_season?: string | null
+          cell_signal_status?: string | null
           common_fears?: Json | null
           country: string
           created_at?: string
@@ -128,8 +134,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_type?: string | null
           affiliate_links?: Json | null
+          base_city?: string | null
           best_season?: string | null
+          cell_signal_status?: string | null
           common_fears?: Json | null
           country?: string
           created_at?: string
@@ -233,6 +242,69 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_chunks: {
+        Row: {
+          content: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          source_field: string
+          source_id: string
+          source_table: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_field: string
+          source_id: string
+          source_table: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_field?: string
+          source_id?: string
+          source_table?: string
+        }
+        Relationships: []
+      }
+      media_slider: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          media_type: string
+          public_url: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          media_type: string
+          public_url: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          media_type?: string
+          public_url?: string
+          storage_path?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
@@ -293,6 +365,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sentinel_leads: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -314,6 +407,42 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          fechas: string | null
+          id: string
+          nivel: string | null
+          notas: string | null
+          origen: string | null
+          parque: string | null
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          fechas?: string | null
+          id?: string
+          nivel?: string | null
+          notas?: string | null
+          origen?: string | null
+          parque?: string | null
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          fechas?: string | null
+          id?: string
+          nivel?: string | null
+          notas?: string | null
+          origen?: string | null
+          parque?: string | null
+          source?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -325,6 +454,21 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_knowledge_chunks: {
+        Args: {
+          match_count?: number
+          min_similarity?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          id: string
+          metadata: Json
+          similarity: number
+          source_field: string
+          source_table: string
+        }[]
       }
     }
     Enums: {
