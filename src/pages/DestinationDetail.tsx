@@ -20,6 +20,7 @@ import SEO from "@/components/SEO";
 import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
 import PermitScarcity from "@/components/PermitScarcity";
+import { ConciergeChat } from "@/components/ConciergeChat";
 import { SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 import type { Tables } from "@/integrations/supabase/types";
@@ -554,6 +555,13 @@ const DestinationDetail = () => {
           </div>
         </section>
       )}
+
+      <div className="my-8 container mx-auto px-4">
+        <ConciergeChat
+          destinationSlug={dest.slug}
+          destinationTitle={dest.title}
+        />
+      </div>
 
       {/* WhatsApp CTA */}
       <ArticleWhatsAppCTA title={dest.title} whatsappMessage={whatsappMessage} />

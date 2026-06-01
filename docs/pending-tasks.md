@@ -92,6 +92,10 @@ Siempre que hagas cambios al código:
 4. Si la arquitectura cambió, actualiza `CLAUDE.md`. Si fue una decisión dura,
    añade un ADR en `docs/decisions.md`.
 
+## Completado
+
+- [2026-06-01] ConciergeChat integrado en DestinationDetail — hook use-concierge.ts + componente ConciergeChat.tsx
+
 ---
 
 ## 📜 Changelog reciente
