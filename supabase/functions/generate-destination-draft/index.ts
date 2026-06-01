@@ -70,7 +70,16 @@ interface OpenAIResponsesPayload {
 
 function hasRefusal(payload: OpenAIResponsesPayload): boolean {
   return (payload.output ?? []).some((item) => {
+    if (item.type === "refusal") {
+      return true;
+    }
+
     if (typeof item.refusal === "string" && item.refusal.trim()) {
+      return true;
+    }
+
+    const firstContent = item.content?.[0];
+    if (firstContent?.type === "refusal") {
       return true;
     }
 
@@ -248,9 +257,6 @@ function buildFewShotBlock(example: ExampleDestination | null): string {
 short_description ejemplo:
 ${example.short_description || ""}
 
-full_guide_markdown ejemplo (extracto):
-${(example.full_guide_markdown || "").slice(0, 1800)}
-
 common_fears ejemplo:
 ${fears || "(sin ejemplo de miedos)"}`;
 }
@@ -384,6 +390,7 @@ serve(async (req) => {
 
     const stepAResponse = await callResponsesApi({
       model: OPENAI_MODEL,
+      max_output_tokens: 3000,
       tools: [{ type: "web_search" }],
       input: buildStepAResearchPrompt(stepAInput),
       text: {
@@ -409,9 +416,14 @@ serve(async (req) => {
     }
 
     const research = JSON.parse(stepAText) as StepAResearchOutput;
+    const stepBResearch = {
+      ...research,
+      sources: research.sources.slice(0, 8),
+    };
 
     const stepBResponse = await callResponsesApi({
       model: OPENAI_MODEL,
+      max_output_tokens: 4000,
       input: [
         {
           role: "system",
@@ -422,7 +434,7 @@ serve(async (req) => {
           content:
             `Estructura este material en el esquema destination_draft.\n\n` +
             `title: ${title}\ncountry: ${country}\nsuggested_slug: ${suggestedSlug || ""}\n\n` +
-            `Material de investigación (JSON):\n${JSON.stringify(research, null, 2)}`,
+            `Material de investigación (JSON):\n${JSON.stringify(stepBResearch)}`,
         },
       ],
       text: {

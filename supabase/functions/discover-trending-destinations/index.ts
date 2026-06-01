@@ -73,24 +73,27 @@ function hasRefusal(payload: OpenAIResponsesPayload): boolean {
   }
 
   return (payload.output ?? []).some((item) => {
+    if (item.type === "refusal") {
+      return true;
+    }
+
     if (typeof item.refusal === "string" && item.refusal.trim()) {
       return true;
     }
 
-    return (item.content ?? []).some((content) =>
-      content.type === "refusal" || (typeof content.refusal === "string" && content.refusal.trim())
-    );
+    const firstContent = item.content?.[0];
+    if (firstContent?.type === "refusal") {
+      return true;
+    }
+
+    return (item.content ?? []).some((content) => {
+      return content.type === "refusal" || (typeof content.refusal === "string" && content.refusal.trim().length > 0);
+    });
   });
 }
 
-function escapeJsonString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/`/g, "\\`");
-}
-
 function buildPrompt(existingDestinations: ExistingDestination[]): string {
-  const catalog = existingDestinations
-    .map((destination) => `- ${destination.title} (${destination.slug})`)
-    .join("\n");
+  const catalog = existingDestinations.slice(0, 40).map((destination) => destination.slug).join(", ");
 
   return `Eres un investigador editorial de Nomaderia. Debes encontrar 6 a 8 destinos de senderismo/outdoor que estén actualmente en tendencia para una audiencia de hispanos residentes en EE. UU. que son principiantes.
 
@@ -230,6 +233,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: OPENAI_MODEL,
+        max_output_tokens: 1500,
         tools: [{ type: "web_search" }],
         input: prompt,
         text: {

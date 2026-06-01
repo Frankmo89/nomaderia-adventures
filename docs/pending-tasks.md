@@ -111,6 +111,9 @@ Siempre que hagas cambios al código:
 - [2026-06-01] Añadida card "Generación con IA" en `AdminDashboard` con conteo admin-only de `destination_ai_meta` y horas ahorradas estimadas.
 - [2026-06-01] Actualizado pipeline AI de drafts de destino (`generate-destination-draft` + `src/types/ai-destinations.ts`) para incluir `base_city`, `access_type` y `cell_signal_status` en prompt de investigación y schema estricto.
 - [2026-06-01] `AdminDestinationForm` actualizado para integrar `base_city`, `access_type` y `cell_signal_status` en UI (con `VerifyFieldBadge`), auto-fill de IA y payload de guardado a `public.destinations`.
+Audit completa — ver docs/audit-report.md para bugs, token findings y recomendaciones.
+- [2026-06-01] Aplicados fixes del audit en Edge Functions (`discover-trending-destinations` y `generate-destination-draft`): hardening de refusal detection, caps `max_output_tokens`, compresión Step A→Step B, cap de catálogo (40 slugs), reducción del few-shot y eliminación de código muerto.
+Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
 
 ---
 
