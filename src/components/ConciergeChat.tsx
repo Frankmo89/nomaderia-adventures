@@ -68,7 +68,7 @@ function MessageBubble({ message }: { message: ConciergeMessage }) {
             : "bg-stone-100 text-stone-800 rounded-tr-2xl rounded-tl-2xl rounded-br-2xl"
         )}
       >
-        {message.content}
+        <span dangerouslySetInnerHTML={{ __html: message.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
       </div>
 
       {/* Fuentes */}

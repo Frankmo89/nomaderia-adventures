@@ -109,10 +109,25 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({})) as {
       source_table?: string;
       source_id?:    string;
+      type?:         string;
+      table?:        string;
+      record?:       Record<string, unknown>;
     };
 
-    const filterTable = body.source_table;
-    const filterId    = body.source_id;
+    // Detectar formato: webhook de Supabase vs llamada directa
+    let filterTable = body.source_table;
+    let filterId    = body.source_id;
+
+    if (body.record && body.table) {
+      filterTable = body.table as string;
+      filterId    = body.record.id as string;
+      if (!body.record.is_published) {
+        return new Response(
+          JSON.stringify({ skipped: "no publicado" }),
+          { headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
     const pending: ChunkRow[] = [];
 
     // ── destinations ──────────────────────────────────────────────────────────
