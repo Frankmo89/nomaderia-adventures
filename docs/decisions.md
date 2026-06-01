@@ -1,0 +1,174 @@
+# Registro de Decisiones y Lecciones de IA — Nomaderia Adventures
+
+> **Memoria de largo plazo del proyecto.** Cada decisión de arquitectura, pivote
+> de negocio o lección técnica dura vive aquí, para que ningún agente vuelva a
+> proponer algo que ya descartamos (**AI Drift**).
+>
+> **Para agentes:** lee este archivo *antes* de proponer cambios. Si una
+> propuesta contradice una decisión "Vigente", **detente y avísalo** en vez de
+> implementarla. No borres entradas: si una decisión cambia, marca la vieja como
+> `Reemplazada` y añade una nueva con el número siguiente.
+
+## Cómo escribir una entrada
+
+Cada decisión es un **ADR** (Architecture Decision Record) corto:
+
+```
+### ADR-NNN — Título breve
+- **Fecha:** AAAA-MM
+- **Estado:** Vigente | Reemplazada (→ ADR-XXX) | Diferida
+- **Contexto:** Por qué surgió la decisión.
+- **Decisión:** Qué se decidió, en una o dos frases.
+- **Consecuencias:** Qué implica para el código / negocio. Qué NO hacer.
+```
+
+---
+
+### ADR-001 — Stack congelado
+- **Fecha:** 2026-02
+- **Estado:** Vigente
+- **Contexto:** Riesgo de que agentes propongan "mejoras" de framework que
+  fragmentan el proyecto (Next.js para SSR, Vue, Redux para estado, otra librería
+  de animación, etc.).
+- **Decisión:** El stack es React 18 + TS + Vite + Tailwind + shadcn/ui + Radix +
+  Framer Motion + React Router + Supabase + TanStack Query + Zod. Se congela.
+- **Consecuencias:** NO proponer Next.js, Vue, Redux ni librerías UI/animación
+  adicionales. El estado de servidor se maneja con React Query; el de formularios
+  con React Hook Form. Cualquier necesidad nueva se resuelve dentro de este stack.
+
+### ADR-002 — Pivote de mercado: hispanos en EE. UU., USD únicamente
+- **Fecha:** 2026-05
+- **Estado:** Vigente (reemplaza el enfoque TJ cross-border / CDMX)
+- **Contexto:** El enfoque inicial mezclaba Tijuana cross-border, clase media-alta
+  con visa, y CDMX vía SEO. Dispersaba el mensaje, el canal de cobro y el
+  presupuesto promedio del cliente.
+- **Decisión:** Mercado primario = **hispanos residentes en EE. UU.** (SoCal /
+  San Diego), 25-45 años, principiantes en senderismo. Moneda: **USD únicamente**.
+  Foco en parques nacionales de EE. UU. explicados en español.
+- **Consecuencias:** Posicionamiento competitivo vs. AllTrails/Chimani en un solo
+  eje: **idioma + audiencia + honestidad con principiantes**. NO reintroducir
+  copy, precios o segmentación orientados a TJ cross-border o CDMX como mercado
+  primario (pueden existir como secundarios sin reescribir la propuesta de valor).
+
+### ADR-003 — Pivote de precios: 2 productos + bundle, sin MXN
+- **Fecha:** 2026-05
+- **Estado:** Vigente (reemplaza Escapada/Aventura/Expedición y todo precio MXN)
+- **Contexto:** El sistema de 3 tiers por duración (Escapada/Aventura/Expedición)
+  con precios duales USD/MXN era difícil de comunicar y de cobrar manualmente.
+- **Decisión:** Tres SKUs claros, **USD únicamente**:
+  - Alerta de Permisos — **$29 USD** (Stripe Payment Link).
+  - Itinerario Personalizado — **$29 USD** (WhatsApp).
+  - Solución Completa (bundle) — **$49 USD** (WhatsApp).
+- **Consecuencias:** Fuente de verdad en `src/config/pricing.ts`. NO reintroducir
+  precios MXN ni los nombres legacy en ningún componente, Edge Function o email.
+  *Deuda conocida:* aún quedan referencias MXN/legacy en
+  `send-drip-emails/index.ts` y `send-quiz-results/index.ts` (ver pending-tasks).
+
+### ADR-004 — Modelo concierge antes que modelo de contenido
+- **Fecha:** 2026-02
+- **Estado:** Vigente
+- **Contexto:** El SEO + affiliate puro tarda 6-12 meses en generar ingreso. El
+  servicio concierge (itinerario armado a mano, cerrado por WhatsApp) puede
+  facturar en semanas.
+- **Decisión:** Priorizar el funnel de servicio (quiz → WhatsApp → cobro manual)
+  por encima de construir más features de contenido, hasta tener flujo de clientes.
+- **Consecuencias:** Cada feature nueva se evalúa por cuánto reduce la fricción
+  hacia el mensaje de WhatsApp o el pago en Stripe. "Vender antes de construir."
+
+### ADR-005 — WhatsApp es el canal de cierre, no el sitio
+- **Fecha:** 2026-02
+- **Estado:** Vigente
+- **Contexto:** Intentar cerrar la venta dentro del sitio (carritos, checkout
+  complejo) añade fricción que esta audiencia (principiantes) no tolera.
+- **Decisión:** El sitio califica y educa; la venta se cierra por WhatsApp (o por
+  el Payment Link de Stripe en el caso de Alerta de Permisos).
+- **Consecuencias:** Todo CTA de servicio pasa por `buildWhatsAppLink(message)`
+  con mensaje contextual pre-llenado. No construir checkout propio mientras el
+  volumen no lo justifique.
+
+### ADR-006 — Light theme editorial con dos excepciones dark
+- **Fecha:** 2026-05
+- **Estado:** Vigente
+- **Contexto:** El sitio es luminoso y fotográfico (light theme), pero las
+  superficies de conversión y el panel interno necesitan otro tono.
+- **Decisión:** Todo el sitio usa light theme (`#FAFAFA` / `#1C1917`, primary
+  `#D97706`, secondary `#166534`). **Excepciones dark:** `SentinelLanding`
+  (`/sentinel`) y el **admin sidebar/layout**.
+- **Consecuencias:** No introducir un toggle de tema. No "oscurecer" páginas
+  públicas ni "aclarar" Sentinel/admin sin instrucción explícita. Las variables
+  `--sidebar-*` en `src/index.css` definen la paleta oscura del admin.
+
+### ADR-007 — Patrón de fetch: hooks+React Query (público) vs. useEffect (admin)
+- **Fecha:** 2026-02
+- **Estado:** Vigente
+- **Contexto:** Mezclar patrones de data-fetching causa inconsistencia y bugs de
+  caching.
+- **Decisión:** En componentes **públicos**, fetch siempre vía custom hooks de
+  `src/hooks/` con TanStack Query. En el **admin**, `useEffect + useState` directo
+  con el cliente Supabase (no requiere caching).
+- **Consecuencias:** Contenido estático (destinos, gear, blog) usa `staleTime`
+  largo (30 min). No introducir `useEffect + fetch` en componentes públicos.
+
+### ADR-008 — Honestidad de datos: cero social proof falso
+- **Fecha:** 2026-02
+- **Estado:** Vigente
+- **Contexto:** La ventaja competitiva es la confianza con principiantes. Un
+  testimonio o estadística inventada destruye esa ventaja de raíz.
+- **Decisión:** `SocialProof` y los contadores usan estadísticas reales de
+  Supabase (`use-stats.ts`). Datos de permisos (`PermitScarcity`) provienen de
+  fuentes oficiales (NPS / Recreation.gov).
+- **Consecuencias:** Prohibido generar testimonios, reseñas o números ficticios.
+  Si no hay dato real, no se muestra el componente.
+
+### ADR-009 — Casts de Supabase por schema drift (deuda controlada)
+- **Fecha:** 2026-05
+- **Estado:** Vigente (temporal — se resuelve al regenerar tipos)
+- **Contexto:** Las tablas `sentinel_leads` y `media_slider` existen en Supabase
+  pero faltan en `src/integrations/supabase/types.ts` porque los tipos no se han
+  regenerado (falta `SUPABASE_ACCESS_TOKEN` en el entorno del agente).
+- **Decisión:** Usar `(supabase as unknown as SupabaseClient).from("...")` como
+  puente temporal en `AdminDashboard.tsx`, `SentinelLanding.tsx` y `use-media.ts`.
+- **Consecuencias:** NO editar `types.ts` a mano para "arreglarlo". El fix real es
+  que Frank regenere los tipos con la CLI (ver pending-tasks). Una vez regenerados,
+  eliminar los casts.
+
+### ADR-010 — Concierge con IA (RAG): diferido hasta primeros clientes
+- **Fecha:** 2026-05
+- **Estado:** Diferida
+- **Contexto:** Existe la idea de un concierge IA tipo RAG sobre el contenido de
+  destinos. Construirlo ahora desviaría esfuerzo del objetivo inmediato (cerrar
+  los primeros clientes — ADR-004).
+- **Decisión:** **Parquear** el concierge IA hasta cumplir el TRIGGER definido en
+  el documento de trabajo completo → **`docs/seccion-9-concierge-ia.md`** (esa es
+  la fuente de verdad; este ADR es solo el registro de la decisión). Dirección ya
+  fijada ahí: **un solo agente con tool-calling + `pgvector` en Supabase**,
+  embeddings con **OpenAI `text-embedding-3-small`** (NO Cohere), vectorizando solo
+  la capa editorial propia (NO scraping de nps.gov/recreation.gov/CBP), sin
+  LangChain ni multi-agente. El modelo de *cancelaciones de clientes* queda
+  descartado (≠ el modelo de *disponibilidad de permisos*, que sí es válido y
+  también diferido).
+- **TRIGGER de des-parqueo (las tres):** ~10-15 clientes pagados reales + tareas
+  humanas de Sección 8 completas + corpus de ~50+ preguntas reales de WhatsApp.
+- **Consecuencias:** No agregar `pgvector`, colas, workers ni SDKs de embeddings
+  al stack todavía. Si el usuario pide construir RAG/embeddings/concierge, leer
+  primero `docs/seccion-9-concierge-ia.md` y verificar el TRIGGER antes de
+  responder. No re-litigar la arquitectura.
+
+---
+
+## Lecciones técnicas (bugs no obvios)
+
+> Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
+> error ya pagado.
+
+- **RLS de `sentinel_leads`:** la tabla tenía solo `INSERT` para `anon` y faltaba
+  política `SELECT` para admin, por lo que el contador del dashboard siempre
+  mostraba 0. Fix: política `FOR SELECT TO authenticated USING has_role`. Lección:
+  un contador en 0 en el admin suele ser un problema de RLS, no de query.
+- **Contraste WCAG AA:** subir `--muted-foreground` de `45%` → `40%` lightness en
+  `src/index.css` arregla *todos* los usos de `text-muted-foreground` de una sola
+  vez sobre `#FAFAFA` (~4.1:1 → ~5.0:1). Lección: preferir el fix en la variable
+  CSS antes que tocar componentes uno por uno.
+- **Stripe fallback:** "Alerta de Permisos" caía a `"#"` cuando
+  `VITE_STRIPE_SENTINEL_URL` no estaba seteada. Hardcodear el Payment Link real
+  como fallback evita CTAs muertos en producción.

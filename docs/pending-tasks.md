@@ -1,607 +1,169 @@
-# Tareas Pendientes y Changelog — Nomaderia Adventures
+# Pendientes y Changelog — Nomaderia Adventures
 
-> **Para agentes AI:** Si el usuario pide algo que depende de una tarea pendiente aquí, recuérdale que primero debe completarla.
-
----
-
-## ⚠️ Tareas Pendientes (requieren acción humana)
-
-### 🔴 Prioridad Alta
-
-#### 📊 Analítica
-- [x] **(OBSOLETO)** Configuración vía `VITE_GA_MEASUREMENT_ID` en `.env` — actualmente GA4 se carga con scripts directos en `index.html` usando `G-CK9STWJDFM`
-- [x] **(OBSOLETO)** Componente de Google Analytics (`gtag.js`) en `src/` — la implementación actual usa únicamente los scripts incluidos en `index.html`
-- [x] **Reemplazar ID placeholder de GA4** en `index.html`: `G-XXXXXXXXXX` → `G-CK9STWJDFM` ✅
-- [x] **Reemplazar ID placeholder de Meta Pixel** en `index.html`: `XXXXXXXXXXXXXXXXX` → `TU_PIXEL_ID_AQUI` (infraestructura lista; reemplazar con Pixel ID real cuando esté disponible) ✅
-- [ ] Crear cuenta en Facebook Business Manager para obtener el Pixel ID y reemplazar el placeholder en `index.html`
-- [ ] Verificar sitio en Google Search Console (requiere dominio)
-- [x] Enviar sitemap.xml (implementado: generación automática en build)
-
-#### 💼 Negocio / Comercial
-- [ ] **Deshabilitar el Sign-up público** en Supabase Dashboard → Authentication → Settings → desactivar "Enable email signups"
-- [ ] Comprar dominio (decisión: nomaderia.com vs nomaderia.mx — inclinación hacia .com por alcance)
-- [ ] Configurar DNS y hosting de producción
-- [ ] Re-aplicar a programas Travelpayouts rechazados cuando tráfico > 1,000/mes:
-  - GetYourGuide, Booking, Expedia, Trip.com, DiscoverCars
-
-#### 📝 Contenido
-- [ ] **Subir imagen de certificación TAP** → `public/diploma.jpg`
-- [ ] Descargar WhatsApp Business y configurar el número de Nomaderia
-- [ ] Reemplazar `VITE_WHATSAPP_NUMBER` en el archivo `.env` con el número real
-- [ ] Subir la foto/video estrella a la carpeta `/public` y actualizar el `src` en `HeroSection.tsx`
-- [ ] Proveer iconos PWA dedicados en `/public` con tamaños `192x192` y `512x512` para reemplazar el fallback actual del manifest
-- [ ] Entrar al panel de admin y subir imágenes de portada (hero images) a los destinos que falten
-- [ ] Guardar las 4 Respuestas Rápidas en la configuración de WhatsApp Business
-- [ ] Agregar hero images a destinos sin imagen
-- [ ] Completar affiliate links reales en destinos desde `/admin`
-
-#### 🔑 Supabase Secrets
-- [ ] Configurar `RESEND_API_KEY` en Supabase Dashboard > Edge Functions > Secrets
-  - Obtener en https://resend.com/api-keys
-  - Comando: `supabase secrets set RESEND_API_KEY=re_xxxxx`
-- [ ] Configurar `SITE_URL` en los mismos secrets
-  - Comando: `supabase secrets set SITE_URL=https://nomaderia.com`
-- [ ] Habilitar extensión `pg_cron` en Supabase Dashboard > Database > Extensions
-  - Alternativa sin pg_cron: usar cron-job.org (gratis) con POST diario a la Edge Function
-
-### 🟡 Backlog — Código
-
-- [x] **Fix counter `sentinel_leads` en AdminDashboard + panel "Atención hoy"** — ✅ completado
-- [x] Limpiar casts legacy de Supabase en admin/Sentinel
-  - `src/pages/admin/AdminItineraryRequests.tsx` ya usa `supabase.from("itinerary_requests")` tipado; sin cambio adicional requerido
-  - `src/pages/admin/AdminDashboard.tsx` y `src/pages/SentinelLanding.tsx` ahora usan `supabase as unknown as SupabaseClient` para tablas aún ausentes en `src/integrations/supabase/types.ts`
-  - Intento de regenerar `src/integrations/supabase/types.ts` con `npx supabase gen types ... --schema public` bloqueado por falta de `SUPABASE_ACCESS_TOKEN`
-  - Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
-- [x] Integrar compartir en redes sociales (botones share) — ✅ `ShareButtons.tsx` montado en DestinationDetail, GearArticleDetail y BlogPostDetail
-- [x] Breadcrumbs visuales — ✅ ya implementados inline en el hero de DestinationDetail, BlogPostDetail y GearArticleDetail (sobre overlay oscuro, `text-white/60`)
-- [x] Resolver issues de contraste texto para WCAG AA compliance — ✅ `--muted-foreground` subido de 45% → 40% lightness (~4.1:1 → ~5.0:1 sobre #FAFAFA); `PermitScarcity` footnote subido de `text-[11px]` → `text-xs`
-
-### 🟠 Auditoría de Contenido (30 marzo 2026)
-
-> Ver reporte completo en `docs/audit-report.md`
-
-#### SEO — Pages sin `usePageMeta()` completo
-- [x] `src/pages/Index.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
-- [x] `src/pages/Destinations.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
-- [x] `src/pages/BudgetCalculator.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
-- [x] `src/pages/Servicios.tsx` — ✅ Agregado `usePageMeta()` con título y descripción
-- [x] `src/pages/SobreNosotros.tsx` — ✅ `usePageMeta()` completo
-- [x] `src/pages/PrivacyPolicy.tsx` — ✅ `usePageMeta()` completo
-- [x] `src/pages/TermsAndConditions.tsx` — ✅ `usePageMeta()` completo
-
-#### Contenido en Supabase (requiere revisión manual en admin)
-- [ ] Auditar cada destino: verificar markdown en español, affiliate links funcionales, campos completos (hero_image_url, difficulty_level, estimated_budget, duration, country)
-- [ ] Auditar cada gear article: verificar productos JSON con nombre/precio/affiliate_url/imagen, tag `nomaderia-20` en Amazon links
-- [ ] Auditar cada blog post: verificar title/excerpt/content en español, category válida, reading_time, tags, links internos
-
-#### Pendientes menores
-- [ ] Subir logo final a Supabase y actualizar `src/config/assets.ts` (resolver TODO en línea 7)
-- [ ] Configurar Meta Pixel ID real en `index.html` (reemplazar `TU_PIXEL_ID_AQUI`)
-
-### 🟢 Sitio en vivo (producción)
-https://nomaderia.com/
+> **Para agentes AI:** Si el usuario pide algo que depende de una tarea pendiente
+> aquí, recuérdale que primero debe completarla. Al terminar cualquier trabajo,
+> actualiza este archivo (mueve la tarea de "Pendiente" a "Changelog").
+>
+> Sitio en producción: **https://nomaderia.com** · Hosting: Cloudflare Pages ·
+> Stripe live activo · Primer lead real capturado vía `/sentinel`.
 
 ---
 
-### ✅ Admin Dashboard — rediseño visual (Mayo 2026)
-- [x] **CHANGE 1** — Header bar fijo en tope del dashboard: "Buenos días, Frank" + badge "NOMADERIA · PRODUCCIÓN" + fecha en español; breakout negativo (`-mx-4 md:-mx-8 -mt-4 md:-mt-8`) para cubrir borde a borde con `border-b border-[#E7E2D9] bg-[#FAFAFA]`
-- [x] **CHANGE 2** — Panel "Atención hoy" restyled: borde amber `border-[#F5C36B]` / `borderLeft #F59E0B`, fondo degradado `#FFF8EE → #FFFCF5`, header con ícono en cuadro amber 28×28, conteo de pendientes, timestamp "Actualizado hace 2 min"; layout de dos columnas `grid-cols-2 gap-[18px]`; cada fila con avatar de iniciales, ícono Clock, pill "Sin contactar" pulsante, botón WhatsApp verde `#16A34A`
-- [x] **CHANGE 3** — Tarjeta "Leads de Alerta": fondo `#FFF8EE` y borde `#F5C36B` cuando `sentinelLeads > 0`; badge "NUEVO" amber junto al número
-- [x] **CHANGE 4** — Analytics del Quiz: 4 tarjetas en grilla `grid-cols-2 gap-3` con `bg-white border-[#E7E2D9] rounded-xl p-3.5`; barras con track `#F0EBE0` h=7px, top bar gradiente `#D97706→#F59E0B`, resto `#E2D9C5`
-- [x] **CHANGE 5** — Analytics + Actividad Reciente en columnas laterales `grid-cols-[1.15fr_1fr] gap-4`
-- [x] **CHANGE 6** — Badges de tipo de contenido: Blog `bg-[#F0EBE0] text-[#78350F]`, Destino `bg-[#FEF3E2] text-[#B45309]`, Gear `bg-[#E6F0E9] text-[#166534]`
-- [x] **CHANGE 7** — Quick actions: "Nuevo Destino" `bg-[#D97706] text-white`; otros `bg-white border-[#E7E2D9] text-[#1C1917]`
-- [x] Importados `Clock` (lucide-react) y `cn` (`@/lib/utils`) en AdminDashboard
-- [x] `tsc --noEmit` ✅, `npm run build` ✅
+## 🙋 Pendientes Humanos (solo Frank puede hacerlos)
 
-### ✅ Admin Sidebar — rediseño visual (Mayo 2026)
-- [x] `src/index.css`: variables `--sidebar-*` actualizadas a paleta oscura: fondo `#1C1917`, texto `#E7E5E4`, primario amber `#D97706`, hover `#2A2724`, borde `rgba(255,255,255,0.06)`
-- [x] `src/pages/admin/AdminLayout.tsx`:
-  - Logo: ícono naranja 30×30 `rounded-lg bg-primary` con `Mountain` dentro + "NOMADERIA" `tracking-widest` + "Admin" `text-[10px] uppercase tracking-[0.18em]`
-  - Workspace pill: píldora "Producción" con dot verde `#166534` + ring sutil + `ChevronDown`
-  - Nav activo: `bg-[rgba(217,119,6,0.10)]` + texto `#FBBF24 font-semibold` + indicador izquierdo `w-0.5 bg-primary`; inactivo: `text-sidebar-foreground/55`
-  - Nav "Leads de Alerta" añadido (`/admin/sentinel-leads`, ícono `Bell`) con badge estático naranja `1` — `TODO: wire to live sentinel_leads count`
-  - Sección usuario: avatar "FR" + nombre "Frank" + email antes del botón de logout
-  - Logo mobile top bar también actualizado para consistencia
-- [x] `tsc --noEmit` ✅, `npm run build` ✅
+Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
+referenciar esta lista primero.
 
-### ✅ Admin Dashboard — fix sentinel_leads + panel "Atención hoy" (Mayo 2026)
-- [x] `supabase/migrations/20260524000000_sentinel_leads_admin_select.sql`: nueva política RLS `"Admins can view sentinel leads"` (FOR SELECT TO authenticated USING has_role) — la tabla solo tenía INSERT anon, sin SELECT para admin, causando que el contador siempre mostrara 0
-- [x] `src/pages/admin/AdminDashboard.tsx`: corregida query de sentinel count (`select("*", ...)` → `select("id", ...)` con `count: exact, head: true`)
-- [x] Añadidas interfaces `SentinelLead` y `RecentQuizResponse` + helper `timeAgo()`
-- [x] Panel **"Atención hoy"** (border-left primario, fondo primary/5) insertado sobre el grid de stats — muestra leads de `sentinel_leads` y respuestas de `quiz_responses` de las últimas 48h, cada fila con botón verde WhatsApp que abre mensaje pre-llenado contextual
-- [x] Importados `MessageCircle` (lucide-react) y `buildWhatsAppLink` (`@/lib/whatsapp`) en AdminDashboard
+- [ ] **Subir `public/diploma.jpg`** — foto del certificado TAP (credencial en
+      `SobreNosotros.tsx`).
+- [ ] **Configurar WhatsApp Business** en el número `18588996802` y guardar las 4
+      respuestas rápidas.
+- [ ] **Facebook Pixel:** crear cuenta en Business Manager, obtener el Pixel ID y
+      reemplazar `TU_PIXEL_ID_AQUI` en `index.html`.
+- [ ] **Iconos PWA:** subir `192x192` y `512x512` a `/public` (hoy el manifest usa
+      fallback con `favicon.ico` + `placeholder.svg`).
+- [ ] **Desactivar signup público** en Supabase → Authentication → Settings →
+      desactivar "Enable email signups".
+- [ ] **Regenerar tipos de Supabase** (requiere `SUPABASE_ACCESS_TOKEN`):
+      `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`
+      → elimina los casts `as unknown as SupabaseClient` (ver ADR-009).
+- [ ] **Secrets de Edge Functions** en Supabase Dashboard → Edge Functions →
+      Secrets:
+      - `supabase secrets set RESEND_API_KEY=re_xxxxx`
+      - `supabase secrets set SITE_URL=https://nomaderia.com`
+- [ ] **Habilitar `pg_cron`** (Database → Extensions) para el drip diario, o usar
+      cron-job.org con POST diario a la Edge Function.
+- [ ] **Verificar sitio en Google Search Console.**
+- [ ] **Re-aplicar a Travelpayouts** rechazados cuando el tráfico supere
+      ~1,000/mes: GetYourGuide, Booking, Expedia, Trip.com, DiscoverCars.
 
-### ✅ Email drip itinerary_cta — modelo de 2 productos (Mayo 2026)
-- [x] `supabase/functions/send-drip-emails/index.ts` `buildItineraryCtaEmail()`: eliminada la sección de 3 paquetes legacy (Weekend/Aventura/Expedición) y reemplazada por el modelo actual de 2 productos: **Itinerario Personalizado ($29 USD)** y **Solución Completa ($49 USD, badge "Más popular")**
-- [x] CTA principal cambiado de `E86C3A` (naranja legacy) a verde WhatsApp `#25D366` con enlace directo `wa.me/18588996802?text=...` y mensaje pre-llenado
-- [x] CTA secundario actualizado de `/destinos` a `/servicios`
-- [x] Ruta rota `/#itinerario` eliminada; el botón principal apunta a WhatsApp directamente
+---
 
-### ✅ WCAG AA contraste — muted-foreground y PermitScarcity (Mayo 2026)
-- [x] `src/index.css`: `--muted-foreground` subido de `20 10% 45%` → `20 10% 40%` — contraste en fondo `#FAFAFA` pasa de ~4.1:1 a ~5.0:1, cumpliendo WCAG AA para todo texto normal (requiere ≥4.5:1)
-- [x] `src/components/PermitScarcity.tsx`: texto de footnote subido de `text-[11px]` → `text-xs` (12px mínimo para categoría "normal text")
-- [x] Un único cambio de variable CSS arregla todos los usos de `text-muted-foreground` en el sitio sin tocar componentes individuales
-- [x] Los separadores `text-white/40` en breadcrumbs (sobre overlay oscuro de imagen) se conservan — no son contenido informativo y el fondo oscuro les da contraste suficiente
+## 🛠️ Pendientes de Código (un agente puede ejecutarlos)
 
-### ✅ 404 branded + preconnect Supabase (Mayo 2026)
-- [x] `src/pages/NotFound.tsx`: ahora incluye `Navbar`, `Footer`, ícono `Mountain`, dos botones (volver al inicio / ver destinos), `usePageMeta` con `noindex, nofollow`, y muestra la ruta exacta que falló
-- [x] `index.html`: agregado `<link rel="preconnect" href="https://vrixiuvnhvqafmxlcyex.supabase.co" />` junto a los preconnects de Google Fonts
+### Prioridad alta
+- [ ] **Limpiar precios MXN / legacy en Edge Functions** —
+      `supabase/functions/send-drip-emails/index.ts` y
+      `send-quiz-results/index.ts` aún contienen precios MXN y/o nombres del
+      sistema viejo. Alinear al modelo $29 / $49 USD (ADR-003).
+- [ ] **Logo final** — subir a Supabase y actualizar `src/config/assets.ts`
+      (resolver el `TODO` de la línea 7).
 
-### ✅ Exit-intent / scroll-depth modal hacia Sentinel (Mayo 2026)
-- [x] Creado `src/components/ExitIntentModal.tsx` con `Dialog` de shadcn y copy en español orientado a la propuesta de valor de Sentinel
-- [x] Trigger único por sesión con `sessionStorage` (`exit_intent_shown`): desktop por `mouseleave` hacia el borde superior y mobile al alcanzar 60% de scroll
-- [x] Exclusiones activas para no mostrar el modal en `/sentinel`, `/gracias` ni rutas `/admin*`
-- [x] Eventos analytics implementados: `trackEvent("exit_intent_shown")` y `trackEvent("exit_intent_cta_click")`
-- [x] Montado globalmente una sola vez en `src/App.tsx`
-- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅, `npm run build` ✅ y `npm run test` ✅
-- [x] Hallazgo preexistente no relacionado: `npm run lint` sigue fallando por errores en `src/components/ui/command.tsx` y `src/components/ui/textarea.tsx`
+### Calidad / mantenimiento (tareas separadas)
+- [ ] **Lint preexistente:** errores en `src/components/ui/command.tsx`,
+      `src/components/ui/textarea.tsx` y `SentinelLanding.tsx`. *No tocar
+      `components/ui` salvo decisión explícita.*
+- [ ] **Test preexistente:** falla en `src/lib/lazy-with-retry.test.ts`.
+- [ ] **Imágenes responsive:** convertir heros de detalle (blog/gear) a
+      `srcset`/WebP.
 
-### ✅ Sticky Mobile CTA en páginas de destino (Mayo 2026)
-- [x] **Nueva barra sticky mobile-first** — `src/components/StickyMobileCTA.tsx` fija al fondo solo en mobile (`md:hidden`), con `bg-background`, borde superior, sombra sutil y padding con safe-area para mantener visible la conversión principal durante el scroll.
-- [x] **Conversión contextual** — `DestinationDetail.tsx` reutiliza el mismo mensaje contextual de WhatsApp del CTA editorial y pasa `destination.affiliate_links?.permit_alert_url` para mostrar el botón secundario “Alerta de permisos” solo cuando aplica.
-- [x] **Tracking y espacio inferior** — ambos botones disparan `trackEvent`; la página agrega padding inferior móvil para que la barra no tape contenido ni footer.
-- [x] Verificaciones ejecutadas: `npx tsc --noEmit` ✅ y `npm run build` ✅
+### Contenido en Supabase (requiere revisión manual en `/admin`)
+- [ ] Auditar cada **destino**: markdown en español, affiliate links funcionales,
+      campos completos (`hero_image_url`, `difficulty_level`, `estimated_budget`,
+      `duration`, `country`), `permit_alert_url` donde aplique.
+- [ ] Auditar cada **gear article**: JSON de productos con nombre/precio/
+      `affiliate_url`/imagen y tag `nomaderia-20` en links de Amazon.
+- [ ] Auditar cada **blog post**: title/excerpt/content en español, category
+      válida, `reading_time`, tags, links internos.
+- [ ] Subir hero images a destinos que aún no tengan.
 
-### ✅ PWA mínima instalable — manifest + meta (Mayo 2026)
-- [x] Creado `public/manifest.webmanifest` con nombre, descripción, colores base y `display: "standalone"` para habilitar "agregar a inicio" sin service worker ni cache offline
-- [x] `index.html` ahora usa assets locales de `/public` para icono/manifest y agrega meta tags mínimas de installability (`theme-color`, `application-name`, `mobile-web-app-capable`, `apple-mobile-web-app-*`)
-- [x] Reutilizados assets existentes en `/public`: `favicon.ico` (256x256) y `placeholder.svg`; no se generaron nuevos binarios PNG
-- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅, `npm run test` ✅ y `npm run build` ✅
-- [x] Nota: `npm run lint` sigue fallando por issues preexistentes no relacionados en `src/components/ui/*`, `DidYouKnowSection.tsx` y `AdminGallery.tsx`
+---
 
-### ✅ Componente PermitScarcity — escasez de permisos (Mayo 2026)
-- [x] Creado `src/components/PermitScarcity.tsx` con mapa interno de datos honestos (NPS/Recreation.gov) para parques con sistema de permisos/lotería
-- [x] Soporta `yosemite-valley` y `gran-canon`; retorna `null` para destinos sin sistema de permisos
-- [x] Diseño: card `bg-secondary/5`, ícono `AlertTriangle`, mecanismo como label, dato como body, ventana destacada, footnote de fuente
-- [x] Montado en `DestinationDetail.tsx` en la sidebar, justo arriba del card "Reserva Tu Viaje"
-- [x] TODO incluido para migrar datos a campo jsonb `permit_info` en Supabase
-- [x] Verificaciones ejecutadas: `tsc --noEmit` ✅ y `npm run build` ✅
+## 🔮 Backlog Futuro
 
-### ✅ Cache tuning de React Query para contenido estático (Mayo 2026)
-- [x] `src/App.tsx` mantiene el `staleTime` global por defecto en **5 min** (`5 * 60 * 1000`)
-- [x] `src/hooks/use-destinations.ts` ahora define `staleTime: 30 * 60 * 1000` en `useDestinations`, `useDestinationBySlug` y `useRelatedDestinations`
-- [x] `src/hooks/use-gear-articles.ts` ahora define `staleTime: 30 * 60 * 1000` en `useGearArticles` y `useFeaturedGearArticles`
-- [x] `src/hooks/use-blog-posts.ts` ahora define `staleTime: 30 * 60 * 1000` en `useBlogPosts`
-- [x] `src/hooks/use-media.ts` (`useMediaSlider`) ahora define `staleTime: 10 * 60 * 1000`
-- [x] Sin cambios en hooks admin, quiz ni stats para mantener frescura de datos donde aplica
-- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
+- **Concierge IA (RAG):** diferido hasta primeros clientes (ADR-010). Dirección
+  tentativa: agente único con tool-calling + `pgvector`; proveedor de embeddings
+  por definir. **No** agregar dependencias todavía.
+- **Emails:** Email 4 de re-engagement a 30 días; tracking de opens/clicks con
+  webhooks de Resend → tabla `email_events`.
+- **Dashboard avanzado:** desglose de conversiones por `source`, top destinos
+  recomendados, conversión quiz→email, trends con Recharts.
+- **PWA/offline:** service worker + cache de guías para trail sin señal.
+- **Performance:** más skeleton loaders, optimización progresiva de imágenes.
 
-### ✅ Dashboard admin — stat card de Sentinel Leads (Mayo 2026)
-- [x] `src/pages/admin/AdminDashboard.tsx` ahora incluye la stat card **"Leads de Alerta"** con ícono `Bell` y conteo exacto desde `sentinel_leads`
-- [x] Se agregó el query usando `(supabase as unknown as SupabaseClient).from("sentinel_leads").select("*", { count: "exact", head: true })`
-- [x] La nueva card quedó ubicada antes de **Suscriptores**, manteniendo intacta la lógica de las cards existentes
-- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
-
-### ✅ Auditoría de precios en email post-quiz (Mayo 2026)
-- [x] Revisión completa de `supabase/functions/send-quiz-email/index.ts` para detectar precios MXN, nombres legacy (Escapada/Aventura/Expedición) y referencias al modelo anterior de 3 tiers
-- [x] Resultado: **sin hallazgos**; el contenido actual no usa precios MXN ni estructura legacy, por lo que no se aplicaron cambios en la Edge Function
-- [x] Confirmado que se mantiene `from: "Nomaderia <hola@nomaderia.com>"` sin modificaciones
-- [x] Verificación ejecutada: `node node_modules/typescript/bin/tsc --noEmit` ✅
-- [x] Recomendación siguiente: mantener esta misma auditoría cada vez que se actualice el copy de emails en `send-quiz-email`
-
-### ✅ Fixes pequeños — credencial TAP y noindex en /gracias (Mayo 2026)
-- [x] `src/pages/SobreNosotros.tsx` ya no depende de `public/diploma.jpg`; se reemplazó el bloque roto por una tarjeta/badge estilizada con `ShieldCheck`, texto "Agente de Viajes Certificado TAP" y subtítulo "The Travel Institute — National TAP Test"
-- [x] Se agregó comentario de seguimiento en `SobreNosotros.tsx`: `TODO` para volver a `<img>` cuando Frank suba el archivo
-- [x] `src/hooks/use-seo.ts` ahora soporta `robots` en `usePageMeta()` y asegura creación/actualización de metas faltantes
-- [x] `src/pages/Gracias.tsx` actualizado con `robots: "noindex, nofollow"` para evitar indexación de la página de confirmación post-pago
-- [x] Verificación ejecutada: `node node_modules/typescript/bin/tsc --noEmit` ✅
-- [x] Recomendación siguiente: subir `public/diploma.jpg` para reactivar la versión con imagen real cuando esté disponible
-
-### ✅ Fix tests Vitest — `window.location.reload` en `lazy-with-retry` (Mayo 2026)
-- [x] `src/lib/lazy-with-retry.test.ts` dejó de usar redefinición/spy directa sobre `window.location.reload`, incompatible con entornos nuevos de Vitest
-- [x] El mock ahora usa `vi.stubGlobal("location", { ...window.location, reload: vi.fn() })`
-- [x] Se agregó restauración explícita al final del test con `vi.unstubAllGlobals()`
-- [x] Verificación ejecutada: `npm run test -- --run` ✅ (77/77 tests pasando, 0 fallos)
-
-### ✅ Mantenimiento SEO — sitemap y robots (Mayo 2026)
-- [x] `public/sitemap.xml` actualizado con rutas públicas faltantes indexables: `/destinos`, `/terminos`, `/servicios` y `/sentinel`
-- [x] Se mantuvieron intactas las entradas existentes y se dejó fuera `/gracias` por ser una página de post-pago no indexable
-- [x] `public/robots.txt` ahora bloquea `/admin`, `/admin/*` y `/gracias` para todos los crawlers
-- [x] `scripts/generate-sitemap.ts` alineado para que futuros builds vuelvan a incluir las rutas estáticas faltantes y los nuevos metadatos SEO requeridos
-- [x] Verificaciones ejecutadas: `./node_modules/.bin/tsc --noEmit` ✅ y `npm run build` ✅
-- [x] Hallazgos preexistentes no relacionados: `npm run lint` falla en `src/components/ui/command.tsx` y `src/components/ui/textarea.tsx`; `npm run test` falla en `src/lib/lazy-with-retry.test.ts`
-- [x] Recomendación siguiente: ejecutar `npm run generate-sitemap` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` configurados para regenerar también los slugs dinámicos antes del siguiente deploy
-
-### ✅ Página de post-pago Stripe `/gracias` (Mayo 2026)
-- [x] Creada `src/pages/Gracias.tsx` con copy en español, tema claro (`bg-background`, `text-foreground`) y enfoque mobile-first
-- [x] Agregado `usePageMeta()` con título y descripción de confirmación post-pago
-- [x] Hero implementado: **"¡Listo, eres parte de Nomaderia!"**
-- [x] Copy de seguimiento: contacto por WhatsApp en menos de 24h para iniciar gestión de spot en Yosemite
-- [x] CTA secundaria agregada hacia `https://nomaderia.com/sentinel` para compartir la alerta
-- [x] Registrada ruta lazy `/gracias` en `src/App.tsx` siguiendo el patrón existente con `lazyWithRetry`
-- [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
-
-### ✅ Accessibility pass — Icon-only buttons (Mayo 2026)
-- [x] Auditados controles icon-only en `src/components/landing/Navbar.tsx`, `src/components/dashboard/ImageUpload.tsx` y páginas admin
-- [x] Agregados `aria-label` + `title` descriptivos en botones de abrir/cerrar menú, eliminar, editar y cerrar sesión
-- [x] Sin cambios de lógica; solo mejoras de accesibilidad en nombres accesibles
-
-### ✅ Fix Sentinel Landing — Fallback Stripe + Copy de Acceso Anticipado (Mayo 2026)
-- [x] `src/pages/SentinelLanding.tsx` ahora define `stripeUrl` con fallback hardcodeado a Stripe cuando `VITE_STRIPE_SENTINEL_URL` no está configurada
-- [x] Reemplazado el uso directo de `import.meta.env.VITE_STRIPE_SENTINEL_URL` por la constante `stripeUrl`
-- [x] Texto visible al usuario actualizado para remover "Fundador" y usar "Acceso Anticipado"
-
-### ✅ Cuatro Fixes Dirigidos — Pricing, Permit Alert, SEO, Admin Form (Mayo 2026)
-
-**FIX 1 — Pricing Restructure:**
-- [x] Reemplazada estructura de 3 paquetes (Weekend/Aventura/Expedición) por 2 productos + 1 bundle
-- [x] Product A: "Alerta de Permisos" — $29 USD (Stripe)
-- [x] Product B: "Itinerario Personalizado" — $29 USD (WhatsApp)
-- [x] Bundle: "Solución Completa" — $49 USD (Ahorra $9)
-- [x] Eliminados precios MXN de `src/config/pricing.ts`, `Servicios.tsx`, `PremiumItinerarySection.tsx`
-- [x] Actualizado test `src/pages/Servicios.test.ts`
-
-**FIX 2 — Permit Alert CTA en Destination Sidebar:**
-- [x] Botón "Alerta de permisos — $29 USD" en sidebar "Reserva Tu Viaje" (`DestinationDetail.tsx`)
-- [x] Condición: solo aparece si `affiliate_links.permit_alert_url` está configurado
-- [x] Estilo: bg-[#D97706] text-white, Bell icon, full width
-
-**FIX 3 — SEO Meta en 4 páginas:**
-- [x] `usePageMeta()` en Index.tsx, Destinations.tsx, BudgetCalculator.tsx, Servicios.tsx
-
-**FIX 4 — Admin Form: Campo permit_alert_url:**
-- [x] Nuevo campo "URL Alerta de Permisos (Stripe)" en `AdminDestinationForm.tsx`
-- [x] Primera posición en sección Affiliate Links, antes de flights_url
-- [x] Help text: "Solo para parques con permisos difíciles (Yosemite, Grand Canyon)"
-
-**REPORT-ONLY (NO implementados, requieren acción humana):**
-- [ ] `public/diploma.jpg` falta — foto de certificación TAP de Frank
-- [ ] Facebook Pixel `TU_PIXEL_ID_AQUI` aún es placeholder en `index.html`
-- [ ] Precios MXN aún presentes en `supabase/functions/send-drip-emails/index.ts`
-- [ ] Precios MXN aún presentes en `supabase/functions/send-quiz-results/index.ts`
-- [ ] Schema drift: tablas `sentinel_leads` y `media_slider` faltan en `src/integrations/supabase/types.ts` (regenerar con CLI)
-
-### ✅ Fase 4 — Armadura de Titanio: Monitoreo y Auditoría Avanzada (Marzo 2026)
-- [x] **Botón de Prueba en Auditoría** — Nueva tarjeta "Prueba de Ventas" en `SystemAudit.tsx` con botón "Enviar Correo de Prueba" que llama a la Edge Function `send-quiz-email` con datos de prueba (test@nomaderia.com, destino Yosemite). Muestra estados: Enviando…, ✅ Éxito, ❌ Error con mensaje.
-- [x] **Verificador de Imágenes** — Nueva tarjeta "Verificador de Imágenes" en `SystemAudit.tsx` que consulta `hero_image_url` de todos los destinos en Supabase y verifica cada imagen con `new Image()` en el browser (evita restricciones CORS). Timeout de 5 segundos por imagen via `Promise.race`. Muestra contador OK/Error, URLs fallidas, y mensaje de error si la query de Supabase falla.
-- [x] **Monitoreo de Errores (Sentry)** — Instalado `@sentry/react@10.42.0`. `main.tsx` inicializa Sentry si `VITE_SENTRY_DSN` está definida. `ErrorBoundary.tsx` captura errores via `componentDidCatch` → `Sentry.captureException`. Cubre calculadora y quiz automáticamente.
-- [x] **Variable VITE_SENTRY_DSN** — Agregada a `.env.example` y a la tarjeta "Variables de Entorno" de `SystemAudit.tsx`.
-- [x] **Logs de Envío** — Edge Function `send-quiz-email` ahora registra `[send-quiz-email] OK — correo enviado exitosamente` (con destinatario + messageId) en éxito, y `[send-quiz-email] FAIL` / `[send-quiz-email] ERROR` en caso de fallo, visibles en Supabase > Edge Functions > Logs.
-- `src/pages/admin/SystemAudit.tsx` — 2 nuevas tarjetas (Prueba de Ventas + Verificador de Imágenes) + VITE_SENTRY_DSN en env checks
-- `src/components/ErrorBoundary.tsx` — `componentDidCatch` con `Sentry.captureException`
-- `src/main.tsx` — Inicialización condicional de Sentry
-- `.env.example` — `VITE_SENTRY_DSN` agregada
-- `supabase/functions/send-quiz-email/index.ts` — Logs estructurados con prefijo `[send-quiz-email]`
-
-### ✅ Media Slider Dinámico — Gestor Multimedia para Landing Page (Marzo 2026)
-- [x] Creado hook `src/hooks/use-media.ts` con `useMediaSlider()` (TanStack Query, filtra `is_active: true`, ordena por `display_order`) y helpers `uploadMediaItem()`, `toggleMediaActive()`, `deleteMediaItem()`
-- [x] Creada página admin `src/pages/admin/AdminGallery.tsx` — subida de archivos (imagen/video), grid con preview, toggle activo/inactivo, eliminar con confirmación (tabla + storage)
-- [x] Creado componente `src/components/landing/MediaSlider.tsx` — carrusel con Framer Motion `AnimatePresence` crossfade cada 6 segundos, renderiza `<video>` o `<img>` según `media_type`, overlay oscuro `bg-black/30`
-- [x] `HeroSection.tsx` — Reemplazado fondo estático `bg-neutral-800` + overlay por `<MediaSlider />` dinámico (fallback al fondo original si no hay media)
-- [x] `AdminLayout.tsx` — Enlace "Galería" con ícono `ImageIcon` agregado al sidebar
-- [x] `App.tsx` — Ruta `/admin/gallery` registrada con lazy loading
-- [x] Bucket `media_gallery` (público) en Supabase Storage y tabla `media_slider` creados por el dueño
-- **Pendiente del dueño:** Regenerar tipos con `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts` para eliminar cast de tipo en `use-media.ts`
-- `src/hooks/use-media.ts` — Hook público + helpers admin
-- `src/pages/admin/AdminGallery.tsx` — Panel admin de galería
-- `src/components/landing/MediaSlider.tsx` — Carrusel público
-- `src/components/landing/HeroSection.tsx` — Integración MediaSlider
-- `src/pages/admin/AdminLayout.tsx` — Enlace Galería en sidebar
-- `src/App.tsx` — Ruta /admin/gallery
-
-### ✅ Tarea 1.3 — Página /servicios rediseñada con nuevos precios y estructura (Marzo 2026)
-- [x] Hero actualizado: headline "Tu aventura, armada paso a paso" con subtítulo motivador para principiantes
-- [x] 3 tarjetas de precios con shadcn/ui Card: Weekend $19/$299 (1-3 días), Aventura $35/$549 (4-7 días, badge "Más popular"), Expedición $59/$899 (8+ días, highlight "Soporte por WhatsApp durante el viaje")
-- [x] CTAs con ícono WhatsApp (MessageCircle de lucide-react) y mensajes prellenados dinámicos por paquete
-- [x] Sección "Cómo Funciona" con 3 pasos: Cuéntanos tu plan, Diseñamos tu ruta, Viaja sin estrés — íconos Lucide (ClipboardList, Route, Palmtree)
-- [x] FAQ con Accordion de shadcn/ui — 4 preguntas frecuentes sobre qué incluye un itinerario
-- [x] Animaciones Framer Motion con `staggerChildren` para entrada suave de tarjetas de precios
-- [x] Dark mode compatible: usa variables CSS (bg-background, text-foreground, bg-card, border-border) en vez de colores hardcodeados
-- [x] Ruta `/servicios` ya registrada en `App.tsx` y enlace en Navbar
-- `src/pages/Servicios.tsx` — Página rediseñada completa
-- `docs/pending-tasks.md` — Changelog actualizado
-
-### ✅ Quiz Refactor: Mercado principal, Lucide icons, y pregunta de barreras (Marzo 2026)
-- [x] **docs/supabase-schema.md** — Columna `main_barrier text` (nullable) documentada en `quiz_responses`
-- [x] **src/integrations/supabase/types.ts** — `main_barrier` agregado a Row/Insert/Update de `quiz_responses`
-- [x] **src/hooks/use-quiz.ts** — `proximityMap` actualizado con nuevas llaves de mercado principal: `tijuana_baja`, `sandiego_socal`, `cdmx`, `resto_mx`, `resto_usa`, `otro`
-- [x] **src/hooks/use-quiz.ts** — `main_barrier` insertado en `quiz_responses` desde `handleEmailSubmit`
-- [x] **src/hooks/use-quiz.ts** — Propiedad `emoji` eliminada de la interfaz `QuizOption`
-- [x] **src/components/landing/QuizSection.tsx** — Emojis reemplazados por íconos de Lucide React (`opt.icon`) en todas las opciones
-- [x] **src/components/landing/QuizSection.tsx** — Nueva pregunta `main_barrier` ("¿Qué es lo que más te frena para salir a explorar?") con 4 opciones: `lack_info`, `fitness_doubt`, `no_gear`, `comfort` usando iconos Map, HeartPulse, Backpack, Tent
-- [x] **src/components/landing/QuizSection.tsx** — `originOptions` actualizado: Tijuana/Baja, San Diego/SoCal, CDMX, Resto MX, Resto USA, Otro
-- [x] **src/pages/admin/AdminQuizResponses.tsx** — `barrierLabels` agregado, `originLabels` actualizado, columna "Barrera" en CSV y tabla visual
-- [x] **src/hooks/use-quiz.test.ts** — Tests de origin actualizados con nuevas llaves de mercado
-- **Pendiente del dueño:** Ejecutar migración SQL para agregar `main_barrier text` a `quiz_responses` en Supabase Dashboard
-- `src/hooks/use-quiz.ts` — Scoring + insert actualizados
-- `src/components/landing/QuizSection.tsx` — UI refactorizada
-- `src/pages/admin/AdminQuizResponses.tsx` — Dashboard actualizado
-- `src/hooks/use-quiz.test.ts` — Tests actualizados
-- `docs/supabase-schema.md` — Schema documentado
-- `src/integrations/supabase/types.ts` — Tipos TypeScript actualizados
-
-### ✅ Contadores de SocialProof conectados a Supabase via hook dedicado (Marzo 2026)
-- [x] Creado hook `src/hooks/use-stats.ts` con `useQuizCount()` y `useDestinationsCount()` — TanStack Query con `{ count: 'exact', head: true }` para conteo eficiente sin descargar data
-- [x] `SocialProof.tsx` refactorizado para usar los hooks dedicados en lugar de queries inline (cumple patrón: fetch público siempre via custom hooks en `src/hooks/`)
-- [x] Estado de carga usa `Skeleton` de shadcn/ui en lugar de texto plano "···"
-- [x] Animación Framer Motion (`AnimatedCounter`) cuenta de 0 al valor real cuando el componente es visible
-- [x] Verificado: no hay elementos de video en el componente
-- `src/hooks/use-stats.ts` — Nuevo hook de conteos
-- `src/components/landing/SocialProof.tsx` — Usa hooks dedicados + Skeleton loading
-
-### ✅ Botones de Pricing en PremiumItinerarySection conectados a WhatsApp (Marzo 2026)
-- [x] Botones "Pedir Escapada/Aventura/Nómada" en la sección de precios del homepage ahora abren WhatsApp en nueva pestaña
-- [x] Número hardcodeado: `18588996802` (consistente con el resto del sitio)
-- [x] Mensajes prellenados específicos por paquete con precio incluido
-- [x] Tercer paquete renombrado de "Expedición $49" a "Nómada $75" según requerimiento
-- `src/components/landing/PremiumItinerarySection.tsx` — Botones de pricing funcionales con WhatsApp
-
-### ✅ Configuración Comercial — Link de pago oficial (Marzo 2026)
-- [x] Creado link de pago oficial **paypal.me/Nomaderia** para recibir pagos de itinerarios personalizados
-- [x] Link listo para compartir con clientes en WhatsApp y en la página `/servicios`
-
-### ✅ Fase 4 — Página índice /destinos (Marzo 2026)
-- [x] Creada nueva página `src/pages/Destinations.tsx` con Navbar, título "Todos Nuestros Destinos", catálogo completo y Footer
-- [x] `DestinationsCatalog` refactorizado para aceptar prop opcional `limit?: number`
-- [x] Si `limit` existe, se aplica `.slice(0, limit)` y se muestra botón "Ver todos los destinos →"
-- [x] Si `limit` no existe, se muestran todos los destinos sin botón
-- [x] `Index.tsx` ahora usa `<DestinationsCatalog limit={3} />`
-- [x] Ruta `/destinos` registrada en `App.tsx` con lazy loading
-- [x] `src/pages/Destinations.tsx` — Nueva página índice de destinos
-- [x] `src/components/landing/DestinationsCatalog.tsx` — Prop `limit` opcional
-- [x] `src/pages/Index.tsx` — Pasa `limit={3}` al catálogo
-- [x] `src/App.tsx` — Ruta `/destinos`
-
-### ✅ Fase 3 — Compactar catálogo de destinos en Homepage (Marzo 2026)
-- [x] Se compactó el catálogo de destinos en el Home a 3 items con botón de Ver Todos
-- [x] `.slice(0, 3)` aplicado después de `filterByDifficulty(level)` para limitar a 3 destinos por pestaña
-- [x] Botón "Ver todos los destinos →" con `variant="outline"` y `size="lg"` debajo de las Tabs
-- [x] Botón usa `<Link to="/destinos">` envuelto en `<Button asChild>`
-- `src/components/landing/DestinationsCatalog.tsx` — Catálogo compactado + botón Ver Todos
-
-### ✅ Fase 2 — Design System (modo oscuro) en TravelInsuranceSection (Marzo 2026)
-- [x] Se aplicó el Design System (modo oscuro) a la sección de Seguros para mejorar el contraste
-- [x] Contenedor `<section>` con fondo Charcoal `bg-[#1C1917]`
-- [x] Textos principales (h2, span, p) en Light Sand `text-[#F5F0EB]` con opacidades `/70` para jerarquía
-- [x] Tarjetas de beneficios con fondo translúcido `bg-white/5` y borde `border-white/10`
-- [x] Íconos y acento "Aventura" en Sunset Orange `text-[#D97706]`, fondos `bg-[#D97706]/15`
-- [x] Botón CTA con `bg-[#D97706] text-[#F5F0EB] hover:bg-[#D97706]/90`
-- `src/components/landing/TravelInsuranceSection.tsx` — Inversión de colores completa
-
-### ✅ Fase 1 — Embudo de ventas en Index.tsx (Marzo 2026)
-- [x] El layout de Index.tsx ha sido reordenado para optimizar el embudo de ventas
-- [x] Nuevo orden: Navbar → Hero → SocialProof → PremiumItinerarySection → TravelInsuranceSection → CTA Inline → Quiz → DidYouKnow → Destinos → Gear → Blog → Newsletter → Footer
-- [x] Nuevo bloque CTA inline con fondo `bg-secondary/20`, heading "¿Listo para tu primera gran aventura?" y botón WhatsApp "Diseña tu viaje a medida"
-- `src/pages/Index.tsx` — Reordenado y CTA inline añadido
-
-### ✅ Tarea 1.4 — Componente ArticleWhatsAppCTA reutilizable (Marzo 2026)
-- [x] Nuevo componente `src/components/ArticleWhatsAppCTA.tsx` con diseño editorial limpio
-  - Fondo sutil Light Sand (`#F5F0EB`), bordes finos, animación Framer Motion
-  - Copy motivador: "¿Listo para vivir esta aventura? Deja de planear y empieza a empacar."
-  - Botón CTA: "Diseña mi viaje a medida" con ícono MessageCircle
-  - Prop `title` para mensaje contextual: "¡Hola! Acabo de leer sobre [title] y me gustaría que me ayudes a armar mi viaje."
-  - Usa `buildWhatsAppUrl()` con número hardcodeado `18588996802`
-- [x] Insertado al final del contenido principal en `DestinationDetail.tsx` (antes de PremiumItinerarySection)
-- [x] Insertado al final del contenido principal en `BlogPostDetail.tsx` (antes de artículos relacionados)
-- [x] Reemplaza las Cards CTA inline anteriores en ambas páginas por el componente reutilizable
-- `src/components/ArticleWhatsAppCTA.tsx` — Nuevo componente
-- `src/pages/DestinationDetail.tsx` — Usa ArticleWhatsAppCTA
-- `src/pages/BlogPostDetail.tsx` — Usa ArticleWhatsAppCTA
-
-### ✅ Botones de Pricing conectados a WhatsApp (Marzo 2026)
-- [x] Botones "Pedir mi Escapada/Aventura/Expedición" en `/servicios` ahora abren WhatsApp en nueva pestaña
-- [x] Número final hardcodeado: `18588996802` (ya no depende de `VITE_WHATSAPP_NUMBER`)
-- [x] Mensajes prellenados específicos por paquete con precio incluido
-- [x] `Servicios.tsx` sigue usando `buildWhatsAppUrl()`, ahora con número hardcodeado y override por paquete (no se construye la URL inline con `encodeURIComponent`)
-- `src/pages/Servicios.tsx` — Botones de pricing funcionales con WhatsApp
-
-### ✅ Hero de PremiumItinerarySection optimizado (Marzo 2026)
-- [x] Badge cambiado de "✦ Exclusivo · Solo 5 cupos al mes" a "✦ Diseño 100% Personalizado"
-- [x] Badge con fondo transparente (bg-transparent), borde secondary sólido y texto secondary
-- [x] Subtítulo oscurecido de text-muted-foreground a text-foreground/70 para mejor contraste
-- [x] Añadido mb-16 al subtítulo (antes mb-12) para breathing room antes de las tarjetas
-- `src/components/landing/PremiumItinerarySection.tsx` — Hero refinado
-
-### ✅ Meta Pixel y Google Analytics (GA4) (Marzo 2026)
-- [x] Script estándar de Meta Pixel con `fbq('track', 'PageView')` y `<noscript>` fallback
-- [x] Script estándar de Google Analytics (GA4) con `gtag.js`
-- [x] IDs placeholder (`XXXXXXXXXXXXXXXXX` y `G-XXXXXXXXXX`) listos para reemplazo
-- [x] Comentarios HTML en español antes de cada bloque de script
-- [x] Scripts directos en `index.html`, sin dependencias npm adicionales
-- `index.html` — Scripts de tracking en `<head>`
-
-### ✅ Banners de conversión WhatsApp en Blog y Destinos (Marzo 2026) — *Reemplazado por Tarea 1.4*
-- [x] CTA WhatsApp inline original (ya eliminado) — sustituido por componente reutilizable `ArticleWhatsAppCTA.tsx`
-
-### ✅ PremiumItinerarySection: Tarjetas de precio en lugar de formulario (Marzo 2026)
-- [x] Eliminado formulario modal (Dialog, Form, inputs, Zod schema, Supabase insert)
-- [x] Reemplazado con 3 tarjetas compactas de precio: Escapada $9, Aventura $25, Expedición $49
-- [x] Cada tarjeta con 3 viñetas principales y botón WhatsApp con mensaje prellenado
-- [x] Aventura destacada con `border-primary` y badge "Más Popular"
-- [x] Enlace "Ver todos los detalles →" a `/servicios` debajo de las tarjetas
-- [x] Mantenidos título "Tu Aventura, Tu Medida", badge "Exclusivo" y animaciones Framer Motion
-- [x] Colores adaptados al tema claro (textos oscuros)
-- [x] Eliminada prop `destinationName` (ya no necesaria sin formulario)
-- [x] Refactorizado `buildWhatsAppUrl` a helper centralizado `src/lib/whatsapp.ts`
-- [x] Actualizados WhatsAppButton, HeroSection, PremiumItinerarySection, Servicios para usar helper compartido
-- `src/lib/whatsapp.ts` — Helper centralizado para URLs de WhatsApp
-- `src/components/landing/PremiumItinerarySection.tsx` — Refactorizado completo
-- `src/components/WhatsAppButton.tsx` — Usa helper centralizado
-- `src/components/landing/HeroSection.tsx` — Usa helper centralizado
-- `src/pages/Servicios.tsx` — Usa helper centralizado
-- `src/pages/DestinationDetail.tsx` — Removida prop `destinationName`
-
-### ✅ Pivot visual a Light Theme (Marzo 2026)
-- [x] **Pivot visual a Light Theme completado** — Migración de dark mode nativo a diseño luminoso, limpio y editorial enfocado en fotografía (estilo MBA). Fondo #FAFAFA, texto #1C1917, acento primario #D97706, acento secundario #166534. Gradientes de imagen actualizados de `from-background` a `from-black` para mantener legibilidad. Hero sections de detalle con texto blanco sobre overlay oscuro. Navbar con texto blanco en modo transparente (sobre hero) y texto oscuro al hacer scroll. `prose-invert` eliminado. `.dark` class removida. CLAUDE.md actualizado con nuevo Design System.
-- [x] **Fix darkMode config** — Restaurado `darkMode: ["class"]` en `tailwind.config.ts` para evitar que el OS del usuario active dark mode via media query en componentes de shadcn/ui.
-- [x] **Hero Inmersivo** — Nuevo HeroSection con headline "Tu Concierge de Aventuras en Español", CTA primario WhatsApp ("Plática Conmigo"), CTA secundario al quiz, badge de confianza TAP, fondo temporal `bg-neutral-800` listo para video/foto real.
-- [x] **Fix botón secundario Hero** — Corregido botón outline que se renderizaba como bloque blanco sólido. Forzadas clases `bg-transparent border border-white text-white hover:bg-white/10` para que sea ghost real sobre fondo oscuro.
-- [x] **Página de Servicios editorial** — Página `/servicios` con diseño luminoso: hero minimalista con badge TAP en secondary (#166534), sección "Cómo Funciona" con 3 pasos, tarjetas de precio (Escapada $9 / Aventura $25 / Expedición $49) con bg-white shadow-lg, Aventura destacada con border-primary y badge "Más Popular", FAQ con Accordion, links WhatsApp prellenados.
-
-### ✅ Tarea 1.2 — Botón flotante WhatsApp con mensaje contextual (Marzo 2026)
-- [x] **Botón flotante WhatsApp** — Componente `WhatsAppButton.tsx` con icono SVG inline, color verde WhatsApp (#25D366), posición fixed inferior derecha (z-50), animación de entrada con Framer Motion (scale desde 0, delay 1s), tooltip "Plática conmigo" en desktop, oculto en rutas /admin/*. Renderizado en App.tsx fuera de `<Routes>`.
-- [x] **Número hardcodeado** — `18588996802` (ya no depende de `VITE_WHATSAPP_NUMBER`)
-- [x] **Mensaje contextual** — `getPageLabel()` detecta la ruta actual y genera: "¡Hola! Estoy viendo [página] y me gustaría más información." Cubre: `/`, `/calculadora`, `/blog`, `/gear`, `/servicios`, `/sobre-nosotros`, `/privacidad`, `/destinos/:slug`, `/blog/:slug`, `/gear/:slug`
-- `src/components/WhatsAppButton.tsx` — Componente del botón flotante (Tarea 1.2 completada)
-- `src/App.tsx` — Import y render de WhatsAppButton fuera de Routes
-
-### ✅ Quiz: Combinada temporada + zona de origen (Febrero 2026)
-- [x] **Quiz: Combinada temporada + zona de origen** — Preguntas 5 y 6 combinadas en una sola pantalla con Select dropdowns. Origen ahora usa zonas específicas (Frontera MX-USA, Centro MX, Sur MX, California/SW USA, etc.) para mejor granularidad en recomendaciones de presupuesto. Quiz reducido de 6 a 5 pasos.
-
-### ✅ Resilient Lazy Loading (Febrero 2026)
-- [x] **Resilient lazy loading** — `lazyWithRetry()` con retry automático + backoff exponencial + reload por deploy + ErrorBoundary con detección de chunk errors y UI de reconexión.
-- `src/lib/lazy-with-retry.ts` — Wrapper de `React.lazy()` con retry automático (2 reintentos, backoff exponencial) + reload por deploy
-- `src/App.tsx` — Migrados todos los `lazy()` a `lazyWithRetry()`
-- `src/components/ErrorBoundary.tsx` — Detección de chunk load errors con UI específica ("Problema de conexión")
-- `src/main.tsx` — Limpieza de `sessionStorage` key `chunk-reload` en boot exitoso
-
-### ✅ Blog Preview en Homepage (Febrero 2026)
-- Nuevo componente BlogPreview muestra 3 posts aleatorios/rotativos del blog
-- Usa hook useBlogPosts() existente (TanStack Query)
-- Cards con imagen, categoría badge, fecha, descripción truncada
-- CTA "Ver todo el blog" al final
-- Integrado en Index.tsx entre GearPreview y SocialProof
-- Si no hay posts publicados, la sección no se renderiza
-
-### ✅ Skeleton Loaders: Layout-Matched Card & Detail Skeletons (Mayo 2026)
-- [x] **`src/components/LoadingSkeletons.tsx`** — Nuevos componentes skeleton con formas que coinciden pixel-a-pixel con el contenido real (sin layout shift):
-  - `DestinationCardGridSkeleton` — imagen `h-56 sm:h-52`, línea de país, fila footer (reloj · dólar · "Ver Guía")
-  - `BlogCardGridSkeleton` — imagen `h-44`, fila badge + reading time + autor, fecha y "Leer más"
-  - `DestinationDetailSkeleton` mejorado — hero `h-[50vh] md:h-[60vh]`, fila de 4 tabs navegables, bloques de cuerpo, placeholder de acordeón FAQ, sidebar `h-64`
-  - `CardGridSkeleton` genérico conservado por compatibilidad con otros usos
-- [x] **`src/components/landing/DestinationsCatalog.tsx`** — Usa `DestinationCardGridSkeleton` en lugar del genérico
-- [x] **`src/pages/BlogListing.tsx`** — Usa `BlogCardGridSkeleton` (count=6) en lugar del genérico (count=3); `DestinationDetail.tsx` ya usaba `DestinationDetailSkeleton`
-- [x] `tsc --noEmit` — 0 errores; `npm run build` — build exitoso
-
-### ✅ SocialProof: Conteos Reales vía `usePublicStats` (Mayo 2026)
-- [x] **Nuevo hook `src/hooks/use-public-stats.ts`** — consultas `head: true` / `count: "exact"` con `Promise.all` para 4 tablas: `destinations` (is_published=true), `blog_posts` (is_published=true), `quiz_responses` (total), `newsletter_subscribers` (total). `staleTime: 30 min`. Errores lanzados silenciosamente (retorna `undefined`, la UI no renderiza).
-- [x] **`SocialProof.tsx` actualizado** — importa `usePublicStats`; reemplaza los números inventados (350+, 12) con conteos en vivo. Cada tarjeta sólo se renderiza si su conteo es > 0. La tarjeta TAP (certificación real, sin número) siempre se muestra. Mientras se carga, el componente retorna `null` para evitar un parpadeo con ceros.
-- [x] Cero testimonios, cero estrellas, cero números inventados.
-
-### ✅ SocialProof: Alto Impacto Visual con Contadores Animados (Marzo 2026)
-- [x] Sección de Prueba Social ahora es dinámica con datos reales de Supabase y contadores animados
-- [x] `AnimatedCounter` interno usa `useMotionValue`, `useTransform`, `useSpring` y `useInView` de Framer Motion para contar de 0 al valor real cuando la sección es visible
-- [x] Fondo Charcoal (`bg-[#1C1917]`) como bloque de interrupción visual en el scroll
-- [x] Tarjetas oscuras con borde naranja sutil: `bg-white/5 border border-[#D97706]/20`
-- [x] Texto principal en Light Sand: `text-[#F5F0EB]`
-- [x] Hover interactivo: `whileHover={{ y: -10, borderColor: "#D97706" }}`
-- [x] Tarjeta TAP sin número animado, con ícono ShieldCheck pulsante en naranja
-- [x] CTA y badge en Sunset Orange (`#D97706`)
-- `src/components/landing/SocialProof.tsx` — Rediseño completo con contadores animados
-
-### ✅ SocialProof: Estadísticas Reales (Febrero 2026)
-- Reemplazó testimonios falsos con 3 tarjetas de datos reales
-- Contador de quiz_responses desde Supabase (crece automáticamente)
-- Contador de destinos publicados desde Supabase
-- Badge de certificación TAP Test
-- CTA al quiz al final de la sección
-- Mismo estilo visual del sitio (bg-muted, noise, Framer Motion)
-
-### ✅ Sección "¿Sabías que puedes...?" Premium (Febrero 2026)
-- Datos dinámicos desde Supabase (ya no hardcodeados)
-- Imágenes reales de hero_image_url de cada destino
-- Bento grid en desktop (card principal grande + 4 secundarias)
-- Cards cinematográficas de 420px en mobile con snap scroll
-- Badge de dificultad con color, meta info (país, días, presupuesto)
-- Mapeo de textos emocionales por slug de destino
-- CTA al quiz al final de la sección
-- Subtítulo "Aventuras reales para principiantes"
-
-### ✅ Gear SEO Estructural (Febrero 2026)
-- GearArticleDetail: usePageMeta, JSON-LD Article mejorado con articleSection + inLanguage, BreadcrumbList, breadcrumbs visuales con aria-current, fecha de publicación, CTA interno (quiz + calculadora)
-- GearListing: usePageMeta, JSON-LD CollectionPage, fecha en cada card
-- Patrón ahora consistente en blog, destinos y gear
-
-### ✅ Email Drip Sequence Completo (Febrero 2026)
-- Tabla `email_drip_log` con RLS e índice para deduplicación
-- Edge Function `send-quiz-email` — Email 1 inmediato al completar quiz (ya existente, integrada)
-- Edge Function `send-drip-emails` — Emails 2 (gear guide, 3 días) y 3 (itinerary CTA, 7 días)
-- `use-quiz.ts` — Bug fix: eliminado código `emailError` fuera de scope + `failed_email_events` inexistente
-- `AdminEmailLogs.tsx` — Panel admin con tabla de logs, badges por tipo/estado, exportar CSV
-- `AdminDashboard.tsx` — Nueva stat card "Emails Enviados" con conteo desde `email_drip_log`
-- `AdminLayout.tsx` + `App.tsx` — Ruta `/admin/email-logs` con ícono 📧 en sidebar
-- Migración pg_cron: cron job diario 16:00 UTC (10:00 AM CT) para `send-drip-emails`
-- **Pendiente del dueño:** Configurar `RESEND_API_KEY` en Supabase secrets
-- **Pendiente del dueño:** Habilitar pg_cron en Dashboard > Database > Extensions
-
-### ✅ Email Marketing Post-Quiz (Febrero 2026)
-- Supabase Edge Function `send-quiz-email` envía email personalizado via Resend API
-- Se llama desde `use-quiz.ts` después de guardar respuesta del quiz
-- Email dark theme con destino #1 + imagen + alternativas + CTA itinerario
-- El email no bloquea la UI — si falla, usuario ve resultados igual
-- From: hola@nomaderia.com (dominio verificado en Resend)
-- Secrets: RESEND_API_KEY + SITE_URL configurados en Supabase Edge Functions
-
-### ✅ Cleanup de higiene (Mayo 2026)
-- Eliminado `src/components/ui/tmpclaude-b035-cwd`, un archivo de texto suelto que no pertenecía a `src/components/ui/`
-- Removidos los `console.log()`/`console.error()` sobrantes en `src/`; se conservan solo el fatal bootstrap de `main.tsx`, los `Sentry.captureException()` y el `console.warn()` de `NotFound.tsx`
-- `src/pages/NotFound.tsx` ahora registra rutas 404 con `console.warn()` en lugar de `console.error()`
-- Eliminado el tipo/import no usado detectado por TypeScript en `src/pages/GearListing.tsx`
-- Hardening de enlaces externos (`<a href="https://...">`) auditado en `src/**/*.tsx`: **0 enlaces corregidos** (todos ya tenían `target="_blank"` + `rel="noopener noreferrer"`; sin cambios de lógica)
-
-### ✅ Performance pass de imágenes (Mayo 2026)
-- Auditadas todas las etiquetas `<img>` en `src/**/*.tsx` (sin cambios en `src/components/OptimizedImage.tsx` ni en `src/components/ui/`)
-- Agregado `loading="lazy"` en imágenes que no lo tenían (`Navbar`, `Footer`, `SobreNosotros`, `AdminGallery`, `ImageUpload`, `MultiMediaUpload`, `DestinationDetail` lightbox)
-- En el flujo de hero de home (`HeroSection` → `MediaSlider` → `BackgroundSlideshow`), se prioriza la primera imagen visible con `fetchPriority="high"` y `loading="eager"`; el resto queda en lazy
-- Verificación TypeScript ejecutada con `node node_modules/typescript/bin/tsc --noEmit` (0 errores)
-- Recomendación siguiente: convertir imágenes hero de detalle (`blog/gear`) a formatos responsive (`srcset`/WebP) en una tarea separada
-
-### ✅ Verificación de CTAs de servicios (Mayo 2026)
-- Auditados `src/config/pricing.ts`, `src/pages/Servicios.tsx` y `src/components/landing/PremiumItinerarySection.tsx`
-- `Servicios` y `PremiumItinerarySection` ya consumían `products[].ctaUrl` en enlaces externos con `target="_blank"` + `rel="noopener noreferrer"`; sin cambios en los componentes
-- `Itinerario Personalizado` y `Solución Completa` ya abrían WhatsApp vía `buildWhatsAppUrl()`
-- **Corregido:** `Alerta de Permisos` usaba `VITE_STRIPE_SENTINEL_URL || "#"`; ahora cae al Stripe real `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`
-- Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
-- Hallazgos preexistentes no relacionados: `npm run lint` falla por errores en `src/components/ui/command.tsx`, `src/components/ui/textarea.tsx` y `src/pages/SentinelLanding.tsx`; `npm run test` falla en `src/lib/lazy-with-retry.test.ts`
-- Recomendación siguiente: resolver esos errores preexistentes de lint/test en una tarea separada
-
-### ✅ WhatsApp CTAs contextuales + helper central (Mayo 2026)
-- `src/lib/whatsapp.ts` ahora expone helper único `buildWhatsAppLink(message)` con `WHATSAPP_NUMBER = "18588996802"` hardcodeado
-- Migración completada de `buildWhatsAppUrl(...)` a `buildWhatsAppLink(...)` en páginas/componentes/tests
-- `DestinationDetail` (vía `ArticleWhatsAppCTA`) ahora precarga mensaje contextual:  
-  `Hola Nomaderia 👋 Me interesa el itinerario personalizado de {destino}. ¿Me ayudas a planearlo?`
-- `Servicios` usa mensajes contextuales para:
-  - `Itinerario Personalizado` ($29 USD)
-  - `Solución Completa` ($49 USD: alerta + itinerario)
-- Botón global flotante de WhatsApp (`WhatsAppButton`) usa mensaje contextual:
-  `Hola Nomaderia 👋 Tengo una pregunta sobre mis próximas aventuras.`
-- Tracking agregado en CTAs de itinerario:  
-  `trackEvent("cta_itinerario_whatsapp_click", { source })`
-- Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
-- Recomendación siguiente: agregar dashboard/event report para desglosar conversiones por `source`
-
-### ✅ Meta previews en detalles dinámicos (Mayo 2026)
-- `src/pages/DestinationDetail.tsx` ahora monta `usePageMeta()` solo cuando el destino cargó, con `title`, `description` e `image` derivados de Supabase para mejorar previews en WhatsApp/Facebook
-- `src/pages/BlogPostDetail.tsx` ahora monta `usePageMeta()` solo cuando el post cargó, usando `post.title`, `post.short_description` y `post.hero_image_url`
-- Verificación ejecutada: `node node_modules/typescript/bin/tsc --noEmit` ✅
-- Hallazgos preexistentes no relacionados: `npm run lint` sigue fallando en `src/components/ui/command.tsx`, `src/components/ui/textarea.tsx` y `src/pages/SentinelLanding.tsx`; `npm run test` sigue fallando en `src/lib/lazy-with-retry.test.ts`
-- Recomendación siguiente: corregir esos errores preexistentes de lint/test en una tarea separada
-
-- ✅ **Quiz de 6 preguntas** con matching de destinos + analytics en admin
-- ✅ **8 destinos** insertados (Yosemite a Torres del Paine)
-- ✅ **PrivacyPolicy.tsx** — `/privacidad` con LFPDPPP completa
-- ✅ **SobreNosotros.tsx** — `/sobre-nosotros` con badge de credencial TAP
-- ✅ **Footer actualizado** — Instagram, Facebook, TikTok reales + mailto
-- ✅ **PremiumItinerarySection** — Dialog + form → `itinerary_requests`
-- ✅ **AdminItineraryRequests** — Tabla + CSV export + stat card en dashboard
-- ✅ **SEO hooks** — `useCanonical()` + `useJsonLd()` en todas las páginas de detalle
-- ✅ **usePageMeta()** — Agregado a `SobreNosotros.tsx`, `PrivacyPolicy.tsx` y `TermsAndConditions.tsx` con títulos y descripciones en español
-- ✅ **Auditoría Radix** — 12 paquetes no usados eliminados
-- ✅ **LoadingSkeletons** — Skeleton loaders para destination, gear, card grid
-- ✅ **ErrorBoundary** — Wrapper genérico para rutas
-- ✅ **Precios USD-only en Edge Functions** — Eliminadas referencias MXN ($299/$549/$899 MXN) en `send-drip-emails` y `send-quiz-results`; precios actualizados a $29 USD (itinerario básico) y $49 USD (bundle/expedición)
+---
 
 ## Instrucciones para Copilot Agent
 
 Siempre que hagas cambios al código:
-1. Actualiza este archivo con lo que se completó
-2. Agrega recomendaciones de próximos pasos si aplica
-3. Si creas archivos nuevos, actualiza la estructura en `CLAUDE.md` si es necesario
+1. Lee `CLAUDE.md`, `docs/claude-context.md`, `docs/decisions.md` y este archivo.
+2. Un cambio lógico = un commit. `tsc --noEmit` y `npm run build` deben pasar.
+3. Actualiza este archivo (mueve la tarea a "Changelog reciente").
+4. Si la arquitectura cambió, actualiza `CLAUDE.md`. Si fue una decisión dura,
+   añade un ADR en `docs/decisions.md`.
 
 ---
 
-## 🔮 Pendientes Futuros (backlog)
+## 📜 Changelog reciente
 
-### 📧 Emails Futuros
-- Email 4 — Re-engagement a los 30 días para usuarios que no han vuelto al sitio
-- Tracking de opens/clicks con Resend webhooks → tabla `email_events`
-- Email 2 (3 días post-quiz): "5 cosas que desearía saber antes de mi primera aventura" — contenido educativo + gear
-- Email 3 (7 días post-quiz): Oferta directa itinerario personalizado con precios
-- Requiere: tabla email_queue + Supabase scheduled function o pg_cron
+> Histórico condensado por temas. El detalle commit-a-commit anterior a Mayo 2026
+> vive en el historial de git. Entradas recientes primero.
 
-### 🚀 Mejoras Técnicas
-- Performance: lazy loading imágenes, hero images WebP/srcset, más skeleton loaders
-- Dashboard avanzado: top destinos recomendados, conversión quiz→email, trends con Recharts
-- PWA/offline: service worker, manifest.json, cache de guías para trail sin señal
-- Chatbot WhatsApp: integración con WhatsApp Business API para paquete Expedición
+### Mayo 2026
+
+**Pricing y conversión**
+- Reestructurado a 2 productos + bundle, USD only: Alerta de Permisos $29
+  (Stripe), Itinerario Personalizado $29 (WhatsApp), Solución Completa $49
+  (WhatsApp). Eliminados precios MXN y nombres legacy en `pricing.ts`,
+  `Servicios.tsx`, `PremiumItinerarySection.tsx` y `send-quiz-email`.
+- `Alerta de Permisos` ahora cae al Stripe Payment Link real como fallback (antes
+  caía a `"#"`).
+- Email drip `itinerary_cta` migrado al modelo de 2 productos; CTA principal a
+  WhatsApp verde `#25D366`, secundario a `/servicios`.
+
+**WhatsApp y CTAs**
+- `src/lib/whatsapp.ts` expone helper único `buildWhatsAppLink(message)` con
+  número `18588996802`. Migrados todos los CTAs a mensajes contextuales
+  pre-llenados + `trackEvent("cta_itinerario_whatsapp_click", { source })`.
+- `StickyMobileCTA` (mobile-first) en páginas de destino, con botón secundario de
+  alerta de permisos cuando aplica.
+
+**Admin (rediseño visual)**
+- Dashboard: header fijo "Buenos días, Frank" + badge producción, panel "Atención
+  hoy" (leads de `sentinel_leads` + `quiz_responses` de 48h con botón WhatsApp),
+  stat card "Leads de Alerta", analytics del quiz, badges por tipo de contenido.
+- Sidebar: paleta oscura vía variables `--sidebar-*`, logo Nomaderia, pill
+  "Producción", sección de usuario.
+- Fix `sentinel_leads`: nueva política RLS `SELECT` para admin (el contador
+  mostraba 0) + query corregida a `count: exact, head: true` (ver lección en
+  `decisions.md`).
+
+**SEO / meta / accesibilidad**
+- `usePageMeta()` completo en todas las páginas públicas; meta previews dinámicas
+  (title/description/image desde Supabase) en `DestinationDetail` y
+  `BlogPostDetail`.
+- Contraste WCAG AA: `--muted-foreground` 45%→40% lightness; footnote de
+  `PermitScarcity` a `text-xs`.
+- `NotFound` branded (Navbar/Footer/`noindex`) + preconnect a Supabase en
+  `index.html`.
+
+**Features**
+- `ExitIntentModal` (trigger único por sesión, desktop mouseleave / mobile 60%
+  scroll) hacia Sentinel, con analytics.
+- `PermitScarcity` con datos honestos NPS/Recreation.gov (`yosemite-valley`,
+  `gran-canon`).
+- PWA mínima instalable: `manifest.webmanifest` + meta tags de installability.
+- Cache tuning de React Query: `staleTime` 30 min en contenido estático.
+
+**Higiene**
+- Eliminado archivo suelto en `components/ui/`; limpiados `console.*` sobrantes;
+  `loading="lazy"` + `fetchPriority="high"` en heros; enlaces externos auditados
+  (`rel="noopener noreferrer"`).
+
+### Marzo 2026 (resumen)
+
+- Fase "Armadura de Titanio": Sentry (`@sentry/react`) en `main.tsx` +
+  `ErrorBoundary`; tarjetas de auditoría (prueba de venta + verificador de
+  imágenes) en `SystemAudit.tsx`; logs estructurados en `send-quiz-email`.
+- Media Slider dinámico: hook `use-media.ts`, admin `AdminGallery.tsx`,
+  `MediaSlider.tsx` en hero, bucket `media_gallery` + tabla `media_slider`.
+- Quiz de 6 preguntas con matching de destinos + analytics; columna
+  `main_barrier`; `proximityMap` con llaves de mercado (`sandiego_socal`,
+  `tijuana_baja`, `cdmx`, `resto_mx`, `resto_usa`, `otro`).
+- Email marketing post-quiz vía Resend (`send-quiz-email`, `send-drip-emails`);
+  tabla `email_drip_log` con RLS; panel `AdminEmailLogs.tsx`.
+- Base de contenido: 8 destinos iniciales, `PrivacyPolicy` (LFPDPPP),
+  `SobreNosotros` (badge TAP), `PremiumItinerarySection` →
+  `itinerary_requests`, `AdminItineraryRequests`, hooks SEO
+  (`useCanonical`/`useJsonLd`/`usePageMeta`), LoadingSkeletons, ErrorBoundary,
+  auditoría Radix (12 paquetes no usados eliminados).

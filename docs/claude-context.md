@@ -1,5 +1,10 @@
 # CLAUDE CONTEXT — Full Architecture Audit (Read-only)
 
+> ⚠️ **Snapshot de auditoría (pre-edit).** Las secciones de schema/RLS/Edge
+> Functions/design (1-6, 10) siguen vigentes. El modelo de negocio y precios
+> evolucionó después de este snapshot: la **fuente de verdad actual** es
+> `CLAUDE.md` + `docs/decisions.md` (ADR-003). Ver notas inline en 7.2 y 9.3.
+
 ## Baseline validation run (pre-edit)
 - `npm run lint` → **fails** (pre-existing):
   - `src/components/ui/command.tsx` (`@typescript-eslint/no-empty-object-type`)
@@ -525,10 +530,11 @@ Source: `src/pages/Servicios.tsx`
 5. Standard `Navbar` + `Footer`
 
 ### 7.2 Products and prices shown
-Driven from `src/config/pricing.ts` and rendered in this page:
-- `Weekend` — `$19 USD` / `$299 MXN` — `1-3 días`
-- `Aventura` — `$35 USD` / `$549 MXN` — `4-7 días` (popular)
-- `Expedición` — `$59 USD` / `$899 MXN` — `8+ días` (highlight: WhatsApp support)
+> ⚠️ DESACTUALIZADO en este snapshot. El modelo legacy (Weekend/Aventura/
+> Expedición, USD+MXN) fue ELIMINADO (ADR-003). Modelo vigente, USD only:
+- `Alerta de Permisos` — `$29 USD` — Stripe Payment Link
+- `Itinerario Personalizado` — `$29 USD` — WhatsApp
+- `Solución Completa` (bundle) — `$49 USD` — WhatsApp
 
 ### 7.3 CTAs and destinations
 - Hero CTA → WhatsApp URL built with `buildWhatsAppUrl(..., WHATSAPP_NUMBER)`
@@ -610,6 +616,11 @@ Via `useDestinationBySlug()` and `useRelatedDestinations()`:
   - `src/pages/DestinationDetail.tsx` booking fallback: `Enlaces de reserva próximamente.`
 
 ### 9.3 Hardcoded prices/currencies found
+
+> Estado actual: `pricing.ts` YA no tiene MXN (FIX 1, mayo 2026). Las referencias
+> MXN en `send-drip-emails` y `send-quiz-results` SÍ siguen pendientes (ver
+> `pending-tasks.md` → Pendientes de Código).
+
 - `src/config/pricing.ts`:
   - `$299 MXN`, `$549 MXN`, `$899 MXN`
 - `supabase/functions/send-drip-emails/index.ts`:
