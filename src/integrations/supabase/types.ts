@@ -356,6 +356,87 @@ export type Database = {
         }
         Relationships: []
       }
+      permit_alerts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          notes: string | null
+          park: string
+          permit_name: string
+          status: string
+          target_year: number
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          park: string
+          permit_name: string
+          status?: string
+          target_year: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          park?: string
+          permit_name?: string
+          status?: string
+          target_year?: number
+        }
+        Relationships: []
+      }
+      permit_windows: {
+        Row: {
+          closes_at: string | null
+          created_at: string
+          how_to_apply_url: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          opens_at: string
+          park: string
+          permit_name: string
+          source_url: string | null
+          updated_at: string
+          window_type: string
+          year: number
+        }
+        Insert: {
+          closes_at?: string | null
+          created_at?: string
+          how_to_apply_url?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          opens_at: string
+          park: string
+          permit_name: string
+          source_url?: string | null
+          updated_at?: string
+          window_type: string
+          year: number
+        }
+        Update: {
+          closes_at?: string | null
+          created_at?: string
+          how_to_apply_url?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          opens_at?: string
+          park?: string
+          permit_name?: string
+          source_url?: string | null
+          updated_at?: string
+          window_type?: string
+          year?: number
+        }
+        Relationships: []
+      }
       quiz_responses: {
         Row: {
           budget_range: string | null

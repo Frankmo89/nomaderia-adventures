@@ -37,10 +37,16 @@ referenciar esta lista primero.
 - [ ] **Frank: aplicar migración `create_ai_content_meta` y regenerar tipos**:
   correr `supabase db push` para crear `public.ai_content_meta` y después regenerar tipos con
   `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
+- [ ] **Frank: aplicar migración `create_permit_alerts_tables` y regenerar tipos**:
+  correr `supabase db push` para crear `public.permit_windows` y `public.permit_alerts`, y después regenerar tipos con
+  `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
 - [ ] **Secrets de Edge Functions** en Supabase Dashboard → Edge Functions →
       Secrets:
       - `supabase secrets set RESEND_API_KEY=re_xxxxx`
       - `supabase secrets set SITE_URL=https://nomaderia.com`
+- [ ] **Frank: configurar secret y cron para alertas de permisos (Paso 8)**:
+  - `supabase secrets set CRON_SECRET=<valor_largo_y_unico>`
+  - Programar ejecución diaria de `check-permit-alerts` con header `x-cron-secret: <CRON_SECRET>` (pg_cron o cron-job.org).
 - [ ] **Habilitar `pg_cron`** (Database → Extensions) para el drip diario, o usar
       cron-job.org con POST diario a la Edge Function.
 - [ ] **Verificar sitio en Google Search Console.**
@@ -125,6 +131,12 @@ Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
 - [2026-06-01] Integrado panel IA de discovery en `AdminBlogPosts` con botón "✦ Descubrir Temas SEO", progreso por etapas en español y cards en `src/components/admin/TrendingBlogCard.tsx` mostrando `search_intent`, fuentes y CTA "Desarrollar este →" hacia `/admin/blog-posts/new?candidate=`.
 - [2026-06-01] Flujo blog AI end-to-end integrado en `AdminBlogPostForm`: autofill por `?candidate=` en modo nuevo, overlay por etapas, badge de confianza, panel privado de fuentes, badges `⚠ Verificar`, cálculo cliente de `reading_time_min`, guard de slug único y upsert no bloqueante a `ai_content_meta` tras insert.
 - [2026-06-01] Extendida card "Generación con IA" en `AdminDashboard` para sumar `destination_ai_meta` + `ai_content_meta` (gear/blog), mostrando breakdown en español (Destinos/Gear/Blog), total combinado y horas ahorradas estimadas con fallback seguro si `ai_content_meta` falla o viene vacío.
+- [2026-06-01] Creada `supabase/functions/discover-permit-windows/index.ts` con patrón research→structure, `requireAdmin`, `callResponses`, enrichment opcional RIDB y esquema estricto `permit_windows_draft`; devuelve borrador de calendario oficial sin escribir en DB.
+- [2026-06-01] Añadidos `src/types/ai-permits.ts` y `src/hooks/use-permit-windows-draft.ts` para invocar `discover-permit-windows` con React Query, sin `any` y sin tocar tipos generados.
+- [2026-06-01] Creada página `src/pages/admin/AdminPermitWindows.tsx` con tabla CRUD de `permit_windows`, toggle `is_active`, búsqueda IA "✦ Buscar fechas oficiales" (hook `usePermitWindowsDraft`), revisión editable de ventanas con panel `Fuentes (privado)` + badges `⚠ Verificar`, guardado manual no auto-activo y upsert no bloqueante a `ai_content_meta`; ruta registrada en `App.tsx` (`/admin/permit-windows`) y link agregado al sidebar en `AdminLayout`.
+- [2026-06-01] Añadido formulario "Activa tu Alerta de Permisos" en `/gracias` (prefill `?email=`, validación de email, selección de parque, permiso y año objetivo) con inserción a `permit_alerts` vía hook `src/hooks/use-permit-alert.ts`, estado de éxito en español y aviso honesto de no garantía de permiso.
+- [2026-06-01] Creada página admin `src/pages/admin/AdminPermitAlerts.tsx` con listado de `permit_alerts` (email, parque, permiso, año objetivo, estado, fecha) ordenado por `created_at` descendente, filtro por estado (`active`/`notified`/`expired`), cambio manual de estado por fila, nota operativa para validar email contra Stripe y layout mobile-first; ruta registrada en `App.tsx` (`/admin/permit-alerts`) y link agregado en `AdminLayout`.
+- [2026-06-01] Creada `supabase/functions/check-permit-alerts/index.ts` para ejecución por cron con auth por header `x-cron-secret` + `CRON_SECRET`, lectura service-role de ventanas activas (`now` a `+7 días`), envío de correos en español vía Resend para `permit_alerts` activas coincidentes y actualización idempotente de estado a `notified`; respuesta `{ checked, notified }` y logs con prefijo `[check-permit-alerts]`.
 - [2026-06-01] Creada `supabase/functions/generate-gear-draft/index.ts` (research → structure) con helpers compartidos, `NOMADERIA_SOUL`, schema estricto de `gear_draft` y reglas editoriales de verificación para `price`/`rating`.
 - [2026-06-01] Añadidos `src/types/ai-gear.ts`, `src/hooks/use-trending-gear.ts` y `src/hooks/use-gear-draft.ts` (React Query + `supabase.functions.invoke`) alineados con respuestas de Edge Functions de gear.
 - [2026-06-01] Integrado panel AI de discovery en `AdminGearArticles` con botón "✦ Descubrir Gear Trending", progreso por etapas en español y cards responsivas en `src/components/admin/TrendingGearCard.tsx` enlazando al form con `?candidate=`.

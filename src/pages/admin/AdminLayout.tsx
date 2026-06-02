@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
-import { Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare, Users, LogOut, FileText, Compass, Mail, ImageIcon, ShieldCheck, ChevronDown, Bell } from "lucide-react";
+import { Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare, Users, LogOut, FileText, Compass, Mail, ImageIcon, ShieldCheck, ChevronDown, Bell, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,8 @@ const links = [
   { label: "Destinos", href: "/admin/destinations", icon: MapPin },
   { label: "Gear Articles", href: "/admin/gear-articles", icon: BookOpen },
   { label: "Blog Posts", href: "/admin/blog-posts", icon: FileText },
+  { label: "Ventanas de Permiso", href: "/admin/permit-windows", icon: BellRing },
+  { label: "Alertas de Permiso", href: "/admin/permit-alerts", icon: Bell },
   { label: "Itinerarios", href: "/admin/itinerary-requests", icon: Compass },
   { label: "Leads de Alerta", href: "/admin/sentinel-leads", icon: Bell, alert: true },
   { label: "Quiz Responses", href: "/admin/quiz-responses", icon: MessageSquare },

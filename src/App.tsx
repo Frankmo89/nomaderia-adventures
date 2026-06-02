@@ -44,6 +44,8 @@ const AdminSubscribers = lazyWithRetry(() => import("./pages/admin/AdminSubscrib
 const AdminItineraryRequests = lazyWithRetry(() => import("./pages/admin/AdminItineraryRequests"));
 const AdminBlogPosts = lazyWithRetry(() => import("./pages/admin/AdminBlogPosts"));
 const AdminBlogPostForm = lazyWithRetry(() => import("./pages/admin/AdminBlogPostForm"));
+const AdminPermitWindows = lazyWithRetry(() => import("./pages/admin/AdminPermitWindows"));
+const AdminPermitAlerts = lazyWithRetry(() => import("./pages/admin/AdminPermitAlerts"));
 const AdminEmailLogs = lazyWithRetry(() => import("./pages/admin/AdminEmailLogs"));
 const AdminGallery = lazyWithRetry(() => import("./pages/admin/AdminGallery"));
 const SystemAudit = lazyWithRetry(() => import("./pages/admin/SystemAudit"));
@@ -104,6 +106,8 @@ const App = () => (
                 <Route path="blog-posts" element={<AdminBlogPosts />} />
                 <Route path="blog-posts/new" element={<AdminBlogPostForm />} />
                 <Route path="blog-posts/:id/edit" element={<AdminBlogPostForm />} />
+                <Route path="permit-windows" element={<AdminPermitWindows />} />
+                <Route path="permit-alerts" element={<AdminPermitAlerts />} />
                 <Route path="email-logs" element={<AdminEmailLogs />} />
                 <Route path="gallery" element={<AdminGallery />} />
                 <Route path="audit" element={<SystemAudit />} />
