@@ -51,56 +51,6 @@ interface PermitWindowsDraftResponse {
   model: string;
 }
 
-interface OpenAIResponsesPayload {
-  output_text?: string;
-  output?: Array<{
-    type?: string;
-    refusal?: string | null;
-    content?: Array<{
-      type?: string;
-      text?: string;
-      refusal?: string | null;
-    }>;
-  }>;
-}
-
-function hasRefusal(payload: OpenAIResponsesPayload): boolean {
-  return (payload.output ?? []).some((item) => {
-    if (item.type === "refusal") {
-      return true;
-    }
-
-    if (item.refusal != null && `${item.refusal}`.trim().length > 0) {
-      return true;
-    }
-
-    const firstContent = item.content?.[0];
-    if (firstContent?.type === "refusal") {
-      return true;
-    }
-
-    return (item.content ?? []).some((content) => {
-      return content.type === "refusal" || (content.refusal != null && `${content.refusal}`.trim().length > 0);
-    });
-  });
-}
-
-function getOutputText(payload: OpenAIResponsesPayload): string | null {
-  if (typeof payload.output_text === "string" && payload.output_text.trim()) {
-    return payload.output_text;
-  }
-
-  for (const item of payload.output ?? []) {
-    for (const content of item.content ?? []) {
-      if (content.type === "output_text" && typeof content.text === "string" && content.text.trim()) {
-        return content.text;
-      }
-    }
-  }
-
-  return null;
-}
-
 function buildStepAResearchPrompt(input: { park: string; year: number }, ridbBlock: string): string {
   return `Investiga los permisos oficiales y ventanas de permiso para este parque y año.
 

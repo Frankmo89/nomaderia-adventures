@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +47,8 @@ const trackedConfidenceFields = [
   "tags",
   "content_markdown",
 ] as const;
+
+const META_DESCRIPTION_MAX = 160;
 
 const computeReadingTimeMin = (contentMarkdown: string): string => {
   const wordCount = contentMarkdown
@@ -120,6 +121,9 @@ const AdminBlogPostForm = () => {
   }, [searchParams]);
 
   const verifyFlags = aiDraftResponse?.verify_flags || [];
+  const metaDescriptionLength = form.meta_description.length;
+  const metaDescriptionRemaining = META_DESCRIPTION_MAX - metaDescriptionLength;
+  const metaDescriptionExceeded = metaDescriptionRemaining < 0;
   const confidenceCount = useMemo(() => {
     return trackedConfidenceFields.filter((fieldName) => {
       if (verifyFlags.includes(fieldName)) return false;
@@ -244,6 +248,16 @@ const AdminBlogPostForm = () => {
     setSaving(true);
     setDraftErrorMessage(null);
 
+    if (metaDescriptionExceeded) {
+      setSaving(false);
+      toast({
+        title: "Meta descripción demasiado larga",
+        description: `La meta descripción debe tener máximo ${META_DESCRIPTION_MAX} caracteres.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     let resolvedSlug = form.slug;
 
     if (!isEdit) {
@@ -289,8 +303,7 @@ const AdminBlogPostForm = () => {
       if (result.error) { toast({ title: "Error", description: result.error.message, variant: "destructive" }); return; }
 
       if (aiDraftResponse && result.data?.id) {
-        const aiMetaClient = supabase as unknown as SupabaseClient;
-        const { error: aiMetaError } = await aiMetaClient
+        const { error: aiMetaError } = await supabase
           .from("ai_content_meta")
           .upsert(
             {
@@ -396,7 +409,16 @@ const AdminBlogPostForm = () => {
       </div>
       <div className="space-y-2">
         <Label className="text-foreground">Meta descripción (SEO)</Label>
-        <Textarea value={form.meta_description} onChange={(e) => set("meta_description", e.target.value)} rows={2} placeholder="Descripción optimizada para Google (máx 160 caracteres)" />
+        <Textarea
+          value={form.meta_description}
+          onChange={(e) => set("meta_description", e.target.value)}
+          rows={2}
+          maxLength={META_DESCRIPTION_MAX}
+          placeholder="Descripción optimizada para Google (máx 160 caracteres)"
+        />
+        <p className={`text-xs ${metaDescriptionExceeded ? "text-destructive" : "text-muted-foreground"}`}>
+          {metaDescriptionLength}/{META_DESCRIPTION_MAX}
+        </p>
       </div>
       <div className="space-y-2">
         <Label className="text-foreground">Tags (uno por línea)</Label>

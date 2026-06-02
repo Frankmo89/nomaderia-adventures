@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -245,8 +244,7 @@ const AdminGearArticleForm = () => {
     }
 
     if (!isEdit && aiDraftResponse && "data" in result && result.data?.id) {
-      const aiMetaClient = supabase as unknown as SupabaseClient;
-      const { error: aiMetaError } = await aiMetaClient
+      const { error: aiMetaError } = await supabase
         .from("ai_content_meta")
         .upsert(
           {

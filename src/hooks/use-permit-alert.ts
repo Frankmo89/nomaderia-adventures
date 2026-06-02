@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface CreatePermitAlertInput {
@@ -16,11 +15,9 @@ interface CreatePermitAlertResult {
 }
 
 export function usePermitAlert() {
-  const db = supabase as unknown as SupabaseClient;
-
   const mutation = useMutation<CreatePermitAlertResult, Error, CreatePermitAlertInput>({
     mutationFn: async ({ email, park, permit_name, target_year, notes }: CreatePermitAlertInput): Promise<CreatePermitAlertResult> => {
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from("permit_alerts")
         .insert({
           email,

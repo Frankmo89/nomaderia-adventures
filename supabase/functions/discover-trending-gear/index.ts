@@ -127,7 +127,8 @@ serve(async (req) => {
     const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data: existingGear, error: gearError } = await serviceClient
       .from("gear_articles")
-      .select("slug, title");
+      .select("slug, title")
+      .limit(40);
 
     if (gearError) {
       throw new Error(`No se pudieron leer los gear articles existentes: ${gearError.message}`);

@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VerifyFieldBadge } from "@/components/admin/VerifyFieldBadge";
 import type { PermitWindowDraft } from "@/types/ai-permits";
+import { PARK_NAMES } from "@/lib/parks";
 
 interface PermitWindowDraftEditorProps {
   item: PermitWindowDraft;
@@ -28,6 +29,14 @@ export function PermitWindowDraftEditor({ item, index, onChange, onSave, saving 
     onChange(index, { ...item, [key]: value });
   };
 
+  const parkOptions = (() => {
+    const options = [...PARK_NAMES] as string[];
+    if (item.park && !options.includes(item.park)) {
+      options.push(item.park);
+    }
+    return options;
+  })();
+
   return (
     <article className="rounded-xl border border-border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -40,7 +49,14 @@ export function PermitWindowDraftEditor({ item, index, onChange, onSave, saving 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label className="text-card-foreground mb-2">Parque</Label>
-          <Input className={inputCls} value={item.park} onChange={(e) => setField("park", e.target.value)} />
+          <Select value={item.park} onValueChange={(value) => setField("park", value)}>
+            <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {parkOptions.map((park) => (
+                <SelectItem key={park} value={park}>{park}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="text-card-foreground mb-2">Permiso</Label>

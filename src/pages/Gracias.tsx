@@ -9,16 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePageMeta } from "@/hooks/use-seo";
 import { usePermitAlert } from "@/hooks/use-permit-alert";
+import { PARK_NAMES } from "@/lib/parks";
 
-const knownParks = [
-  "Yosemite National Park",
-  "Grand Canyon National Park",
-  "Zion National Park",
-  "Rocky Mountain National Park",
-  "Glacier National Park",
-  "Sequoia & Kings Canyon",
-  "Otro",
-];
+const OTHER_PARK_OPTION = "__otro__";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -31,7 +24,7 @@ const Gracias = () => {
   }, []);
 
   const [email, setEmail] = useState(prefilledEmail);
-  const [parkOption, setParkOption] = useState(knownParks[0]);
+  const [parkOption, setParkOption] = useState<string>(PARK_NAMES[0]);
   const [customPark, setCustomPark] = useState("");
   const [permitName, setPermitName] = useState("Half Dome Cables");
   const [targetYear, setTargetYear] = useState(String(initialYear));
@@ -45,7 +38,9 @@ const Gracias = () => {
     robots: "noindex, nofollow",
   });
 
-  const selectedPark = parkOption === "Otro" ? customPark.trim() : parkOption;
+  const selectedPark = parkOption === OTHER_PARK_OPTION
+    ? `Otro: ${customPark.trim()}`
+    : parkOption;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,14 +140,15 @@ const Gracias = () => {
                         <SelectValue placeholder="Selecciona un parque" />
                       </SelectTrigger>
                       <SelectContent>
-                        {knownParks.map((park) => (
+                        {PARK_NAMES.map((park) => (
                           <SelectItem key={park} value={park}>{park}</SelectItem>
                         ))}
+                        <SelectItem value={OTHER_PARK_OPTION}>Otro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {parkOption === "Otro" && (
+                  {parkOption === OTHER_PARK_OPTION && (
                     <div className="space-y-2">
                       <Label htmlFor="alert-custom-park" className="text-foreground">Escribe el parque</Label>
                       <Input

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +47,6 @@ function formatDate(iso: string): string {
 }
 
 const AdminPermitAlerts = () => {
-  const db = supabase as unknown as SupabaseClient;
   const { toast } = useToast();
 
   const [items, setItems] = useState<PermitAlertRow[]>([]);
@@ -65,6 +63,7 @@ const AdminPermitAlerts = () => {
     }
 
     let query = db
+    let query = supabase
       .from("permit_alerts")
       .select("id, email, park, permit_name, target_year, status, created_at")
       .order("created_at", { ascending: false });
@@ -97,7 +96,7 @@ const AdminPermitAlerts = () => {
   const handleStatusChange = async (id: string, nextStatus: PermitAlertStatus) => {
     setUpdatingId(id);
 
-    const { error } = await db
+    const { error } = await supabase
       .from("permit_alerts")
       .update({ status: nextStatus })
       .eq("id", id);

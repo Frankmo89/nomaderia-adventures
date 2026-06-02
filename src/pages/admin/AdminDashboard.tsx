@@ -134,7 +134,7 @@ const AdminDashboard = () => {
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("is_published", false),
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }),
-        (supabase as unknown as SupabaseClient).from("sentinel_leads").select("id", { count: "exact", head: true }),
+        supabase.from("sentinel_leads").select("id", { count: "exact", head: true }),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
         supabase.from("itinerary_requests").select("id", { count: "exact", head: true }),
         db.from("email_drip_log").select("id", { count: "exact", head: true }),
@@ -180,7 +180,7 @@ const AdminDashboard = () => {
       // 48h panels
       const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       const [sentinelRecentRes, quizRecentRes] = await Promise.all([
-        (supabase as unknown as SupabaseClient)
+        supabase
           .from("sentinel_leads")
           .select("email, source, created_at")
           .gte("created_at", cutoff48h)

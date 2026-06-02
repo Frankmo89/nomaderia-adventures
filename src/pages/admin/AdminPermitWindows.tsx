@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { Plus, Pencil, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +28,7 @@ import { usePermitWindowsDraft } from "@/hooks/use-permit-windows-draft";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { PermitWindowDraft, PermitWindowsDraftResponse } from "@/types/ai-permits";
+import { PARK_NAMES } from "@/lib/parks";
 
 interface PermitWindowRow {
   id: string;
@@ -60,7 +60,7 @@ interface PermitWindowFormState {
 }
 
 const emptyForm: PermitWindowFormState = {
-  park: "",
+  park: PARK_NAMES[0],
   permit_name: "",
   window_type: "lottery",
   opens_at: "",
@@ -99,7 +99,6 @@ function formatDateTimeReadable(iso: string | null): string {
 }
 
 const AdminPermitWindows = () => {
-  const db = supabase as unknown as SupabaseClient;
   const { toast } = useToast();
 
   const [items, setItems] = useState<PermitWindowRow[]>([]);
@@ -131,9 +130,17 @@ const AdminPermitWindows = () => {
     return Array.from(baseFlags);
   }, [draftResponse]);
 
+  const parkOptions = useMemo(() => {
+    const options = [...PARK_NAMES] as string[];
+    if (form.park && !options.includes(form.park)) {
+      options.push(form.park);
+    }
+    return options;
+  }, [form.park]);
+
   const load = async () => {
     setLoading(true);
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from("permit_windows")
       .select("id, park, permit_name, window_type, opens_at, closes_at, how_to_apply_url, source_url, year, notes, is_active, created_at, updated_at")
       .order("year", { ascending: false })
@@ -179,7 +186,7 @@ const AdminPermitWindows = () => {
   };
 
   const handleToggleActive = async (id: string, current: boolean) => {
-    const { error } = await db.from("permit_windows").update({ is_active: !current }).eq("id", id);
+    const { error } = await supabase.from("permit_windows").update({ is_active: !current }).eq("id", id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
@@ -189,7 +196,7 @@ const AdminPermitWindows = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await db.from("permit_windows").delete().eq("id", id);
+    const { error } = await supabase.from("permit_windows").delete().eq("id", id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
@@ -239,8 +246,8 @@ const AdminPermitWindows = () => {
     };
 
     const result = editingId
-      ? await db.from("permit_windows").update(payload).eq("id", editingId)
-      : await db.from("permit_windows").insert(payload);
+      ? await supabase.from("permit_windows").update(payload).eq("id", editingId)
+      : await supabase.from("permit_windows").insert(payload);
 
     setSavingForm(false);
 
@@ -318,7 +325,7 @@ const AdminPermitWindows = () => {
       is_active: false,
     };
 
-    const result = await db.from("permit_windows").insert(payload).select("id").single();
+    const result = await supabase.from("permit_windows").insert(payload).select("id").single();
     setDraftSavingIndex(null);
 
     if (result.error) {
@@ -327,7 +334,7 @@ const AdminPermitWindows = () => {
     }
 
     if (draftResponse && result.data?.id) {
-      const { error: aiMetaError } = await db
+      const { error: aiMetaError } = await supabase
         .from("ai_content_meta")
         .upsert(
           {
@@ -456,7 +463,14 @@ const AdminPermitWindows = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-card-foreground mb-2">Parque</Label>
-                <Input className="bg-background border-border text-foreground" value={form.park} onChange={(e) => setFormField("park", e.target.value)} required />
+                <Select value={form.park} onValueChange={(value) => setFormField("park", value)}>
+                  <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {parkOptions.map((park) => (
+                      <SelectItem key={park} value={park}>{park}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label className="text-card-foreground mb-2">Permiso</Label>
