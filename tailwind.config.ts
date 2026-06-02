@@ -19,6 +19,16 @@ export default {
         serif: ["'Playfair Display'", "serif"],
         sans: ["'Inter'", "sans-serif"],
       },
+      fontSize: {
+        display: ["clamp(3.5rem, 7vw, 6rem)", { lineHeight: "0.95", letterSpacing: "-0.04em" }],
+        h1: ["clamp(2.5rem, 5vw, 4.5rem)", { lineHeight: "1.05", letterSpacing: "-0.035em" }],
+        h2: ["clamp(2rem, 3.5vw, 3.25rem)", { lineHeight: "1.1", letterSpacing: "-0.03em" }],
+        h3: ["clamp(1.5rem, 2.25vw, 2.25rem)", { lineHeight: "1.15", letterSpacing: "-0.02em" }],
+        eyebrow: ["clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)", { lineHeight: "1.2", letterSpacing: "0.16em" }],
+      },
+      maxWidth: {
+        text: "42rem",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -59,6 +69,9 @@ export default {
         trail: "hsl(var(--trail))",
         sky: "hsl(var(--sky))",
         charcoal: "hsl(var(--charcoal))",
+        stone: "hsl(var(--stone))",
+        walnut: "hsl(var(--walnut))",
+        clay: "hsl(var(--clay))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

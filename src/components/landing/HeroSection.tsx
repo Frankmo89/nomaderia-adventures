@@ -8,17 +8,24 @@ const WHATSAPP_URL = buildWhatsAppLink(
   "Hola Frank, quiero planear mi primera aventura"
 );
 
+const primaryCtaClassName =
+  "rounded-full bg-[#C96B05] text-primary-foreground shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#B95F05] hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98] active:bg-[#A95504]";
+
+const secondaryCtaClassName =
+  "rounded-full border border-stone/80 bg-white/72 text-foreground/90 shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-sand hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98]";
+
 const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <MediaSlider />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/78 via-[#1C1917]/34 to-transparent" />
 
       <div className="relative z-10 container mx-auto px-5 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: "easeOut" }}
-          className="font-serif text-5xl md:text-7xl font-bold text-white mb-6"
+          className="text-display font-bold leading-[0.92] tracking-[-0.04em] text-white mb-6 max-w-4xl mx-auto"
           style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
         >
           Tu Concierge de Aventuras
@@ -46,7 +53,7 @@ const HeroSection = () => {
           <Button
             asChild
             size="lg"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 h-14 shadow-lg shadow-primary/30 w-full sm:w-auto"
+            className={`text-lg px-10 h-14 w-full sm:w-auto ${primaryCtaClassName}`}
           >
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
               Plática Conmigo
@@ -55,7 +62,8 @@ const HeroSection = () => {
           <Button
             asChild
             size="lg"
-            className="bg-transparent border border-white text-white hover:bg-white/10 text-lg px-10 h-14 backdrop-blur-sm w-full sm:w-auto"
+            variant="outline"
+            className={`text-lg px-10 h-14 w-full sm:w-auto backdrop-blur-sm ${secondaryCtaClassName}`}
           >
             <a href="#quiz">Descubre Tu Destino Ideal →</a>
           </Button>
@@ -66,7 +74,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="mt-8 inline-flex items-center gap-2 bg-black/20 border border-white/20 backdrop-blur-sm rounded-full px-5 py-2.5 text-sm text-white/80 font-sans"
+          className="mt-8 inline-flex items-center gap-2 bg-black/20 border border-white/20 backdrop-blur-sm rounded-full px-5 py-2.5 text-sm text-white/80 font-sans shadow-editorial"
         >
           <ShieldCheck className="h-4 w-4 text-primary" />
           <span>Agente de Viajes Certificado (TAP) · Respuesta en {"<"} 24h</span>

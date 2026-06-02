@@ -45,7 +45,12 @@
     --sidebar-ring: 32 95% 44%;
 
     /* Custom tokens */
-    --sand: 30 22% 85%;
+    --sand: 34 42% 93%; /* #F4EFE7 editorial sand */
+    --stone: 36 27% 86%; /* #E7E0D6 warm stone */
+    --walnut: 25 25% 20%; /* #3D2F23 walnut */
+    --clay: 30 68% 41%; /* #B5651D clay */
+    --shadow-editorial: 0 16px 40px rgba(61, 47, 35, 0.08);
+    --shadow-editorial-hover: 0 22px 56px rgba(61, 47, 35, 0.12);
     --forest: 143 64% 24%;
     --sunset: 32 95% 44%;
     --trail: 143 64% 24%;
@@ -58,7 +63,6 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
@@ -66,6 +70,36 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  .text-display,
+  .text-h1,
+  .text-h2,
+  .text-h3 {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .text-eyebrow {
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+  }
+
+  .section-editorial {
+    @apply py-24 md:py-32 lg:py-40;
+  }
+
+  .text-column {
+    @apply max-w-text;
+  }
+
+  .shadow-editorial {
+    box-shadow: var(--shadow-editorial);
+  }
+
+  .shadow-editorial-hover {
+    box-shadow: var(--shadow-editorial-hover);
   }
 }
 

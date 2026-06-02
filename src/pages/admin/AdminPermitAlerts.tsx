@@ -62,7 +62,6 @@ const AdminPermitAlerts = () => {
       setLoading(true);
     }
 
-    let query = db
     let query = supabase
       .from("permit_alerts")
       .select("id, email, park, permit_name, target_year, status, created_at")

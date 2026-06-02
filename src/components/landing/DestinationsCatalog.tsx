@@ -37,7 +37,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
     >
       <Link
         to={`/destinos/${d.slug}`}
-        className="block bg-card rounded-xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-primary/10 active:scale-[0.98] sm:hover:scale-[1.02] group"
+        className="group block h-full overflow-hidden rounded-2xl border border-stone/70 bg-card shadow-editorial transition-all duration-300 hover:-translate-y-0.5 hover:shadow-editorial-hover active:scale-[0.99]"
       >
         <div className="relative h-56 sm:h-52 overflow-hidden">
           {d.hero_image_url ? (
@@ -58,20 +58,22 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
             <Badge className={difficultyColor[d.difficulty_level]}>{difficultyLabel[d.difficulty_level]}</Badge>
           </div>
         </div>
-        <div className="p-4 sm:p-5">
+        <div className="flex h-full flex-col p-4 sm:p-5">
           <h3 className="font-serif text-lg font-bold text-card-foreground mb-1">{d.title}</h3>
           <p className="text-sm text-card-foreground/70 mb-2">
             {countryFlag[d.country] || ""} {d.country}
           </p>
-          <p className="text-sm text-card-foreground/80 mb-3 line-clamp-2">{d.short_description}</p>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-card-foreground/60 flex items-center gap-1">
+          <p className="text-sm text-card-foreground/80 mb-4 line-clamp-2">{d.short_description}</p>
+          <div className="mt-auto flex flex-col gap-3 border-t border-stone/60 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 text-sm">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-card-foreground/60">
+              <span className="flex items-center gap-1 shrink-0">
               <Clock className="h-3.5 w-3.5" /> {d.days_needed}
-            </span>
-            <span className="text-card-foreground/60 flex items-center gap-1">
+              </span>
+              <span className="flex items-center gap-1 shrink-0">
               <DollarSign className="h-3.5 w-3.5" /> ~${d.estimated_budget_usd}
-            </span>
-            <span className="text-primary font-medium group-hover:underline">Ver Guía →</span>
+              </span>
+            </div>
+            <span className="shrink-0 whitespace-nowrap text-primary font-medium group-hover:underline">Ver Guía →</span>
           </div>
         </div>
       </Link>
@@ -132,7 +134,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
         {limit !== undefined && (
           <div className="flex justify-center mt-10">
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="rounded-full border-stone/80 bg-white/72 shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-sand hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98]">
               <Link to="/destinos">Ver todos los destinos →</Link>
             </Button>
           </div>

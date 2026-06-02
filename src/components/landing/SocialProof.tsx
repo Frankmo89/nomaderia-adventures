@@ -116,11 +116,11 @@ const SocialProof = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15, duration: 0.5 }}
-              whileHover={{ y: -4, borderColor: "#D97706" }}
-              className="bg-white rounded-2xl p-8 text-center border border-amber-100 shadow-sm transition-shadow hover:shadow-md"
+              whileHover={{ y: -4 }}
+              className="bg-card rounded-2xl p-8 text-center border border-stone/70 shadow-editorial transition-all duration-200 hover:shadow-editorial-hover"
             >
               {/* Icon */}
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-50 mb-5">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-sand mb-5 border border-stone/70">
                 {stat.isTap ? (
                   <motion.div
                     animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
@@ -165,7 +165,7 @@ const SocialProof = () => {
         >
           <a
             href="#quiz"
-            className="inline-flex items-center gap-2 bg-[#D97706] hover:bg-[#D97706]/90 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-[#C96B05] px-6 py-3 text-sm font-semibold text-white shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#B95F05] hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98]"
           >
             🧭 Descubre tu destino ideal
           </a>

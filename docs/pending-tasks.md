@@ -110,6 +110,8 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-06-01] Pro path — P3: hero/buttons/cards/bugfix polish aplicado en hero, CTAs, tarjetas y card meta row del destino para legibilidad, profundidad y no-overlap.
+- [2026-06-01] Pro path — P2: editorial primitives añadidos en `src/components/editorial/` (`Section`, `Eyebrow`, `FullBleedImage`, `Reveal`) con motion respetando `prefers-reduced-motion` y overlay opcional.
 - [2026-06-01] ConciergeChat integrado en DestinationDetail — hook use-concierge.ts + componente ConciergeChat.tsx
 - [2026-06-01] Creado `supabase/functions/_shared/nomaderia-soul.ts` como mirror runtime; `docs/NOMADERIA_SOUL.md` sigue siendo la fuente de verdad.
 - [2026-06-01] Creada `supabase/functions/discover-trending-destinations/index.ts` con OpenAI Responses + web_search para candidatos trending.

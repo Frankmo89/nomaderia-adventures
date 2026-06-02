@@ -76,7 +76,7 @@ const BlogPreview = () => {
             >
               <Link
                 to={`/blog/${post.slug}`}
-                className="block bg-card rounded-2xl overflow-hidden shadow-lg group hover:scale-[1.02] transition-transform duration-300"
+                className="group block overflow-hidden rounded-2xl border border-stone/70 bg-card shadow-editorial transition-all duration-300 hover:-translate-y-0.5 hover:shadow-editorial-hover"
               >
                 {/* Image */}
                 <div className="h-48 overflow-hidden relative">
