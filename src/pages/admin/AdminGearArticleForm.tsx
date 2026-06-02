@@ -1,27 +1,111 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
+import { AIDraftProgressOverlay } from "@/components/admin/AIDraftProgressOverlay";
+import { AIDraftSourcesPanel } from "@/components/admin/AIDraftSourcesPanel";
 import { supabase } from "@/integrations/supabase/client";
+import { useGearDraft } from "@/hooks/use-gear-draft";
 import { useToast } from "@/hooks/use-toast";
+import type { GenerateGearResponse } from "@/types/ai-gear";
 
 interface Product { name: string; price: string; rating: number; pros: string[]; cons: string[]; affiliate_url: string; }
+interface CandidateParams { title: string; category: string; suggested_slug?: string; }
 
 const emptyProduct = (): Product => ({ name: "", price: "", rating: 5, pros: [""], cons: [""], affiliate_url: "" });
+
+const stagedDraftStatuses = [
+  "Buscando fuentes confiables…",
+  "Redactando con la voz de Nomaderia…",
+  "Organizando productos y verificación…",
+];
 
 const AdminGearArticleForm = () => {
   const { id } = useParams();
   const isEdit = !!id;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [form, setForm] = useState({ title: "", slug: "", category: "", short_description: "", content_markdown: "", is_published: false, featured: false });
   const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
+  const [aiDraftResponse, setAiDraftResponse] = useState<GenerateGearResponse | null>(null);
+  const [draftProgressIndex, setDraftProgressIndex] = useState(0);
+  const [draftErrorMessage, setDraftErrorMessage] = useState<string | null>(null);
+  const draftAutofillStartedRef = useRef(false);
+  const draftAutofillCanceledRef = useRef(false);
+  const { mutate: generateDraft, isPending: draftPending, reset: resetDraft } = useGearDraft();
+
+  const candidateParams = useMemo<CandidateParams | null>(() => {
+    const candidate = searchParams.get("candidate");
+
+    if (candidate) {
+      try {
+        const parsed = JSON.parse(candidate) as CandidateParams;
+        if (parsed.title && parsed.category) return parsed;
+      } catch {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(candidate)) as CandidateParams;
+          if (parsed.title && parsed.category) return parsed;
+        } catch {
+          return null;
+        }
+      }
+    }
+
+    const title = searchParams.get("title");
+    const category = searchParams.get("category");
+    const suggested_slug = searchParams.get("suggested_slug") || undefined;
+
+    if (title && category) {
+      return { title, category, suggested_slug };
+    }
+
+    return null;
+  }, [searchParams]);
+
+  const verifyFlags = aiDraftResponse?.verify_flags || [];
+  const forcedVerifyFlags = useMemo(() => {
+    const flags = new Set<string>(verifyFlags);
+    flags.add("price");
+    if (products.some((product) => product.rating > 0)) {
+      flags.add("rating");
+    }
+    return Array.from(flags);
+  }, [products, verifyFlags]);
+
+  const confidenceTotal = useMemo(() => {
+    return 5 + products.length;
+  }, [products.length]);
+
+  const confidenceCount = useMemo(() => {
+    let count = 0;
+
+    if (form.title.trim().length > 0 && !verifyFlags.includes("title")) count += 1;
+    if (form.slug.trim().length > 0 && !verifyFlags.includes("slug")) count += 1;
+    if (form.category.trim().length > 0 && !verifyFlags.includes("category")) count += 1;
+    if (form.short_description.trim().length > 0 && !verifyFlags.includes("short_description")) count += 1;
+    if (form.content_markdown.trim().length > 0 && !verifyFlags.includes("content_markdown")) count += 1;
+
+    products.forEach((product, index) => {
+      const hasName = product.name.trim().length > 0;
+      const productFlag = `products.${index}`;
+      if (hasName && !verifyFlags.includes(productFlag) && !verifyFlags.includes("products")) {
+        count += 1;
+      }
+    });
+
+    return count;
+  }, [form, products, verifyFlags]);
+
+  const confidenceHigh = confidenceTotal > 0 && confidenceCount / confidenceTotal >= 0.75;
 
   useEffect(() => {
     if (!isEdit) return;
@@ -38,18 +122,153 @@ const AdminGearArticleForm = () => {
     load();
   }, [id, isEdit]);
 
+  useEffect(() => {
+    if (!draftPending) {
+      setDraftProgressIndex(0);
+      return;
+    }
+
+    // Progreso por etapas en cliente; no representa streaming real del backend.
+    const intervalId = window.setInterval(() => {
+      setDraftProgressIndex((prev) => (prev + 1) % stagedDraftStatuses.length);
+    }, 2200);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [draftPending]);
+
+  useEffect(() => {
+    if (isEdit || !candidateParams || draftAutofillStartedRef.current) return;
+
+    draftAutofillStartedRef.current = true;
+    draftAutofillCanceledRef.current = false;
+    setDraftErrorMessage(null);
+    resetDraft();
+
+    generateDraft(candidateParams, {
+      onSuccess: (response) => {
+        if (draftAutofillCanceledRef.current) return;
+
+        setAiDraftResponse(response);
+        setForm((prev) => ({
+          ...prev,
+          title: response.draft.title,
+          slug: response.draft.slug,
+          category: response.draft.category,
+          short_description: response.draft.short_description,
+          content_markdown: response.draft.content_markdown,
+        }));
+
+        setProducts(response.draft.products.map((product) => ({
+          name: product.name,
+          price: product.price || "",
+          rating: typeof product.rating === "number" ? product.rating : 0,
+          pros: product.pros.length ? product.pros : [""],
+          cons: product.cons.length ? product.cons : [""],
+          affiliate_url: "",
+        })));
+      },
+      onError: (error) => {
+        if (draftAutofillCanceledRef.current) return;
+        setDraftErrorMessage(error.message || "No pudimos generar el borrador IA.");
+      },
+    });
+  }, [candidateParams, generateDraft, isEdit, resetDraft]);
+
   const set = (key: string, val: string | boolean) => setForm((p) => ({ ...p, [key]: val }));
+
+  const ensureUniqueSlug = async (baseSlug: string): Promise<string> => {
+    const normalizedBase = baseSlug.trim();
+    if (!normalizedBase) return normalizedBase;
+
+    let candidateSlug = normalizedBase;
+    let suffix = 2;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("gear_articles")
+        .select("id")
+        .eq("slug", candidateSlug)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return candidateSlug;
+
+      candidateSlug = `${normalizedBase}-${suffix}`;
+      suffix += 1;
+    }
+  };
+
+  const handleCancelAutoFill = () => {
+    draftAutofillCanceledRef.current = true;
+    resetDraft();
+    toast({
+      title: "Autocompletado detenido",
+      description: "Puedes seguir editando el artículo manualmente.",
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const payload = { ...form, products: JSON.parse(JSON.stringify(products)), short_description: form.short_description || null, content_markdown: form.content_markdown || null };
-    const { error } = isEdit
+    setDraftErrorMessage(null);
+
+    let resolvedSlug = form.slug;
+    if (!isEdit) {
+      try {
+        resolvedSlug = await ensureUniqueSlug(form.slug);
+        if (resolvedSlug !== form.slug) {
+          setForm((prev) => ({ ...prev, slug: resolvedSlug }));
+          toast({
+            title: "Slug ajustado automáticamente",
+            description: `El slug ya existía. Se guardará como ${resolvedSlug}.`,
+          });
+        }
+      } catch (slugError) {
+        setSaving(false);
+        const message = slugError instanceof Error ? slugError.message : "No pudimos validar el slug.";
+        toast({ title: "Error", description: message, variant: "destructive" });
+        return;
+      }
+    }
+
+    const payload = { ...form, slug: resolvedSlug, products: JSON.parse(JSON.stringify(products)), short_description: form.short_description || null, content_markdown: form.content_markdown || null };
+    const result = isEdit
       ? await supabase.from("gear_articles").update(payload).eq("id", id)
-      : await supabase.from("gear_articles").insert(payload);
+      : await supabase.from("gear_articles").insert(payload).select("id").single();
+
     setSaving(false);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else navigate("/admin/gear-articles");
+    if (result.error) {
+      toast({ title: "Error", description: result.error.message, variant: "destructive" });
+      return;
+    }
+
+    if (!isEdit && aiDraftResponse && "data" in result && result.data?.id) {
+      const aiMetaClient = supabase as unknown as SupabaseClient;
+      const { error: aiMetaError } = await aiMetaClient
+        .from("ai_content_meta")
+        .upsert(
+          {
+            content_type: "gear",
+            content_id: result.data.id,
+            sources: aiDraftResponse.sources,
+            verify_flags: aiDraftResponse.verify_flags,
+            model: aiDraftResponse.model,
+          },
+          { onConflict: "content_type,content_id" },
+        );
+
+      if (aiMetaError) {
+        console.error("[AdminGearArticleForm] ai_content_meta save failed:", aiMetaError);
+        toast({
+          title: "Artículo guardado con advertencia",
+          description: "Se guardó el artículo, pero no pudimos guardar las fuentes privadas de IA.",
+        });
+      }
+    }
+
+    navigate("/admin/gear-articles");
   };
 
   const addProduct = () => setProducts([...products, emptyProduct()]);
@@ -57,9 +276,50 @@ const AdminGearArticleForm = () => {
   const updateProduct = <K extends keyof Product>(i: number, key: K, val: Product[K]) =>
     setProducts(products.map((p, idx) => (idx === i ? { ...p, [key]: val } : p)));
 
+  const hasRatingSet = (product: Product) => product.rating > 0;
+
   return (
     <div className="max-w-3xl">
-      <h1 className="font-serif text-3xl text-foreground mb-6">{isEdit ? "Editar Artículo" : "Nuevo Artículo"}</h1>
+      <AIDraftProgressOverlay
+        open={draftPending}
+        message={stagedDraftStatuses[draftProgressIndex]}
+        onCancel={handleCancelAutoFill}
+      />
+
+      <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between">
+        <h1 className="font-serif text-3xl text-foreground">{isEdit ? "Editar Artículo" : "Nuevo Artículo"}</h1>
+        {aiDraftResponse && !isEdit && (
+          <Badge className={confidenceHigh ? "bg-secondary text-secondary-foreground" : "bg-primary/15 text-primary border border-primary/20"}>
+            Confianza: {confidenceCount} de {confidenceTotal} campos verificados con fuente
+          </Badge>
+        )}
+      </div>
+
+      {draftErrorMessage && !draftPending && (
+        <Card className="bg-card border-border mb-6">
+          <CardContent className="pt-6">
+            <p className="text-sm text-destructive font-medium">{draftErrorMessage}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {aiDraftResponse && !isEdit && <AIDraftSourcesPanel sources={aiDraftResponse.sources} />}
+
+      {!!forcedVerifyFlags.length && !isEdit && (
+        <Card className="bg-card border-border mt-6">
+          <CardHeader>
+            <CardTitle className="text-card-foreground">Campos por verificar</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {forcedVerifyFlags.map((flag) => (
+              <span key={flag} className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
+                ⚠ Verificar: {flag}
+              </span>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card className="bg-card border-border">
           <CardHeader><CardTitle className="text-card-foreground">Información</CardTitle></CardHeader>
@@ -89,8 +349,24 @@ const AdminGearArticleForm = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Input placeholder="Nombre" value={p.name} onChange={(e) => updateProduct(i, "name", e.target.value)} className="bg-background border-border text-foreground" />
-                  <Input placeholder="Precio" value={p.price} onChange={(e) => updateProduct(i, "price", e.target.value)} className="bg-background border-border text-foreground" />
-                  <Input type="number" placeholder="Rating (1-5)" min={1} max={5} value={p.rating} onChange={(e) => updateProduct(i, "rating", Number(e.target.value))} className="bg-background border-border text-foreground" />
+                  <div>
+                    <div className="mb-1">
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
+                        ⚠ Verificar
+                      </span>
+                    </div>
+                    <Input placeholder="Precio" value={p.price} onChange={(e) => updateProduct(i, "price", e.target.value)} className="bg-background border-border text-foreground" />
+                  </div>
+                  <div>
+                    {hasRatingSet(p) && (
+                      <div className="mb-1">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
+                          ⚠ Verificar
+                        </span>
+                      </div>
+                    )}
+                    <Input type="number" placeholder="Rating (0-5)" min={0} max={5} value={p.rating} onChange={(e) => updateProduct(i, "rating", Number(e.target.value))} className="bg-background border-border text-foreground" />
+                  </div>
                 </div>
                 <Input placeholder="URL Afiliado" value={p.affiliate_url} onChange={(e) => updateProduct(i, "affiliate_url", e.target.value)} className="bg-background border-border text-foreground" />
                 <div className="grid grid-cols-2 gap-3">

@@ -1,13 +1,19 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AIDraftProgressOverlay } from "@/components/admin/AIDraftProgressOverlay";
+import { AIDraftSourcesPanel } from "@/components/admin/AIDraftSourcesPanel";
 import { supabase } from "@/integrations/supabase/client";
+import { useBlogDraft } from "@/hooks/use-blog-draft";
 import { useToast } from "@/hooks/use-toast";
+import type { GenerateBlogResponse } from "@/types/ai-blog";
 import ImageUpload from "@/components/dashboard/ImageUpload";
 
 const blogCategories = [
@@ -21,9 +27,41 @@ const blogCategories = [
   "Listas",
 ];
 
+interface CandidateParams {
+  title: string;
+  category?: string;
+  suggested_slug?: string;
+}
+
+const stagedDraftStatuses = [
+  "Investigando fuentes para el tema…",
+  "Redactando borrador SEO con voz Nomaderia…",
+  "Validando campos para revisión editorial…",
+];
+
+const trackedConfidenceFields = [
+  "title",
+  "slug",
+  "category",
+  "short_description",
+  "meta_description",
+  "tags",
+  "content_markdown",
+] as const;
+
+const computeReadingTimeMin = (contentMarkdown: string): string => {
+  const wordCount = contentMarkdown
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+  return String(Math.max(1, Math.ceil(wordCount / 200)));
+};
+
 const AdminBlogPostForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const isEdit = Boolean(id);
 
@@ -41,6 +79,60 @@ const AdminBlogPostForm = () => {
     meta_description: "",
   });
   const [tags, setTags] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [aiDraftResponse, setAiDraftResponse] = useState<GenerateBlogResponse | null>(null);
+  const [draftProgressIndex, setDraftProgressIndex] = useState(0);
+  const [draftErrorMessage, setDraftErrorMessage] = useState<string | null>(null);
+  const draftAutofillStartedRef = useRef(false);
+  const draftAutofillCanceledRef = useRef(false);
+  const {
+    mutate: generateDraft,
+    isPending: draftPending,
+    reset: resetDraft,
+  } = useBlogDraft();
+
+  const candidateParams = useMemo<CandidateParams | null>(() => {
+    const candidate = searchParams.get("candidate");
+
+    if (candidate) {
+      try {
+        const parsed = JSON.parse(candidate) as CandidateParams;
+        if (parsed.title) return parsed;
+      } catch {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(candidate)) as CandidateParams;
+          if (parsed.title) return parsed;
+        } catch {
+          return null;
+        }
+      }
+    }
+
+    const title = searchParams.get("title");
+    const category = searchParams.get("category") || undefined;
+    const suggested_slug = searchParams.get("suggested_slug") || undefined;
+
+    if (title) {
+      return { title, category, suggested_slug };
+    }
+
+    return null;
+  }, [searchParams]);
+
+  const verifyFlags = aiDraftResponse?.verify_flags || [];
+  const confidenceCount = useMemo(() => {
+    return trackedConfidenceFields.filter((fieldName) => {
+      if (verifyFlags.includes(fieldName)) return false;
+
+      if (fieldName === "tags") {
+        return tags.length > 0;
+      }
+
+      const value = form[fieldName];
+      return value.trim().length > 0;
+    }).length;
+  }, [form, tags, verifyFlags]);
+  const confidenceHigh = confidenceCount / trackedConfidenceFields.length >= 0.75;
 
   useEffect(() => {
     if (!id) return;
@@ -66,13 +158,115 @@ const AdminBlogPostForm = () => {
     load();
   }, [id]);
 
+  useEffect(() => {
+    if (!draftPending) {
+      setDraftProgressIndex(0);
+      return;
+    }
+
+    // Progreso por etapas en cliente; no representa streaming real del backend.
+    const intervalId = window.setInterval(() => {
+      setDraftProgressIndex((prev) => (prev + 1) % stagedDraftStatuses.length);
+    }, 2200);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [draftPending]);
+
+  useEffect(() => {
+    if (isEdit || !candidateParams || draftAutofillStartedRef.current) return;
+
+    draftAutofillStartedRef.current = true;
+    draftAutofillCanceledRef.current = false;
+    setDraftErrorMessage(null);
+    resetDraft();
+
+    generateDraft(candidateParams, {
+      onSuccess: (response) => {
+        if (draftAutofillCanceledRef.current) return;
+
+        setAiDraftResponse(response);
+        setForm((prev) => ({
+          ...prev,
+          title: response.draft.title,
+          slug: response.draft.slug,
+          category: response.draft.category,
+          short_description: response.draft.short_description,
+          meta_description: response.draft.meta_description,
+          content_markdown: response.draft.content_markdown,
+          reading_time_min: computeReadingTimeMin(response.draft.content_markdown),
+        }));
+        setTags(response.draft.tags);
+      },
+      onError: (error) => {
+        if (draftAutofillCanceledRef.current) return;
+        setDraftErrorMessage(error.message || "No pudimos generar el borrador IA.");
+      },
+    });
+  }, [candidateParams, generateDraft, isEdit, resetDraft]);
+
   const set = (key: string, value: string | boolean) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const ensureUniqueSlug = async (baseSlug: string): Promise<string> => {
+    const normalizedBase = baseSlug.trim();
+    if (!normalizedBase) return normalizedBase;
+
+    let candidateSlug = normalizedBase;
+    let suffix = 2;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("id")
+        .eq("slug", candidateSlug)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return candidateSlug;
+
+      candidateSlug = `${normalizedBase}-${suffix}`;
+      suffix += 1;
+    }
+  };
+
+  const handleCancelAutoFill = () => {
+    draftAutofillCanceledRef.current = true;
+    resetDraft();
+    toast({
+      title: "Autocompletado detenido",
+      description: "Puedes seguir editando el post manualmente.",
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
+    setDraftErrorMessage(null);
+
+    let resolvedSlug = form.slug;
+
+    if (!isEdit) {
+      try {
+        resolvedSlug = await ensureUniqueSlug(form.slug);
+        if (resolvedSlug !== form.slug) {
+          setForm((prev) => ({ ...prev, slug: resolvedSlug }));
+          toast({
+            title: "Slug ajustado automáticamente",
+            description: `El slug ya existía. Se guardará como ${resolvedSlug}.`,
+          });
+        }
+      } catch (slugError) {
+        setSaving(false);
+        const message = slugError instanceof Error ? slugError.message : "No pudimos validar el slug.";
+        toast({ title: "Error", description: message, variant: "destructive" });
+        return;
+      }
+    }
+
     const payload = {
       title: form.title,
-      slug: form.slug,
+      slug: resolvedSlug,
       category: form.category,
       short_description: form.short_description || null,
       content_markdown: form.content_markdown || null,
@@ -87,18 +281,79 @@ const AdminBlogPostForm = () => {
 
     if (isEdit) {
       const { error } = await supabase.from("blog_posts").update(payload).eq("id", id!);
+      setSaving(false);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     } else {
-      const { error } = await supabase.from("blog_posts").insert(payload);
-      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+      const result = await supabase.from("blog_posts").insert(payload).select("id").single();
+      setSaving(false);
+      if (result.error) { toast({ title: "Error", description: result.error.message, variant: "destructive" }); return; }
+
+      if (aiDraftResponse && result.data?.id) {
+        const aiMetaClient = supabase as unknown as SupabaseClient;
+        const { error: aiMetaError } = await aiMetaClient
+          .from("ai_content_meta")
+          .upsert(
+            {
+              content_type: "blog",
+              content_id: result.data.id,
+              sources: aiDraftResponse.sources,
+              verify_flags: aiDraftResponse.verify_flags,
+              model: aiDraftResponse.model,
+            },
+            { onConflict: "content_type,content_id" },
+          );
+
+        if (aiMetaError) {
+          console.error("[AdminBlogPostForm] ai_content_meta save failed:", aiMetaError);
+          toast({
+            title: "Post guardado con advertencia",
+            description: "Se guardó el post, pero no pudimos guardar las fuentes privadas de IA.",
+          });
+        }
+      }
     }
+
     toast({ title: isEdit ? "Post actualizado" : "Post creado" });
     navigate("/admin/blog-posts");
   };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-      <h1 className="font-serif text-3xl text-foreground">{isEdit ? "Editar Post" : "Nuevo Post"}</h1>
+      <AIDraftProgressOverlay
+        open={draftPending}
+        message={stagedDraftStatuses[draftProgressIndex]}
+        onCancel={handleCancelAutoFill}
+      />
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h1 className="font-serif text-3xl text-foreground">{isEdit ? "Editar Post" : "Nuevo Post"}</h1>
+        {aiDraftResponse && !isEdit && (
+          <Badge className={confidenceHigh ? "bg-secondary text-secondary-foreground" : "bg-primary/15 text-primary border border-primary/20"}>
+            Confianza: {confidenceCount} de {trackedConfidenceFields.length} campos verificados con fuente
+          </Badge>
+        )}
+      </div>
+
+      {draftErrorMessage && !draftPending && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+          <p className="text-sm text-destructive font-medium">{draftErrorMessage}</p>
+        </div>
+      )}
+
+      {aiDraftResponse && !isEdit && <AIDraftSourcesPanel sources={aiDraftResponse.sources} />}
+
+      {!!verifyFlags.length && !isEdit && (
+        <div className="rounded-lg border border-border bg-card/50 p-4">
+          <p className="text-sm font-medium text-card-foreground mb-2">Campos por verificar</p>
+          <div className="flex flex-wrap gap-2">
+            {verifyFlags.map((flag) => (
+              <span key={flag} className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
+                ⚠ Verificar: {flag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label className="text-foreground">Título</Label>
@@ -128,7 +383,7 @@ const AdminBlogPostForm = () => {
         <Input type="number" value={form.reading_time_min} onChange={(e) => set("reading_time_min", e.target.value)} min={1} />
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground">Hero Image</Label>
+        <Label className="text-foreground">Imagen principal</Label>
         <ImageUpload
           bucket="blog-posts"
           currentUrl={form.hero_image_url}
@@ -140,7 +395,7 @@ const AdminBlogPostForm = () => {
         <Textarea value={form.short_description} onChange={(e) => set("short_description", e.target.value)} rows={2} />
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground">Meta Description (SEO)</Label>
+        <Label className="text-foreground">Meta descripción (SEO)</Label>
         <Textarea value={form.meta_description} onChange={(e) => set("meta_description", e.target.value)} rows={2} placeholder="Descripción optimizada para Google (máx 160 caracteres)" />
       </div>
       <div className="space-y-2">
@@ -154,7 +409,7 @@ const AdminBlogPostForm = () => {
         />
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground">Contenido (Markdown)</Label>
+        <Label className="text-foreground">Contenido (markdown)</Label>
         <Textarea value={form.content_markdown} onChange={(e) => set("content_markdown", e.target.value)} rows={12} className="font-mono text-sm" />
       </div>
       <div className="flex items-center gap-6">
@@ -168,7 +423,7 @@ const AdminBlogPostForm = () => {
         </div>
       </div>
       <div className="flex gap-3">
-        <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           {isEdit ? "Guardar" : "Crear"}
         </Button>
         <Button type="button" variant="outline" onClick={() => navigate("/admin/blog-posts")}>Cancelar</Button>

@@ -34,6 +34,9 @@ referenciar esta lista primero.
   correr `supabase db push` para subir columnas nuevas de `public.destinations`
   (`base_city`, `access_type`, `cell_signal_status`) y después regenerar tipos con
   `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
+- [ ] **Frank: aplicar migración `create_ai_content_meta` y regenerar tipos**:
+  correr `supabase db push` para crear `public.ai_content_meta` y después regenerar tipos con
+  `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
 - [ ] **Secrets de Edge Functions** en Supabase Dashboard → Edge Functions →
       Secrets:
       - `supabase secrets set RESEND_API_KEY=re_xxxxx`
@@ -114,6 +117,18 @@ Siempre que hagas cambios al código:
 Audit completa — ver docs/audit-report.md para bugs, token findings y recomendaciones.
 - [2026-06-01] Aplicados fixes del audit en Edge Functions (`discover-trending-destinations` y `generate-destination-draft`): hardening de refusal detection, caps `max_output_tokens`, compresión Step A→Step B, cap de catálogo (40 slugs), reducción del few-shot y eliminación de código muerto.
 Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
+- [2026-06-01] Añadidos helpers compartidos para Edge Functions en `supabase/functions/_shared/admin-auth.ts` y `supabase/functions/_shared/openai.ts`; las funciones de destinos pueden migrarse opcionalmente a estos módulos después.
+- [2026-06-01] Creada `supabase/functions/discover-trending-gear/index.ts` usando helpers compartidos (`requireAdmin`, `callResponses`) para discovery de temas de gear trending con dedup contra `gear_articles`.
+- [2026-06-01] Creada `supabase/functions/discover-trending-blog/index.ts` usando helpers compartidos (`requireAdmin`, `callResponses`) con enfoque SEO-intent en español, dedup contra `blog_posts` (cap 40), `web_search` y schema estricto `blog_candidates`.
+- [2026-06-01] Creada `supabase/functions/generate-blog-draft/index.ts` en flujo de 2 pasos (research + structure) con `requireAdmin`, `callResponses` y `NOMADERIA_SOUL`; incluye few-shot desde `blog_posts` publicado (prioriza featured), reglas anti-alucinación estrictas, schema `blog_draft` y respuesta `{ draft, sources, verify_flags, model }`.
+- [2026-06-01] Añadidos `src/types/ai-blog.ts`, `src/hooks/use-trending-blog.ts` y `src/hooks/use-blog-draft.ts` alineados con Edge Functions de blog (`discover-trending-blog` y `generate-blog-draft`) sin `any` y con nombres de campos exactos.
+- [2026-06-01] Integrado panel IA de discovery en `AdminBlogPosts` con botón "✦ Descubrir Temas SEO", progreso por etapas en español y cards en `src/components/admin/TrendingBlogCard.tsx` mostrando `search_intent`, fuentes y CTA "Desarrollar este →" hacia `/admin/blog-posts/new?candidate=`.
+- [2026-06-01] Flujo blog AI end-to-end integrado en `AdminBlogPostForm`: autofill por `?candidate=` en modo nuevo, overlay por etapas, badge de confianza, panel privado de fuentes, badges `⚠ Verificar`, cálculo cliente de `reading_time_min`, guard de slug único y upsert no bloqueante a `ai_content_meta` tras insert.
+- [2026-06-01] Extendida card "Generación con IA" en `AdminDashboard` para sumar `destination_ai_meta` + `ai_content_meta` (gear/blog), mostrando breakdown en español (Destinos/Gear/Blog), total combinado y horas ahorradas estimadas con fallback seguro si `ai_content_meta` falla o viene vacío.
+- [2026-06-01] Creada `supabase/functions/generate-gear-draft/index.ts` (research → structure) con helpers compartidos, `NOMADERIA_SOUL`, schema estricto de `gear_draft` y reglas editoriales de verificación para `price`/`rating`.
+- [2026-06-01] Añadidos `src/types/ai-gear.ts`, `src/hooks/use-trending-gear.ts` y `src/hooks/use-gear-draft.ts` (React Query + `supabase.functions.invoke`) alineados con respuestas de Edge Functions de gear.
+- [2026-06-01] Integrado panel AI de discovery en `AdminGearArticles` con botón "✦ Descubrir Gear Trending", progreso por etapas en español y cards responsivas en `src/components/admin/TrendingGearCard.tsx` enlazando al form con `?candidate=`.
+- [2026-06-01] Flujo gear AI end-to-end integrado en `AdminGearArticleForm`: autofill por `?candidate=` en modo nuevo, overlay de progreso, badge de confianza, panel privado de fuentes, verificación visible (`⚠ Verificar`), guard de slug único y upsert no bloqueante a `ai_content_meta` tras insert.
 
 ---
 

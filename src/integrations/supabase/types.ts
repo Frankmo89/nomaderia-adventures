@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_content_meta: {
+        Row: {
+          content_id: string
+          content_type: string
+          generated_at: string
+          id: string
+          model: string | null
+          sources: Json
+          verify_flags: Json
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          generated_at?: string
+          id?: string
+          model?: string | null
+          sources?: Json
+          verify_flags?: Json
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          generated_at?: string
+          id?: string
+          model?: string | null
+          sources?: Json
+          verify_flags?: Json
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author: string | null

@@ -2,10 +2,15 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, ExternalLink, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { DraftSource } from "@/types/ai-destinations";
+
+interface DraftLikeSource {
+  title: string;
+  url: string;
+  used_for: string;
+}
 
 interface AIDraftSourcesPanelProps {
-  sources: DraftSource[];
+  sources: DraftLikeSource[];
 }
 
 export function AIDraftSourcesPanel({ sources }: AIDraftSourcesPanelProps) {
