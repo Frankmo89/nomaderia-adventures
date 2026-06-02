@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import Reveal from "@/components/editorial/Reveal";
 import { useDestinations, type DestinationCard } from "@/hooks/use-destinations";
 
 const didYouKnowText: Record<string, string> = {
@@ -108,7 +109,7 @@ const SkeletonCard = ({ className = "" }: { className?: string }) => (
 );
 
 const SkeletonLoader = () => (
-  <section className="py-16 sm:py-24 bg-muted relative overflow-hidden">
+  <section className="py-16 sm:py-24 bg-wash-forest relative overflow-hidden">
     <div className="relative z-10">
       <div className="container mx-auto px-5 mb-10 sm:mb-14">
         <div className="flex flex-col items-center gap-3">
@@ -261,7 +262,7 @@ const DidYouKnowSection = () => {
   if (destinations.length === 0) return null;
 
   return (
-    <section className="py-16 sm:py-24 bg-muted relative overflow-hidden">
+    <section className="py-16 sm:py-24 bg-wash-forest relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
       }} />
@@ -269,19 +270,14 @@ const DidYouKnowSection = () => {
       <div className="relative z-10">
         {/* Header */}
         <div className="container mx-auto px-5 mb-10 sm:mb-14">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center"
-          >
+          <Reveal className="text-center">
             <span className="text-primary text-sm font-semibold tracking-wider uppercase mb-3 block">
               Aventuras reales para principiantes
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
               ¿Sabías que puedes…?
             </h2>
-          </motion.div>
+          </Reveal>
         </div>
 
         {/* Mobile: cinematographic horizontal scroll */}
@@ -345,11 +341,7 @@ const DidYouKnowSection = () => {
 
         {/* CTA below */}
         <div className="container mx-auto px-5 mt-10 sm:mt-14 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
+          <Reveal>
             <button
               onClick={() => document.getElementById("quiz")?.scrollIntoView({ behavior: "smooth" })}
               className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
@@ -357,7 +349,7 @@ const DidYouKnowSection = () => {
             >
               🧭 Descubre tu destino ideal
             </button>
-          </motion.div>
+          </Reveal>
         </div>
       </div>
     </section>

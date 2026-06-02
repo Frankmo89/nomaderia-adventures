@@ -1,6 +1,13 @@
-import { useEffect, useRef } from "react";
-import { motion, useMotionValue, useTransform, useSpring, useInView } from "framer-motion";
+import { useEffect, useState } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from "framer-motion";
 import { Users, MapPin, ShieldCheck, BookOpen } from "lucide-react";
+import Reveal from "@/components/editorial/Reveal";
 import { usePublicStats } from "@/hooks/use-public-stats";
 
 /** Animated counter that counts from 0 to `target` when visible */
@@ -11,20 +18,36 @@ const AnimatedCounter = ({
   target: number;
   suffix?: string;
 }) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const [hasEnteredViewport, setHasEnteredViewport] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const motionVal = useMotionValue(0);
-  const springVal = useSpring(motionVal, { stiffness: 60, damping: 20 });
-  const display = useTransform(springVal, (v) => `${Math.round(v)}${suffix}`);
+  const display = useTransform(motionVal, (v) => `${Math.round(v)}${suffix}`);
 
   useEffect(() => {
-    if (isInView) {
+    if (!hasEnteredViewport) return;
+
+    if (prefersReducedMotion) {
       motionVal.set(target);
+      return;
     }
-  }, [isInView, target, motionVal]);
+
+    const controls = animate(motionVal, target, {
+      duration: 1.1,
+      ease: "easeOut",
+    });
+
+    return () => controls.stop();
+  }, [hasEnteredViewport, motionVal, prefersReducedMotion, target]);
 
   return (
-    <motion.span ref={ref} aria-live="polite" aria-atomic="true" role="status">
+    <motion.span
+      aria-live="polite"
+      aria-atomic="true"
+      role="status"
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      onViewportEnter={() => setHasEnteredViewport(true)}
+    >
       {display}
     </motion.span>
   );
@@ -33,9 +56,9 @@ const AnimatedCounter = ({
 const SocialProof = () => {
   const { data: stats, isLoading } = usePublicStats();
 
-  // Build the list of real data-driven stat cards (only shown when count > 0)
+  // Keep quiz social proof hidden until the signal is strong enough.
   const dataStats = [
-    stats?.quizResponses && stats.quizResponses > 0
+    stats?.quizResponses && stats.quizResponses >= 50
       ? {
           icon: Users,
           value: stats.quizResponses,
@@ -90,22 +113,17 @@ const SocialProof = () => {
   if (isLoading) return null;
 
   return (
-    <section className="py-16 sm:py-24 bg-background relative overflow-hidden">
+    <section className="py-16 sm:py-24 bg-wash-sand relative overflow-hidden">
       <div className="container mx-auto px-5 relative z-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12 sm:mb-16"
-        >
+        <Reveal className="text-center mb-12 sm:mb-16">
           <span className="text-[#D97706] text-sm font-semibold tracking-wider uppercase mb-3 block">
             Respaldado por datos reales
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
             ¿Por Qué Confiar en Nomaderia?
           </h2>
-        </motion.div>
+        </Reveal>
 
         {/* Stats grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
@@ -157,19 +175,14 @@ const SocialProof = () => {
         </div>
 
         {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mt-10 sm:mt-14"
-        >
+        <Reveal className="text-center mt-10 sm:mt-14">
           <a
             href="#quiz"
             className="inline-flex items-center gap-2 rounded-full bg-[#C96B05] px-6 py-3 text-sm font-semibold text-white shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#B95F05] hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98]"
           >
             🧭 Descubre tu destino ideal
           </a>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

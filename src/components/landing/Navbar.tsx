@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Mountain, Menu, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import { BRAND_ASSETS } from "@/config/assets";
 
 const navLinks = [
@@ -20,15 +20,12 @@ const Navbar = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [open, setOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const { scrollY } = useScroll();
 
-  useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 50);
-      setShowScrollTop(window.scrollY > window.innerHeight);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setScrolled(latest > 40);
+    setShowScrollTop(latest > window.innerHeight);
+  });
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -42,16 +39,19 @@ const Navbar = () => {
 
   return (
     <>
-      <header
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-          scrolled
-            ? "bg-background/80 backdrop-blur-xl shadow-lg border-b border-border/50"
-            : "bg-transparent"
-        )}
+      <motion.header
+        className="fixed top-0 left-0 right-0 z-50"
+        initial={false}
       >
+        <motion.div
+          aria-hidden="true"
+          className="absolute inset-0 border-b border-stone/70 bg-sand/95 backdrop-blur-xl shadow-editorial"
+          initial={false}
+          animate={{ opacity: scrolled ? 1 : 0 }}
+          transition={{ duration: 0.28, ease: "easeOut" }}
+        />
         <div className="container mx-auto flex items-center justify-between px-5 py-4">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="relative z-10 flex items-center gap-2">
             {BRAND_ASSETS.logo && !logoError ? (
               <img src={BRAND_ASSETS.logo} alt="Nomaderia" loading="lazy" className="h-8 w-auto" onError={() => setLogoError(true)} />
             ) : (
@@ -68,7 +68,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="relative z-10 hidden md:flex items-center gap-8">
             {navLinks.map((link) =>
               link.href.startsWith("/") ? (
                 <Link
@@ -103,7 +103,7 @@ const Navbar = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden min-h-[44px] min-w-[44px]"
+            className="relative z-10 md:hidden min-h-[44px] min-w-[44px]"
             aria-label="Abrir menú de navegación"
             title="Abrir menú de navegación"
             onClick={() => setOpen(true)}
@@ -111,7 +111,7 @@ const Navbar = () => {
             <Menu className={cn("h-6 w-6", scrolled ? "text-foreground" : "text-white")} />
           </Button>
         </div>
-      </header>
+      </motion.header>
 
       {/* Full-screen mobile menu overlay */}
       <AnimatePresence>

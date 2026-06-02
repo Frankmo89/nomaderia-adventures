@@ -17,6 +17,7 @@ import { useMemo } from "react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import JsonLd from "@/components/JsonLd";
+import Reveal from "@/components/editorial/Reveal";
 
 const CTA_WHATSAPP_MESSAGE = '¡Hola! Estoy listo para diseñar mi viaje a medida.';
 
@@ -76,19 +77,19 @@ const Index = () => {
       <JsonLd data={jsonLdData} />
       <JsonLd data={organizationLd} />
       <HeroSection />
-      <section className="bg-primary/10 py-8">
-        <div className="container mx-auto px-4 text-center">
+      <section className="bg-wash-clay py-8">
+        <Reveal className="container mx-auto px-4 text-center">
           <Link to="/sentinel" className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
             <Bell className="w-4 h-4" />
             Alertas Yosemite — Cupos de Fundador $29 USD
           </Link>
-        </div>
+        </Reveal>
       </section>
       <SocialProof />
       <PremiumItinerarySection />
       <TravelInsuranceSection />
-      <section className="bg-secondary/20 py-16">
-        <div className="container mx-auto px-4 text-center">
+      <section className="bg-wash-forest py-16">
+        <Reveal className="container mx-auto px-4 text-center">
           <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-6">
             ¿Listo para tu primera gran aventura?
           </h2>
@@ -101,7 +102,7 @@ const Index = () => {
               Diseña tu viaje a medida
             </a>
           </Button>
-        </div>
+        </Reveal>
       </section>
       <QuizSection />
       <DidYouKnowSection />

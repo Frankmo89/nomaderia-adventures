@@ -15,6 +15,7 @@ import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import Reveal from "@/components/editorial/Reveal";
 const ITINERARY_DISCOUNT = "10%";
 
 const WhatsAppIcon = () => (
@@ -371,7 +372,7 @@ const QuizResults = ({
     : undefined;
 
   return (
-    <section id="quiz" className="py-16 sm:py-24 bg-background relative overflow-hidden">
+    <section id="quiz" className="py-16 sm:py-24 bg-wash-clay relative overflow-hidden">
       <CelebrationParticles />
       <div className="absolute inset-0 opacity-[0.04] bg-cover bg-center pointer-events-none"
         style={{ backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=60)` }} />
@@ -478,7 +479,7 @@ const QuizSection = () => {
   };
 
   if (loading && !showResults) return (
-    <section id="quiz" className="py-16 sm:py-24 bg-background relative overflow-hidden">
+    <section id="quiz" className="py-16 sm:py-24 bg-wash-clay relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/6 blur-3xl" />
         <div className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-secondary/6 blur-3xl" />
@@ -501,7 +502,7 @@ const QuizSection = () => {
   );
 
   return (
-    <section id="quiz" className="py-16 sm:py-24 bg-background relative overflow-hidden">
+    <section id="quiz" className="py-16 sm:py-24 bg-wash-clay relative overflow-hidden">
       {/* Atmospheric glow blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/6 blur-3xl" />
@@ -511,10 +512,7 @@ const QuizSection = () => {
 
       <div className="container mx-auto px-5 max-w-2xl relative z-10">
         {/* Section header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="text-center mb-8 sm:mb-10"
-        >
+        <Reveal className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 text-sm text-primary mb-4">
             <Sparkles className="h-3.5 w-3.5" />
             Cuestionario personalizado · 1 minuto
@@ -525,7 +523,7 @@ const QuizSection = () => {
           <p className="text-muted-foreground text-sm sm:text-base">
             Responde {steps.length} preguntas y te decimos tu destino ideal
           </p>
-        </motion.div>
+        </Reveal>
 
         {/* Numbered step indicator */}
         <div className="flex items-center justify-center mb-8 sm:mb-10">

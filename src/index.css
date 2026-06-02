@@ -101,6 +101,45 @@
   .shadow-editorial-hover {
     box-shadow: var(--shadow-editorial-hover);
   }
+
+  .bg-wash-sand {
+    background-color: hsl(var(--sand));
+    background-image: linear-gradient(
+      180deg,
+      hsl(var(--sand) / 0.96) 0%,
+      hsl(var(--accent) / 0.92) 100%
+    );
+  }
+
+  .bg-wash-clay {
+    background-color: hsl(var(--sand));
+    background-image: linear-gradient(
+      180deg,
+      hsl(var(--sand) / 0.95) 0%,
+      hsl(var(--clay) / 0.16) 55%,
+      hsl(var(--sand) / 0.97) 100%
+    );
+  }
+
+  .bg-wash-forest {
+    background-color: hsl(var(--sand));
+    background-image: linear-gradient(
+      180deg,
+      hsl(var(--sand) / 0.94) 0%,
+      hsl(var(--forest) / 0.14) 58%,
+      hsl(var(--sand) / 0.97) 100%
+    );
+  }
+
+  .bg-wash-to-footer {
+    background-color: hsl(var(--sand));
+    background-image: linear-gradient(
+      180deg,
+      hsl(var(--sand) / 0.96) 0%,
+      hsl(var(--clay) / 0.12) 52%,
+      hsl(var(--walnut) / 0.16) 100%
+    );
+  }
 }
 
 /* Smooth scrolling */

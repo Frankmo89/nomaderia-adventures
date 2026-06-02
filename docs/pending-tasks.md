@@ -110,6 +110,10 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-06-02] Pro path — P8: gradient washes aplicado en homepage: se armonizaron transiciones de secciones con fondos cálidos del palette tokenizado (`sand`, `clay`, `forest`) usando clases utilitarias (`bg-wash-*`) para evitar saltos bruscos y mantener contraste AA en textos.
+- [2026-06-02] Pro path — P7: carousels + footer aplicado: `DestinationsCatalog` y `BlogPreview` migrados a carrusel horizontal mobile-first con `snap-x snap-mandatory`, momentum nativo iOS e indicador sutil de puntos; `Footer` actualizado a variante dark con `rounded-t-[2.5rem]`, base walnut y texto sand, manteniendo links/rutas intactos.
+- [2026-06-02] Pro path — P5: trust reframe + counters aplicado en `SocialProof`: `quizResponses` se muestra solo con umbral real `>= 50`; contadores migrados a `useMotionValue + animate` con `whileInView` una sola vez y respeto de `prefers-reduced-motion`.
+- [2026-06-02] Pro path — P4: reveals/navbar/hover aplicados con framer-motion en homepage, navbar con `useScroll` y hover sutil desktop-only respetando `prefers-reduced-motion`.
 - [2026-06-01] Pro path — P3: hero/buttons/cards/bugfix polish aplicado en hero, CTAs, tarjetas y card meta row del destino para legibilidad, profundidad y no-overlap.
 - [2026-06-01] Pro path — P2: editorial primitives añadidos en `src/components/editorial/` (`Section`, `Eyebrow`, `FullBleedImage`, `Reveal`) con motion respetando `prefers-reduced-motion` y overlay opcional.
 - [2026-06-01] ConciergeChat integrado en DestinationDetail — hook use-concierge.ts + componente ConciergeChat.tsx

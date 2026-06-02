@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Reveal from "@/components/editorial/Reveal";
 import { products } from "@/config/pricing";
 
 const benefits = [
@@ -32,38 +33,32 @@ const benefits = [
 
 const PremiumItinerarySection = () => {
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-20 relative overflow-hidden bg-wash-clay">
       {/* Background texture */}
       <div className="absolute inset-0 bg-secondary/5" />
       <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, hsl(var(--secondary) / 0.08) 0%, transparent 60%), radial-gradient(circle at 80% 20%, hsl(var(--trail) / 0.06) 0%, transparent 50%)" }} />
 
       <div className="container mx-auto px-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="max-w-5xl mx-auto"
-        >
+        <div className="max-w-5xl mx-auto">
           {/* Badge */}
-          <div className="flex justify-center mb-6">
+          <Reveal className="flex justify-center mb-6">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-transparent border border-secondary text-secondary text-sm font-medium tracking-wide">
               ✦ Diseño 100% Personalizado
             </span>
-          </div>
+          </Reveal>
 
           {/* Heading */}
-          <div className="text-center mb-4">
+          <Reveal className="text-center mb-4">
             <h2 className="font-serif text-4xl md:text-5xl font-bold text-foreground leading-tight">
               Tu Aventura,{" "}
               <span className="text-secondary">Tu Medida</span>
             </h2>
-          </div>
+          </Reveal>
 
-          <p className="text-center text-foreground/70 text-lg max-w-2xl mx-auto mb-16 leading-relaxed">
+          <Reveal className="text-center text-foreground/70 text-lg max-w-2xl mx-auto mb-16 leading-relaxed">
             Diseñamos tu itinerario de trekking desde cero, adaptado a tu nivel, presupuesto y objetivos.
             Sin plantillas genéricas. Sin rutas de turista.
-          </p>
+          </Reveal>
 
           {/* Benefits grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-12">
@@ -170,7 +165,7 @@ const PremiumItinerarySection = () => {
               Ver todos los detalles →
             </Link>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

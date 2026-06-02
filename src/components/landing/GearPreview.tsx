@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
+import Reveal from "@/components/editorial/Reveal";
 import { useFeaturedGearArticles } from "@/hooks/use-gear-articles";
 
 const categoryLabel: Record<string, string> = {
@@ -20,20 +21,17 @@ const GearPreview = () => {
   const { data: articles = [], isLoading } = useFeaturedGearArticles();
 
   return (
-    <section className="py-16 sm:py-20 bg-muted relative overflow-hidden">
+    <section className="py-16 sm:py-20 bg-wash-clay relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none noise-bg" />
       <div className="container mx-auto px-5 relative z-10">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="font-serif text-2xl sm:text-3xl md:text-5xl font-bold text-foreground text-center mb-2"
-        >
-          Equipo Para Principiantes
-        </motion.h2>
-        <p className="text-center text-muted-foreground mb-10 sm:mb-12 text-sm sm:text-base">
-          No necesitas gastar miles. Estas son las únicas cosas que realmente necesitas.
-        </p>
+        <Reveal className="text-center mb-10 sm:mb-12">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-2">
+            Equipo Para Principiantes
+          </h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            No necesitas gastar miles. Estas son las únicas cosas que realmente necesitas.
+          </p>
+        </Reveal>
 
         {isLoading ? (
           <CardGridSkeleton count={3} />
@@ -75,11 +73,11 @@ const GearPreview = () => {
           </div>
         )}
 
-        <div className="text-center">
+        <Reveal className="text-center">
           <Button asChild variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 h-12 min-w-[200px]">
             <Link to="/gear">Ver Todo el Equipo →</Link>
           </Button>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

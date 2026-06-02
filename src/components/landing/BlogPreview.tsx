@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
+import Reveal from "@/components/editorial/Reveal";
 import { useBlogPosts } from "@/hooks/use-blog-posts";
 
 /**
@@ -22,13 +23,46 @@ function shuffleArray<T>(arr: T[]): T[] {
 
 const BlogPreview = () => {
   const { data: posts = [], isLoading } = useBlogPosts();
+  const prefersReducedMotion = useReducedMotion();
+  const [canHover, setCanHover] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setCanHover(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const hoverEnabled = canHover && !prefersReducedMotion;
+
+  const handleCarouselScroll = (element: HTMLDivElement) => {
+    const children = Array.from(element.children) as HTMLElement[];
+    if (children.length === 0) return;
+
+    const viewportCenter = element.scrollLeft + element.clientWidth / 2;
+    let nearestIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    children.forEach((child, index) => {
+      const childCenter = child.offsetLeft + child.offsetWidth / 2;
+      const distance = Math.abs(viewportCenter - childCenter);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+
+    setActiveSlide((prev) => (prev === nearestIndex ? prev : nearestIndex));
+  };
 
   // Elegir 3 posts al azar — se recalcula solo cuando cambia el array de posts
   const featured = useMemo(() => shuffleArray(posts).slice(0, 3), [posts]);
 
   if (isLoading) {
     return (
-      <section className="py-16 sm:py-20 bg-muted relative overflow-hidden">
+      <section className="py-16 sm:py-20 bg-wash-sand relative overflow-hidden">
         <div className="container mx-auto px-5">
           <CardGridSkeleton count={3} />
         </div>
@@ -39,7 +73,7 @@ const BlogPreview = () => {
   if (featured.length === 0) return null;
 
   return (
-    <section className="py-16 sm:py-24 bg-background relative overflow-hidden">
+    <section className="py-16 sm:py-24 bg-wash-sand relative overflow-hidden">
       {/* Noise texture */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
@@ -47,12 +81,7 @@ const BlogPreview = () => {
 
       <div className="container mx-auto px-5 relative z-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-10 sm:mb-14"
-        >
+        <Reveal className="text-center mb-10 sm:mb-14">
           <span className="text-primary text-sm font-semibold tracking-wider uppercase mb-3 block">
             Publicaciones del blog
           </span>
@@ -62,70 +91,89 @@ const BlogPreview = () => {
           <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto">
             Tips, errores comunes y todo lo que necesitas saber antes de tu primera aventura.
           </p>
-        </motion.div>
+        </Reveal>
 
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Cards carousel */}
+        <div
+          className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-2 md:overflow-visible lg:grid-cols-3"
+          onScroll={(event) => handleCarouselScroll(event.currentTarget)}
+        >
           {featured.map((post, i) => (
-            <motion.div
-              key={post.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.12, duration: 0.5 }}
-            >
-              <Link
-                to={`/blog/${post.slug}`}
-                className="group block overflow-hidden rounded-2xl border border-stone/70 bg-card shadow-editorial transition-all duration-300 hover:-translate-y-0.5 hover:shadow-editorial-hover"
+            <div key={post.id} className="min-w-[86%] snap-center md:min-w-0">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.12, duration: 0.5 }}
+                className="h-full"
               >
-                {/* Image */}
-                <div className="h-48 overflow-hidden relative">
-                  {post.hero_image_url ? (
-                    <img
-                      src={post.hero_image_url}
-                      alt={post.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                </div>
+                <motion.div initial="rest" whileHover={hoverEnabled ? "hover" : undefined} className="h-full">
+                  <Link
+                    to={`/blog/${post.slug}`}
+                    className="group block h-full overflow-hidden rounded-2xl border border-stone/70 bg-card shadow-editorial transition-all duration-300 hover:-translate-y-0.5 hover:shadow-editorial-hover"
+                  >
+                    {/* Image */}
+                    <div className="relative h-48 overflow-hidden">
+                      {post.hero_image_url ? (
+                        <motion.img
+                          src={post.hero_image_url}
+                          alt={post.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                          variants={{ rest: { scale: 1 }, hover: { scale: 1.03 } }}
+                          transition={{ duration: 0.6, ease: "easeOut" }}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    </div>
 
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="outline" className="border-card-foreground/20 text-card-foreground text-xs">
-                      {post.category}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(post.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
-                  </div>
-                  <h3 className="font-serif text-lg font-bold text-card-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm text-card-foreground/70 line-clamp-2 mb-3">
-                    {post.short_description}
-                  </p>
-                  <span className="text-primary text-sm font-semibold inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                    Leer más
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-              </Link>
-            </motion.div>
+                    {/* Content */}
+                    <div className="p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <Badge variant="outline" className="border-card-foreground/20 text-xs text-card-foreground">
+                          {post.category}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(post.created_at).toLocaleDateString("es-MX", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <h3 className="mb-2 line-clamp-2 font-serif text-lg font-bold text-card-foreground transition-colors group-hover:text-primary">
+                        {post.title}
+                      </h3>
+                      <p className="mb-3 line-clamp-2 text-sm text-card-foreground/70">{post.short_description}</p>
+                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-all group-hover:gap-2">
+                        Leer más
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              </motion.div>
+            </div>
           ))}
         </div>
 
+        {featured.length > 1 && (
+          <div className="mt-4 flex items-center justify-center gap-2 md:hidden" aria-hidden="true">
+            {featured.map((_, dotIndex) => (
+              <span
+                key={`blog-dot-${dotIndex}`}
+                className={`h-1.5 rounded-full transition-all duration-200 ${
+                  dotIndex === activeSlide ? "w-5 bg-primary/80" : "w-1.5 bg-foreground/20"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
         {/* CTA: Ver todo el blog */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mt-10 sm:mt-14"
-        >
+        <Reveal className="text-center mt-10 sm:mt-14">
           <Link
             to="/blog"
             className="inline-flex items-center gap-2 border border-border hover:bg-muted text-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
@@ -133,7 +181,7 @@ const BlogPreview = () => {
             Ver todo el blog
             <ArrowRight className="h-4 w-4" />
           </Link>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );
