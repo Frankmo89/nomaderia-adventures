@@ -206,6 +206,30 @@
     pointer-events: none;
     z-index: 1;
   }
+
+  /* Branded skeleton shimmer — loading as a brand moment, not a blank void */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--sand) / 0.6) 25%,
+      hsl(var(--stone)) 50%,
+      hsl(var(--sand) / 0.6) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer {
+      animation: none;
+      background: hsl(var(--sand) / 0.6);
+    }
+  }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position:  200% 0; }
 }
 
 /* Smooth scrolling */
