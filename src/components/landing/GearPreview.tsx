@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,9 +20,21 @@ const categoryImage: Record<string, string> = {
 
 const GearPreview = () => {
   const { data: articles = [], isLoading } = useFeaturedGearArticles();
+  const prefersReducedMotion = useReducedMotion();
+  const [canHover, setCanHover] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setCanHover(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  const hoverEnabled = canHover && !prefersReducedMotion;
 
   return (
-    <section className="py-16 sm:py-20 bg-wash-clay relative overflow-hidden">
+    <section className="py-16 sm:py-20 bg-wash-clay relative overflow-hidden section-recessed">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none noise-bg" />
       <div className="container mx-auto px-5 relative z-10">
         <Reveal className="text-center mb-10 sm:mb-12">
@@ -37,30 +51,44 @@ const GearPreview = () => {
         ) : (
           <RevealGroup className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 mb-8 sm:mb-10" stagger>
             {articles.map((a) => (
-              <Link
+              <motion.div
                 key={a.id}
-                to={`/gear/${a.slug}`}
-                className="block bg-card rounded-xl overflow-hidden active:scale-[0.98] sm:hover:scale-[1.03] transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-primary/10 group"
+                initial="rest"
+                whileHover={hoverEnabled ? "hover" : undefined}
               >
-                <div className="h-48 sm:h-48 overflow-hidden relative">
-                  <img
-                    src={categoryImage[a.category] || categoryImage.boots}
-                    alt={a.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                </div>
-                <div className="p-4 sm:p-5">
-                  <Badge className="bg-secondary text-secondary-foreground mb-3">
-                    {categoryLabel[a.category] || a.category}
-                  </Badge>
-                  <h3 className="font-serif text-lg font-bold text-card-foreground mb-2">{a.title}</h3>
-                  <p className="text-sm text-card-foreground/70">{a.short_description}</p>
-                  <span className="text-primary text-sm font-medium mt-3 inline-block group-hover:underline">Leer Guía →</span>
-                </div>
-              </Link>
+                <Link
+                  to={`/gear/${a.slug}`}
+                  className="block bg-card rounded-xl overflow-hidden card-depth"
+                >
+                  <div className="h-48 sm:h-48 overflow-hidden relative">
+                    <motion.img
+                      src={categoryImage[a.category] || categoryImage.boots}
+                      alt={a.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                      variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
+                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <motion.div
+                      variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none flex items-end p-3"
+                    >
+                      <span className="text-white text-sm font-semibold tracking-wide">Explorar →</span>
+                    </motion.div>
+                  </div>
+                  <div className="p-4 sm:p-5">
+                    <Badge className="bg-secondary text-secondary-foreground mb-3">
+                      {categoryLabel[a.category] || a.category}
+                    </Badge>
+                    <h3 className="font-serif text-lg font-bold text-card-foreground mb-2">{a.title}</h3>
+                    <p className="text-sm text-card-foreground/70">{a.short_description}</p>
+                    <span className="text-primary text-sm font-medium mt-3 inline-block">Leer Guía →</span>
+                  </div>
+                </Link>
+              </motion.div>
             ))}
           </RevealGroup>
         )}

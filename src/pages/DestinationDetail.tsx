@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
 import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell } from "lucide-react";
@@ -84,6 +84,10 @@ const DestinationDetail = () => {
   // Gallery lightbox
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Tab animation
+  const [activeTab, setActiveTab] = useState("can-i");
+  const prefersReducedMotion = useReducedMotion();
 
   const heroImages = useMemo(() => {
     const imgs = dest?.gallery_images as string[] | null | undefined;
@@ -300,7 +304,7 @@ const DestinationDetail = () => {
       <section className="py-12">
         <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8">
           <div className="flex-1 min-w-0">
-            <Tabs defaultValue="can-i" className="w-full">
+            <Tabs defaultValue="can-i" className="w-full" onValueChange={setActiveTab}>
               <TabsList className="bg-muted mb-6 flex-wrap">
                 <TabsTrigger value="can-i">¿Puedo Hacerlo?</TabsTrigger>
                 <TabsTrigger value="prep">Preparación Física</TabsTrigger>
@@ -308,39 +312,79 @@ const DestinationDetail = () => {
                 <TabsTrigger value="gear">Qué Llevar</TabsTrigger>
               </TabsList>
               <TabsContent value="can-i">
-                {dest.difficulty_description && (
-                  <div className="prose max-w-none mb-8">
-                    <p className="text-foreground/90 text-lg leading-relaxed">{dest.difficulty_description}</p>
-                  </div>
-                )}
-                {fears.length > 0 && (
-                  <>
-                    <h3 className="font-serif text-2xl text-foreground mb-4">Preguntas Frecuentes</h3>
-                    <Accordion type="single" collapsible className="w-full">
-                      {fears.map((f, i) => (
-                        <AccordionItem key={i} value={`fear-${i}`} className="border-border">
-                          <AccordionTrigger className="text-foreground hover:text-primary">{f.question}</AccordionTrigger>
-                          <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
-                  </>
-                )}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {dest.difficulty_description && (
+                      <div className="prose max-w-none mb-8">
+                        <p className="text-foreground/90 text-lg leading-relaxed">{dest.difficulty_description}</p>
+                      </div>
+                    )}
+                    {fears.length > 0 && (
+                      <>
+                        <h3 className="font-serif text-2xl text-foreground mb-4">Preguntas Frecuentes</h3>
+                        <Accordion type="single" collapsible className="w-full">
+                          {fears.map((f, i) => (
+                            <AccordionItem key={i} value={`fear-${i}`} className="border-border">
+                              <AccordionTrigger className="text-foreground hover:text-primary">{f.question}</AccordionTrigger>
+                              <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      </>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
               </TabsContent>
               <TabsContent value="prep">
-                <div className="prose max-w-none text-foreground/90">
-                  <ReactMarkdown components={markdownComponents}>{dest.preparation_plan || "Contenido próximamente."}</ReactMarkdown>
-                </div>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <div className="prose max-w-none text-foreground/90">
+                      <ReactMarkdown components={markdownComponents}>{dest.preparation_plan || "Contenido próximamente."}</ReactMarkdown>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </TabsContent>
               <TabsContent value="itinerary">
-                <div className="prose max-w-none text-foreground/90">
-                  <ReactMarkdown components={markdownComponents}>{dest.itinerary_markdown || "Contenido próximamente."}</ReactMarkdown>
-                </div>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <div className="prose max-w-none text-foreground/90">
+                      <ReactMarkdown components={markdownComponents}>{dest.itinerary_markdown || "Contenido próximamente."}</ReactMarkdown>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </TabsContent>
               <TabsContent value="gear">
-                <div className="prose max-w-none text-foreground/90">
-                  <ReactMarkdown components={markdownComponents}>{dest.gear_list_markdown || "Contenido próximamente."}</ReactMarkdown>
-                </div>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <div className="prose max-w-none text-foreground/90">
+                      <ReactMarkdown components={markdownComponents}>{dest.gear_list_markdown || "Contenido próximamente."}</ReactMarkdown>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </TabsContent>
             </Tabs>
           </div>

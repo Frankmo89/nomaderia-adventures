@@ -33,7 +33,7 @@ const benefits = [
 
 const PremiumItinerarySection = () => {
   return (
-    <section className="py-20 relative overflow-hidden bg-wash-clay">
+    <section className="py-20 relative overflow-hidden bg-wash-clay section-recessed">
       {/* Background texture */}
       <div className="absolute inset-0 bg-secondary/5" />
       <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, hsl(var(--secondary) / 0.08) 0%, transparent 60%), radial-gradient(circle at 80% 20%, hsl(var(--trail) / 0.06) 0%, transparent 50%)" }} />
@@ -94,9 +94,9 @@ const PremiumItinerarySection = () => {
               >
                 <Card
                   className={cn(
-                    "relative flex flex-col h-full bg-white shadow-lg",
+                    "relative flex flex-col h-full bg-white card-depth",
                     product.popular
-                      ? "border-2 border-primary shadow-primary/10"
+                      ? "border-2 border-primary"
                       : "border-border"
                   )}
                 >

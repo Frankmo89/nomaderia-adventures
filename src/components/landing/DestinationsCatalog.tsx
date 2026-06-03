@@ -91,7 +91,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
       <motion.div initial="rest" whileHover={hoverEnabled ? "hover" : undefined} className="h-full">
         <Link
           to={`/destinos/${d.slug}`}
-          className="group block h-full overflow-hidden rounded-2xl border border-stone/70 bg-card shadow-editorial transition-all duration-300 hover:-translate-y-0.5 hover:shadow-editorial-hover active:scale-[0.99]"
+          className="group block h-full overflow-hidden rounded-2xl border border-stone/70 bg-card card-depth"
         >
           <div className="relative h-56 overflow-hidden sm:h-52">
             {d.hero_image_url ? (
@@ -101,7 +101,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                 loading="lazy"
                 decoding="async"
                 className="h-full w-full object-cover"
-                variants={{ rest: { scale: 1 }, hover: { scale: 1.03 } }}
+                variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               />
             ) : (
@@ -110,6 +110,13 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <motion.div
+              variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none flex items-end p-3"
+            >
+              <span className="text-white text-sm font-semibold tracking-wide">Explorar →</span>
+            </motion.div>
             <div className="absolute left-3 top-3 flex gap-2">
               <Badge className={difficultyColor[d.difficulty_level]}>{difficultyLabel[d.difficulty_level]}</Badge>
             </div>
@@ -160,7 +167,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
   }
 
   return (
-    <section id="destinos" className="relative overflow-hidden bg-wash-sand py-16 sm:py-20">
+    <section id="destinos" className="relative overflow-hidden bg-wash-sand py-16 sm:py-20 section-recessed">
       <div className="noise-bg pointer-events-none absolute inset-0 opacity-[0.02]" />
       <div className="container relative z-10 mx-auto px-5">
         <Reveal className="mb-8 text-center sm:mb-10">

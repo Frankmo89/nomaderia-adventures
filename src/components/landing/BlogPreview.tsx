@@ -73,7 +73,7 @@ const BlogPreview = () => {
   if (featured.length === 0) return null;
 
   return (
-    <section className="py-16 sm:py-24 bg-wash-sand relative overflow-hidden">
+    <section className="py-16 sm:py-24 bg-wash-sand relative overflow-hidden section-recessed">
       {/* Noise texture */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
@@ -110,7 +110,7 @@ const BlogPreview = () => {
                 <motion.div initial="rest" whileHover={hoverEnabled ? "hover" : undefined} className="h-full">
                   <Link
                     to={`/blog/${post.slug}`}
-                    className="group block h-full overflow-hidden rounded-2xl border border-stone/70 bg-card shadow-editorial transition-all duration-300 hover:-translate-y-0.5 hover:shadow-editorial-hover"
+                    className="group block h-full overflow-hidden rounded-2xl border border-stone/70 bg-card card-depth"
                   >
                     {/* Image */}
                     <div className="relative h-48 overflow-hidden">
@@ -120,13 +120,20 @@ const BlogPreview = () => {
                           alt={post.title}
                           loading="lazy"
                           className="h-full w-full object-cover"
-                          variants={{ rest: { scale: 1 }, hover: { scale: 1.03 } }}
+                          variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                         />
                       ) : (
                         <div className="h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                      <motion.div
+                        variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
+                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                        className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none flex items-end p-3"
+                      >
+                        <span className="text-white text-sm font-semibold tracking-wide">Leer →</span>
+                      </motion.div>
                     </div>
 
                     {/* Content */}

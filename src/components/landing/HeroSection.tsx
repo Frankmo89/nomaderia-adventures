@@ -50,23 +50,27 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Button
-            asChild
-            size="lg"
-            className={`text-lg px-10 h-14 w-full sm:w-auto ${primaryCtaClassName}`}
-          >
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-              Plática Conmigo
-            </a>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className={`text-lg px-10 h-14 w-full sm:w-auto backdrop-blur-sm ${secondaryCtaClassName}`}
-          >
-            <a href="#quiz">Descubre Tu Destino Ideal →</a>
-          </Button>
+          <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} className="w-full sm:w-auto">
+            <Button
+              asChild
+              size="lg"
+              className={`text-lg px-10 h-14 w-full ${primaryCtaClassName}`}
+            >
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                Plática Conmigo
+              </a>
+            </Button>
+          </motion.div>
+          <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }} className="w-full sm:w-auto">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className={`text-lg px-10 h-14 w-full backdrop-blur-sm ${secondaryCtaClassName}`}
+            >
+              <a href="#quiz">Descubre Tu Destino Ideal →</a>
+            </Button>
+          </motion.div>
         </motion.div>
 
         {/* Trust badge */}

@@ -113,7 +113,7 @@ const SocialProof = () => {
   if (isLoading) return null;
 
   return (
-    <section className="py-16 sm:py-24 bg-wash-sand relative overflow-hidden">
+    <section className="py-16 sm:py-24 bg-wash-sand relative overflow-hidden section-recessed">
       <div className="container mx-auto px-5 relative z-10">
         {/* Header */}
         <Reveal className="text-center mb-12 sm:mb-16">
@@ -130,8 +130,7 @@ const SocialProof = () => {
           {visibleStats.map((stat) => (
             <motion.div
               key={stat.label}
-              whileHover={{ y: -4 }}
-              className="bg-card rounded-2xl p-8 text-center border border-stone/70 shadow-editorial transition-all duration-200 hover:shadow-editorial-hover"
+              className="bg-card rounded-2xl p-8 text-center border border-stone/70 card-depth"
             >
               {/* Icon */}
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-sand mb-5 border border-stone/70">
@@ -172,12 +171,14 @@ const SocialProof = () => {
 
         {/* CTA */}
         <Reveal className="text-center mt-10 sm:mt-14">
-          <a
+          <motion.a
             href="#quiz"
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.1 }}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98]"
           >
             🧭 Descubre tu destino ideal
-          </a>
+          </motion.a>
         </Reveal>
       </div>
     </section>

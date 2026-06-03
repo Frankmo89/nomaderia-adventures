@@ -224,8 +224,10 @@ const Navbar = () => {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.92 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-6 right-6 z-40 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-3.5 shadow-lg shadow-primary/30 transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
+            className="fixed bottom-6 right-6 z-40 bg-primary hover:bg-primary/80 text-primary-foreground rounded-full p-3.5 shadow-lg shadow-primary/30 transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
           >
             <ArrowUp className="h-5 w-5" />
           </motion.button>
