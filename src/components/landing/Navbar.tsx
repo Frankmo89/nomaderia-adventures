@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Mountain, Menu, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,15 @@ const navLinks = [
 ];
 
 const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
+  const { pathname } = useLocation();
+  const isHomepage = pathname === "/";
+
+  // Ref keeps the closure in useMotionValueEvent always current on route changes
+  const isHomepageRef = useRef(isHomepage);
+  isHomepageRef.current = isHomepage;
+
+  // Inner pages start solid; homepage starts transparent (over the hero)
+  const [scrolled, setScrolled] = useState(!isHomepage);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [open, setOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -26,9 +34,16 @@ const Navbar = () => {
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrolled(latest > 40);
+    const threshold = isHomepageRef.current ? window.innerHeight * 0.9 : 40;
+    setScrolled(latest > threshold);
     setShowScrollTop(latest > window.innerHeight);
   });
+
+  // Re-evaluate immediately on SPA route navigation
+  useEffect(() => {
+    const threshold = isHomepage ? window.innerHeight * 0.9 : 40;
+    setScrolled(scrollY.get() > threshold);
+  }, [pathname, isHomepage, scrollY]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -46,22 +61,33 @@ const Navbar = () => {
         className="fixed top-0 left-0 right-0 z-50"
         initial={false}
       >
+        {/* Warm frosted glass background — fades in past the hero fold */}
         <motion.div
           aria-hidden="true"
-          className="absolute inset-0 border-b border-stone/70 bg-sand/95 backdrop-blur-xl shadow-editorial"
+          className="absolute inset-0 bg-sand/85 backdrop-blur-md border-b border-stone/30"
           initial={false}
           animate={{ opacity: scrolled ? 1 : 0 }}
-          transition={{ duration: 0.28, ease: "easeOut" }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
         />
+
         <div className="container mx-auto flex items-center justify-between px-5 py-4">
           <Link to="/" className="relative z-10 flex items-center gap-2">
             {BRAND_ASSETS.logo && !logoError ? (
-              <img src={BRAND_ASSETS.logo} alt="Nomaderia" loading="lazy" className="h-8 w-auto" onError={() => setLogoError(true)} />
+              <img
+                src={BRAND_ASSETS.logo}
+                alt="Nomaderia"
+                loading="lazy"
+                className="h-8 w-auto"
+                onError={() => setLogoError(true)}
+              />
             ) : (
               <>
-                <Mountain className="h-6 w-6 text-primary" />
+                <Mountain className={cn(
+                  "h-6 w-6 transition-colors duration-300",
+                  scrolled ? "text-primary" : "text-white"
+                )} />
                 <span className={cn(
-                  "font-serif text-xl font-bold tracking-wide transition-colors duration-500",
+                  "font-serif text-xl font-bold tracking-wide transition-colors duration-300",
                   scrolled ? "text-foreground" : "text-white"
                 )}>
                   NOMADERIA
@@ -73,24 +99,18 @@ const Navbar = () => {
           {/* Desktop nav */}
           <nav className="relative z-10 hidden md:flex items-center gap-8">
             {navLinks.map((link, i) => {
+              const linkClassName = cn(
+                "text-sm font-medium transition-colors duration-300",
+                scrolled
+                  ? "text-foreground/80 hover:text-primary"
+                  : "text-white/90 hover:text-white text-shadow-hero"
+              );
               const linkEl = link.href.startsWith("/") ? (
-                <Link
-                  to={link.href}
-                  className={cn(
-                    "text-sm font-medium transition-colors",
-                    scrolled ? "text-foreground/80 hover:text-primary" : "text-white/80 hover:text-white"
-                  )}
-                >
+                <Link to={link.href} className={linkClassName}>
                   {link.label}
                 </Link>
               ) : (
-                <a
-                  href={link.href}
-                  className={cn(
-                    "text-sm font-medium transition-colors",
-                    scrolled ? "text-foreground/80 hover:text-primary" : "text-white/80 hover:text-white"
-                  )}
-                >
+                <a href={link.href} className={linkClassName}>
                   {link.label}
                 </a>
               );
@@ -108,6 +128,7 @@ const Navbar = () => {
                 </motion.div>
               );
             })}
+
             {prefersReducedMotion ? (
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
                 <a href="#quiz">Descubre Tu Aventura</a>
@@ -134,7 +155,10 @@ const Navbar = () => {
             title="Abrir menú de navegación"
             onClick={() => setOpen(true)}
           >
-            <Menu className={cn("h-6 w-6", scrolled ? "text-foreground" : "text-white")} />
+            <Menu className={cn(
+              "h-6 w-6 transition-colors duration-300",
+              scrolled ? "text-foreground" : "text-white"
+            )} />
           </Button>
         </div>
       </motion.header>
