@@ -100,7 +100,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                 alt={d.title}
                 loading="lazy"
                 decoding="async"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-top img-warm"
                 variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               />
@@ -109,7 +109,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                 <MapPin className="h-12 w-12 text-primary/40" />
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
             <motion.div
               variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}

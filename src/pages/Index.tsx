@@ -18,6 +18,7 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import JsonLd from "@/components/JsonLd";
 import Reveal from "@/components/editorial/Reveal";
+import SectionDivider from "@/components/landing/SectionDivider";
 
 const CTA_WHATSAPP_MESSAGE = '¡Hola! Estoy listo para diseñar mi viaje a medida.';
 
@@ -85,6 +86,8 @@ const Index = () => {
           </Link>
         </Reveal>
       </section>
+      {/* I5: ridge divider — hero area → SocialProof */}
+      <SectionDivider variant="ridge" />
       <SocialProof />
       <PremiumItinerarySection />
       <TravelInsuranceSection />
@@ -107,9 +110,15 @@ const Index = () => {
       <QuizSection />
       <DidYouKnowSection />
       <DestinationsCatalog limit={3} />
+      {/* I5: ridge divider — DestinationsCatalog → GearPreview */}
+      <SectionDivider variant="ridge" />
       <GearPreview />
       <BlogPreview />
+      {/* I5: ridge divider — BlogPreview → Newsletter */}
+      <SectionDivider variant="ridge" />
       <NewsletterSignup />
+      {/* I5: topo divider — Newsletter → Footer (dark=true: stone strokes on walnut bg) */}
+      <SectionDivider variant="topo" dark />
       <Footer />
     </main>
   );

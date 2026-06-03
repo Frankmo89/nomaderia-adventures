@@ -15,7 +15,7 @@ interface BackgroundSlideshowProps {
 const BackgroundSlideshow = ({
   items,
   interval = DEFAULT_INTERVAL_MS,
-  overlayClassName = "bg-black/60",
+  overlayClassName = "bg-gradient-to-t from-[#1C1917]/70 via-[#1C1917]/30 to-transparent",
   fallback,
   prioritizeFirstImage = false,
 }: BackgroundSlideshowProps) => {
@@ -59,7 +59,7 @@ const BackgroundSlideshow = ({
               muted
               playsInline
               aria-hidden="true"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover img-warm"
             />
           ) : (
             <img
@@ -68,7 +68,7 @@ const BackgroundSlideshow = ({
               role="presentation"
               loading={prioritizeFirstImage && safeIndex === 0 ? "eager" : "lazy"}
               fetchPriority={prioritizeFirstImage && safeIndex === 0 ? "high" : "auto"}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover img-warm"
             />
           )}
         </motion.div>

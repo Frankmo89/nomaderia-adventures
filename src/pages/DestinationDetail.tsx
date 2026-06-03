@@ -245,7 +245,7 @@ const DestinationDetail = () => {
                     src={src}
                     alt={i === 0 ? `Vista de ${dest.title}` : `${dest.title} — imagen ${i + 1}`}
                     loading={i === 0 ? "eager" : "lazy"}
-                    className="w-full h-full object-cover transition-opacity duration-700"
+                    className="w-full h-full object-cover object-top img-warm transition-opacity duration-700"
                   />
                 </div>
               )) : (
@@ -255,7 +255,7 @@ const DestinationDetail = () => {
           </div>
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
           {/* Dot indicators */}
           {heroImages.length > 1 && (

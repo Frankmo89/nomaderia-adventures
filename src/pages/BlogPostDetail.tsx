@@ -140,11 +140,11 @@ const BlogPostDetail = () => {
       <section className="pt-20">
         <div className="h-[55vh] md:h-[65vh] flex items-end relative overflow-hidden">
           {post.hero_image_url ? (
-            <img src={post.hero_image_url} alt={post.title} loading="eager" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: "center 30%" }} />
+            <img src={post.hero_image_url} alt={post.title} loading="eager" className="absolute inset-0 w-full h-full object-cover object-center img-warm" style={{ objectPosition: "center 30%" }} />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-secondary/20" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
           <div className="container mx-auto px-4 pb-8 relative z-10">
             <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
               <Link to="/" className="text-white/60 hover:text-white">Inicio</Link>

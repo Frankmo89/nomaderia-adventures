@@ -190,6 +190,13 @@
     transform: scale(0.988);
   }
 
+  /* Unified warm image grade — applied directly to <img>/<video> elements.
+     Pushes any photo into Nomaderia's warm amber palette regardless of source.
+     sepia(0.12) → warm tint | saturate(1.1) → slight pop | brightness(0.97) → compensate */
+  .img-warm {
+    filter: sepia(0.12) saturate(1.1) brightness(0.97);
+  }
+
   /* Section recessed — inset top-shadow for depth cue */
   .section-recessed::before {
     content: '';

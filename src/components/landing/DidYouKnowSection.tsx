@@ -46,13 +46,13 @@ const CardContent = ({ dest, isLarge = false }: { dest: DestinationCard; isLarge
         alt={dest.title}
         loading="lazy"
         decoding="async"
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10000ms] ease-linear group-hover:scale-110"
+        className="absolute inset-0 w-full h-full object-cover object-top img-warm transition-transform duration-[10000ms] ease-linear group-hover:scale-110"
       />
     ) : (
       <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 to-primary/20" />
     )}
 
-    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
 
     <div className="absolute top-4 left-4 z-10">
       <span className={`text-xs font-semibold text-white px-2.5 py-1 rounded-full ${difficultyColor[dest.difficulty_level] || "bg-primary/80"}`}>

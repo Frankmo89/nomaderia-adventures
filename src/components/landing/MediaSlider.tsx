@@ -28,7 +28,7 @@ const MediaSlider = () => {
       >
         <BackgroundSlideshow
           items={items ?? []}
-          overlayClassName="bg-black/30"
+          overlayClassName="bg-gradient-to-t from-[#1C1917]/70 via-[#1C1917]/30 to-transparent"
           prioritizeFirstImage
           fallback={
             <>
