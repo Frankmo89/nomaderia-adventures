@@ -113,11 +113,11 @@ const SocialProof = () => {
   if (isLoading) return null;
 
   return (
-    <section className="py-16 sm:py-24 bg-wash-sand relative overflow-hidden section-recessed">
+    <section className="section-editorial bg-wash-sand relative overflow-hidden section-recessed">
       <div className="container mx-auto px-5 relative z-10">
         {/* Header */}
         <Reveal className="text-center mb-12 sm:mb-16">
-          <span className="text-[#D97706] text-sm font-semibold tracking-wider uppercase mb-3 block">
+          <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary mb-3 block">
             Respaldado por datos reales
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">

@@ -76,6 +76,10 @@
     font-family: 'Playfair Display', serif;
   }
 
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
   /* On-brand focus rings for accessibility */
   a:focus-visible,
   button:focus-visible,
@@ -95,8 +99,8 @@
   }
 
   .text-eyebrow {
+    @apply text-xs tracking-[0.2em] uppercase font-medium text-secondary;
     font-family: 'Inter', sans-serif;
-    text-transform: uppercase;
   }
 
   .section-editorial {

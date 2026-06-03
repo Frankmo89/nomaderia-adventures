@@ -36,10 +36,10 @@ const SobreNosotros = () => {
       <JsonLd data={profileLd} />
 
       {/* Hero */}
-      <section className="container mx-auto px-4 pt-28 pb-12 max-w-3xl">
+      <section className="container mx-auto px-4 pt-28 pb-12 max-w-[42rem]">
         <div className="flex items-center gap-2 mb-4">
-          <Mountain className="h-6 w-6 text-primary" />
-          <span className="text-sm font-medium text-primary uppercase tracking-widest">Nomaderia Adventures</span>
+          <Mountain className="h-6 w-6 text-secondary" />
+          <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary">Nomaderia Adventures</span>
         </div>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-6">
           Sobre Nosotros
@@ -50,7 +50,7 @@ const SobreNosotros = () => {
       </section>
 
       {/* Agente certificado */}
-      <section className="container mx-auto px-4 pb-16 max-w-3xl">
+      <section className="container mx-auto px-4 pb-16 max-w-[42rem]">
         <div className="bg-card border border-border rounded-2xl p-8 space-y-8">
 
           {/* Badge de credencial */}
@@ -59,7 +59,7 @@ const SobreNosotros = () => {
               <BadgeCheck className="h-7 w-7 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-1">Credencial oficial</p>
+              <p className="text-xs tracking-[0.2em] uppercase font-medium text-secondary mb-1">Credencial oficial</p>
               <h2 className="font-serif text-2xl text-foreground mb-2">Plataforma respaldada por Agentes Certificados</h2>
               <p className="text-stone-800 leading-relaxed">
                 Contamos con certificación oficial como Agentes de Viajes, lo que nos permite orientarte con fundamentos reales: desde cómo conseguir los mejores precios en vuelos hasta qué equipaje llevar según el clima del destino.
@@ -91,7 +91,7 @@ const SobreNosotros = () => {
       </section>
 
       {/* Misión */}
-      <section className="container mx-auto px-4 pb-16 max-w-3xl space-y-6">
+      <section className="container mx-auto px-4 pb-16 max-w-[42rem] space-y-6">
         <h2 className="font-serif text-2xl text-foreground">Nuestra misión</h2>
         <p className="text-foreground/70 leading-relaxed">
           Queremos que cualquier persona, sin importar su experiencia previa, pueda planear una aventura segura, significativa y dentro de su presupuesto. Combinamos el conocimiento de un agente de viajes con herramientas digitales —quiz de destinos, guías de gear, calculadora de presupuesto e itinerarios personalizados— para que tú solo te preocupes por disfrutar el camino.
@@ -113,7 +113,7 @@ const SobreNosotros = () => {
       </section>
 
       {/* CTA contacto */}
-      <section className="container mx-auto px-4 pb-20 max-w-3xl">
+      <section className="container mx-auto px-4 pb-20 max-w-[42rem]">
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-8 text-center">
           <h2 className="font-serif text-2xl text-foreground mb-3">¿Tienes alguna pregunta?</h2>
           <p className="text-foreground/70 mb-6">

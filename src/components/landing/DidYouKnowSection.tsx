@@ -109,7 +109,7 @@ const SkeletonCard = ({ className = "" }: { className?: string }) => (
 );
 
 const SkeletonLoader = () => (
-  <section className="py-16 sm:py-24 bg-wash-forest relative overflow-hidden">
+  <section className="section-editorial bg-wash-forest relative overflow-hidden">
     <div className="relative z-10">
       <div className="container mx-auto px-5 mb-10 sm:mb-14">
         <div className="flex flex-col items-center gap-3">
@@ -262,7 +262,7 @@ const DidYouKnowSection = () => {
   if (destinations.length === 0) return null;
 
   return (
-    <section className="py-16 sm:py-24 bg-wash-forest relative overflow-hidden section-recessed">
+    <section className="section-editorial bg-wash-forest relative overflow-hidden section-recessed">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
       }} />
@@ -271,7 +271,7 @@ const DidYouKnowSection = () => {
         {/* Header */}
         <div className="container mx-auto px-5 mb-10 sm:mb-14">
           <Reveal className="text-center">
-            <span className="text-primary text-sm font-semibold tracking-wider uppercase mb-3 block">
+            <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary mb-3 block">
               Aventuras reales para principiantes
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">

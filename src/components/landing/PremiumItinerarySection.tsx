@@ -33,7 +33,7 @@ const benefits = [
 
 const PremiumItinerarySection = () => {
   return (
-    <section className="py-20 relative overflow-hidden bg-wash-clay section-recessed">
+    <section className="section-editorial relative overflow-hidden bg-wash-clay section-recessed">
       {/* Background texture */}
       <div className="absolute inset-0 bg-secondary/5" />
       <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, hsl(var(--secondary) / 0.08) 0%, transparent 60%), radial-gradient(circle at 80% 20%, hsl(var(--trail) / 0.06) 0%, transparent 50%)" }} />
@@ -41,8 +41,8 @@ const PremiumItinerarySection = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-5xl mx-auto">
           {/* Badge */}
-          <Reveal className="flex justify-center mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-transparent border border-secondary text-secondary text-sm font-medium tracking-wide">
+          <Reveal className="text-center mb-6">
+            <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary block">
               ✦ Diseño 100% Personalizado
             </span>
           </Reveal>
@@ -55,7 +55,7 @@ const PremiumItinerarySection = () => {
             </h2>
           </Reveal>
 
-          <Reveal className="text-center text-foreground/70 text-lg max-w-2xl mx-auto mb-16 leading-relaxed">
+          <Reveal className="text-center text-foreground/70 text-lg max-w-[42rem] mx-auto mb-16 leading-relaxed">
             Diseñamos tu itinerario de trekking desde cero, adaptado a tu nivel, presupuesto y objetivos.
             Sin plantillas genéricas. Sin rutas de turista.
           </Reveal>

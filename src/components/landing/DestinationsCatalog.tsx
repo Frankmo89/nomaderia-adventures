@@ -148,7 +148,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
   if (isLoading) {
     return (
-      <section id="destinos" className="bg-wash-sand py-16 sm:py-20">
+      <section id="destinos" className="bg-wash-sand section-editorial">
         <div className="container mx-auto px-5">
           <DestinationCardGridSkeleton count={6} />
         </div>
@@ -158,7 +158,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
   if (error) {
     return (
-      <section id="destinos" className="bg-wash-sand py-16 sm:py-20">
+      <section id="destinos" className="bg-wash-sand section-editorial">
         <div className="container mx-auto px-5 text-center">
           <p className="text-muted-foreground">No se pudieron cargar los destinos. Intenta recargar la página.</p>
         </div>
@@ -167,7 +167,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
   }
 
   return (
-    <section id="destinos" className="relative overflow-hidden bg-wash-sand py-16 sm:py-20 section-recessed">
+    <section id="destinos" className="relative overflow-hidden bg-wash-sand section-editorial section-recessed">
       <div className="noise-bg pointer-events-none absolute inset-0 opacity-[0.02]" />
       <div className="container relative z-10 mx-auto px-5">
         <Reveal className="mb-8 text-center sm:mb-10">

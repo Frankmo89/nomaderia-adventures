@@ -34,10 +34,13 @@ const GearPreview = () => {
   const hoverEnabled = canHover && !prefersReducedMotion;
 
   return (
-    <section className="py-16 sm:py-20 bg-wash-clay relative overflow-hidden section-recessed">
+    <section className="section-editorial bg-wash-clay relative overflow-hidden section-recessed">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none noise-bg" />
       <div className="container mx-auto px-5 relative z-10">
         <Reveal className="text-center mb-10 sm:mb-12">
+          <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary mb-3 block">
+            Gear esencial
+          </span>
           <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-2">
             Equipo Para Principiantes
           </h2>
