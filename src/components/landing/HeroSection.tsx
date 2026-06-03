@@ -9,7 +9,7 @@ const WHATSAPP_URL = buildWhatsAppLink(
 );
 
 const primaryCtaClassName =
-  "rounded-full bg-[#C96B05] text-primary-foreground shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#B95F05] hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98] active:bg-[#A95504]";
+  "rounded-full bg-primary text-primary-foreground shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98] active:bg-primary/80";
 
 const secondaryCtaClassName =
   "rounded-full border border-stone/80 bg-white/72 text-foreground/90 shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-sand hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98]";
@@ -24,7 +24,7 @@ const HeroSection = () => {
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           className="text-display font-bold leading-[0.92] tracking-[-0.04em] text-white mb-6 max-w-4xl mx-auto"
           style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
         >

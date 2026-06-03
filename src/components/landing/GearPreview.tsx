@@ -1,9 +1,8 @@
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
-import Reveal from "@/components/editorial/Reveal";
+import Reveal, { RevealGroup } from "@/components/editorial/Reveal";
 import { useFeaturedGearArticles } from "@/hooks/use-gear-articles";
 
 const categoryLabel: Record<string, string> = {
@@ -36,41 +35,34 @@ const GearPreview = () => {
         {isLoading ? (
           <CardGridSkeleton count={3} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 mb-8 sm:mb-10">
-            {articles.map((a, i) => (
-              <motion.div
+          <RevealGroup className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 mb-8 sm:mb-10" stagger>
+            {articles.map((a) => (
+              <Link
                 key={a.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
+                to={`/gear/${a.slug}`}
+                className="block bg-card rounded-xl overflow-hidden active:scale-[0.98] sm:hover:scale-[1.03] transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-primary/10 group"
               >
-                <Link
-                  to={`/gear/${a.slug}`}
-                  className="block bg-card rounded-xl overflow-hidden active:scale-[0.98] sm:hover:scale-[1.03] transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-primary/10 group"
-                >
-                  <div className="h-48 sm:h-48 overflow-hidden relative">
-                    <img
-                      src={categoryImage[a.category] || categoryImage.boots}
-                      alt={a.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <Badge className="bg-secondary text-secondary-foreground mb-3">
-                      {categoryLabel[a.category] || a.category}
-                    </Badge>
-                    <h3 className="font-serif text-lg font-bold text-card-foreground mb-2">{a.title}</h3>
-                    <p className="text-sm text-card-foreground/70">{a.short_description}</p>
-                    <span className="text-primary text-sm font-medium mt-3 inline-block group-hover:underline">Leer Guía →</span>
-                  </div>
-                </Link>
-              </motion.div>
+                <div className="h-48 sm:h-48 overflow-hidden relative">
+                  <img
+                    src={categoryImage[a.category] || categoryImage.boots}
+                    alt={a.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                </div>
+                <div className="p-4 sm:p-5">
+                  <Badge className="bg-secondary text-secondary-foreground mb-3">
+                    {categoryLabel[a.category] || a.category}
+                  </Badge>
+                  <h3 className="font-serif text-lg font-bold text-card-foreground mb-2">{a.title}</h3>
+                  <p className="text-sm text-card-foreground/70">{a.short_description}</p>
+                  <span className="text-primary text-sm font-medium mt-3 inline-block group-hover:underline">Leer Guía →</span>
+                </div>
+              </Link>
             ))}
-          </div>
+          </RevealGroup>
         )}
 
         <Reveal className="text-center">

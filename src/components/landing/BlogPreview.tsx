@@ -101,10 +101,10 @@ const BlogPreview = () => {
           {featured.map((post, i) => (
             <div key={post.id} className="min-w-[86%] snap-center md:min-w-0">
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.12, duration: 0.5 }}
+                transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className="h-full"
               >
                 <motion.div initial="rest" whileHover={hoverEnabled ? "hover" : undefined} className="h-full">
@@ -121,7 +121,7 @@ const BlogPreview = () => {
                           loading="lazy"
                           className="h-full w-full object-cover"
                           variants={{ rest: { scale: 1 }, hover: { scale: 1.03 } }}
-                          transition={{ duration: 0.6, ease: "easeOut" }}
+                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                         />
                       ) : (
                         <div className="h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20" />

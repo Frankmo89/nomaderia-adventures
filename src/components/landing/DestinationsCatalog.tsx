@@ -82,10 +82,10 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
   const DestCard = ({ d, index }: { d: (typeof destinations)[0]; index: number }) => (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: index * 0.08, duration: 0.5 }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="h-full"
     >
       <motion.div initial="rest" whileHover={hoverEnabled ? "hover" : undefined} className="h-full">
@@ -102,7 +102,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                 decoding="async"
                 className="h-full w-full object-cover"
                 variants={{ rest: { scale: 1 }, hover: { scale: 1.03 } }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary/30 to-primary/20">

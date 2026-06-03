@@ -316,10 +316,10 @@ const DidYouKnowSection = () => {
             {destinations[0] && (
               <motion.div
                 className="col-span-1 row-span-2"
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
                 <CardContent dest={destinations[0]} isLarge />
               </motion.div>
@@ -328,10 +328,10 @@ const DidYouKnowSection = () => {
             {destinations.slice(1, 5).map((dest, i) => (
               <motion.div
                 key={dest.slug}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: (i + 1) * 0.1, duration: 0.6 }}
+                transition={{ delay: (i + 1) * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
                 <CardContent dest={dest} />
               </motion.div>

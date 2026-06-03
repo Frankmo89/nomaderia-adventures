@@ -231,7 +231,7 @@ const DestinationDetail = () => {
 
       {/* Hero Carousel */}
       <section className="pt-20">
-        <div className="h-[50vh] md:h-[60vh] flex items-end relative overflow-hidden">
+        <div className="h-[80vh] md:h-[90vh] flex items-end relative overflow-hidden">
           {/* Embla viewport */}
           <div ref={heroRef} className="absolute inset-0 overflow-hidden">
             <div className="flex h-full">

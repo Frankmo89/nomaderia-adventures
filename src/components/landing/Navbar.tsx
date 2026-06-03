@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { Mountain, Menu, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
+
+const NAV_EASE = [0.22, 1, 0.36, 1] as const;
 import { BRAND_ASSETS } from "@/config/assets";
 
 const navLinks = [
@@ -20,6 +22,7 @@ const Navbar = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [open, setOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -69,10 +72,9 @@ const Navbar = () => {
 
           {/* Desktop nav */}
           <nav className="relative z-10 hidden md:flex items-center gap-8">
-            {navLinks.map((link) =>
-              link.href.startsWith("/") ? (
+            {navLinks.map((link, i) => {
+              const linkEl = link.href.startsWith("/") ? (
                 <Link
-                  key={link.label}
                   to={link.href}
                   className={cn(
                     "text-sm font-medium transition-colors",
@@ -83,7 +85,6 @@ const Navbar = () => {
                 </Link>
               ) : (
                 <a
-                  key={link.label}
                   href={link.href}
                   className={cn(
                     "text-sm font-medium transition-colors",
@@ -92,11 +93,36 @@ const Navbar = () => {
                 >
                   {link.label}
                 </a>
-              )
+              );
+
+              if (prefersReducedMotion) return <div key={link.label}>{linkEl}</div>;
+
+              return (
+                <motion.div
+                  key={link.label}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.06, duration: 0.4, ease: NAV_EASE }}
+                >
+                  {linkEl}
+                </motion.div>
+              );
+            })}
+            {prefersReducedMotion ? (
+              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
+                <a href="#quiz">Descubre Tu Aventura</a>
+              </Button>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + navLinks.length * 0.06, duration: 0.4, ease: NAV_EASE }}
+              >
+                <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
+                  <a href="#quiz">Descubre Tu Aventura</a>
+                </Button>
+              </motion.div>
             )}
-            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
-              <a href="#quiz">Descubre Tu Aventura</a>
-            </Button>
           </nav>
 
           {/* Mobile hamburger */}

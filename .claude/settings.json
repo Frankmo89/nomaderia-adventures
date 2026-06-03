@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mobbin": {
+      "command": "npx",
+      "args": ["-y", "mobbin-mcp"]
+    }
+  }
+}

@@ -138,9 +138,9 @@ const BlogPostDetail = () => {
       {jsonLd && <JsonLd data={jsonLd} />}
       {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
       <section className="pt-20">
-        <div className="h-[35vh] flex items-end relative overflow-hidden">
+        <div className="h-[55vh] md:h-[65vh] flex items-end relative overflow-hidden">
           {post.hero_image_url ? (
-            <img src={post.hero_image_url} alt={post.title} loading="eager" className="absolute inset-0 w-full h-full object-cover" />
+            <img src={post.hero_image_url} alt={post.title} loading="eager" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: "center 30%" }} />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-secondary/20" />
           )}

@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "mobbin": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mobbin-mcp"]
+    }
+  }
+}

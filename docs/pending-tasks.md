@@ -110,6 +110,10 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-06-03] I1: unified motion language — expo-out easing `[0.22, 1, 0.36, 1]` applied to all homepage entrance animations; `RevealGroup` stagger primitive added to `Reveal.tsx`; staggered reveals applied to gear cards (RevealGroup) and SocialProof stats (RevealGroup); hero parallax added to MediaSlider.tsx (desktop only, `prefers-reduced-motion` gated); navbar desktop links animate in on first paint with cascade delay. SocialProof CTA hex tokens also fixed. Build passes.
+- [2026-06-03] Hotfix B: hero heights raised — `BlogPostDetail.tsx` hero `h-[35vh]` → `h-[55vh] md:h-[65vh]` with `objectPosition: center 30%`; `DestinationDetail.tsx` carousel `h-[50vh] md:h-[60vh]` → `h-[80vh] md:h-[90vh]`. Build passes.
+- [2026-06-03] Hotfix A: hero CTA token color corrected — `HeroSection.tsx` primary button migrated from hardcoded hex values (`#C96B05`, `#B95F05`, `#A95504`) to design tokens (`bg-primary`, `hover:bg-primary/90`, `active:bg-primary/80`). Build passes.
+
 - [2026-06-02] Pro path — P8: gradient washes aplicado en homepage: se armonizaron transiciones de secciones con fondos cálidos del palette tokenizado (`sand`, `clay`, `forest`) usando clases utilitarias (`bg-wash-*`) para evitar saltos bruscos y mantener contraste AA en textos.
 - [2026-06-02] Pro path — P7: carousels + footer aplicado: `DestinationsCatalog` y `BlogPreview` migrados a carrusel horizontal mobile-first con `snap-x snap-mandatory`, momentum nativo iOS e indicador sutil de puntos; `Footer` actualizado a variante dark con `rounded-t-[2.5rem]`, base walnut y texto sand, manteniendo links/rutas intactos.
 - [2026-06-02] Pro path — P5: trust reframe + counters aplicado en `SocialProof`: `quizResponses` se muestra solo con umbral real `>= 50`; contadores migrados a `useMotionValue + animate` con `whileInView` una sola vez y respeto de `prefers-reduced-motion`.
