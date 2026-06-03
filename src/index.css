@@ -111,13 +111,9 @@
     @apply max-w-text;
   }
 
-  .shadow-editorial {
-    box-shadow: var(--shadow-editorial);
-  }
-
-  .shadow-editorial-hover {
-    box-shadow: var(--shadow-editorial-hover);
-  }
+  /* Text shadows — use instead of inline style={{ textShadow }} */
+  .text-shadow-hero { text-shadow: 0 4px 30px rgba(0,0,0,0.5); }
+  .text-shadow-card { text-shadow: 0 2px 14px rgba(0,0,0,0.45); }
 
   .bg-wash-sand {
     background-color: hsl(var(--sand));

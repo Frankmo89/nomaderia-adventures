@@ -283,8 +283,7 @@ const DestinationDetail = () => {
               <span className="text-white/70 truncate max-w-[200px]" aria-current="page">{dest.title}</span>
             </nav>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="font-serif text-4xl md:text-6xl font-bold text-white mb-3"
-              style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
+              className="font-serif text-4xl md:text-6xl font-bold text-white mb-3 text-shadow-card">
               {dest.title}
             </motion.h1>
             <p className="text-lg text-white/70 mb-4">

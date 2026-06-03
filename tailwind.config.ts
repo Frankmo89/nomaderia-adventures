@@ -102,6 +102,10 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      boxShadow: {
+        "editorial": "0 16px 40px rgba(61, 47, 35, 0.08)",
+        "editorial-hover": "0 22px 56px rgba(61, 47, 35, 0.12)",
+      },
     },
   },
   plugins: [tailwindcssAnimate, typography],

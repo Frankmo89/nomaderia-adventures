@@ -62,8 +62,7 @@ const CardContent = ({ dest, isLarge = false }: { dest: DestinationCard; isLarge
 
     <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6 transition-transform duration-500 group-hover:translate-y-[-4px]">
       <p
-        className={`font-serif font-bold text-white leading-tight mb-2 ${isLarge ? "text-xl sm:text-2xl md:text-3xl" : "text-base sm:text-lg"}`}
-        style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
+        className={`font-serif font-bold text-white leading-tight mb-2 text-shadow-card ${isLarge ? "text-xl sm:text-2xl md:text-3xl" : "text-base sm:text-lg"}`}
       >
         {getDidYouKnowText(dest.slug, dest.title, dest.country)}
       </p>

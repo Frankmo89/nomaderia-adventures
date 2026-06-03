@@ -176,7 +176,7 @@ const QuizLoading = () => (
 );
 
 // --- Celebration particles ---
-const celebrationColors = ["bg-orange-500", "bg-emerald-600", "bg-sky-500", "bg-yellow-400"];
+const celebrationColors = ["bg-primary", "bg-secondary", "bg-sky-500", "bg-yellow-400"];
 
 const CelebrationParticles = () => (
   <div className="absolute inset-0 pointer-events-none overflow-hidden">

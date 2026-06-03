@@ -25,8 +25,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-          className="text-display font-bold leading-[0.92] tracking-[-0.04em] text-white mb-6 max-w-4xl mx-auto"
-          style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
+          className="text-display font-bold leading-[0.92] tracking-[-0.04em] text-white mb-6 max-w-4xl mx-auto text-shadow-hero"
         >
           Tu Concierge de Aventuras
           <br />
@@ -37,8 +36,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-10 font-sans"
-          style={{ textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}
+          className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-10 font-sans text-shadow-card"
         >
           Te armo tu viaje de trekking completo — itinerario, equipo, presupuesto
           — adaptado a tu nivel y tus sueños.

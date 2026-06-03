@@ -121,7 +121,7 @@ const BlogPreview = () => {
                           loading="lazy"
                           className="h-full w-full object-cover object-center img-warm"
                           variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
-                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                          transition={{ duration: 0.7, ease: "easeOut" }}
                         />
                       ) : (
                         <div className="h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20" />
