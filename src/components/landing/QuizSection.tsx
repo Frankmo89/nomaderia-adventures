@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motio
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass,
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
-  Mail, Send, Loader2, Calendar, MapPin, HeartPulse, Backpack, Tent,
+  Mail, Loader2, Calendar, MapPin, HeartPulse, Backpack, Tent,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ import type { QuizDestination, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import Reveal from "@/components/editorial/Reveal";
-const ITINERARY_DISCOUNT = "10%";
 
 const WhatsAppIcon = () => (
   <svg
@@ -228,9 +227,8 @@ const EmailCapture = ({
 }) => {
   if (emailSubmitted) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-6">
-        <span className="text-3xl mb-2 block">🎉</span>
-        <p className="text-foreground font-medium">¡Listo! Revisa tu correo con tus resultados y el código de descuento.</p>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="rounded-2xl border border-stone/20 bg-sand/40 p-6 md:p-8">
+        <p className="text-secondary font-medium">¡Listo! Revisa tu correo con tus resultados y empieza a planificar tu aventura.</p>
       </motion.div>
     );
   }
@@ -244,29 +242,27 @@ const EmailCapture = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-amber-50/60 dark:bg-amber-900/10 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border-2 border-amber-400/50 max-w-md mx-auto shadow-lg shadow-amber-500/10"
+      className="rounded-2xl border border-stone/20 bg-sand/40 p-6 md:p-8"
     >
-      <div className="flex items-center justify-center gap-2 mb-2">
-        <Mail className="h-5 w-5 text-primary" />
-        <h4 className="font-serif text-lg font-bold text-foreground text-center leading-tight">
-          📩 Guarda tus resultados y obtén un{" "}
-          <span className="text-primary underline decoration-wavy decoration-primary/60">{ITINERARY_DISCOUNT} de DESCUENTO</span>{" "}
-          en tu Itinerario Personalizado
+      <div className="flex items-center gap-2">
+        <Mail className="h-5 w-5 text-secondary shrink-0" strokeWidth={1.5} />
+        <h4 className="font-serif text-xl font-semibold text-foreground leading-tight">
+          Guarda tu aventura
         </h4>
       </div>
-      <p className="text-muted-foreground text-sm mb-5 text-center">
-        Ingresa tu email y te enviamos tus resultados + el código de descuento exclusivo.
+      <p className="text-sm text-stone-500 mt-1">
+        Recibe tus resultados por correo y te ayudo a planificar tu próxima aventura.
       </p>
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+      <form onSubmit={handleSubmit} className="flex flex-col">
         <Input
           type="email"
-          placeholder="tu@email.com"
+          placeholder="tu@correo.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="bg-white dark:bg-muted text-foreground h-12 text-base border-amber-300/60 focus-visible:ring-primary"
+          className="mt-4"
         />
-        <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground whitespace-nowrap shadow-lg shadow-primary/20 h-12 px-6">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 mr-2" />Quiero mi descuento</>}
+        <Button type="submit" disabled={loading} className="w-full rounded-full bg-primary text-white font-semibold py-3 mt-3 h-auto">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar mis resultados →"}
         </Button>
       </form>
     </motion.div>
