@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Download, Search } from "lucide-react";
+import { Download, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
+import AdminEmptyState from "@/components/admin/EmptyState";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -107,13 +108,23 @@ const AdminSubscribers = () => {
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-10 text-muted-foreground">
-                  No hay suscriptores todavía.
+                <TableCell colSpan={3} className="p-0">
+                  <AdminEmptyState
+                    icon={Users}
+                    title="Aún no hay suscriptores"
+                    description="Los correos capturados a través del quiz y las landings aparecerán aquí."
+                  />
                 </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
+                <TableCell colSpan={3} className="p-0">
+                  <AdminEmptyState
+                    icon={Search}
+                    title={`Sin resultados para "${search}"`}
+                    description="Intenta con otro correo electrónico."
+                  />
+                </TableCell>
               </TableRow>
             ) : (
               paged.map((s) => (

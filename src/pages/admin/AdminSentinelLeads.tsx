@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Download, MessageCircle, Search } from "lucide-react";
+import { Download, MessageCircle, Search, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
+import AdminEmptyState from "@/components/admin/EmptyState";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
@@ -125,11 +126,23 @@ const AdminSentinelLeads = () => {
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">No hay leads todavía.</TableCell>
+                <TableCell colSpan={4} className="p-0">
+                  <AdminEmptyState
+                    icon={Target}
+                    title="Aún no hay leads de Sentinel"
+                    description="Los leads de la alerta de permisos de Yosemite aparecerán aquí."
+                  />
+                </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
+                <TableCell colSpan={4} className="p-0">
+                  <AdminEmptyState
+                    icon={Search}
+                    title={`Sin resultados para "${search}"`}
+                    description="Intenta con otro correo electrónico."
+                  />
+                </TableCell>
               </TableRow>
             ) : (
               paged.map((lead) => (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Pencil, Trash2, Sparkles, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Sparkles, Search, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 import { TrendingGearCard } from "@/components/admin/TrendingGearCard";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
+import AdminEmptyState from "@/components/admin/EmptyState";
 import { useTrendingGear } from "@/hooks/use-trending-gear";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
@@ -181,13 +182,24 @@ const AdminGearArticles = () => {
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                  No hay artículos. <Link to="/admin/gear-articles/new" className="underline text-primary">Crea el primero.</Link>
+                <TableCell colSpan={5} className="p-0">
+                  <AdminEmptyState
+                    icon={Package}
+                    title="Aún no hay artículos de equipo"
+                    description="Publica tu primer artículo de gear para guiar a los aventureros."
+                    cta={{ label: "Crear artículo de equipo", href: "/admin/gear-articles/new" }}
+                  />
                 </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
+                <TableCell colSpan={5} className="p-0">
+                  <AdminEmptyState
+                    icon={Search}
+                    title={`Sin resultados para "${search}"`}
+                    description="Intenta con otro término de búsqueda."
+                  />
+                </TableCell>
               </TableRow>
             ) : (
               paged.map((a) => (

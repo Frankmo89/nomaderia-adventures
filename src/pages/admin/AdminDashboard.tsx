@@ -301,7 +301,8 @@ const AdminDashboard = () => {
                         <p className="text-[11.5px] text-[#6B6660]">{timeAgo(lead.created_at)}</p>
                       </div>
                     </div>
-                    <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-[#FEF3E2] text-[#B45309] border border-[#F5C36B] animate-pulse shrink-0">Sin contactar</span>
+                    {/* NOTE: static badge until contact-status persistence is implemented (next prompt adds contacted_at + status to leads tables) */}
+                    <span className="text-[10.5px] font-medium px-2 py-0.5 rounded-full bg-[#F0EBE0] text-[#6B6660] border border-[#E2D9C5] shrink-0">Sin contactar</span>
                     <Button
                       size="sm"
                       className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-[11.5px] font-semibold px-3 py-1.5 rounded-lg border border-[#15803D] shrink-0"
@@ -355,7 +356,8 @@ const AdminDashboard = () => {
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-[#FEF3E2] text-[#B45309] border border-[#F5C36B] animate-pulse shrink-0">Sin contactar</span>
+                    {/* NOTE: static badge until contact-status persistence is implemented (next prompt adds contacted_at + status to leads tables) */}
+                    <span className="text-[10.5px] font-medium px-2 py-0.5 rounded-full bg-[#F0EBE0] text-[#6B6660] border border-[#E2D9C5] shrink-0">Sin contactar</span>
                     {q.email ? (
                       <Button
                         size="sm"

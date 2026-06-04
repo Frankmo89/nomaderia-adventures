@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Pencil, Trash2, Sparkles, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Sparkles, Search, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 import { TrendingBlogCard } from "@/components/admin/TrendingBlogCard";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
+import AdminEmptyState from "@/components/admin/EmptyState";
 import { useTrendingBlog } from "@/hooks/use-trending-blog";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
@@ -177,13 +178,24 @@ const AdminBlogPosts = () => {
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                  No hay posts. <Link to="/admin/blog-posts/new" className="underline text-primary">Crea el primero.</Link>
+                <TableCell colSpan={5} className="p-0">
+                  <AdminEmptyState
+                    icon={FileText}
+                    title="Aún no hay posts"
+                    description="Escribe tu primer post para atraer tráfico orgánico al sitio."
+                    cta={{ label: "Crear post", href: "/admin/blog-posts/new" }}
+                  />
                 </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
+                <TableCell colSpan={5} className="p-0">
+                  <AdminEmptyState
+                    icon={Search}
+                    title={`Sin resultados para "${search}"`}
+                    description="Intenta con otro término de búsqueda."
+                  />
+                </TableCell>
               </TableRow>
             ) : (
               paged.map((a) => (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Search } from "lucide-react";
+import { Download, Search, Map, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
+import AdminEmptyState from "@/components/admin/EmptyState";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { cn } from "@/lib/utils";
 
 interface ItineraryRequest {
   id: string;
@@ -21,6 +24,8 @@ interface ItineraryRequest {
 }
 
 type ItinSortKey = "name" | "destination" | "created_at";
+
+const COL_COUNT = 7;
 
 const budgetLabel: Record<string, string> = {
   "menos-de-500": "< $500",
@@ -65,7 +70,16 @@ const AdminItineraryRequests = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { sortState, handleSort } = useSortable<ItinSortKey>();
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const q = search.trim().toLowerCase();
   const filtered = q
@@ -124,6 +138,7 @@ const AdminItineraryRequests = () => {
               <SortableHeader label="Destino" sortKey="destination" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Presupuesto</TableHead>
               <TableHead className="text-foreground">Mensaje</TableHead>
+              <TableHead className="text-foreground">Acción</TableHead>
               <SortableHeader label="Fecha" sortKey="created_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
             </TableRow>
           </TableHeader>
@@ -136,18 +151,29 @@ const AdminItineraryRequests = () => {
                   <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-16" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                  No hay solicitudes todavía.
+                <TableCell colSpan={COL_COUNT} className="p-0">
+                  <AdminEmptyState
+                    icon={Map}
+                    title="Aún no hay solicitudes de itinerario"
+                    description="Las solicitudes de itinerario personalizado aparecerán aquí."
+                  />
                 </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
+                <TableCell colSpan={COL_COUNT} className="p-0">
+                  <AdminEmptyState
+                    icon={Search}
+                    title={`Sin resultados para "${search}"`}
+                    description="Intenta con otro nombre, correo o destino."
+                  />
+                </TableCell>
               </TableRow>
             ) : (
               paged.map((r) => (
@@ -165,7 +191,40 @@ const AdminItineraryRequests = () => {
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground max-w-xs">
-                    <span className="line-clamp-2 text-sm">{r.message || "—"}</span>
+                    {r.message ? (
+                      <div>
+                        <span className={cn("text-sm block", !expandedIds.has(r.id) && "line-clamp-2")}>
+                          {r.message}
+                        </span>
+                        {r.message.length > 80 && (
+                          <button
+                            type="button"
+                            className="text-xs text-primary mt-1 hover:underline"
+                            onClick={() => toggleExpanded(r.id)}
+                          >
+                            {expandedIds.has(r.id) ? "Ver menos" : "Ver más"}
+                          </button>
+                        )}
+                      </div>
+                    ) : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-xs"
+                      onClick={() =>
+                        window.open(
+                          buildWhatsAppLink(
+                            `Hola ${r.name}, recibí tu solicitud para ${r.destination}. ¿Platicamos? — Frank, Nomaderia`
+                          ),
+                          "_blank",
+                          "noopener,noreferrer"
+                        )
+                      }
+                    >
+                      <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                      WA
+                    </Button>
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">
                     {new Date(r.created_at).toLocaleDateString("es-MX")}

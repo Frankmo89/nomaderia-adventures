@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Search } from "lucide-react";
+import { Download, Search, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
+import AdminEmptyState from "@/components/admin/EmptyState";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -148,13 +149,23 @@ const AdminEmailLogs = () => {
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
-                  No hay emails enviados todavía.
+                <TableCell colSpan={4} className="p-0">
+                  <AdminEmptyState
+                    icon={Mail}
+                    title="Aún no se han enviado correos"
+                    description="Los emails del drip automático se registrarán aquí una vez enviados."
+                  />
                 </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
+                <TableCell colSpan={4} className="p-0">
+                  <AdminEmptyState
+                    icon={Search}
+                    title={`Sin resultados para "${search}"`}
+                    description="Intenta con otro correo electrónico."
+                  />
+                </TableCell>
               </TableRow>
             ) : (
               paged.map((l) => (
