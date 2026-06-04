@@ -3,7 +3,7 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare, Users,
   LogOut, FileText, Compass, Mail, ImageIcon, ShieldCheck, ChevronDown,
-  BellRing, BellPlus, Target, Menu,
+  BellRing, BellPlus, Target, Menu, Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -36,6 +36,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Leads",
     links: [
+      { label: "Todos los Leads", href: "/admin/leads", icon: Inbox },
       { label: "Leads de Alerta", href: "/admin/sentinel-leads", icon: Target, alert: true },
       { label: "Quiz Responses", href: "/admin/quiz-responses", icon: MessageSquare },
       { label: "Itinerarios", href: "/admin/itinerary-requests", icon: Compass },

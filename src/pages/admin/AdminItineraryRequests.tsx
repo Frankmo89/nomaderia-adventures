@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
 import AdminEmptyState from "@/components/admin/EmptyState";
+import LeadStatusBadge from "@/components/admin/LeadStatusBadge";
+import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
@@ -21,11 +23,13 @@ interface ItineraryRequest {
   estimated_budget: string | null;
   message: string | null;
   created_at: string;
+  status: LeadStatus;
+  contacted_at: string | null;
 }
 
-type ItinSortKey = "name" | "destination" | "created_at";
+type ItinSortKey = "name" | "destination" | "created_at" | "status";
 
-const COL_COUNT = 7;
+const COL_COUNT = 8;
 
 const budgetLabel: Record<string, string> = {
   "menos-de-500": "< $500",
@@ -37,19 +41,21 @@ const budgetLabel: Record<string, string> = {
 
 const getItinValue = (r: ItineraryRequest, key: ItinSortKey): string => {
   switch (key) {
-    case "name": return r.name;
+    case "name":        return r.name;
     case "destination": return r.destination;
-    case "created_at": return r.created_at;
+    case "created_at":  return r.created_at;
+    case "status":      return r.status;
   }
 };
 
 const exportCSV = (items: ItineraryRequest[]) => {
-  const headers = ["Nombre", "Email", "Destino", "Presupuesto", "Mensaje", "Fecha"];
+  const headers = ["Nombre", "Email", "Destino", "Presupuesto", "Estado", "Mensaje", "Fecha"];
   const rows = items.map((r) => [
     r.name,
     r.email,
     r.destination,
     r.estimated_budget ? (budgetLabel[r.estimated_budget] || r.estimated_budget) : "",
+    r.status,
     r.message || "",
     new Date(r.created_at).toLocaleDateString("es-MX"),
   ]);
@@ -95,11 +101,52 @@ const AdminItineraryRequests = () => {
         .from("itinerary_requests")
         .select("*")
         .order("created_at", { ascending: false });
-      setItems(data || []);
+      setItems((data as ItineraryRequest[]) || []);
       setLoading(false);
     };
     load();
   }, []);
+
+  const handleStatusUpdate = (id: string, newStatus: LeadStatus) => {
+    setItems((prev) =>
+      prev.map((r) => {
+        if (r.id !== id) return r;
+        return {
+          ...r,
+          status: newStatus,
+          contacted_at:
+            newStatus === "contactado"
+              ? (r.contacted_at ?? new Date().toISOString())
+              : newStatus === "nuevo"
+              ? null
+              : r.contacted_at,
+        };
+      })
+    );
+  };
+
+  const handleWhatsApp = (r: ItineraryRequest) => {
+    if (r.status === "nuevo") {
+      const now = new Date().toISOString();
+      setItems((prev) =>
+        prev.map((l) => (l.id === r.id ? { ...l, status: "contactado", contacted_at: now } : l))
+      );
+      supabase
+        .from("itinerary_requests")
+        .update({ status: "contactado", contacted_at: now })
+        .eq("id", r.id)
+        .then(({ error }) => {
+          if (error) console.warn("[WA] status update failed:", error.message);
+        });
+    }
+    window.open(
+      buildWhatsAppLink(
+        `Hola ${r.name}, recibí tu solicitud para ${r.destination}. ¿Platicamos? — Frank, Nomaderia`
+      ),
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
 
   return (
     <div>
@@ -123,7 +170,12 @@ const AdminItineraryRequests = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Buscar por nombre, correo o destino…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Buscar por nombre, correo o destino…"
+              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
+            />
           </div>
           <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
@@ -133,13 +185,14 @@ const AdminItineraryRequests = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-border">
-              <SortableHeader label="Nombre" sortKey="name" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Nombre"  sortKey="name"        activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Email</TableHead>
               <SortableHeader label="Destino" sortKey="destination" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Presupuesto</TableHead>
               <TableHead className="text-foreground">Mensaje</TableHead>
+              <SortableHeader label="Estado"  sortKey="status"      activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Acción</TableHead>
-              <SortableHeader label="Fecha" sortKey="created_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Fecha"   sortKey="created_at"  activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -151,6 +204,7 @@ const AdminItineraryRequests = () => {
                   <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-16" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                 </TableRow>
@@ -209,18 +263,18 @@ const AdminItineraryRequests = () => {
                     ) : "—"}
                   </TableCell>
                   <TableCell>
+                    <LeadStatusBadge
+                      id={r.id}
+                      table="itinerary_requests"
+                      status={r.status}
+                      onUpdate={(newStatus) => handleStatusUpdate(r.id, newStatus)}
+                    />
+                  </TableCell>
+                  <TableCell>
                     <Button
                       size="sm"
                       className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-xs"
-                      onClick={() =>
-                        window.open(
-                          buildWhatsAppLink(
-                            `Hola ${r.name}, recibí tu solicitud para ${r.destination}. ¿Platicamos? — Frank, Nomaderia`
-                          ),
-                          "_blank",
-                          "noopener,noreferrer"
-                        )
-                      }
+                      onClick={() => handleWhatsApp(r)}
                     >
                       <MessageCircle className="h-3.5 w-3.5 mr-1" />
                       WA

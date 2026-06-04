@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
 import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock } from "lucide-react";
+import { STATUS_CONFIG } from "@/components/admin/LeadStatusBadge";
+import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,9 +37,11 @@ interface RecentItem {
 }
 
 interface SentinelLead {
+  id: string;
   email: string;
   source: string | null;
   created_at: string;
+  status: LeadStatus;
 }
 
 interface RecentQuizResponse {
@@ -46,6 +50,7 @@ interface RecentQuizResponse {
   interest: string | null;
   recommended_destinations: string[] | null;
   created_at: string;
+  status: LeadStatus;
 }
 
 function timeAgo(dateStr: string): string {
@@ -190,14 +195,16 @@ const AdminDashboard = () => {
       const [sentinelRecentRes, quizRecentRes] = await Promise.all([
         supabase
           .from("sentinel_leads")
-          .select("email, source, created_at")
+          .select("id, email, source, created_at, status")
           .gte("created_at", cutoff48h)
           .eq("source", "sentinel-landing")
+          .eq("status", "nuevo")
           .order("created_at", { ascending: false }),
         supabase
           .from("quiz_responses")
-          .select("id, email, interest, recommended_destinations, created_at")
+          .select("id, email, interest, recommended_destinations, created_at, status")
           .gte("created_at", cutoff48h)
+          .eq("status", "nuevo")
           .order("created_at", { ascending: false })
           .limit(20),
       ]);
@@ -261,7 +268,7 @@ const AdminDashboard = () => {
               <Bell className="h-4 w-4 text-[#1C1917]" />
             </div>
             <span className="text-base font-bold text-[#1C1917]">Atención hoy</span>
-            <span className="text-[11.5px] text-[#6B6660]">· {sentinelRecent.length + quizRecent.length} cosas pendientes</span>
+            <span className="text-[11.5px] text-[#6B6660]">· {sentinelRecent.length + quizRecent.length} leads sin contactar</span>
           </div>
           {fetchedAt && (
             <span className="text-[11px] text-[#9A938B]">
@@ -275,7 +282,7 @@ const AdminDashboard = () => {
           {/* a) Sentinel leads últimas 48h */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <p className="text-[10.5px] font-bold text-[#6B6660] tracking-[0.14em] uppercase">Leads de alerta · últimas 48h</p>
+              <p className="text-[10.5px] font-bold text-[#6B6660] tracking-[0.14em] uppercase">Leads de alerta · sin contactar</p>
               <span className="text-[10.5px] font-bold px-1.5 py-0.5 rounded-full bg-[#F59E0B] text-[#1C1917]">{sentinelRecent.length}</span>
             </div>
             {sentinelRecent.length === 0 ? (
@@ -284,7 +291,7 @@ const AdminDashboard = () => {
               <div className="space-y-2">
                 {sentinelRecent.map((lead) => (
                   <div
-                    key={lead.email}
+                    key={lead.id}
                     className="grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 bg-white border border-[#E7E2D9] rounded-lg"
                     style={{ padding: '10px 12px' }}
                   >
@@ -301,20 +308,32 @@ const AdminDashboard = () => {
                         <p className="text-[11.5px] text-[#6B6660]">{timeAgo(lead.created_at)}</p>
                       </div>
                     </div>
-                    {/* NOTE: static badge until contact-status persistence is implemented (next prompt adds contacted_at + status to leads tables) */}
-                    <span className="text-[10.5px] font-medium px-2 py-0.5 rounded-full bg-[#F0EBE0] text-[#6B6660] border border-[#E2D9C5] shrink-0">Sin contactar</span>
+                    <span className={cn("text-[10.5px] font-medium px-2 py-0.5 rounded-full border shrink-0", STATUS_CONFIG[lead.status].cls)}>
+                      {STATUS_CONFIG[lead.status].label}
+                    </span>
                     <Button
                       size="sm"
                       className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-[11.5px] font-semibold px-3 py-1.5 rounded-lg border border-[#15803D] shrink-0"
-                      onClick={() =>
+                      onClick={() => {
+                        const now = new Date().toISOString();
+                        setSentinelRecent((prev) =>
+                          prev.map((l) => (l.id === lead.id ? { ...l, status: "contactado" as const } : l))
+                        );
+                        supabase
+                          .from("sentinel_leads")
+                          .update({ status: "contactado", contacted_at: now })
+                          .eq("id", lead.id)
+                          .then(({ error }) => {
+                            if (error) console.warn("[WA] status update failed:", error.message);
+                          });
                         window.open(
                           buildWhatsAppLink(
                             `Hola, vi que te interesaste en la alerta de permisos de Yosemite. ¿Tienes dudas? Con gusto te ayudo. — Frank, Nomaderia`
                           ),
                           "_blank",
                           "noopener,noreferrer"
-                        )
-                      }
+                        );
+                      }}
                     >
                       <MessageCircle className="h-3.5 w-3.5 mr-1" />
                       WhatsApp
@@ -328,7 +347,7 @@ const AdminDashboard = () => {
           {/* b) Quiz completados últimas 48h */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <p className="text-[10.5px] font-bold text-[#6B6660] tracking-[0.14em] uppercase">Quiz completados · últimas 48h</p>
+              <p className="text-[10.5px] font-bold text-[#6B6660] tracking-[0.14em] uppercase">Quiz completados · sin contactar</p>
               <span className="text-[10.5px] font-bold px-1.5 py-0.5 rounded-full bg-[#1C1917] text-white">{quizRecent.length}</span>
             </div>
             {quizRecent.length === 0 ? (
@@ -356,21 +375,33 @@ const AdminDashboard = () => {
                         </p>
                       </div>
                     </div>
-                    {/* NOTE: static badge until contact-status persistence is implemented (next prompt adds contacted_at + status to leads tables) */}
-                    <span className="text-[10.5px] font-medium px-2 py-0.5 rounded-full bg-[#F0EBE0] text-[#6B6660] border border-[#E2D9C5] shrink-0">Sin contactar</span>
+                    <span className={cn("text-[10.5px] font-medium px-2 py-0.5 rounded-full border shrink-0", STATUS_CONFIG[q.status].cls)}>
+                      {STATUS_CONFIG[q.status].label}
+                    </span>
                     {q.email ? (
                       <Button
                         size="sm"
                         className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-[11.5px] font-semibold px-3 py-1.5 rounded-lg border border-[#15803D] shrink-0"
-                        onClick={() =>
+                        onClick={() => {
+                          const now = new Date().toISOString();
+                          setQuizRecent((prev) =>
+                            prev.map((r) => (r.id === q.id ? { ...r, status: "contactado" as const } : r))
+                          );
+                          supabase
+                            .from("quiz_responses")
+                            .update({ status: "contactado", contacted_at: now })
+                            .eq("id", q.id)
+                            .then(({ error }) => {
+                              if (error) console.warn("[WA] status update failed:", error.message);
+                            });
                           window.open(
                             buildWhatsAppLink(
                               `Hola 👋 Vi que completaste el quiz de Nomaderia y tu destino ideal es ${q.recommended_destinations?.[0] ?? q.interest ?? "un parque nacional"}. ¿Te ayudo a planear tu aventura? — Frank, Nomaderia`
                             ),
                             "_blank",
                             "noopener,noreferrer"
-                          )
-                        }
+                          );
+                        }}
                       >
                         <MessageCircle className="h-3.5 w-3.5 mr-1" />
                         WhatsApp

@@ -51,6 +51,7 @@ const AdminEmailLogs = lazyWithRetry(() => import("./pages/admin/AdminEmailLogs"
 const AdminGallery = lazyWithRetry(() => import("./pages/admin/AdminGallery"));
 const SystemAudit = lazyWithRetry(() => import("./pages/admin/SystemAudit"));
 const AdminSentinelLeads = lazyWithRetry(() => import("./pages/admin/AdminSentinelLeads"));
+const AdminLeads = lazyWithRetry(() => import("./pages/admin/AdminLeads"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +114,7 @@ const App = () => (
                 <Route path="gallery" element={<AdminGallery />} />
                 <Route path="audit" element={<SystemAudit />} />
                 <Route path="sentinel-leads" element={<AdminSentinelLeads />} />
+                <Route path="leads" element={<AdminLeads />} />
               </Route>
               <Route path="*" element={<NotFound />} />
               </Routes>

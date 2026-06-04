@@ -244,6 +244,7 @@ export type Database = {
       }
       itinerary_requests: {
         Row: {
+          contacted_at: string | null
           created_at: string
           destination: string
           email: string
@@ -251,8 +252,10 @@ export type Database = {
           id: string
           message: string | null
           name: string
+          status: Database["public"]["Enums"]["lead_status"]
         }
         Insert: {
+          contacted_at?: string | null
           created_at?: string
           destination: string
           email: string
@@ -260,8 +263,10 @@ export type Database = {
           id?: string
           message?: string | null
           name: string
+          status?: Database["public"]["Enums"]["lead_status"]
         }
         Update: {
+          contacted_at?: string | null
           created_at?: string
           destination?: string
           email?: string
@@ -269,6 +274,7 @@ export type Database = {
           id?: string
           message?: string | null
           name?: string
+          status?: Database["public"]["Enums"]["lead_status"]
         }
         Relationships: []
       }
@@ -440,6 +446,7 @@ export type Database = {
       quiz_responses: {
         Row: {
           budget_range: string | null
+          contacted_at: string | null
           created_at: string
           email: string | null
           fitness_level: string | null
@@ -447,11 +454,13 @@ export type Database = {
           interest: string | null
           main_barrier: string | null
           recommended_destinations: string[] | null
+          status: Database["public"]["Enums"]["lead_status"]
           travel_style: string | null
           trip_duration: string | null
         }
         Insert: {
           budget_range?: string | null
+          contacted_at?: string | null
           created_at?: string
           email?: string | null
           fitness_level?: string | null
@@ -459,11 +468,13 @@ export type Database = {
           interest?: string | null
           main_barrier?: string | null
           recommended_destinations?: string[] | null
+          status?: Database["public"]["Enums"]["lead_status"]
           travel_style?: string | null
           trip_duration?: string | null
         }
         Update: {
           budget_range?: string | null
+          contacted_at?: string | null
           created_at?: string
           email?: string | null
           fitness_level?: string | null
@@ -471,6 +482,7 @@ export type Database = {
           interest?: string | null
           main_barrier?: string | null
           recommended_destinations?: string[] | null
+          status?: Database["public"]["Enums"]["lead_status"]
           travel_style?: string | null
           trip_duration?: string | null
         }
@@ -478,22 +490,28 @@ export type Database = {
       }
       sentinel_leads: {
         Row: {
+          contacted_at: string | null
           created_at: string | null
           email: string
           id: string
           source: string | null
+          status: Database["public"]["Enums"]["lead_status"]
         }
         Insert: {
+          contacted_at?: string | null
           created_at?: string | null
           email: string
           id?: string
           source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
         }
         Update: {
+          contacted_at?: string | null
           created_at?: string | null
           email?: string
           id?: string
           source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
         }
         Relationships: []
       }
@@ -584,6 +602,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin"
+      lead_status: "nuevo" | "contactado" | "convertido"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -712,6 +731,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin"],
+      lead_status: ["nuevo", "contactado", "convertido"],
     },
   },
 } as const
