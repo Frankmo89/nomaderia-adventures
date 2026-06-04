@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TrendingBlogCard } from "@/components/admin/TrendingBlogCard";
 import SortableHeader from "@/components/admin/SortableHeader";
+import AdminPagination from "@/components/admin/Pagination";
 import { useTrendingBlog } from "@/hooks/use-trending-blog";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,7 @@ const AdminBlogPosts = () => {
   const [search, setSearch] = useState("");
   const [showDiscoveryPanel, setShowDiscoveryPanel] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
+  const [page, setPage] = useState(1);
   const { toast } = useToast();
   const { sortState, handleSort } = useSortable<BlogSortKey>();
   const {
@@ -61,6 +63,8 @@ const AdminBlogPosts = () => {
     ? items.filter((a) => `${a.title} ${a.category ?? ""}`.toLowerCase().includes(q))
     : items;
   const sorted = applySortable(filtered, sortState, getBlogValue);
+  const pageCount = Math.max(1, Math.ceil(sorted.length / 25));
+  const paged = sorted.slice((page - 1) * 25, page * 25);
 
   const load = async () => {
     const { data } = await supabase
@@ -143,7 +147,7 @@ const AdminBlogPosts = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por título o categoría…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
+            <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Buscar por título o categoría…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
           </div>
           <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
@@ -182,7 +186,7 @@ const AdminBlogPosts = () => {
                 <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
               </TableRow>
             ) : (
-              sorted.map((a) => (
+              paged.map((a) => (
                 <TableRow key={a.id} className="border-border">
                   <TableCell className="text-foreground font-medium">{a.title}</TableCell>
                   <TableCell>
@@ -224,6 +228,7 @@ const AdminBlogPosts = () => {
           </TableBody>
         </Table>
       </div>
+      <AdminPagination page={page} pageCount={pageCount} total={sorted.length} onPageChange={setPage} />
     </div>
   );
 };

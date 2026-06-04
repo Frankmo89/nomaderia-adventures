@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SortableHeader from "@/components/admin/SortableHeader";
+import AdminPagination from "@/components/admin/Pagination";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
@@ -51,6 +52,7 @@ const AdminSentinelLeads = () => {
   const [items, setItems] = useState<SentinelLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const { sortState, handleSort } = useSortable<LeadSortKey>();
 
   const q = search.trim().toLowerCase();
@@ -58,6 +60,8 @@ const AdminSentinelLeads = () => {
     ? items.filter((lead) => lead.email.toLowerCase().includes(q))
     : items;
   const sorted = applySortable(filtered, sortState, getLeadValue);
+  const pageCount = Math.max(1, Math.ceil(sorted.length / 25));
+  const paged = sorted.slice((page - 1) * 25, page * 25);
 
   useEffect(() => {
     const load = async () => {
@@ -93,7 +97,7 @@ const AdminSentinelLeads = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por correo…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
+            <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Buscar por correo…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
           </div>
           <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
@@ -128,7 +132,7 @@ const AdminSentinelLeads = () => {
                 <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
               </TableRow>
             ) : (
-              sorted.map((lead) => (
+              paged.map((lead) => (
                 <TableRow key={lead.id} className="border-border">
                   <TableCell className="font-medium text-foreground">{lead.email}</TableCell>
                   <TableCell>
@@ -155,6 +159,7 @@ const AdminSentinelLeads = () => {
           </TableBody>
         </Table>
       </div>
+      <AdminPagination page={page} pageCount={pageCount} total={sorted.length} onPageChange={setPage} />
     </div>
   );
 };
