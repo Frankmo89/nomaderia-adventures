@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import SortableHeader from "@/components/admin/SortableHeader";
+import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
@@ -16,7 +18,17 @@ interface SentinelLead {
   created_at: string;
 }
 
+type LeadSortKey = "email" | "created_at" | "source";
+
 const db = supabase as unknown as SupabaseClient;
+
+const getLeadValue = (lead: SentinelLead, key: LeadSortKey): string => {
+  switch (key) {
+    case "email": return lead.email;
+    case "created_at": return lead.created_at;
+    case "source": return lead.source ?? "";
+  }
+};
 
 const exportCSV = (items: SentinelLead[]) => {
   const headers = ["Email", "Fuente", "Fecha"];
@@ -39,11 +51,13 @@ const AdminSentinelLeads = () => {
   const [items, setItems] = useState<SentinelLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { sortState, handleSort } = useSortable<LeadSortKey>();
 
   const q = search.trim().toLowerCase();
   const filtered = q
     ? items.filter((lead) => lead.email.toLowerCase().includes(q))
     : items;
+  const sorted = applySortable(filtered, sortState, getLeadValue);
 
   useEffect(() => {
     const load = async () => {
@@ -79,16 +93,9 @@ const AdminSentinelLeads = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por correo…"
-              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por correo…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
           </div>
-          <p className="text-xs text-muted-foreground shrink-0">
-            Mostrando {filtered.length} de {items.length}
-          </p>
+          <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
       )}
 
@@ -96,9 +103,9 @@ const AdminSentinelLeads = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-border">
-              <TableHead className="text-foreground">Email</TableHead>
-              <TableHead className="text-foreground">Fuente</TableHead>
-              <TableHead className="text-foreground">Fecha</TableHead>
+              <SortableHeader label="Email" sortKey="email" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Fuente" sortKey="source" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Fecha" sortKey="created_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Acción</TableHead>
             </TableRow>
           </TableHeader>
@@ -114,18 +121,14 @@ const AdminSentinelLeads = () => {
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
-                  No hay leads todavía.
-                </TableCell>
+                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">No hay leads todavía.</TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
-                  Sin resultados para esta búsqueda.
-                </TableCell>
+                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
               </TableRow>
             ) : (
-              filtered.map((lead) => (
+              sorted.map((lead) => (
                 <TableRow key={lead.id} className="border-border">
                   <TableCell className="font-medium text-foreground">{lead.email}</TableCell>
                   <TableCell>
@@ -134,25 +137,13 @@ const AdminSentinelLeads = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {new Date(lead.created_at).toLocaleDateString("es-MX", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {new Date(lead.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}
                   </TableCell>
                   <TableCell>
                     <Button
                       size="sm"
                       className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-xs"
-                      onClick={() =>
-                        window.open(
-                          buildWhatsAppLink(
-                            `Hola, vi que te interesaste en la alerta de permisos de Yosemite. ¿Tienes dudas? Con gusto te ayudo. — Frank, Nomaderia`
-                          ),
-                          "_blank",
-                          "noopener,noreferrer"
-                        )
-                      }
+                      onClick={() => window.open(buildWhatsAppLink(`Hola, vi que te interesaste en la alerta de permisos de Yosemite. ¿Tienes dudas? Con gusto te ayudo. — Frank, Nomaderia`), "_blank", "noopener,noreferrer")}
                     >
                       <MessageCircle className="h-3.5 w-3.5 mr-1" />
                       WhatsApp

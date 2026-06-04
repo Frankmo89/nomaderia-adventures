@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import SortableHeader from "@/components/admin/SortableHeader";
+import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
 type QuizResponse = Tables<"quiz_responses">;
+
+type QuizSortKey = "created_at" | "fitness_level" | "budget_range";
 
 const fitnessLabels: Record<string, string> = {
   sedentary: "🚶 Sedentario", light_activity: "🏃 Activo casual", moderate: "💪 Regular", active: "🔥 Muy activo",
@@ -22,18 +26,23 @@ const budgetLabels: Record<string, string> = {
   low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", unlimited: "🚀 Sin límite",
 };
 const originLabels: Record<string, string> = {
-  // New market keys
   tijuana_baja: "🇲🇽 Tijuana/Baja", sandiego_socal: "🇺🇸 San Diego/SoCal", cdmx: "🇲🇽 CDMX",
   resto_mx: "🇲🇽 Resto MX", resto_usa: "🇺🇸 Resto USA", otro: "🌎 Otro",
-  // Legacy keys kept for backward compatibility with historical data
   mx_border: "🇲🇽 Frontera MX (Legacy)", mx_center: "🇲🇽 Centro MX (Legacy)",
   mx_south: "🇲🇽 Sur MX (Legacy)", us_southwest: "🇺🇸 Suroeste USA (Legacy)",
   us_other: "🇺🇸 Resto USA (Legacy)", spain: "🇪🇸 España (Legacy)",
   south_america: "🌎 Sudamérica (Legacy)", other: "🌎 Otro (Legacy)",
 };
-
 const barrierLabels: Record<string, string> = {
   lack_info: "🗺️ Falta Info", fitness_doubt: "❤️ Condición", no_gear: "🎒 Equipo", comfort: "⛺ Comodidad",
+};
+
+const getQuizValue = (r: QuizResponse, key: QuizSortKey): string => {
+  switch (key) {
+    case "created_at": return r.created_at;
+    case "fitness_level": return r.fitness_level ?? "";
+    case "budget_range": return r.budget_range ?? "";
+  }
 };
 
 const exportCSV = (items: QuizResponse[]) => {
@@ -62,11 +71,13 @@ const AdminQuizResponses = () => {
   const [items, setItems] = useState<QuizResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { sortState, handleSort } = useSortable<QuizSortKey>();
 
   const q = search.trim().toLowerCase();
   const filtered = q
     ? items.filter((r) => (r.email ?? "").toLowerCase().includes(q))
     : items;
+  const sorted = applySortable(filtered, sortState, getQuizValue);
 
   useEffect(() => {
     const load = async () => {
@@ -95,16 +106,9 @@ const AdminQuizResponses = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por correo…"
-              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por correo…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
           </div>
-          <p className="text-xs text-muted-foreground shrink-0">
-            Mostrando {filtered.length} de {items.length}
-          </p>
+          <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
       )}
 
@@ -113,13 +117,13 @@ const AdminQuizResponses = () => {
           <TableHeader>
             <TableRow className="border-border">
               <TableHead className="text-foreground">Email</TableHead>
-              <TableHead className="text-foreground">Fitness</TableHead>
+              <SortableHeader label="Fitness" sortKey="fitness_level" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Paisaje</TableHead>
               <TableHead className="text-foreground">Duración</TableHead>
-              <TableHead className="text-foreground">Presupuesto</TableHead>
+              <SortableHeader label="Presupuesto" sortKey="budget_range" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Origen</TableHead>
               <TableHead className="text-foreground">Barrera</TableHead>
-              <TableHead className="text-foreground">Fecha</TableHead>
+              <SortableHeader label="Fecha" sortKey="created_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,14 +141,12 @@ const AdminQuizResponses = () => {
                   No hay respuestas del quiz todavía.
                 </TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
-                  Sin resultados para esta búsqueda.
-                </TableCell>
+                <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
               </TableRow>
             ) : (
-              filtered.map((r) => (
+              sorted.map((r) => (
                 <TableRow key={r.id} className="border-border">
                   <TableCell className="text-foreground">{r.email || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{fitnessLabels[r.fitness_level || ""] || r.fitness_level || "—"}</TableCell>

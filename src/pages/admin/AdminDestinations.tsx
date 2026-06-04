@@ -12,12 +12,31 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TrendingDestinationCard } from "@/components/admin/TrendingDestinationCard";
+import SortableHeader from "@/components/admin/SortableHeader";
 import { useTrendingDestinations } from "@/hooks/use-trending-destinations";
+import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Destination = Tables<"destinations">;
+
+type DestSortKey = "title" | "country" | "difficulty_level" | "created_at";
+
+const difficultyLabel: Record<string, string> = {
+  easy: "Fácil",
+  moderate: "Moderada",
+  challenging: "Difícil",
+};
+
+const getDestValue = (d: Destination, key: DestSortKey): string => {
+  switch (key) {
+    case "title": return d.title;
+    case "country": return d.country ?? "";
+    case "difficulty_level": return d.difficulty_level ?? "";
+    case "created_at": return d.created_at;
+  }
+};
 
 const AdminDestinations = () => {
   const [items, setItems] = useState<Destination[]>([]);
@@ -26,6 +45,7 @@ const AdminDestinations = () => {
   const [showDiscoveryPanel, setShowDiscoveryPanel] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
   const { toast } = useToast();
+  const { sortState, handleSort } = useSortable<DestSortKey>();
   const {
     mutate: discoverTrending,
     data: discoveryData,
@@ -44,6 +64,7 @@ const AdminDestinations = () => {
   const filtered = q
     ? items.filter((d) => `${d.title} ${d.country ?? ""}`.toLowerCase().includes(q))
     : items;
+  const sorted = applySortable(filtered, sortState, getDestValue);
 
   const load = async () => {
     const { data } = await supabase.from("destinations").select("*").order("created_at", { ascending: false });
@@ -54,19 +75,12 @@ const AdminDestinations = () => {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    if (!discoveryPending) {
-      setStatusIndex(0);
-      return;
-    }
-
+    if (!discoveryPending) { setStatusIndex(0); return; }
     // Progreso por etapas en cliente (no es streaming real del backend).
     const intervalId = window.setInterval(() => {
       setStatusIndex((prev) => (prev + 1) % discoveryStatuses.length);
     }, 2200);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    return () => { window.clearInterval(intervalId); };
   }, [discoveryPending, discoveryStatuses.length]);
 
   const handleDelete = async (id: string) => {
@@ -92,13 +106,7 @@ const AdminDestinations = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="font-serif text-3xl text-foreground">Destinos</h1>
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="border-primary/30 text-primary hover:bg-primary/10"
-            onClick={handleDiscoverTrending}
-            disabled={discoveryPending}
-          >
+          <Button type="button" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10" onClick={handleDiscoverTrending} disabled={discoveryPending}>
             <Sparkles className="h-4 w-4 mr-2" /> ✦ Descubrir Trending
           </Button>
           <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -111,43 +119,21 @@ const AdminDestinations = () => {
         <section className="mb-8 rounded-xl border border-border bg-card/40 p-4 md:p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="font-serif text-2xl text-foreground">Sugerencias IA en Tendencia</h2>
-            {discoveryPending && (
-              <Badge variant="outline" className="text-primary border-primary/30">
-                {discoveryStatuses[statusIndex]}
-              </Badge>
-            )}
+            {discoveryPending && <Badge variant="outline" className="text-primary border-primary/30">{discoveryStatuses[statusIndex]}</Badge>}
           </div>
-
           {discoveryError && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-              <p className="text-sm text-destructive font-medium mb-3">
-                No pudimos descubrir destinos en este momento. Intenta de nuevo.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="border-destructive/40 text-destructive hover:bg-destructive/20"
-                onClick={handleDiscoverTrending}
-                disabled={discoveryPending}
-              >
-                Reintentar
-              </Button>
+              <p className="text-sm text-destructive font-medium mb-3">No pudimos descubrir destinos en este momento. Intenta de nuevo.</p>
+              <Button type="button" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/20" onClick={handleDiscoverTrending} disabled={discoveryPending}>Reintentar</Button>
             </div>
           )}
-
           {!discoveryPending && !discoveryError && discoveryData?.candidates?.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No encontramos candidatos nuevos por ahora. Prueba de nuevo en unos minutos.
-            </p>
+            <p className="text-sm text-muted-foreground">No encontramos candidatos nuevos por ahora. Prueba de nuevo en unos minutos.</p>
           )}
-
           {discoveryData?.candidates && discoveryData.candidates.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {discoveryData.candidates.map((candidate) => (
-                <TrendingDestinationCard
-                  key={`${candidate.suggested_slug}-${candidate.title}`}
-                  candidate={candidate}
-                />
+                <TrendingDestinationCard key={`${candidate.suggested_slug}-${candidate.title}`} candidate={candidate} />
               ))}
             </div>
           )}
@@ -158,16 +144,9 @@ const AdminDestinations = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por título o país…"
-              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por título o país…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
           </div>
-          <p className="text-xs text-muted-foreground shrink-0">
-            Mostrando {filtered.length} de {items.length}
-          </p>
+          <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
       )}
 
@@ -175,10 +154,11 @@ const AdminDestinations = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-border">
-              <TableHead className="text-foreground">Título</TableHead>
-              <TableHead className="text-foreground">País</TableHead>
-              <TableHead className="text-foreground">Dificultad</TableHead>
+              <SortableHeader label="Título" sortKey="title" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="País" sortKey="country" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Dificultad" sortKey="difficulty_level" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Publicado</TableHead>
+              <SortableHeader label="Creado" sortKey="created_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -190,35 +170,35 @@ const AdminDestinations = () => {
                   <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-10 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-14" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                   No hay destinos. <Link to="/admin/destinations/new" className="underline text-primary">Crea el primero.</Link>
                 </TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                  Sin resultados para esta búsqueda.
-                </TableCell>
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
               </TableRow>
             ) : (
-              filtered.map((d) => (
+              sorted.map((d) => (
                 <TableRow key={d.id} className="border-border">
                   <TableCell className="text-foreground font-medium">{d.title}</TableCell>
                   <TableCell className="text-muted-foreground">{d.country}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-foreground border-border">{d.difficulty_level}</Badge>
+                    <Badge variant="outline" className="text-foreground border-border">
+                      {difficultyLabel[d.difficulty_level ?? ""] ?? d.difficulty_level}
+                    </Badge>
                   </TableCell>
                   <TableCell>
-                    <Switch
-                      checked={d.is_published ?? false}
-                      onCheckedChange={() => handleTogglePublish(d.id, d.is_published ?? false)}
-                      aria-label={d.is_published ? "Publicado" : "Borrador"}
-                    />
+                    <Switch checked={d.is_published ?? false} onCheckedChange={() => handleTogglePublish(d.id, d.is_published ?? false)} aria-label={d.is_published ? "Publicado" : "Borrador"} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
+                    {new Date(d.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -232,15 +212,11 @@ const AdminDestinations = () => {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>¿Eliminar destino?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Se eliminará permanentemente <strong>{d.title}</strong>.
-                            </AlertDialogDescription>
+                            <AlertDialogDescription>Esta acción no se puede deshacer. Se eliminará permanentemente <strong>{d.title}</strong>.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDelete(d.id)}>
-                              Eliminar
-                            </AlertDialogAction>
+                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDelete(d.id)}>Eliminar</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

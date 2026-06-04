@@ -12,12 +12,27 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TrendingBlogCard } from "@/components/admin/TrendingBlogCard";
+import SortableHeader from "@/components/admin/SortableHeader";
 import { useTrendingBlog } from "@/hooks/use-trending-blog";
+import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 type BlogPost = Pick<Tables<"blog_posts">, "id" | "title" | "category" | "is_published" | "created_at">;
+
+type BlogSortKey = "title" | "category" | "created_at";
+
+const titleCase = (s: string | null): string =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1) : "—";
+
+const getBlogValue = (a: BlogPost, key: BlogSortKey): string => {
+  switch (key) {
+    case "title": return a.title;
+    case "category": return a.category ?? "";
+    case "created_at": return a.created_at;
+  }
+};
 
 const AdminBlogPosts = () => {
   const [items, setItems] = useState<BlogPost[]>([]);
@@ -26,6 +41,7 @@ const AdminBlogPosts = () => {
   const [showDiscoveryPanel, setShowDiscoveryPanel] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
   const { toast } = useToast();
+  const { sortState, handleSort } = useSortable<BlogSortKey>();
   const {
     mutate: discoverTrending,
     data: discoveryData,
@@ -44,6 +60,7 @@ const AdminBlogPosts = () => {
   const filtered = q
     ? items.filter((a) => `${a.title} ${a.category ?? ""}`.toLowerCase().includes(q))
     : items;
+  const sorted = applySortable(filtered, sortState, getBlogValue);
 
   const load = async () => {
     const { data } = await supabase
@@ -57,19 +74,12 @@ const AdminBlogPosts = () => {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    if (!discoveryPending) {
-      setStatusIndex(0);
-      return;
-    }
-
+    if (!discoveryPending) { setStatusIndex(0); return; }
     // Progreso por etapas en cliente (no es streaming real del backend).
     const intervalId = window.setInterval(() => {
       setStatusIndex((prev) => (prev + 1) % discoveryStatuses.length);
     }, 2200);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    return () => { window.clearInterval(intervalId); };
   }, [discoveryPending, discoveryStatuses.length]);
 
   const handleDelete = async (id: string) => {
@@ -95,13 +105,7 @@ const AdminBlogPosts = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="font-serif text-3xl text-foreground">Posts del Blog</h1>
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="border-primary/30 text-primary hover:bg-primary/10"
-            onClick={handleDiscoverTrending}
-            disabled={discoveryPending}
-          >
+          <Button type="button" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10" onClick={handleDiscoverTrending} disabled={discoveryPending}>
             <Sparkles className="h-4 w-4 mr-2" /> ✦ Descubrir Temas SEO
           </Button>
           <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -114,43 +118,21 @@ const AdminBlogPosts = () => {
         <section className="mb-8 rounded-xl border border-border bg-card/40 p-4 md:p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="font-serif text-2xl text-foreground">Sugerencias IA para Blog</h2>
-            {discoveryPending && (
-              <Badge variant="outline" className="text-primary border-primary/30">
-                {discoveryStatuses[statusIndex]}
-              </Badge>
-            )}
+            {discoveryPending && <Badge variant="outline" className="text-primary border-primary/30">{discoveryStatuses[statusIndex]}</Badge>}
           </div>
-
           {discoveryError && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-              <p className="text-sm text-destructive font-medium mb-3">
-                No pudimos descubrir temas SEO en este momento. Intenta de nuevo.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="border-destructive/40 text-destructive hover:bg-destructive/20"
-                onClick={handleDiscoverTrending}
-                disabled={discoveryPending}
-              >
-                Reintentar
-              </Button>
+              <p className="text-sm text-destructive font-medium mb-3">No pudimos descubrir temas SEO en este momento. Intenta de nuevo.</p>
+              <Button type="button" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/20" onClick={handleDiscoverTrending} disabled={discoveryPending}>Reintentar</Button>
             </div>
           )}
-
           {!discoveryPending && !discoveryError && discoveryData?.candidates?.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No encontramos candidatos nuevos por ahora. Prueba de nuevo en unos minutos.
-            </p>
+            <p className="text-sm text-muted-foreground">No encontramos candidatos nuevos por ahora. Prueba de nuevo en unos minutos.</p>
           )}
-
           {discoveryData?.candidates && discoveryData.candidates.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {discoveryData.candidates.map((candidate) => (
-                <TrendingBlogCard
-                  key={`${candidate.suggested_slug}-${candidate.title}`}
-                  candidate={candidate}
-                />
+                <TrendingBlogCard key={`${candidate.suggested_slug}-${candidate.title}`} candidate={candidate} />
               ))}
             </div>
           )}
@@ -161,16 +143,9 @@ const AdminBlogPosts = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por título o categoría…"
-              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por título o categoría…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
           </div>
-          <p className="text-xs text-muted-foreground shrink-0">
-            Mostrando {filtered.length} de {items.length}
-          </p>
+          <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
       )}
 
@@ -178,9 +153,10 @@ const AdminBlogPosts = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-border">
-              <TableHead className="text-foreground">Título</TableHead>
-              <TableHead className="text-foreground">Categoría</TableHead>
+              <SortableHeader label="Título" sortKey="title" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Categoría" sortKey="category" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Publicado</TableHead>
+              <SortableHeader label="Creado" sortKey="created_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -191,34 +167,34 @@ const AdminBlogPosts = () => {
                   <TableCell><Skeleton className="h-4 w-48" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-10 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-14" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
                   No hay posts. <Link to="/admin/blog-posts/new" className="underline text-primary">Crea el primero.</Link>
                 </TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
-                  Sin resultados para esta búsqueda.
-                </TableCell>
+                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
               </TableRow>
             ) : (
-              filtered.map((a) => (
+              sorted.map((a) => (
                 <TableRow key={a.id} className="border-border">
                   <TableCell className="text-foreground font-medium">{a.title}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-foreground border-border">{a.category}</Badge>
+                    <Badge variant="outline" className="text-foreground border-border">
+                      {titleCase(a.category)}
+                    </Badge>
                   </TableCell>
                   <TableCell>
-                    <Switch
-                      checked={a.is_published ?? false}
-                      onCheckedChange={() => handleTogglePublish(a.id, a.is_published)}
-                      aria-label={a.is_published ? "Publicado" : "Borrador"}
-                    />
+                    <Switch checked={a.is_published ?? false} onCheckedChange={() => handleTogglePublish(a.id, a.is_published)} aria-label={a.is_published ? "Publicado" : "Borrador"} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
+                    {new Date(a.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -232,15 +208,11 @@ const AdminBlogPosts = () => {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>¿Eliminar post?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Se eliminará permanentemente <strong>{a.title}</strong>.
-                            </AlertDialogDescription>
+                            <AlertDialogDescription>Esta acción no se puede deshacer. Se eliminará permanentemente <strong>{a.title}</strong>.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDelete(a.id)}>
-                              Eliminar
-                            </AlertDialogAction>
+                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDelete(a.id)}>Eliminar</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

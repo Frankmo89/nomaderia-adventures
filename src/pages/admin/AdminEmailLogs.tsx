@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import SortableHeader from "@/components/admin/SortableHeader";
+import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmailLog {
@@ -16,10 +18,21 @@ interface EmailLog {
   error_message: string | null;
 }
 
+type EmailLogSortKey = "email" | "email_type" | "status" | "sent_at";
+
 const typeLabels: Record<string, string> = {
   quiz_results: "Quiz",
   gear_guide: "Guía de Equipo",
   itinerary_cta: "Itinerario CTA",
+};
+
+const getEmailLogValue = (l: EmailLog, key: EmailLogSortKey): string => {
+  switch (key) {
+    case "email": return l.email;
+    case "email_type": return l.email_type;
+    case "status": return l.status;
+    case "sent_at": return l.sent_at;
+  }
 };
 
 const exportCSV = (items: EmailLog[]) => {
@@ -65,11 +78,13 @@ const AdminEmailLogs = () => {
   const [items, setItems] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { sortState, handleSort } = useSortable<EmailLogSortKey>();
 
   const q = search.trim().toLowerCase();
   const filtered = q
     ? items.filter((l) => l.email.toLowerCase().includes(q))
     : items;
+  const sorted = applySortable(filtered, sortState, getEmailLogValue);
 
   useEffect(() => {
     const load = async () => {
@@ -101,16 +116,9 @@ const AdminEmailLogs = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por correo…"
-              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por correo…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
           </div>
-          <p className="text-xs text-muted-foreground shrink-0">
-            Mostrando {filtered.length} de {items.length}
-          </p>
+          <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
       )}
 
@@ -118,10 +126,10 @@ const AdminEmailLogs = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-border">
-              <TableHead className="text-foreground">Email</TableHead>
-              <TableHead className="text-foreground">Tipo</TableHead>
-              <TableHead className="text-foreground">Estado</TableHead>
-              <TableHead className="text-foreground">Fecha</TableHead>
+              <SortableHeader label="Email" sortKey="email" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Tipo" sortKey="email_type" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Estado" sortKey="status" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Fecha" sortKey="sent_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -140,14 +148,12 @@ const AdminEmailLogs = () => {
                   No hay emails enviados todavía.
                 </TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
-                  Sin resultados para esta búsqueda.
-                </TableCell>
+                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
               </TableRow>
             ) : (
-              filtered.map((l) => (
+              sorted.map((l) => (
                 <TableRow key={l.id} className="border-border">
                   <TableCell className="text-foreground">{l.email}</TableCell>
                   <TableCell><TypeBadge type={l.email_type} /></TableCell>

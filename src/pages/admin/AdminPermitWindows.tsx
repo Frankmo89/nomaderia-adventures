@@ -72,6 +72,12 @@ const emptyForm: PermitWindowFormState = {
   is_active: false,
 };
 
+const windowTypeLabel: Record<string, string> = {
+  lottery: "Lotería",
+  reservation_release: "Liberación",
+  first_come: "Por llegada",
+};
+
 const discoveryStatuses = [
   "Buscando fuentes oficiales…",
   "Contrastando ventanas por permiso…",
@@ -569,7 +575,7 @@ const AdminPermitWindows = () => {
                   <TableCell className="text-foreground font-medium">{item.park}</TableCell>
                   <TableCell className="text-muted-foreground">{item.permit_name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-foreground border-border">{item.window_type}</Badge>
+                    <Badge variant="outline" className="text-foreground border-border">{windowTypeLabel[item.window_type] ?? item.window_type}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{formatDateTimeReadable(item.opens_at)}</TableCell>
                   <TableCell className="text-muted-foreground">{item.year}</TableCell>

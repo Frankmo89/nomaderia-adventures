@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import SortableHeader from "@/components/admin/SortableHeader";
+import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ItineraryRequest {
@@ -17,12 +19,22 @@ interface ItineraryRequest {
   created_at: string;
 }
 
+type ItinSortKey = "name" | "destination" | "created_at";
+
 const budgetLabel: Record<string, string> = {
   "menos-de-500": "< $500",
   "500-1000": "$500–$1,000",
   "1000-2500": "$1,000–$2,500",
   "2500-5000": "$2,500–$5,000",
   "mas-de-5000": "> $5,000",
+};
+
+const getItinValue = (r: ItineraryRequest, key: ItinSortKey): string => {
+  switch (key) {
+    case "name": return r.name;
+    case "destination": return r.destination;
+    case "created_at": return r.created_at;
+  }
 };
 
 const exportCSV = (items: ItineraryRequest[]) => {
@@ -51,13 +63,13 @@ const AdminItineraryRequests = () => {
   const [items, setItems] = useState<ItineraryRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { sortState, handleSort } = useSortable<ItinSortKey>();
 
   const q = search.trim().toLowerCase();
   const filtered = q
-    ? items.filter((r) =>
-        `${r.name} ${r.email} ${r.destination}`.toLowerCase().includes(q)
-      )
+    ? items.filter((r) => `${r.name} ${r.email} ${r.destination}`.toLowerCase().includes(q))
     : items;
+  const sorted = applySortable(filtered, sortState, getItinValue);
 
   useEffect(() => {
     const load = async () => {
@@ -83,11 +95,7 @@ const AdminItineraryRequests = () => {
           )}
         </div>
         {items.length > 0 && (
-          <Button
-            variant="outline"
-            className="border-border text-foreground hover:bg-muted"
-            onClick={() => exportCSV(items)}
-          >
+          <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => exportCSV(items)}>
             <Download className="h-4 w-4 mr-2" /> Exportar CSV
           </Button>
         )}
@@ -97,16 +105,9 @@ const AdminItineraryRequests = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, correo o destino…"
-              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nombre, correo o destino…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
           </div>
-          <p className="text-xs text-muted-foreground shrink-0">
-            Mostrando {filtered.length} de {items.length}
-          </p>
+          <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
       )}
 
@@ -114,12 +115,12 @@ const AdminItineraryRequests = () => {
         <Table>
           <TableHeader>
             <TableRow className="border-border">
-              <TableHead className="text-foreground">Nombre</TableHead>
+              <SortableHeader label="Nombre" sortKey="name" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Email</TableHead>
-              <TableHead className="text-foreground">Destino</TableHead>
+              <SortableHeader label="Destino" sortKey="destination" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Presupuesto</TableHead>
               <TableHead className="text-foreground">Mensaje</TableHead>
-              <TableHead className="text-foreground">Fecha</TableHead>
+              <SortableHeader label="Fecha" sortKey="created_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -140,14 +141,12 @@ const AdminItineraryRequests = () => {
                   No hay solicitudes todavía.
                 </TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                  Sin resultados para esta búsqueda.
-                </TableCell>
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Sin resultados para esta búsqueda.</TableCell>
               </TableRow>
             ) : (
-              filtered.map((r) => (
+              sorted.map((r) => (
                 <TableRow key={r.id} className="border-border">
                   <TableCell className="text-foreground font-medium">{r.name}</TableCell>
                   <TableCell className="text-muted-foreground">{r.email}</TableCell>
