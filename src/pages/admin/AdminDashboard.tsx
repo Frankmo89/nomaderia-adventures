@@ -72,6 +72,13 @@ const fitnessLabels: Record<string, string> = {
 
 const db = supabase as unknown as SupabaseClient;
 
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 12) return "Buenos días";
+  if (h >= 12 && h < 19) return "Buenas tardes";
+  return "Buenas noches";
+}
+
 const MiniBar = ({ data, labels }: { data: Record<string, number>; labels: Record<string, string> }) => {
   const total = Object.values(data).reduce((a, b) => a + b, 0);
   if (total === 0) return <p className="text-sm text-muted-foreground">Sin datos aún</p>;
@@ -103,6 +110,7 @@ const MiniBar = ({ data, labels }: { data: Record<string, number>; labels: Recor
 };
 
 const AdminDashboard = () => {
+  const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
   const [stats, setStats] = useState<Stats>({
     destinations: 0, destinationDrafts: 0,
     aiGeneratedDestinations: 0,
@@ -210,6 +218,7 @@ const AdminDashboard = () => {
         });
         setQuizAnalytics({ interests, origins, budgets, fitness });
       }
+      setFetchedAt(new Date());
     };
     load();
   }, []);
@@ -221,13 +230,13 @@ const AdminDashboard = () => {
   return (
     <div>
       {/* CHANGE 1: Top header bar */}
-      <header className="flex items-center justify-between -mx-4 md:-mx-8 -mt-4 md:-mt-8 mb-6 md:mb-8 px-7 py-5 border-b border-[#E7E2D9] bg-[#FAFAFA]">
+      <header className="flex items-center justify-between -mx-4 md:-mx-8 -mt-4 md:-mt-8 mb-6 md:mb-8 px-7 py-5 border-b border-border bg-background">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-[22px] font-semibold text-[#1C1917] tracking-tight">Buenos días, Frank</h1>
+            <h1 className="text-[22px] font-semibold text-foreground tracking-tight">{getGreeting()}, Frank</h1>
             <span className="text-[10.5px] font-bold px-2 py-0.5 rounded bg-[#E6F0E9] text-[#166534] border border-[rgba(22,101,52,0.18)] tracking-widest">NOMADERIA · PRODUCCIÓN</span>
           </div>
-          <p className="text-[12.5px] text-[#6B6660] mt-0.5">
+          <p className="text-[12.5px] text-muted-foreground mt-0.5">
             {new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}
           </p>
         </div>
@@ -254,7 +263,11 @@ const AdminDashboard = () => {
             <span className="text-base font-bold text-[#1C1917]">Atención hoy</span>
             <span className="text-[11.5px] text-[#6B6660]">· {sentinelRecent.length + quizRecent.length} cosas pendientes</span>
           </div>
-          <span className="text-[11px] text-[#9A938B]">Actualizado hace 2 min</span>
+          {fetchedAt && (
+            <span className="text-[11px] text-[#9A938B]">
+              Actualizado {fetchedAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
         </div>
 
         {/* Two-column grid */}
@@ -372,7 +385,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-card-foreground/70">Destinos</CardTitle>

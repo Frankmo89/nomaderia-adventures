@@ -23,6 +23,7 @@ const links = [
 
 const AdminLayout = () => {
   const [loading, setLoading] = useState(true);
+  const [recentLeadCount, setRecentLeadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -43,6 +44,18 @@ const AdminLayout = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  useEffect(() => {
+    if (loading) return;
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    supabase
+      .from("sentinel_leads")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", cutoff)
+      .then(({ count }) => {
+        if (count !== null) setRecentLeadCount(count);
+      });
+  }, [loading]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -91,9 +104,8 @@ const AdminLayout = () => {
                 )}
                 <l.icon className={cn("h-4 w-4", active ? "text-primary" : l.alert ? "text-[#F59E0B]" : "")} />
                 {l.label}
-                {l.alert && (
-                  // TODO: wire to live sentinel_leads count
-                  <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary">1</span>
+                {l.alert && recentLeadCount > 0 && (
+                  <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary">{recentLeadCount}</span>
                 )}
               </Link>
             );
