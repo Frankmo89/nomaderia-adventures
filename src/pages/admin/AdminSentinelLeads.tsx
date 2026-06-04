@@ -14,6 +14,7 @@ import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 
 interface SentinelLead {
   id: string;
@@ -29,6 +30,13 @@ type LeadSortKey = "email" | "created_at" | "source" | "status";
 const COL_COUNT = 5;
 
 const db = supabase as unknown as SupabaseClient;
+
+const lastContactAge = (iso: string): string => {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days === 0) return "hoy";
+  if (days === 1) return "hace 1d";
+  return `hace ${days}d`;
+};
 
 const getLeadValue = (lead: SentinelLead, key: LeadSortKey): string => {
   switch (key) {
@@ -62,6 +70,7 @@ const AdminSentinelLeads = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [lastContactMap, setLastContactMap] = useState<Record<string, string>>({});
   const { sortState, handleSort } = useSortable<LeadSortKey>();
 
   const q = search.trim().toLowerCase();
@@ -82,6 +91,24 @@ const AdminSentinelLeads = () => {
       setLoading(false);
     };
     load();
+  }, []);
+
+  useEffect(() => {
+    supabase
+      .from("admin_events")
+      .select("lead_email, created_at")
+      .eq("event_type", "whatsapp_click")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<string, string> = {};
+        for (const row of (data as Array<{ lead_email: string | null; created_at: string }>)) {
+          if (row.lead_email && !map[row.lead_email]) {
+            map[row.lead_email] = row.created_at;
+          }
+        }
+        setLastContactMap(map);
+      });
   }, []);
 
   const handleStatusUpdate = (id: string, newStatus: LeadStatus) => {
@@ -115,6 +142,8 @@ const AdminSentinelLeads = () => {
           if (error) console.warn("[WA] status update failed:", error.message);
         });
     }
+    trackAdminEvent("whatsapp_click", lead.email, "sentinel", { destination: null });
+    setLastContactMap((prev) => ({ ...prev, [lead.email]: new Date().toISOString() }));
     window.open(
       buildWhatsAppLink(
         `Hola, vi que te interesaste en la alerta de permisos de Yosemite. ¿Tienes dudas? Con gusto te ayudo. — Frank, Nomaderia`
@@ -202,7 +231,16 @@ const AdminSentinelLeads = () => {
             ) : (
               paged.map((lead) => (
                 <TableRow key={lead.id} className="border-border">
-                  <TableCell className="font-medium text-foreground">{lead.email}</TableCell>
+                  <TableCell className="font-medium text-foreground">
+                    <div className="flex flex-col">
+                      <span>{lead.email}</span>
+                      {lastContactMap[lead.email] && (
+                        <span className="text-[11px] text-stone-500 mt-0.5">
+                          Último contacto: {lastContactAge(lastContactMap[lead.email])}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-xs border-border text-muted-foreground">
                       {lead.source || "—"}

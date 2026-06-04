@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import MiniBar from "@/components/admin/MiniBar";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 import { cn } from "@/lib/utils";
 
 interface Stats {
@@ -353,6 +354,7 @@ const AdminDashboard = () => {
                           .then(({ error }) => {
                             if (error) console.warn("[WA] status update failed:", error.message);
                           });
+                        trackAdminEvent("whatsapp_click", lead.email, "sentinel", { destination: null });
                         window.open(
                           buildWhatsAppLink(
                             `Hola, vi que te interesaste en la alerta de permisos de Yosemite. ¿Tienes dudas? Con gusto te ayudo. — Frank, Nomaderia`
@@ -421,6 +423,7 @@ const AdminDashboard = () => {
                             .then(({ error }) => {
                               if (error) console.warn("[WA] status update failed:", error.message);
                             });
+                          trackAdminEvent("whatsapp_click", q.email ?? null, "quiz", { destination: q.recommended_destinations?.[0] ?? null });
                           window.open(
                             buildWhatsAppLink(
                               `Hola 👋 Vi que completaste el quiz de Nomaderia y tu destino ideal es ${q.recommended_destinations?.[0] ?? q.interest ?? "un parque nacional"}. ¿Te ayudo a planear tu aventura? — Frank, Nomaderia`

@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 import { cn } from "@/lib/utils";
 
 type PermitAlertStatus = "active" | "notified" | "expired";
@@ -42,6 +43,13 @@ function formatDate(iso: string | null | undefined): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function formatNotifiedDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 const STATUS_BADGE: Record<PermitAlertStatus, string> = {
@@ -142,9 +150,14 @@ const AdminPermitAlerts = () => {
   const handleStatusChange = async (id: string, nextStatus: PermitAlertStatus) => {
     setUpdatingId(id);
 
+    const nowIso = new Date().toISOString();
+
     const { error } = await supabase
       .from("permit_alerts")
-      .update({ status: nextStatus })
+      .update({
+        status: nextStatus,
+        ...(nextStatus === "notified" ? { notified_at: nowIso } : {}),
+      })
       .eq("id", id);
 
     if (error) {
@@ -153,7 +166,13 @@ const AdminPermitAlerts = () => {
       return;
     }
 
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, status: nextStatus } : item)));
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, status: nextStatus, ...(nextStatus === "notified" ? { notified_at: nowIso } : {}) }
+          : item
+      )
+    );
     setUpdatingId(null);
     toast({ title: "Estado actualizado" });
   };
@@ -253,7 +272,7 @@ const AdminPermitAlerts = () => {
                     </Badge>
                   </p>
                   {alert.notified_at && (
-                    <p><span className="text-foreground">Notificada:</span> {formatDate(alert.notified_at)}</p>
+                    <p><span className="text-foreground">Notificada:</span> {formatNotifiedDate(alert.notified_at)}</p>
                   )}
                   <p><span className="text-foreground">Creada:</span> {formatDate(alert.created_at)}</p>
                 </div>
@@ -267,13 +286,14 @@ const AdminPermitAlerts = () => {
                   <Button
                     size="sm"
                     className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-xs px-3 py-1.5 h-7 rounded-lg border border-[#15803D]"
-                    onClick={() =>
+                    onClick={() => {
+                      trackAdminEvent("whatsapp_click", alert.email, "permit_alert", { destination: alert.park });
                       window.open(
                         buildWhatsAppLink(`Hola, tenemos una actualización sobre el permiso para ${alert.park} (${alert.target_year}). ¿Tienes dudas? — Frank, Nomaderia`),
                         "_blank",
                         "noopener,noreferrer",
-                      )
-                    }
+                      );
+                    }}
                   >
                     <MessageCircle className="h-3.5 w-3.5 mr-1" /> WhatsApp
                   </Button>
@@ -346,19 +366,20 @@ const AdminPermitAlerts = () => {
                         title="WhatsApp follow-up"
                         aria-label="WhatsApp follow-up"
                         className="h-7 w-7 text-[#16A34A] hover:bg-[#16A34A]/10"
-                        onClick={() =>
+                        onClick={() => {
+                          trackAdminEvent("whatsapp_click", alert.email, "permit_alert", { destination: alert.park });
                           window.open(
                             buildWhatsAppLink(`Hola, tenemos una actualización sobre el permiso para ${alert.park} (${alert.target_year}). ¿Tienes dudas? — Frank, Nomaderia`),
                             "_blank",
                             "noopener,noreferrer",
-                          )
-                        }
+                          );
+                        }}
                       >
                         <MessageCircle className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{formatDate(alert.notified_at)}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{formatNotifiedDate(alert.notified_at)}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">{formatDate(alert.created_at)}</TableCell>
                 </TableRow>
               ))

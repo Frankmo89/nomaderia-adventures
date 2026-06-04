@@ -13,6 +13,7 @@ import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 import { cn } from "@/lib/utils";
 
 interface ItineraryRequest {
@@ -37,6 +38,13 @@ const budgetLabel: Record<string, string> = {
   "1000-2500": "$1,000–$2,500",
   "2500-5000": "$2,500–$5,000",
   "mas-de-5000": "> $5,000",
+};
+
+const lastContactAge = (iso: string): string => {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days === 0) return "hoy";
+  if (days === 1) return "hace 1d";
+  return `hace ${days}d`;
 };
 
 const getItinValue = (r: ItineraryRequest, key: ItinSortKey): string => {
@@ -77,6 +85,7 @@ const AdminItineraryRequests = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [lastContactMap, setLastContactMap] = useState<Record<string, string>>({});
   const { sortState, handleSort } = useSortable<ItinSortKey>();
 
   const toggleExpanded = (id: string) => {
@@ -105,6 +114,24 @@ const AdminItineraryRequests = () => {
       setLoading(false);
     };
     load();
+  }, []);
+
+  useEffect(() => {
+    supabase
+      .from("admin_events")
+      .select("lead_email, created_at")
+      .eq("event_type", "whatsapp_click")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<string, string> = {};
+        for (const row of (data as Array<{ lead_email: string | null; created_at: string }>)) {
+          if (row.lead_email && !map[row.lead_email]) {
+            map[row.lead_email] = row.created_at;
+          }
+        }
+        setLastContactMap(map);
+      });
   }, []);
 
   const handleStatusUpdate = (id: string, newStatus: LeadStatus) => {
@@ -139,6 +166,8 @@ const AdminItineraryRequests = () => {
           if (error) console.warn("[WA] status update failed:", error.message);
         });
     }
+    trackAdminEvent("whatsapp_click", r.email, "itinerary", { destination: r.destination });
+    setLastContactMap((prev) => ({ ...prev, [r.email]: new Date().toISOString() }));
     window.open(
       buildWhatsAppLink(
         `Hola ${r.name}, recibí tu solicitud para ${r.destination}. ¿Platicamos? — Frank, Nomaderia`
@@ -233,7 +262,16 @@ const AdminItineraryRequests = () => {
               paged.map((r) => (
                 <TableRow key={r.id} className="border-border">
                   <TableCell className="text-foreground font-medium">{r.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.email}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <div className="flex flex-col">
+                      <span>{r.email}</span>
+                      {lastContactMap[r.email] && (
+                        <span className="text-[11px] text-stone-500 mt-0.5">
+                          Último contacto: {lastContactAge(lastContactMap[r.email])}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{r.destination}</TableCell>
                   <TableCell>
                     {r.estimated_budget ? (

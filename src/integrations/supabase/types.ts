@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          lead_email: string | null
+          lead_source: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          lead_email?: string | null
+          lead_source?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          lead_email?: string | null
+          lead_source?: string | null
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       ai_content_meta: {
         Row: {
           content_id: string
@@ -368,6 +395,7 @@ export type Database = {
           email: string
           id: string
           notes: string | null
+          notified_at: string | null
           park: string
           permit_name: string
           status: string
@@ -378,6 +406,7 @@ export type Database = {
           email: string
           id?: string
           notes?: string | null
+          notified_at?: string | null
           park: string
           permit_name: string
           status?: string
@@ -388,6 +417,7 @@ export type Database = {
           email?: string
           id?: string
           notes?: string | null
+          notified_at?: string | null
           park?: string
           permit_name?: string
           status?: string

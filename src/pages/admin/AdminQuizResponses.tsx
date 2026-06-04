@@ -12,6 +12,7 @@ import MiniBar from "@/components/admin/MiniBar";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -417,7 +418,10 @@ const AdminQuizResponses = () => {
                             <Button
                               size="sm"
                               className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-xs"
-                              onClick={() => window.open(buildWhatsAppLink(waMessage), "_blank", "noopener,noreferrer")}
+                              onClick={() => {
+                                trackAdminEvent("whatsapp_click", r.email ?? null, "quiz", { destination: r.recommended_destinations?.[0] ?? null });
+                                window.open(buildWhatsAppLink(waMessage), "_blank", "noopener,noreferrer");
+                              }}
                             >
                               <MessageCircle className="h-3.5 w-3.5 mr-1" />
                               WA

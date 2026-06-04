@@ -15,6 +15,7 @@ import { STATUS_CONFIG } from "@/components/admin/LeadStatusBadge";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 import { cn } from "@/lib/utils";
 
 interface UnifiedLead {
@@ -85,6 +86,7 @@ const AdminLeads = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [lastContactMap, setLastContactMap] = useState<Record<string, string>>({});
   const { sortState, handleSort } = useSortable<LeadSortKey>();
 
   useEffect(() => {
@@ -157,6 +159,24 @@ const AdminLeads = () => {
     load();
   }, []);
 
+  useEffect(() => {
+    supabase
+      .from("admin_events")
+      .select("lead_email, created_at")
+      .eq("event_type", "whatsapp_click")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<string, string> = {};
+        for (const row of (data as Array<{ lead_email: string | null; created_at: string }>)) {
+          if (row.lead_email && !map[row.lead_email]) {
+            map[row.lead_email] = row.created_at;
+          }
+        }
+        setLastContactMap(map);
+      });
+  }, []);
+
   const handleStatusUpdate = (id: string, newStatus: LeadStatus) => {
     setItems((prev) =>
       prev.map((l) => {
@@ -188,6 +208,8 @@ const AdminLeads = () => {
           if (error) console.warn("[WA] status update failed:", error.message);
         });
     }
+    trackAdminEvent("whatsapp_click", lead.email, lead.source, { destination: lead.destination ?? null });
+    setLastContactMap((prev) => ({ ...prev, [lead.email]: new Date().toISOString() }));
     window.open(
       buildWhatsAppLink(buildWaMessage(lead)),
       "_blank",
@@ -364,6 +386,11 @@ const AdminLeads = () => {
                         <span className="text-foreground font-medium text-sm">{lead.email}</span>
                         {lead.name && (
                           <span className="text-xs text-muted-foreground">{lead.name}</span>
+                        )}
+                        {lastContactMap[lead.email] && (
+                          <span className="text-[11px] text-stone-500 mt-0.5">
+                            Último contacto: {relDate(lastContactMap[lead.email])}
+                          </span>
                         )}
                       </div>
                     </TableCell>
