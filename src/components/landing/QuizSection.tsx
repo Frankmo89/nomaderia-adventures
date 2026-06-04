@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motion";
 import {
-  Footprints, Map, Mountain, Shield, TreePine, Sun, Compass, Check,
+  Footprints, Map, Mountain, Shield, TreePine, Sun, Compass,
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
   Mail, Send, Loader2, Calendar, MapPin, HeartPulse, Backpack, Tent,
 } from "lucide-react";
@@ -119,29 +119,45 @@ const steps: QuizStep[] = [
   },
 ];
 
-// --- MatchRing SVG component ---
-const MatchRing = ({ percent }: { percent: number }) => {
-  const r = 28;
-  const circumference = 2 * Math.PI * r;
-  const offset = circumference - (percent / 100) * circumference;
-  const color = percent >= 80 ? "text-green-400" : percent >= 60 ? "text-primary" : "text-yellow-400";
+// --- CompatibilityPill: count-up or friendly fallback ---
+const CompatibilityPill = ({
+  percent,
+  size = "md",
+}: {
+  percent: number;
+  size?: "md" | "sm";
+}) => {
+  const reduceMotion = useReducedMotion();
+  const showPercent = percent >= 75;
+  const [displayed, setDisplayed] = useState(0);
+
+  useEffect(() => {
+    if (!showPercent || reduceMotion) {
+      setDisplayed(percent);
+      return;
+    }
+    const duration = 1000;
+    const startTime = performance.now();
+    let raf: number;
+    const tick = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayed(Math.round(eased * percent));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [percent, reduceMotion, showPercent]);
 
   return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width="68" height="68" className="-rotate-90">
-        <circle cx="34" cy="34" r={r} fill="none" stroke="currentColor" strokeWidth="4" className="text-foreground/10" />
-        <motion.circle
-          cx="34" cy="34" r={r} fill="none" strokeWidth="4" strokeLinecap="round"
-          className={color}
-          stroke="currentColor"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
-        />
-      </svg>
-      <span className="absolute text-sm font-bold text-foreground">{percent}%</span>
-    </div>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full bg-secondary/10 text-secondary font-semibold",
+        size === "sm" ? "px-3 py-1 text-xs" : "px-4 py-1.5 text-sm"
+      )}
+    >
+      {showPercent ? `${displayed}% compatible` : "Muy buena opción para ti"}
+    </span>
   );
 };
 
@@ -257,95 +273,73 @@ const EmailCapture = ({
   );
 };
 
-// --- Sub-component: Result card ---
-const ResultCard = ({ d, index }: { d: QuizDestination; index: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 40 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.3 + index * 0.2, duration: 0.6, ease: "easeOut" }}
-    className={index === 0 ? "sm:col-span-3 sm:max-w-2xl sm:mx-auto" : ""}
+// --- Sub-component: #1 hero result ---
+const HeroResultCard = ({ d }: { d: QuizDestination }) => (
+  <div>
+    <p className="text-eyebrow text-secondary mb-3">Tu Destino Ideal</p>
+    <h2 className="font-serif font-bold text-4xl md:text-5xl text-foreground leading-tight mb-5">
+      {d.title}
+    </h2>
+    <div className="relative rounded-2xl overflow-hidden h-64 md:h-80 mb-5">
+      {d.hero_image_url ? (
+        <img
+          src={d.hero_image_url}
+          alt={`Vista de ${d.title}`}
+          loading="lazy"
+          decoding="async"
+          className="w-full h-full object-cover img-warm"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/80 via-transparent to-transparent" />
+    </div>
+    <div className="space-y-3">
+      <CompatibilityPill percent={d.matchPercent} size="md" />
+      {d.short_description && (
+        <p className="text-base text-muted-foreground line-clamp-2">{d.short_description}</p>
+      )}
+      <Link
+        to={`/destinos/${d.slug}`}
+        className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg text-sm font-semibold shadow-lg shadow-primary/30 transition-colors"
+      >
+        Ver Guía Completa <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  </div>
+);
+
+// --- Sub-component: alternative result card ---
+const AlternativeCard = ({ d }: { d: QuizDestination }) => (
+  <Link
+    to={`/destinos/${d.slug}`}
+    className="block rounded-2xl overflow-hidden card-depth bg-card border border-border group"
   >
-    <Link
-      to={`/destinos/${d.slug}`}
-      className="block rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 active:scale-[0.98] sm:hover:scale-[1.02] group bg-card border border-border"
-    >
-      {/* Imagen con overlays mínimos */}
-      <div className={`relative overflow-hidden ${index === 0 ? "h-48 sm:h-72" : "h-40 sm:h-52"}`}>
-        {d.hero_image_url ? (
-          <img
-            src={d.hero_image_url}
-            alt={`Vista de ${d.title}`}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-
-        {/* MatchRing — top left */}
-        <div className="absolute top-3 left-3">
-          <MatchRing percent={d.matchPercent} />
-        </div>
-
-        {/* Difficulty badge — top right */}
-        <div className="absolute top-3 right-3">
-          <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${difficultyColor[d.difficulty_level]}`}>
-            {difficultyLabel[d.difficulty_level]}
-          </span>
-        </div>
-      </div>
-
-      {/* Contenido debajo de la imagen */}
-      <div className="p-4 sm:p-5 space-y-2.5">
-        <h3
-          className={`font-serif font-bold text-foreground leading-tight ${
-            index === 0 ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
-          }`}
-        >
-          {d.title}
-        </h3>
-
-        <p className="text-sm text-muted-foreground">
-          {(() => {
-            const countryLabel = `${countryFlag[d.country] ?? ""} ${d.country}`.trim();
-            const daysLabel = d.days_needed ?? "—";
-            const budgetLabel =
-              d.estimated_budget_usd != null
-                ? `~$${new Intl.NumberFormat("en-US", {
-                    maximumFractionDigits: 0,
-                  }).format(d.estimated_budget_usd)} USD`
-                : null;
-            return [countryLabel, daysLabel, budgetLabel].filter(Boolean).join(" · ");
-          })()}
-        </p>
-
-        {d.matchReasons.length > 0 && (
-          <div className="flex flex-wrap gap-1.5" aria-label="Razones de match">
-            {d.matchReasons.slice(0, 2).map((reason, ri) => (
-              <span
-                key={ri}
-                className="text-xs bg-primary/15 text-primary px-2.5 py-0.5 rounded-full"
-              >
-                {reason}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {d.short_description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {d.short_description}
-          </p>
-        )}
-
-        <span className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold shadow-lg shadow-primary/30 transition-colors mt-1">
-          Ver Guía Completa <ArrowRight className="h-4 w-4" />
-        </span>
-      </div>
-    </Link>
-  </motion.div>
+    <div className="relative h-40 overflow-hidden">
+      {d.hero_image_url ? (
+        <img
+          src={d.hero_image_url}
+          alt={`Vista de ${d.title}`}
+          loading="lazy"
+          decoding="async"
+          className="w-full h-full object-cover img-warm transition-transform duration-700 group-hover:scale-105"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/50 via-transparent to-transparent" />
+    </div>
+    <div className="p-4 space-y-2">
+      <h3 className="font-serif font-bold text-lg text-foreground leading-tight">{d.title}</h3>
+      <CompatibilityPill percent={d.matchPercent} size="sm" />
+      {d.short_description && (
+        <p className="text-sm text-muted-foreground line-clamp-2">{d.short_description}</p>
+      )}
+      <span className="text-sm font-medium text-primary inline-flex items-center gap-1 pt-1">
+        Ver Guía <ArrowRight className="h-3.5 w-3.5" />
+      </span>
+    </div>
+  </Link>
 );
 
 // --- Sub-component: Results view ---
@@ -364,7 +358,9 @@ const QuizResults = ({
   emailSubmitted: boolean;
   onEmailSubmit: () => void;
 }) => {
+  const reduceMotion = useReducedMotion();
   const topDestination = results[0];
+  const alternatives = results.slice(1);
   const whatsAppUrl = topDestination
     ? buildWhatsAppLink(
         `Hola equipo de Nomaderia, acabo de hacer el Quiz, mi destino ideal es ${topDestination.title} y quiero que planifiquen mi itinerario personalizado. ¿Qué paquetes tienen?`,
@@ -376,27 +372,44 @@ const QuizResults = ({
       <CelebrationParticles />
       <div className="absolute inset-0 opacity-[0.04] bg-cover bg-center pointer-events-none"
         style={{ backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=60)` }} />
-      <div className="container mx-auto px-5 max-w-5xl relative z-10">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }} className="text-center mb-10 sm:mb-14">
-          <span className="text-5xl sm:text-6xl mb-4 block">🏔️</span>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3">
-            🎉 ¡Tu Aventura Ideal!
-          </h2>
-          <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto">
-            Basado en tus respuestas, estos destinos son perfectos para ti
-          </p>
-        </motion.div>
-        <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-6">
-          {results.map((d, i) => <ResultCard key={d.id} d={d} index={i} />)}
-        </div>
+      <div className="container mx-auto px-5 max-w-2xl relative z-10">
 
-        {/* WhatsApp CTA — primary conversion action */}
+        {/* #1 hero result — fades in first */}
+        {topDestination && (
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <HeroResultCard d={topDestination} />
+          </motion.div>
+        )}
+
+        {/* Alternatives — stagger 120ms after hero */}
+        {alternatives.length > 0 && (
+          <div className="mt-10 sm:mt-14">
+            <p className="text-eyebrow text-stone-400 mb-5">También te puede gustar</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {alternatives.map((d, i) => (
+                <motion.div
+                  key={d.id}
+                  initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={reduceMotion ? { duration: 0 } : { delay: 0.12 + i * 0.12, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <AlternativeCard d={d} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* WhatsApp CTA — primary conversion action (logic untouched) */}
         {whatsAppUrl && (
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.5, ease: "easeOut" }}
+            transition={{ delay: reduceMotion ? 0 : 0.5, duration: 0.5, ease: "easeOut" }}
             className="mt-10 sm:mt-12 flex justify-center"
           >
             <a
@@ -411,11 +424,11 @@ const QuizResults = ({
           </motion.div>
         )}
 
-        {/* Email capture — always visible, discount offer */}
+        {/* Email capture — always visible, discount offer (logic untouched) */}
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.1 }}
+          transition={{ delay: reduceMotion ? 0 : 0.7 }}
           className="mt-6 sm:mt-8"
         >
           <EmailCapture
@@ -427,8 +440,12 @@ const QuizResults = ({
           />
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}
-          className="mt-8 sm:mt-10 text-center">
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: reduceMotion ? 0 : 0.9 }}
+          className="mt-8 sm:mt-10 text-center"
+        >
           <a href="#destinos" className="text-primary hover:underline font-medium text-sm sm:text-base block">
             ¿Ninguno te convence? Explora todos los destinos →
           </a>
@@ -444,12 +461,21 @@ const QuizSection = () => {
     step, answers, email, setEmail,
     showResults, emailSubmitted,
     loading, results,
-    direction, isQuizDone,
+    isQuizDone,
     handleSelect, handleBack, handleSwipe,
     fetchResults, handleEmailSubmit,
     handleCombinedSubmit,
   } = useQuiz(steps.length);
 
+  const reduceMotion = useReducedMotion();
+  const [canHover, setCanHover] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setCanHover(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   const [combinedSeason, setCombinedSeason] = useState("");
   const [combinedOrigin, setCombinedOrigin] = useState("");
 
@@ -525,39 +551,20 @@ const QuizSection = () => {
           </p>
         </Reveal>
 
-        {/* Numbered step indicator */}
-        <div className="flex items-center justify-center mb-8 sm:mb-10">
-          {steps.map((_, i) => (
-            <div key={i} className="flex items-center">
-              <motion.div
-                animate={{
-                  scale: i === step ? 1.15 : 1,
-                  transition: { duration: 0.25 },
-                }}
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 shrink-0",
-                  i < step
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
-                    : i === step
-                    ? "bg-primary text-primary-foreground ring-4 ring-primary/20 shadow-lg shadow-primary/25"
-                    : "bg-background border-2 border-border text-muted-foreground"
-                )}
-              >
-                {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
-              </motion.div>
-              {i < steps.length - 1 && (
-                <motion.div
-                  className="h-[2px] w-6 sm:w-8 transition-all duration-500"
-                  animate={{ backgroundColor: i < step ? "hsl(var(--primary))" : "hsl(var(--border))" }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
 
         {/* Glass card */}
         <div className="bg-card/50 backdrop-blur-md border border-border/70 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-background/60">
-          {/* Card top bar: back button + step label */}
+          {/* Linear progress bar — pinned to top of card */}
+          <div className="h-[3px] rounded-full bg-stone/20 mb-5 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-primary"
+              initial={false}
+              animate={{ width: `${((step + 1) / steps.length) * 100}%` }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </div>
+
+          {/* Card top bar: back button + fraction */}
           <div className="flex items-center justify-between mb-5">
             <AnimatePresence>
               {step > 0 && (
@@ -569,15 +576,18 @@ const QuizSection = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-            <span aria-live="polite" aria-atomic="true" className="ml-auto text-xs font-medium text-muted-foreground tracking-wide">
-              Pregunta {Math.min(step + 1, steps.length)} de {steps.length}
+            <span aria-live="polite" aria-atomic="true" className="ml-auto text-xs text-stone-400">
+              {Math.min(step + 1, steps.length)} / {steps.length}
             </span>
           </div>
 
-          <AnimatePresence mode="wait" custom={direction}>
-            <motion.div key={step} custom={direction}
-              initial={{ opacity: 0, x: direction * 60 }} animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction * -60 }} transition={{ duration: 0.3 }}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -20 }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               {...dragProps}>
               <h3 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mb-1.5">
                 {currentStep?.question}
@@ -644,18 +654,18 @@ const QuizSection = () => {
                       <motion.button
                         key={opt.value}
                         onClick={() => handleSelect(currentStep.key, opt.value)}
-                        whileTap={{ scale: 0.985 }}
+                        whileTap={{ opacity: 0.9 }}
                         className={cn(
-                          "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left group",
+                          "w-full flex items-center gap-4 px-4 py-5 rounded-2xl border transition-colors duration-200 text-left",
                           isSelected
-                            ? "border-primary bg-primary/10 shadow-md shadow-primary/10"
-                            : "border-border hover:border-primary/40 hover:bg-muted/40"
+                            ? "bg-primary/8 border-primary/50"
+                            : cn("bg-white border-stone/20", canHover && "hover:border-stone/40")
                         )}
                       >
                         {/* Icon tile */}
                         <div className={cn(
-                          "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-all duration-200",
-                          isSelected ? "bg-primary/20" : "bg-muted group-hover:bg-muted/80"
+                          "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors duration-200",
+                          isSelected ? "bg-primary/15" : "bg-muted"
                         )}>
                           {opt.icon}
                         </div>
@@ -666,21 +676,9 @@ const QuizSection = () => {
                             {opt.label}
                           </p>
                           {opt.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                            <p className="text-sm text-stone-500 mt-0.5 leading-snug">
                               {opt.description}
                             </p>
-                          )}
-                        </div>
-
-                        {/* Selection indicator */}
-                        <div className={cn(
-                          "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200",
-                          isSelected ? "border-primary bg-primary" : "border-border"
-                        )}>
-                          {isSelected && (
-                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                              <Check className="h-3 w-3 text-primary-foreground" />
-                            </motion.div>
                           )}
                         </div>
                       </motion.button>
