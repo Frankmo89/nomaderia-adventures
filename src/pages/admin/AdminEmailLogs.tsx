@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +64,12 @@ const StatusBadge = ({ status }: { status: string }) => {
 const AdminEmailLogs = () => {
   const [items, setItems] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? items.filter((l) => l.email.toLowerCase().includes(q))
+    : items;
 
   useEffect(() => {
     const load = async () => {
@@ -90,6 +97,23 @@ const AdminEmailLogs = () => {
         )}
       </div>
 
+      {!loading && items.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por correo…"
+              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground shrink-0">
+            Mostrando {filtered.length} de {items.length}
+          </p>
+        </div>
+      )}
+
       <div className="rounded-lg border border-border overflow-auto">
         <Table>
           <TableHeader>
@@ -116,8 +140,14 @@ const AdminEmailLogs = () => {
                   No hay emails enviados todavía.
                 </TableCell>
               </TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
+                  Sin resultados para esta búsqueda.
+                </TableCell>
+              </TableRow>
             ) : (
-              items.map((l) => (
+              filtered.map((l) => (
                 <TableRow key={l.id} className="border-border">
                   <TableCell className="text-foreground">{l.email}</TableCell>
                   <TableCell><TypeBadge type={l.email_type} /></TableCell>

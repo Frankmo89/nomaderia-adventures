@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +50,14 @@ const exportCSV = (items: ItineraryRequest[]) => {
 const AdminItineraryRequests = () => {
   const [items, setItems] = useState<ItineraryRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? items.filter((r) =>
+        `${r.name} ${r.email} ${r.destination}`.toLowerCase().includes(q)
+      )
+    : items;
 
   useEffect(() => {
     const load = async () => {
@@ -84,6 +93,23 @@ const AdminItineraryRequests = () => {
         )}
       </div>
 
+      {!loading && items.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre, correo o destino…"
+              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground shrink-0">
+            Mostrando {filtered.length} de {items.length}
+          </p>
+        </div>
+      )}
+
       <div className="rounded-lg border border-border overflow-auto">
         <Table>
           <TableHeader>
@@ -114,8 +140,14 @@ const AdminItineraryRequests = () => {
                   No hay solicitudes todavía.
                 </TableCell>
               </TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                  Sin resultados para esta búsqueda.
+                </TableCell>
+              </TableRow>
             ) : (
-              items.map((r) => (
+              filtered.map((r) => (
                 <TableRow key={r.id} className="border-border">
                   <TableCell className="text-foreground font-medium">{r.name}</TableCell>
                   <TableCell className="text-muted-foreground">{r.email}</TableCell>

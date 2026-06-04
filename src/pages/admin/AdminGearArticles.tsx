@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Pencil, Trash2, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Sparkles, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,6 +22,7 @@ type GearArticle = Tables<"gear_articles">;
 const AdminGearArticles = () => {
   const [items, setItems] = useState<GearArticle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [showDiscoveryPanel, setShowDiscoveryPanel] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
   const { toast } = useToast();
@@ -37,6 +39,11 @@ const AdminGearArticles = () => {
     "Filtrando opciones para principiantes…",
     "Reuniendo fuentes…",
   ];
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? items.filter((a) => `${a.title} ${a.category ?? ""}`.toLowerCase().includes(q))
+    : items;
 
   const load = async () => {
     const { data } = await supabase.from("gear_articles").select("*").order("created_at", { ascending: false });
@@ -147,6 +154,23 @@ const AdminGearArticles = () => {
         </section>
       )}
 
+      {!loading && items.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por título o categoría…"
+              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground shrink-0">
+            Mostrando {filtered.length} de {items.length}
+          </p>
+        </div>
+      )}
+
       <div className="rounded-lg border border-border overflow-auto">
         <Table>
           <TableHeader>
@@ -173,8 +197,14 @@ const AdminGearArticles = () => {
                   No hay artículos. <Link to="/admin/gear-articles/new" className="underline text-primary">Crea el primero.</Link>
                 </TableCell>
               </TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
+                  Sin resultados para esta búsqueda.
+                </TableCell>
+              </TableRow>
             ) : (
-              items.map((a) => (
+              filtered.map((a) => (
                 <TableRow key={a.id} className="border-border">
                   <TableCell className="text-foreground font-medium">{a.title}</TableCell>
                   <TableCell>
