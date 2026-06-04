@@ -7,6 +7,7 @@ import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import MiniBar from "@/components/admin/MiniBar";
 import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -84,35 +85,6 @@ function getGreeting(): string {
   return "Buenas noches";
 }
 
-const MiniBar = ({ data, labels }: { data: Record<string, number>; labels: Record<string, string> }) => {
-  const total = Object.values(data).reduce((a, b) => a + b, 0);
-  if (total === 0) return <p className="text-sm text-muted-foreground">Sin datos aún</p>;
-  const sorted = Object.entries(data).sort(([, a], [, b]) => b - a);
-  return (
-    <div className="space-y-2">
-      {sorted.map(([key, count], idx) => {
-        const pct = Math.round((count / total) * 100);
-        return (
-          <div key={key} className="flex items-center gap-3">
-            <span className="text-sm w-32 truncate">{labels[key] || key}</span>
-            <div className="flex-1 overflow-hidden" style={{ background: '#F0EBE0', height: 7, borderRadius: 4 }}>
-              <div
-                className="transition-all duration-500"
-                style={{
-                  width: `${pct}%`,
-                  height: 7,
-                  borderRadius: 4,
-                  background: idx === 0 ? 'linear-gradient(90deg,#D97706,#F59E0B)' : '#E2D9C5',
-                }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground w-16 text-right">{count} ({pct}%)</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
 
 const AdminDashboard = () => {
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
