@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Sparkles, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -95,14 +96,10 @@ function formatDateTimeReadable(iso: string | null): string {
   if (!iso) return "—";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString("es-MX", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return date.toLocaleString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
+
+const COL_COUNT = 9;
 
 const AdminPermitWindows = () => {
   const { toast } = useToast();
@@ -112,6 +109,7 @@ const AdminPermitWindows = () => {
   const [savingForm, setSavingForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PermitWindowFormState>(emptyForm);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const [showDraftForm, setShowDraftForm] = useState(false);
   const [draftPark, setDraftPark] = useState("");
@@ -138,9 +136,7 @@ const AdminPermitWindows = () => {
 
   const parkOptions = useMemo(() => {
     const options = [...PARK_NAMES] as string[];
-    if (form.park && !options.includes(form.park)) {
-      options.push(form.park);
-    }
+    if (form.park && !options.includes(form.park)) options.push(form.park);
     return options;
   }, [form.park]);
 
@@ -163,23 +159,12 @@ const AdminPermitWindows = () => {
     setLoading(false);
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    if (!draftPending) {
-      setStatusIndex(0);
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      setStatusIndex((prev) => (prev + 1) % discoveryStatuses.length);
-    }, 2200);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    if (!draftPending) { setStatusIndex(0); return; }
+    const id = window.setInterval(() => setStatusIndex((p) => (p + 1) % discoveryStatuses.length), 2200);
+    return () => window.clearInterval(id);
   }, [draftPending]);
 
   const setFormField = <K extends keyof PermitWindowFormState>(key: K, value: PermitWindowFormState[K]) => {
@@ -193,21 +178,13 @@ const AdminPermitWindows = () => {
 
   const handleToggleActive = async (id: string, current: boolean) => {
     const { error } = await supabase.from("permit_windows").update({ is_active: !current }).eq("id", id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
-
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, is_active: !current } : item)));
   };
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("permit_windows").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
-
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Ventana eliminada" });
     await load();
   };
@@ -226,6 +203,7 @@ const AdminPermitWindows = () => {
       notes: item.notes || "",
       is_active: item.is_active,
     });
+    setSheetOpen(true);
   };
 
   const handleSaveForm = async (e: React.FormEvent) => {
@@ -263,7 +241,7 @@ const AdminPermitWindows = () => {
     }
 
     toast({ title: editingId ? "Ventana actualizada" : "Ventana creada" });
-    clearForm();
+    setSheetOpen(false); // onOpenChange will call clearForm()
     await load();
   };
 
@@ -300,7 +278,7 @@ const AdminPermitWindows = () => {
   };
 
   const handleChangeDraftWindow = (index: number, next: PermitWindowDraft) => {
-    setDraftWindows((prev) => prev.map((item, current) => (current === index ? next : item)));
+    setDraftWindows((prev) => prev.map((item, i) => (i === index ? next : item)));
   };
 
   const handleSaveDraftWindow = async (index: number) => {
@@ -363,7 +341,7 @@ const AdminPermitWindows = () => {
     }
 
     toast({ title: "Ventana guardada" });
-    setDraftWindows((prev) => prev.filter((_, current) => current !== index));
+    setDraftWindows((prev) => prev.filter((_, i) => i !== index));
     await load();
   };
 
@@ -375,18 +353,29 @@ const AdminPermitWindows = () => {
         onCancel={handleCancelDraft}
       />
 
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="font-serif text-3xl text-foreground">Ventanas de Permiso</h1>
-        <Button
-          type="button"
-          variant="outline"
-          className="border-primary/30 text-primary hover:bg-primary/10"
-          onClick={() => setShowDraftForm((prev) => !prev)}
-        >
-          <Sparkles className="h-4 w-4 mr-2" /> ✦ Buscar fechas oficiales
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-primary/30 text-primary hover:bg-primary/10"
+            onClick={() => setShowDraftForm((prev) => !prev)}
+          >
+            <Sparkles className="h-4 w-4 mr-2" /> ✦ Buscar fechas oficiales
+          </Button>
+          <Button
+            type="button"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            onClick={() => { clearForm(); setSheetOpen(true); }}
+          >
+            <Plus className="h-4 w-4 mr-2" /> Nueva ventana
+          </Button>
+        </div>
       </div>
 
+      {/* AI discovery panel (stays inline) */}
       {showDraftForm && (
         <Card className="bg-card border-border mb-8">
           <CardHeader>
@@ -403,14 +392,12 @@ const AdminPermitWindows = () => {
                 <Input type="number" className="bg-background border-border text-foreground" value={draftYear} onChange={(e) => setDraftYear(e.target.value)} />
               </div>
             </div>
-
             <div className="flex gap-2">
               <Button type="button" onClick={handleDiscoverDraft} disabled={draftPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 {draftPending ? "Buscando..." : "Buscar fechas oficiales"}
               </Button>
               <Button type="button" variant="outline" onClick={() => setShowDraftForm(false)}>Cerrar</Button>
             </div>
-
             {draftError && !draftPending && (
               <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
                 <p className="text-sm text-destructive font-medium">
@@ -422,10 +409,10 @@ const AdminPermitWindows = () => {
         </Card>
       )}
 
+      {/* AI draft review (stays inline) */}
       {draftResponse && (
         <section className="mb-8 space-y-4">
           <AIDraftSourcesPanel sources={draftResponse.sources} />
-
           {!!verifyFlags.length && (
             <Card className="bg-card border-border">
               <CardHeader>
@@ -440,7 +427,6 @@ const AdminPermitWindows = () => {
               </CardContent>
             </Card>
           )}
-
           {draftWindows.length > 0 ? (
             <div className="space-y-4">
               {draftWindows.map((windowDraft, index) => (
@@ -460,16 +446,20 @@ const AdminPermitWindows = () => {
         </section>
       )}
 
-      <Card className="bg-card border-border mb-8">
-        <CardHeader>
-          <CardTitle className="text-card-foreground">{editingId ? "Editar ventana" : "Nueva ventana"}</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Slide-over form sheet */}
+      <Sheet open={sheetOpen} onOpenChange={(open) => { setSheetOpen(open); if (!open) clearForm(); }}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto bg-card border-border">
+          <SheetHeader className="mb-5">
+            <SheetTitle className="font-serif text-xl text-foreground">
+              {editingId ? "Editar ventana" : "Nueva ventana"}
+            </SheetTitle>
+          </SheetHeader>
+
           <form onSubmit={handleSaveForm} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-card-foreground mb-2">Parque</Label>
-                <Select value={form.park} onValueChange={(value) => setFormField("park", value)}>
+                <Select value={form.park} onValueChange={(v) => setFormField("park", v)}>
                   <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {parkOptions.map((park) => (
@@ -484,7 +474,7 @@ const AdminPermitWindows = () => {
               </div>
               <div>
                 <Label className="text-card-foreground mb-2">Tipo de ventana</Label>
-                <Select value={form.window_type} onValueChange={(value) => setFormField("window_type", value as PermitWindowFormState["window_type"])}>
+                <Select value={form.window_type} onValueChange={(v) => setFormField("window_type", v as PermitWindowFormState["window_type"])}>
                   <SelectTrigger className="bg-background border-border text-foreground"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="lottery">Lotería</SelectItem>
@@ -521,33 +511,36 @@ const AdminPermitWindows = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Switch checked={form.is_active} onCheckedChange={(value) => setFormField("is_active", value)} />
+              <Switch checked={form.is_active} onCheckedChange={(v) => setFormField("is_active", v)} />
               <Label className="text-card-foreground">Activa</Label>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2 pb-4">
               <Button type="submit" disabled={savingForm} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 {savingForm ? "Guardando..." : editingId ? "Actualizar" : "Crear"}
               </Button>
-              {editingId && (
-                <Button type="button" variant="outline" onClick={clearForm}>Cancelar edición</Button>
-              )}
+              <Button type="button" variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => setSheetOpen(false)}>
+                Cancelar
+              </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </SheetContent>
+      </Sheet>
 
+      {/* Table */}
       <div className="rounded-lg border border-border overflow-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-border">
-              <TableHead className="text-foreground">Parque</TableHead>
-              <TableHead className="text-foreground">Permiso</TableHead>
-              <TableHead className="text-foreground">Tipo</TableHead>
-              <TableHead className="text-foreground">Abre en</TableHead>
-              <TableHead className="text-foreground">Año</TableHead>
-              <TableHead className="text-foreground">Activa</TableHead>
-              <TableHead className="text-foreground text-right">Acciones</TableHead>
+              <TableHead className="text-muted-foreground">Parque</TableHead>
+              <TableHead className="text-muted-foreground">Permiso</TableHead>
+              <TableHead className="text-muted-foreground">Tipo</TableHead>
+              <TableHead className="text-muted-foreground">Abre en</TableHead>
+              <TableHead className="text-muted-foreground">Año</TableHead>
+              <TableHead className="text-muted-foreground w-10 text-center">Aplicar</TableHead>
+              <TableHead className="text-muted-foreground w-10 text-center">Fuente</TableHead>
+              <TableHead className="text-muted-foreground">Activa</TableHead>
+              <TableHead className="text-muted-foreground text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -559,13 +552,15 @@ const AdminPermitWindows = () => {
                   <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-6 mx-auto" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-6 mx-auto" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-10 rounded-full" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={COL_COUNT} className="text-center py-10 text-muted-foreground">
                   No hay ventanas de permiso registradas.
                 </TableCell>
               </TableRow>
@@ -575,10 +570,42 @@ const AdminPermitWindows = () => {
                   <TableCell className="text-foreground font-medium">{item.park}</TableCell>
                   <TableCell className="text-muted-foreground">{item.permit_name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-foreground border-border">{windowTypeLabel[item.window_type] ?? item.window_type}</Badge>
+                    <Badge variant="outline" className="text-foreground border-border">
+                      {windowTypeLabel[item.window_type] ?? item.window_type}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{formatDateTimeReadable(item.opens_at)}</TableCell>
                   <TableCell className="text-muted-foreground">{item.year}</TableCell>
+                  <TableCell className="text-center">
+                    {item.how_to_apply_url ? (
+                      <a
+                        href={item.how_to_apply_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="URL para aplicar"
+                        className="inline-flex text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground/40">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {item.source_url ? (
+                      <a
+                        href={item.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="URL fuente"
+                        className="inline-flex text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground/40">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Switch
                       checked={item.is_active}
@@ -588,7 +615,14 @@ const AdminPermitWindows = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button type="button" variant="ghost" size="icon" aria-label={`Editar ventana ${item.permit_name}`} title={`Editar ventana ${item.permit_name}`} onClick={() => handleEdit(item)}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Editar ventana ${item.permit_name}`}
+                        title={`Editar ventana ${item.permit_name}`}
+                        onClick={() => handleEdit(item)}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <AlertDialog>
@@ -606,7 +640,10 @@ const AdminPermitWindows = () => {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDelete(item.id)}>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleDelete(item.id)}
+                            >
                               Eliminar
                             </AlertDialogAction>
                           </AlertDialogFooter>

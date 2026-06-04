@@ -23,9 +23,9 @@ interface EmailLog {
 type EmailLogSortKey = "email" | "email_type" | "status" | "sent_at";
 
 const typeLabels: Record<string, string> = {
-  quiz_results: "Quiz",
-  gear_guide: "Guía de Equipo",
-  itinerary_cta: "Itinerario CTA",
+  quiz_results: "Resultados del quiz",
+  gear_guide: "Guía de equipo",
+  itinerary_cta: "CTA de itinerario",
 };
 
 const getEmailLogValue = (l: EmailLog, key: EmailLogSortKey): string => {
@@ -46,7 +46,9 @@ const exportCSV = (items: EmailLog[]) => {
     new Date(l.sent_at).toLocaleDateString("es-MX"),
     l.error_message || "",
   ]);
-  const csv = [headers, ...rows].map((row) => row.map((v) => `"${v.replace(/"/g, '""').replace(/\n/g, " ").replace(/\r/g, "")}"`).join(",")).join("\n");
+  const csv = [headers, ...rows]
+    .map((row) => row.map((v) => `"${v.replace(/"/g, '""').replace(/\n/g, " ").replace(/\r/g, "")}"`).join(","))
+    .join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -76,6 +78,8 @@ const StatusBadge = ({ status }: { status: string }) => {
   return <Badge className="bg-red-700/30 text-red-400 border-red-700/40 border">Fallido</Badge>;
 };
 
+const COL_COUNT = 5;
+
 const AdminEmailLogs = () => {
   const [items, setItems] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +94,7 @@ const AdminEmailLogs = () => {
   const sorted = applySortable(filtered, sortState, getEmailLogValue);
   const pageCount = Math.max(1, Math.ceil(sorted.length / 25));
   const paged = sorted.slice((page - 1) * 25, page * 25);
+  const failed = items.filter((l) => l.status !== "sent").length;
 
   useEffect(() => {
     const load = async () => {
@@ -108,7 +113,19 @@ const AdminEmailLogs = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-serif text-3xl text-foreground">Email Logs</h1>
-          {!loading && <p className="text-sm text-muted-foreground mt-1">{items.length} email{items.length !== 1 ? "s" : ""} enviado{items.length !== 1 ? "s" : ""}</p>}
+          {!loading && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {items.length} email{items.length !== 1 ? "s" : ""}
+              {items.length > 0 && (
+                <>
+                  {" · "}
+                  <span className={failed > 0 ? "text-red-400" : "text-green-400"}>
+                    {failed} de {items.length} fallido{failed !== 1 ? "s" : ""}
+                  </span>
+                </>
+              )}
+            </p>
+          )}
         </div>
         {items.length > 0 && (
           <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => exportCSV(items)}>
@@ -121,7 +138,12 @@ const AdminEmailLogs = () => {
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Buscar por correo…" className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Buscar por correo…"
+              className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground"
+            />
           </div>
           <p className="text-xs text-muted-foreground shrink-0">Mostrando {filtered.length} de {items.length}</p>
         </div>
@@ -135,6 +157,7 @@ const AdminEmailLogs = () => {
               <SortableHeader label="Tipo" sortKey="email_type" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <SortableHeader label="Estado" sortKey="status" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <SortableHeader label="Fecha" sortKey="sent_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <TableHead className="text-muted-foreground">Error</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -145,11 +168,12 @@ const AdminEmailLogs = () => {
                   <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell />
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="p-0">
+                <TableCell colSpan={COL_COUNT} className="p-0">
                   <AdminEmptyState
                     icon={Mail}
                     title="Aún no se han enviado correos"
@@ -159,7 +183,7 @@ const AdminEmailLogs = () => {
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="p-0">
+                <TableCell colSpan={COL_COUNT} className="p-0">
                   <AdminEmptyState
                     icon={Search}
                     title={`Sin resultados para "${search}"`}
@@ -175,6 +199,11 @@ const AdminEmailLogs = () => {
                   <TableCell><StatusBadge status={l.status} /></TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(l.sent_at).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}
+                  </TableCell>
+                  <TableCell>
+                    {l.status !== "sent" && l.error_message && (
+                      <span className="text-red-400 text-xs break-all">{l.error_message}</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

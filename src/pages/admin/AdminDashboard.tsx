@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock, TrendingUp, TrendingDown } from "lucide-react";
 import { STATUS_CONFIG } from "@/components/admin/LeadStatusBadge";
 import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,17 @@ interface Stats {
   subscribers: number;
   itineraryRequests: number;
   emailsSent: number;
+}
+
+interface TrendDeltas {
+  quizThis: number;
+  quizPrev: number;
+  sentinelThis: number;
+  sentinelPrev: number;
+  subscribersThis: number;
+  subscribersPrev: number;
+  itineraryThis: number;
+  itineraryPrev: number;
 }
 
 interface RecentItem {
@@ -86,6 +97,25 @@ function getGreeting(): string {
 }
 
 
+const DeltaChip = ({ thisWeek, prevWeek, className }: { thisWeek: number; prevWeek: number; className?: string }) => {
+  if (thisWeek === 0 && prevWeek === 0) return null;
+  const up = thisWeek > prevWeek;
+  const down = thisWeek < prevWeek;
+  return (
+    <span
+      className={cn(
+        "flex items-center gap-0.5 text-xs font-medium",
+        up ? "text-[#16a34a]" : down ? "text-red-400" : "text-stone-500",
+        className,
+      )}
+    >
+      {up && <TrendingUp className="h-3 w-3 shrink-0" />}
+      {down && <TrendingDown className="h-3 w-3 shrink-0" />}
+      {up ? "+" : ""}{thisWeek} esta semana
+    </span>
+  );
+};
+
 const AdminDashboard = () => {
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
   const [stats, setStats] = useState<Stats>({
@@ -100,6 +130,7 @@ const AdminDashboard = () => {
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [sentinelRecent, setSentinelRecent] = useState<SentinelLead[]>([]);
   const [quizRecent, setQuizRecent] = useState<RecentQuizResponse[]>([]);
+  const [deltas, setDeltas] = useState<TrendDeltas | null>(null);
   const [quizAnalytics, setQuizAnalytics] = useState<{
     interests: Record<string, number>;
     origins: Record<string, number>;
@@ -197,6 +228,30 @@ const AdminDashboard = () => {
         });
         setQuizAnalytics({ interests, origins, budgets, fitness });
       }
+      // 7-day trend deltas (this week vs previous week, two date-bounded count queries per metric)
+      const w1 = new Date(Date.now() - 7 * 86_400_000).toISOString();
+      const w2 = new Date(Date.now() - 14 * 86_400_000).toISOString();
+      const [qThis, qPrev, slThis, slPrev, sThis, sPrev, irThis, irPrev] = await Promise.all([
+        supabase.from("quiz_responses").select("id", { count: "exact", head: true }).gte("created_at", w1),
+        supabase.from("quiz_responses").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
+        supabase.from("sentinel_leads").select("id", { count: "exact", head: true }).gte("created_at", w1),
+        supabase.from("sentinel_leads").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
+        supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).gte("created_at", w1),
+        supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
+        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }).gte("created_at", w1),
+        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
+      ]);
+      setDeltas({
+        quizThis: qThis.count ?? 0,
+        quizPrev: qPrev.count ?? 0,
+        sentinelThis: slThis.count ?? 0,
+        sentinelPrev: slPrev.count ?? 0,
+        subscribersThis: sThis.count ?? 0,
+        subscribersPrev: sPrev.count ?? 0,
+        itineraryThis: irThis.count ?? 0,
+        itineraryPrev: irPrev.count ?? 0,
+      });
+
       setFetchedAt(new Date());
     };
     load();
@@ -454,6 +509,7 @@ const AdminDashboard = () => {
           <CardContent>
             <p className="text-3xl font-bold text-card-foreground">{stats.itineraryRequests}</p>
             <p className="text-xs text-muted-foreground mt-1">solicitud{stats.itineraryRequests !== 1 ? "es" : ""} recibida{stats.itineraryRequests !== 1 ? "s" : ""}</p>
+            {deltas && <DeltaChip thisWeek={deltas.itineraryThis} prevWeek={deltas.itineraryPrev} className="mt-1" />}
           </CardContent>
         </Card>
 
@@ -473,6 +529,7 @@ const AdminDashboard = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">sentinel_leads</p>
+            {deltas && <DeltaChip thisWeek={deltas.sentinelThis} prevWeek={deltas.sentinelPrev} className="mt-1" />}
           </CardContent>
         </Card>
 
@@ -483,7 +540,11 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-card-foreground">{stats.subscribers}</p>
-            <p className="text-xs text-muted-foreground mt-1">{stats.quiz} quiz response{stats.quiz !== 1 ? "s" : ""}</p>
+            {deltas && <DeltaChip thisWeek={deltas.subscribersThis} prevWeek={deltas.subscribersPrev} className="mt-1" />}
+            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs text-muted-foreground">{stats.quiz} quiz response{stats.quiz !== 1 ? "s" : ""}</span>
+              {deltas && <DeltaChip thisWeek={deltas.quizThis} prevWeek={deltas.quizPrev} />}
+            </div>
           </CardContent>
         </Card>
 
