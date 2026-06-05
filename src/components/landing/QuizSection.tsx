@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motio
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass,
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
-  Mail, Loader2, Calendar, MapPin, HeartPulse, Backpack, Tent,
+  Mail, Loader2, Calendar, HeartPulse, Backpack, Tent,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,14 +46,6 @@ const seasonOptions = [
   { label: "Soy flexible", value: "flexible" },
 ];
 
-const originOptions = [
-  { label: "Tijuana / Baja California", value: "tijuana_baja" },
-  { label: "San Diego / Sur de California", value: "sandiego_socal" },
-  { label: "Ciudad de México (CDMX)", value: "cdmx" },
-  { label: "Resto de México", value: "resto_mx" },
-  { label: "Resto de Estados Unidos", value: "resto_usa" },
-  { label: "Otro lugar", value: "otro" },
-];
 
 const steps: QuizStep[] = [
   {
@@ -346,6 +338,7 @@ const QuizResults = ({
   loading,
   emailSubmitted,
   onEmailSubmit,
+  isUsResident,
 }: {
   results: QuizDestination[];
   email: string;
@@ -353,13 +346,17 @@ const QuizResults = ({
   loading: boolean;
   emailSubmitted: boolean;
   onEmailSubmit: () => void;
+  isUsResident: boolean | null;
 }) => {
   const reduceMotion = useReducedMotion();
   const topDestination = results[0];
   const alternatives = results.slice(1);
+  const residentLine = isUsResident !== null
+    ? `\nResidencia en EE. UU.: ${isUsResident ? "Sí" : "No"}`
+    : "";
   const whatsAppUrl = topDestination
     ? buildWhatsAppLink(
-        `Hola equipo de Nomaderia, acabo de hacer el Quiz, mi destino ideal es ${topDestination.title} y quiero que planifiquen mi itinerario personalizado. ¿Qué paquetes tienen?`,
+        `Hola equipo de Nomaderia, acabo de hacer el Quiz, mi destino ideal es ${topDestination.title} y quiero que planifiquen mi itinerario personalizado. ¿Qué paquetes tienen?${residentLine}`,
       )
     : undefined;
 
@@ -473,7 +470,7 @@ const QuizSection = () => {
     return () => media.removeEventListener("change", update);
   }, []);
   const [combinedSeason, setCombinedSeason] = useState("");
-  const [combinedOrigin, setCombinedOrigin] = useState("");
+  const [isUsResident, setIsUsResident] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (isQuizDone && !showResults && !loading) {
@@ -496,8 +493,8 @@ const QuizSection = () => {
   };
 
   const onCombinedSubmit = () => {
-    if (!combinedSeason || !combinedOrigin) return;
-    handleCombinedSubmit({ season: combinedSeason, origin: combinedOrigin });
+    if (!combinedSeason || isUsResident === null) return;
+    handleCombinedSubmit({ season: combinedSeason, is_us_resident: String(isUsResident) });
   };
 
   if (loading && !showResults) return (
@@ -520,6 +517,7 @@ const QuizSection = () => {
       loading={loading}
       emailSubmitted={emailSubmitted}
       onEmailSubmit={handleEmailSubmit}
+      isUsResident={isUsResident}
     />
   );
 
@@ -616,27 +614,31 @@ const QuizSection = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      ¿Desde qué zona viajarías?
+                    <label className="text-sm font-medium text-foreground">
+                      ¿Eres ciudadano o residente de EE. UU.?
                     </label>
-                    <Select value={combinedOrigin} onValueChange={setCombinedOrigin}>
-                      <SelectTrigger className="bg-muted border-border text-foreground h-11">
-                        <SelectValue placeholder="Selecciona tu zona" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {originOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="grid grid-cols-2 gap-3">
+                      {([{ label: "Sí", value: true }, { label: "No", value: false }] as const).map(({ label, value }) => (
+                        <button
+                          key={String(value)}
+                          type="button"
+                          onClick={() => setIsUsResident(value)}
+                          className={cn(
+                            "h-11 rounded-xl border text-sm font-medium transition-colors duration-200",
+                            isUsResident === value
+                              ? "bg-primary/8 border-primary/50 text-foreground"
+                              : cn("bg-white border-stone/20 text-foreground", canHover && "hover:border-stone/40")
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <Button
                     onClick={onCombinedSubmit}
-                    disabled={!combinedSeason || !combinedOrigin}
+                    disabled={!combinedSeason || isUsResident === null}
                     className="w-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 h-11 mt-2"
                   >
                     Ver Mis Resultados <ArrowRight className="h-4 w-4 ml-2" />

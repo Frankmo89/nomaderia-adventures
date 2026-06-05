@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -335,7 +336,8 @@ export function useQuiz(totalSteps: number) {
     setLoading(true);
     try {
       await supabase.from("newsletter_subscribers").insert({ email, source: "quiz" }).select();
-      await supabase.from("quiz_responses").insert({
+      // Cast needed until types are regenerated to include is_us_resident (ADR-009 pattern)
+      await (supabase as unknown as SupabaseClient).from("quiz_responses").insert({
         email,
         fitness_level: answers.fitness_level,
         interest: answers.interest,
@@ -344,6 +346,7 @@ export function useQuiz(totalSteps: number) {
         budget_range: answers.budget_range ?? answers.budget ?? null,
         main_barrier: answers.main_barrier || null,
         recommended_destinations: results.map((d) => d.id),
+        is_us_resident: answers.is_us_resident !== undefined ? answers.is_us_resident === "true" : null,
       });
       // Enviar email con resultados del quiz
       if (results.length > 0) {
