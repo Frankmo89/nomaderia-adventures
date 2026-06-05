@@ -154,6 +154,18 @@ async function fetchAllNationalParks(apiKey: string): Promise<NpsPark[]> {
   return allParks;
 }
 
+// Fetch specific parks by parkCode that may not surface in the designation filter
+// (e.g. Virgin Islands NP uses "National Park" but territory parks can be edge cases).
+async function fetchParksByCode(apiKey: string, codes: string[]): Promise<NpsPark[]> {
+  const url = `${NPS_BASE}?api_key=${encodeURIComponent(apiKey)}&parkCode=${codes.join(",")}&limit=${codes.length}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) {
+    throw new Error(`NPS API (by code) ${res.status}: ${await res.text()}`);
+  }
+  const body = (await res.json()) as NpsApiResponse;
+  return body.data ?? [];
+}
+
 // ---------- Main handler ----------
 
 serve(async (req) => {
@@ -191,6 +203,18 @@ serve(async (req) => {
     // 1. Pull all National Parks from NPS API
     console.log("[ingest-national-parks] consultando NPS API…");
     const parks = await fetchAllNationalParks(NPS_API_KEY);
+
+    // Supplement with territory/edge-case parks that may not surface via designation filter
+    const EXTRA_CODES = ["viis", "npsa", "jeff"];
+    const extraParks = await fetchParksByCode(NPS_API_KEY, EXTRA_CODES);
+    const seenCodes = new Set(parks.map((p) => p.parkCode.toLowerCase()));
+    for (const p of extraParks) {
+      if (!seenCodes.has(p.parkCode.toLowerCase())) {
+        parks.push(p);
+        seenCodes.add(p.parkCode.toLowerCase());
+      }
+    }
+
     console.log(`[ingest-national-parks] parques nacionales encontrados: ${parks.length}`);
 
     // 2. Process each park
@@ -228,11 +252,12 @@ serve(async (req) => {
       const existingRow = existing as ExistingRow | null;
 
       if (existingRow) {
-        // UPDATE — never touch: slug, title, is_published, or any Spanish-curated column
+        // UPDATE — never touch: slug, title, is_published, research_status, or any Spanish-curated column
         const { error: updateErr } = await db
           .from("destinations")
           .update({
             official_name: park.fullName,
+            nps_description: park.description,
             designation: park.designation,
             country: "Estados Unidos",
             region: park.states,
@@ -263,7 +288,8 @@ serve(async (req) => {
           .insert({
             park_code: park.parkCode,
             official_name: park.fullName,
-            title: park.fullName,             // placeholder — Opus will curate the Spanish title
+            nps_description: park.description,
+            title: park.fullName,             // placeholder — generate-park-content will overwrite with Spanish title
             slug: slugify(park.fullName),
             designation: park.designation,
             country: "Estados Unidos",
@@ -279,6 +305,7 @@ serve(async (req) => {
             has_nonresident_surcharge: hasSurcharge,
             nonresident_surcharge: hasSurcharge ? SURCHARGE_AMOUNT : 0,
             is_published: false,
+            research_status: "pendiente",
           });
 
         if (insertErr) {

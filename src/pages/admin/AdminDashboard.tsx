@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock, TrendingUp, TrendingDown, RefreshCw, Wand2 } from "lucide-react";
 import { STATUS_CONFIG } from "@/components/admin/LeadStatusBadge";
 import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -276,6 +276,27 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error("[NPS ingest]", err);
       setNpsStatus("error");
+    }
+  };
+
+  const [genStatus, setGenStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [genResult, setGenResult] = useState<{ processed: number; updated: number; failed: number } | null>(null);
+
+  const handleGenContent = async () => {
+    setGenStatus("loading");
+    setGenResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-park-content");
+      if (error) throw error;
+      setGenResult({
+        processed: (data as { processed?: number }).processed ?? 0,
+        updated:   (data as { updated?: number }).updated    ?? 0,
+        failed:    (data as { failed?: number }).failed      ?? 0,
+      });
+      setGenStatus("done");
+    } catch (err) {
+      console.error("[generate-park-content]", err);
+      setGenStatus("error");
     }
   };
 
@@ -612,6 +633,25 @@ const AdminDashboard = () => {
         {npsStatus === "error" && (
           <span className="text-sm text-red-500 font-medium">
             Error al ingestar — ver consola.
+          </span>
+        )}
+        <Button
+          variant="outline"
+          className="bg-white border border-[#E7E2D9] text-[#1C1917] hover:bg-[#F5F0E8] disabled:opacity-60"
+          onClick={handleGenContent}
+          disabled={genStatus === "loading"}
+        >
+          <Wand2 className={cn("h-4 w-4 mr-2", genStatus === "loading" && "animate-spin")} />
+          {genStatus === "loading" ? "Generando…" : "Generar Contenido AI"}
+        </Button>
+        {genStatus === "done" && genResult && (
+          <span className="text-sm text-[#166534] font-medium">
+            ✓ {genResult.updated} generados · {genResult.failed} errores ({genResult.processed} en batch)
+          </span>
+        )}
+        {genStatus === "error" && (
+          <span className="text-sm text-red-500 font-medium">
+            Error al generar — ver consola.
           </span>
         )}
       </div>

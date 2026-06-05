@@ -3,6 +3,17 @@
 **Última actualización:** 5 junio 2026
 **Estado:** ⛔ NO CONSTRUIR TODAVÍA — parqueado hasta cumplir el TRIGGER (ver abajo)
 
+> **Nota sobre `generate-park-content` (2026-06-05):** Se creó la Edge Function
+> `generate-park-content` como pipeline de pre-generación de contenido editorial en
+> español para los ~63 parques nacionales. Esto NO es el concierge RAG — es un paso
+> previo: rellena campos textuales de `destinations` (`title`, `short_description`,
+> `why_visit_markdown`, `difficulty_description`, `best_season`, `season_to_avoid`,
+> `meta_title`, `meta_description`) con drafts en voz Nomaderia para que Frank los
+> revise en `/admin/destinations`. Los drafts alimentan indirectamente el RAG futuro
+> porque `ingest-knowledge` indexa esos campos (especialmente `why_visit_markdown`
+> y `short_description`). Columna `research_status` added: `pendiente` →
+> `ai_draft` → (Frank lo revisa) → `revisado` / `is_published = true`.
+
 > **Para AI agents (Claude / Gemini / Copilot):** Si el usuario pide construir el
 > concierge IA, RAG, embeddings, vectorizar tablas, pgvector, tool-calling o el modelo
 > de permisos, primero verifica el TRIGGER de este doc. Si no se cumple, recuerda la
