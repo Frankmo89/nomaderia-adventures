@@ -45,6 +45,22 @@ referenciar esta lista primero.
       Secrets:
       - `supabase secrets set RESEND_API_KEY=re_xxxxx`
       - `supabase secrets set SITE_URL=https://nomaderia.com`
+- [ ] **Configurar `NPS_API_KEY` para `ingest-national-parks`**:
+  1. Obtener API key gratuita en https://www.nps.gov/subjects/developer/get-started.htm
+  2. `supabase secrets set NPS_API_KEY=<tu_key>`
+  3. Desplegar la función: `supabase functions deploy ingest-national-parks`
+  4. Invocarla (requiere sesión admin activa en el navegador):
+     ```bash
+     supabase functions invoke ingest-national-parks \
+       --project-ref vrixiuvnhvqafmxlcyex \
+       --header "Authorization: Bearer <admin_jwt>"
+     ```
+     O desde la consola del navegador en `/admin`:
+     ```javascript
+     await supabase.functions.invoke('ingest-national-parks')
+     ```
+  5. La función retorna `{ total_national_parks, inserted, updated, failed, photos }`.
+  6. Tras la primera corrida, los ~63 parques quedarán en `destinations` con `is_published = false`; publicarlos manualmente desde `/admin/destinations` uno a uno después de curar el contenido español con Opus.
 - [ ] **Frank: configurar secret y cron para alertas de permisos (Paso 8)**:
   - `supabase secrets set CRON_SECRET=<valor_largo_y_unico>`
   - Programar ejecución diaria de `check-permit-alerts` con header `x-cron-secret: <CRON_SECRET>` (pg_cron o cron-job.org).
@@ -112,6 +128,7 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-06-05] Created Edge Function `ingest-national-parks` — fetches all parks from NPS API (`/v1/parks`, paginated), filters to `designation === "National Park"` (~63 parks), and upserts into `destinations` using a select-then-insert-or-update pattern so that `slug` is only generated on first insert (never overwritten) and `is_published` is never flipped. Factual columns written: `park_code`, `official_name`, `designation`, `country` (fixed "Estados Unidos"), `region` (states), `slug` (slugify on insert only), `latitude`/`longitude` (parsed from `latLong` string), `entrance_fee_usd`/`entrance_fee_type` (private vehicle → "por vehículo", per person → "por persona", free → "gratis"), `nps_url`, `experience_type` (fixed "parque-nacional"), `hero_image_url` (images[0]), `gallery_images` (images[1..n] urls), `has_nonresident_surcharge`/`nonresident_surcharge` (true/$100 for 12 parks: acad/brca/ever/glac/grca/grte/romo/sequ/kica/yell/yose/zion). Spanish-curated columns never touched. `title` set to `official_name` as a required NOT-NULL placeholder for new rows (Opus overwrites with curated Spanish title). Auth via `requireAdmin`; writes use service-role client. Returns `{ total_national_parks, inserted, updated, failed, photos }`. TypeScript clean, build passes.
 - [2026-06-04] Collapsed product catalog to single product "Itinerario Completo Nomaderia" at $49 USD — `pricing.ts`: new `Product` interface (`id`, `name`, `priceUSD`, `currency`, `ctaType`, `features`, `ctaUrl`); old `permit_alert`/`itinerary`/`bundle` entries removed; `STRIPE_LINK_ITINERARIO_49 = "REEMPLAZAR_CON_LINK_DE_49_USD"` exported with TODO comment for Frank. `Servicios.tsx`: updated `usePageMeta`, JSON-LD uses `p.priceUSD`, removed `product.popular`/`product.label` badges, products grid changed from `md:grid-cols-3` to `max-w-lg` single centered card, price display uses `$${product.priceUSD} ${product.currency}`, CTA always shows WhatsApp icon + "Diseña mi aventura por WhatsApp", step 3 description de-references old "Expedición" name, `cn` import removed. `PremiumItinerarySection.tsx`: same single-card layout, `Badge`/`cn` imports removed, price display updated, CTA hardcoded. TypeScript clean, build passes.
 - [2026-06-04] Eliminated ExitIntentModal — deleted `src/components/ExitIntentModal.tsx`; removed import and `<ExitIntentModal />` from `App.tsx`. All trigger logic (sessionStorage `exit_intent_shown` flag, desktop `mouseout` listener, mobile 60%-scroll listener), state, and analytics calls inside the component are gone with the file. No other files referenced the component. TypeScript clean, build passes.
 - [2026-06-04] Quiz paso 6 "Últimos detalles": eliminada pregunta de zona de origen, añadida pregunta de residencia EE. UU. — (1) `QuizSection.tsx`: eliminados `originOptions`, `combinedOrigin` state y `MapPin` import; reemplazado el `<Select>` de zona por dos botones Sí/No (`isUsResident: boolean | null`) con estilo consistente con las tarjetas del quiz (border-primary/50 al seleccionar, grid-cols-2). `onCombinedSubmit` pasa `{ is_us_resident: "true"/"false" }` a `handleCombinedSubmit`; disabled hasta que se elija temporada Y residencia. `QuizResults` recibe `isUsResident` y añade `\nResidencia en EE. UU.: Sí/No` al mensaje de WhatsApp. (2) `use-quiz.ts`: `is_us_resident` añadido al insert de `quiz_responses` usando el cast `supabase as unknown as SupabaseClient` (ADR-009) porque el tipo generado aún no incluye la columna — debe resolverse al regenerar tipos cuando Frank tenga `SUPABASE_ACCESS_TOKEN`. TypeScript clean, build passes.
