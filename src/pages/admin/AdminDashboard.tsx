@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import { STATUS_CONFIG } from "@/components/admin/LeadStatusBadge";
 import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -257,6 +257,27 @@ const AdminDashboard = () => {
     };
     load();
   }, []);
+
+  const [npsStatus, setNpsStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [npsResult, setNpsResult] = useState<{ inserted: number; updated: number; failed: number } | null>(null);
+
+  const handleNpsIngest = async () => {
+    setNpsStatus("loading");
+    setNpsResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("ingest-national-parks");
+      if (error) throw error;
+      setNpsResult({
+        inserted: (data as { inserted?: number }).inserted ?? 0,
+        updated:  (data as { updated?: number }).updated  ?? 0,
+        failed:   (data as { failed?: number }).failed    ?? 0,
+      });
+      setNpsStatus("done");
+    } catch (err) {
+      console.error("[NPS ingest]", err);
+      setNpsStatus("error");
+    }
+  };
 
   const typeLabel: Record<RecentItem["type"], string> = { destination: "Destino", gear: "Gear", blog: "Blog" };
   const typeHref: Record<RecentItem["type"], string> = { destination: "/admin/destinations", gear: "/admin/gear-articles", blog: "/admin/blog-posts" };
@@ -564,7 +585,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Quick actions */}
-      <div className="flex gap-3 flex-wrap mb-8">
+      <div className="flex gap-3 flex-wrap items-center mb-8">
         <Button asChild className="bg-[#D97706] hover:bg-[#D97706]/90 text-white">
           <Link to="/admin/destinations/new"><Plus className="h-4 w-4 mr-2" /> Nuevo Destino</Link>
         </Button>
@@ -574,6 +595,25 @@ const AdminDashboard = () => {
         <Button asChild variant="outline" className="bg-white border border-[#E7E2D9] text-[#1C1917] hover:bg-[#F5F0E8]">
           <Link to="/admin/blog-posts/new"><Plus className="h-4 w-4 mr-2" /> Nuevo Post</Link>
         </Button>
+        <Button
+          variant="outline"
+          className="bg-white border border-[#E7E2D9] text-[#1C1917] hover:bg-[#F5F0E8] disabled:opacity-60"
+          onClick={handleNpsIngest}
+          disabled={npsStatus === "loading"}
+        >
+          <RefreshCw className={cn("h-4 w-4 mr-2", npsStatus === "loading" && "animate-spin")} />
+          {npsStatus === "loading" ? "Ingesting…" : "Ingestar Parques NPS"}
+        </Button>
+        {npsStatus === "done" && npsResult && (
+          <span className="text-sm text-[#166534] font-medium">
+            ✓ {npsResult.inserted} nuevos · {npsResult.updated} actualizados · {npsResult.failed} errores
+          </span>
+        )}
+        {npsStatus === "error" && (
+          <span className="text-sm text-red-500 font-medium">
+            Error al ingestar — ver consola.
+          </span>
+        )}
       </div>
 
       {/* CHANGE 5: Activity + Analytics side by side */}
