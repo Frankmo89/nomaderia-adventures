@@ -144,7 +144,7 @@ async function fetchAllNationalParks(apiKey: string): Promise<NpsPark[]> {
     total = parseInt(body.total, 10);
 
     const page = body.data ?? [];
-    const nationalParks = page.filter((p) => p.designation === "National Park");
+    const nationalParks = page.filter((p) => p.designation.includes("National Park"));
     allParks.push(...nationalParks);
 
     start += page.length;
