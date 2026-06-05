@@ -1,6 +1,6 @@
 # Sección 9 — Concierge IA con RAG (Decisión: PARKED)
 
-**Última actualización:** 24 mayo 2026
+**Última actualización:** 5 junio 2026
 **Estado:** ⛔ NO CONSTRUIR TODAVÍA — parqueado hasta cumplir el TRIGGER (ver abajo)
 
 > **Para AI agents (Claude / Gemini / Copilot):** Si el usuario pide construir el
@@ -59,11 +59,23 @@ diseño cuando llegue el momento.
 - **Modelo elegido: `text-embedding-3-small` de OpenAI.** Barato, rápido, suficiente
   para español editorial. **No Cohere** (argumento cross-lingual solo aplica si ya
   existe un corpus oficial en inglés — no existe y no se va a scrapear).
-- **Qué vectorizar (solo capa editorial propia):**
-  - `destinations`: campos `itinerary_markdown`, `preparation_plan`,
-    `gear_list_markdown`, `common_fears` (jsonb)
-  - `gear_articles`: campo `content` y `products` (jsonb)
-  - FAQ por destino
+- **Qué vectorizar (solo capa editorial propia) — IMPLEMENTADO en `ingest-knowledge`:**
+  - `destinations`: **ficha de conocimiento completa** por parque — 13 secciones en
+    markdown español (`Cómo llegar`, `Costos`, `Mejor temporada`, `Permisos`,
+    `Senderos destacados`, `Dónde dormir`, `Seguridad`, `Guía completa`,
+    `Itinerario sugerido`, `Equipo recomendado`, `Preparación`, `Dudas comunes`).
+    Chunking por sección con `## ` como separador; cada chunk lleva el label
+    `# {title} — {region}` al inicio para ser autónomo. `source_field: "ficha"`.
+    Metadata por chunk: `slug`, `title`, `section`, `park_code`, `park_title`,
+    `section_title`, `is_published`, `last_verified_at`.
+  - `gear_articles`: campo `content_markdown` (por sección Markdown) + `products` jsonb (1 chunk por producto).
+  - FAQ por destino → cubierto por el campo `common_fears` dentro de la ficha.
+- **Decisión de publicación (2026-06-05):** se indexan **todos** los rows de
+  `destinations` independientemente de `is_published`. El campo `is_published` se
+  almacena en `metadata` para que el concierge pueda desclamer contenido no revisado
+  (`is_published: false`) en tiempo de respuesta. Esto permite que los ~63 parques
+  ingresados por `ingest-national-parks` sean consultables en draft mientras Opus los
+  cura en español.
 - **Qué NO vectorizar:** scraping de nps.gov / recreation.gov / CBP. Un chunk
   desactualizado miente con confianza — contradice la marca "revisado por agente TAP".
   Si se necesita info oficial, se enlaza a la fuente, nunca se copia.
