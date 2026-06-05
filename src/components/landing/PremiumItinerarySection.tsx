@@ -3,8 +3,6 @@ import { Map, Headphones, BadgeDollarSign, Zap, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import Reveal from "@/components/editorial/Reveal";
 import { products } from "@/config/pricing";
 
@@ -82,8 +80,8 @@ const PremiumItinerarySection = () => {
             ))}
           </div>
 
-          {/* Pricing cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Pricing card */}
+          <div className="max-w-lg mx-auto mb-8">
             {products.map((product, i) => (
               <motion.div
                 key={product.id}
@@ -92,37 +90,13 @@ const PremiumItinerarySection = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
               >
-                <Card
-                  className={cn(
-                    "relative flex flex-col h-full bg-white card-depth",
-                    product.popular
-                      ? "border-2 border-primary"
-                      : "border-border"
-                  )}
-                >
-                  {product.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-primary text-primary-foreground hover:bg-primary">
-                        Más Popular
-                      </Badge>
-                    </div>
-                  )}
-                  {product.label && !product.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary">
-                        {product.label}
-                      </Badge>
-                    </div>
-                  )}
+                <Card className="relative flex flex-col h-full bg-white card-depth border-2 border-primary">
                   <CardHeader className="text-center pt-7 pb-3">
                     <h3 className="font-serif text-xl text-foreground mb-1">
                       {product.name}
                     </h3>
                     <p className="text-2xl font-bold text-foreground">
-                      {product.price}
-                    </p>
-                    <p className="text-xs text-foreground/60 mt-1">
-                      {product.description}
+                      ${product.priceUSD} {product.currency}
                     </p>
                   </CardHeader>
                   <CardContent className="flex-1 pt-0">
@@ -147,7 +121,7 @@ const PremiumItinerarySection = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {product.cta}
+                        Diseña mi aventura por WhatsApp
                       </a>
                     </Button>
                   </CardFooter>

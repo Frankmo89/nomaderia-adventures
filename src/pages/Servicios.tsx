@@ -14,7 +14,6 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { products } from "@/config/pricing";
@@ -37,7 +36,7 @@ const steps = [
     icon: Palmtree,
     title: "3. Viaja sin estrés",
     description:
-      "Llega a tu aventura preparado y seguro. Con Expedición, te acompañamos por WhatsApp durante todo el viaje.",
+      "Llega a tu aventura preparado y seguro. Te acompañamos por WhatsApp durante todo el recorrido.",
   },
 ];
 
@@ -81,8 +80,8 @@ const cardItemVariants = {
 const Servicios = () => {
   useCanonical();
   usePageMeta({
-    title: "Servicios — Itinerarios y Alertas de Permisos | Nomaderia",
-    description: "Alerta de permisos $29 USD. Itinerario personalizado $29 USD. Revisado por agente TAP certificado. Para hispanos en EE. UU.",
+    title: "Servicios — Itinerario Completo $49 USD | Nomaderia",
+    description: "Itinerario completo personalizado a $49 USD: ruta día a día, permisos, equipo, alojamiento y soporte por WhatsApp. Para hispanos en EE. UU.",
   });
   const { data: mediaItems } = useMediaSlider();
 
@@ -102,8 +101,7 @@ const Servicios = () => {
       itemListElement: products.map((p) => ({
         "@type": "Offer",
         name: p.name,
-        description: p.description,
-        price: p.price.replace(/[^0-9.]/g, ""),
+        price: String(p.priceUSD),
         priceCurrency: "USD",
         url: `${SITE_URL}/servicios`,
       })),
@@ -200,10 +198,9 @@ const Servicios = () => {
         </div>
       </section>
 
-      {/* Productos */}
-      <section className="container mx-auto px-4 pb-20 max-w-6xl">
+      {/* Producto */}
+      <section className="container mx-auto px-4 pb-20 max-w-lg">
         <motion.div
-          className="grid md:grid-cols-3 gap-8 items-start"
           variants={cardContainerVariants}
           initial="hidden"
           whileInView="visible"
@@ -211,37 +208,13 @@ const Servicios = () => {
         >
           {products.map((product) => (
             <motion.div key={product.id} variants={cardItemVariants}>
-              <Card
-                className={cn(
-                  "relative flex flex-col h-full bg-card shadow-lg",
-                  product.popular
-                    ? "border-2 border-primary shadow-primary/10 md:scale-105"
-                    : "border-border"
-                )}
-              >
-                {product.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground hover:bg-primary">
-                      Más popular
-                    </Badge>
-                  </div>
-                )}
-                {product.label && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary">
-                      {product.label}
-                    </Badge>
-                  </div>
-                )}
+              <Card className="relative flex flex-col h-full bg-card shadow-lg border-2 border-primary shadow-primary/10">
                 <CardHeader className="text-center pt-8">
                   <h3 className="font-serif text-2xl text-foreground mb-2">
                     {product.name}
                   </h3>
                   <p className="text-3xl font-bold text-foreground">
-                    {product.price}
-                  </p>
-                  <p className="text-sm text-foreground/70 mt-2">
-                    {product.description}
+                    ${product.priceUSD} {product.currency}
                   </p>
                 </CardHeader>
                 <CardContent className="flex-1">
@@ -265,14 +238,12 @@ const Servicios = () => {
                       href={product.ctaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => {
-                        if (product.id === "itinerary" || product.id === "bundle") {
-                          trackEvent("cta_itinerario_whatsapp_click", { source: `servicios_${product.id}` });
-                        }
-                      }}
+                      onClick={() =>
+                        trackEvent("cta_itinerario_whatsapp_click", { source: `servicios_${product.id}` })
+                      }
                     >
-                      {product.id === "permit_alert" ? null : <MessageCircle className="h-5 w-5 mr-2" />}
-                      {product.cta}
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      Diseña mi aventura por WhatsApp
                     </a>
                   </Button>
                 </CardFooter>

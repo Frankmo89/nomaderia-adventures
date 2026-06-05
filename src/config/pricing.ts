@@ -2,68 +2,35 @@ export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 export interface Product {
-  id: "permit_alert" | "itinerary" | "bundle";
+  id: string;
   name: string;
-  price: string;
-  type: "one-time" | "bundle";
-  description: string;
+  priceUSD: number;
+  currency: "USD";
+  ctaType: "whatsapp" | "stripe";
   features: string[];
-  cta: string;
   ctaUrl: string;
-  label?: string;
-  popular?: boolean;
 }
 
-const STRIPE_SENTINEL_URL =
-  import.meta.env.VITE_STRIPE_SENTINEL_URL ||
-  "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
+// TODO: Frank — pega aquí el nuevo Payment Link de $49 USD desde Stripe Dashboard
+export const STRIPE_LINK_ITINERARIO_49 = "REEMPLAZAR_CON_LINK_DE_49_USD";
 
 export const products: Product[] = [
   {
-    id: "permit_alert",
-    name: "Alerta de Permisos",
-    price: "$29 USD",
-    type: "one-time",
-    description: "Te avisamos cuando se libere tu cupo en el parque",
+    id: "itinerario-completo",
+    name: "Itinerario Completo Nomaderia",
+    priceUSD: 49,
+    currency: "USD",
+    ctaType: "whatsapp",
     features: [
-      "Monitoreo 24/7",
-      "Aviso por WhatsApp",
-      "Yosemite y más parques",
+      "Itinerario día por día (ruta, tiempos y dificultad honesta para principiantes)",
+      "Permisos: qué necesitas, cuándo abre la lotería y cómo aplicar",
+      "Lista de equipo con enlaces recomendados",
+      "Dónde dormir y acampar",
+      "Tours y experiencias seleccionadas",
+      "Soporte por WhatsApp durante tu viaje",
     ],
-    cta: "Quiero mi alerta",
-    ctaUrl: STRIPE_SENTINEL_URL,
-  },
-  {
-    id: "itinerary",
-    name: "Itinerario Personalizado",
-    price: "$29 USD",
-    type: "one-time",
-    description: "Tu plan día a día según tu nivel, revisado por agente TAP",
-    features: [
-      "Personalizado por nivel",
-      "Revisado por agente TAP certificado",
-      "Incluye gear y preparación física",
-    ],
-    cta: "Quiero mi itinerario",
-    ctaUrl: buildWhatsAppLink("Hola Nomaderia 👋 Quiero contratar el Itinerario Personalizado ($29 USD)."),
-    popular: true,
-  },
-  {
-    id: "bundle",
-    name: "Solución Completa",
-    price: "$49 USD",
-    type: "bundle",
-    label: "Ahorra $9",
-    description: "Alerta de permisos + itinerario personalizado",
-    features: [
-      "Monitoreo 24/7",
-      "Aviso por WhatsApp",
-      "Yosemite y más parques",
-      "Personalizado por nivel",
-      "Revisado por agente TAP certificado",
-      "Incluye gear y preparación física",
-    ],
-    cta: "Quiero los dos",
-    ctaUrl: buildWhatsAppLink("Hola Nomaderia 👋 Quiero la Solución Completa ($49 USD): alerta + itinerario."),
+    ctaUrl: buildWhatsAppLink(
+      "Hola Nomaderia 👋 Quiero contratar el Itinerario Completo ($49 USD)."
+    ),
   },
 ];
