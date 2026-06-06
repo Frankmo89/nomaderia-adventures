@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { VerifyFieldBadge } from "@/components/admin/VerifyFieldBadge";
 import { AIDraftProgressOverlay } from "@/components/admin/AIDraftProgressOverlay";
 import { AIDraftSourcesPanel } from "@/components/admin/AIDraftSourcesPanel";
@@ -21,6 +21,18 @@ import ImageUpload from "@/components/dashboard/ImageUpload";
 import MultiMediaUpload from "@/components/dashboard/MultiMediaUpload";
 
 interface Fear { miedo: string; respuesta: string; }
+
+interface GenerateParkResult {
+  ok: boolean;
+  procesados: number;
+  restantes: number;
+  detalle: Array<{
+    park_code: string | null;
+    status: "ok" | "error";
+    fields?: string[];
+    reason?: string;
+  }>;
+}
 
 interface CandidateParams {
   title: string;
@@ -202,6 +214,9 @@ const AdminDestinationForm = () => {
   const [fears, setFears] = useState<Fear[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [parkCode, setParkCode] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [forceOverwrite, setForceOverwrite] = useState(false);
   const [aiDraftResponse, setAiDraftResponse] = useState<GenerateDraftResponse | null>(null);
   const [draftProgressIndex, setDraftProgressIndex] = useState(0);
   const [draftErrorMessage, setDraftErrorMessage] = useState<string | null>(null);
@@ -254,33 +269,35 @@ const AdminDestinationForm = () => {
   }, [form, verifyFlags]);
   const confidenceHigh = confidenceCount / trackedConfidenceFields.length >= 0.75;
 
-  useEffect(() => {
-    if (!isEdit) return;
-    const load = async () => {
-      const { data } = await supabase.from("destinations").select("*").eq("id", id).maybeSingle();
-      if (!data) return;
-      const aff = (data.affiliate_links as Record<string, string>) || {};
-      setForm({
-        title: data.title, slug: data.slug, country: data.country, region: data.region || "",
-        base_city: data.base_city || "", access_type: data.access_type || "", cell_signal_status: data.cell_signal_status || "",
-        short_description: data.short_description || "", difficulty_level: data.difficulty_level,
-        difficulty_description: data.difficulty_description || "", days_needed: data.days_needed || "",
-        best_season: data.best_season || "", estimated_budget_usd: String(data.estimated_budget_usd || ""),
-        hero_image_url: data.hero_image_url || "", experience_type: data.experience_type || "",
-        tags: (data.tags || []).join(", "),
-        is_published: data.is_published || false, featured: data.featured || false,
-        full_guide_markdown: data.full_guide_markdown || "", preparation_plan: data.preparation_plan || "",
-        itinerary_markdown: data.itinerary_markdown || "", gear_list_markdown: data.gear_list_markdown || "",
-        flights_url: aff.flights_url || "", hotels_url: aff.hotels_url || "", insurance_url: aff.insurance_url || "",
-        tours_url: aff.tours_url || "", tickets_url: aff.tickets_url || "",
-        car_rental_url: aff.car_rental_url || "", transfer_url: aff.transfer_url || "",
-        permit_alert_url: aff.permit_alert_url || "",
-      });
-      setFears((data.common_fears as unknown as Fear[]) || []);
-      setGalleryImages((data.gallery_images as string[]) || []);
-    };
-    load();
+  const loadDestination = useCallback(async () => {
+    if (!isEdit || !id) return;
+    const { data } = await supabase.from("destinations").select("*").eq("id", id).maybeSingle();
+    if (!data) return;
+    const aff = (data.affiliate_links as Record<string, string>) || {};
+    setForm({
+      title: data.title, slug: data.slug, country: data.country, region: data.region || "",
+      base_city: data.base_city || "", access_type: data.access_type || "", cell_signal_status: data.cell_signal_status || "",
+      short_description: data.short_description || "", difficulty_level: data.difficulty_level,
+      difficulty_description: data.difficulty_description || "", days_needed: data.days_needed || "",
+      best_season: data.best_season || "", estimated_budget_usd: String(data.estimated_budget_usd || ""),
+      hero_image_url: data.hero_image_url || "", experience_type: data.experience_type || "",
+      tags: (data.tags || []).join(", "),
+      is_published: data.is_published || false, featured: data.featured || false,
+      full_guide_markdown: data.full_guide_markdown || "", preparation_plan: data.preparation_plan || "",
+      itinerary_markdown: data.itinerary_markdown || "", gear_list_markdown: data.gear_list_markdown || "",
+      flights_url: aff.flights_url || "", hotels_url: aff.hotels_url || "", insurance_url: aff.insurance_url || "",
+      tours_url: aff.tours_url || "", tickets_url: aff.tickets_url || "",
+      car_rental_url: aff.car_rental_url || "", transfer_url: aff.transfer_url || "",
+      permit_alert_url: aff.permit_alert_url || "",
+    });
+    setParkCode((data as Record<string, unknown>).park_code as string | null ?? null);
+    setFears((data.common_fears as unknown as Fear[]) || []);
+    setGalleryImages((data.gallery_images as string[]) || []);
   }, [id, isEdit]);
+
+  useEffect(() => {
+    loadDestination();
+  }, [loadDestination]);
 
   useEffect(() => {
     if (!draftPending) {
@@ -366,6 +383,35 @@ const AdminDestinationForm = () => {
 
       candidateSlug = `${normalizedBase}-${suffix}`;
       suffix += 1;
+    }
+  };
+
+  const handleGenerateParkContent = async () => {
+    if (!parkCode) return;
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-park-content", {
+        body: { park_code: parkCode, force: forceOverwrite },
+      });
+      if (error) throw error;
+      const result = data as GenerateParkResult | null;
+      if (!result?.ok) {
+        throw new Error(result?.detalle?.[0]?.reason ?? "La función no devolvió OK");
+      }
+      const parkDetail = result.detalle.find((d) => d.status === "ok");
+      const fieldsCount = parkDetail?.fields?.length ?? 0;
+      toast({
+        title: "Contenido generado",
+        description: fieldsCount > 0
+          ? `${fieldsCount} campos actualizados con IA.`
+          : "Sin campos nuevos (todos ya tenían contenido — usa Forzar para sobrescribir).",
+      });
+      await loadDestination();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al generar contenido";
+      toast({ title: "Error al generar", description: message, variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -481,6 +527,47 @@ const AdminDestinationForm = () => {
           </Badge>
         )}
       </div>
+
+      {isEdit && (
+        <Card className="bg-card border border-primary/30 mb-6">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+              <Button
+                type="button"
+                disabled={isGenerating || !parkCode}
+                onClick={handleGenerateParkContent}
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground shrink-0"
+              >
+                {isGenerating
+                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generando...</>
+                  : <><Sparkles className="h-4 w-4 mr-2" />Generar contenido AI de este parque</>
+                }
+              </Button>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="force-overwrite"
+                  checked={forceOverwrite}
+                  onCheckedChange={setForceOverwrite}
+                  disabled={isGenerating}
+                />
+                <Label htmlFor="force-overwrite" className="text-sm text-muted-foreground cursor-pointer">
+                  Forzar sobrescritura (ignorar reglas no-destructivas)
+                </Label>
+              </div>
+              {!parkCode && (
+                <p className="text-xs text-muted-foreground italic">
+                  Sin código NPS — este destino no tiene <code className="text-xs">park_code</code> configurado.
+                </p>
+              )}
+              {parkCode && (
+                <p className="text-xs text-muted-foreground">
+                  Código NPS: <span className="font-mono text-foreground">{parkCode}</span>
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {draftErrorMessage && !draftPending && (
         <Card className="bg-card border-border mb-6">
