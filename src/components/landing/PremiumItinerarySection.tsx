@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Map, Headphones, BadgeDollarSign, Zap, Check } from "lucide-react";
+import { Gauge, Ticket, Footprints, Globe, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,24 +8,24 @@ import { products } from "@/config/pricing";
 
 const benefits = [
   {
-    icon: Map,
-    title: "Rutas Secretas",
-    desc: "Caminos que no encuentras en Google ni en ninguna guía de turistas",
+    icon: Gauge,
+    title: "Dificultad Honesta",
+    desc: "Te decimos exactamente qué forma física necesitas. Sin subestimar el reto ni exagerarlo para venderte el servicio.",
   },
   {
-    icon: Headphones,
-    title: "Soporte 24/7",
-    desc: "Acompañamiento personalizado antes, durante y después de tu aventura",
+    icon: Ticket,
+    title: "Permisos Sin Estrés",
+    desc: "Te guiamos paso a paso en Recreation.gov antes de que se agoten los cupos — Yosemite, Half Dome y más.",
   },
   {
-    icon: BadgeDollarSign,
-    title: "Optimización de Presupuesto",
-    desc: "Máxima experiencia sin desperdiciar un peso en lo que no importa",
+    icon: Footprints,
+    title: "Hecho para Principiantes",
+    desc: "Nunca asumimos que ya sabes. Cada guía parte de cero, sin jerga de mochilero experto.",
   },
   {
-    icon: Zap,
-    title: "Respuesta en 24h",
-    desc: "Tu propuesta personalizada lista en menos de un día hábil",
+    icon: Globe,
+    title: "En Español de Verdad",
+    desc: "No es traducción automática. Explicamos permisos, trails y tarifas con los términos reales de los parques.",
   },
 ];
 

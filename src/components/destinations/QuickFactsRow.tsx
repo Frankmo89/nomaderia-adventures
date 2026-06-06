@@ -26,13 +26,13 @@ export default function QuickFactsRow({ daysNeeded, budgetUsd, maxElevationFt, b
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="py-8 border-b border-border"
+      className="py-10 border-b border-border"
     >
       <div className="container mx-auto px-4 max-w-3xl">
         <div className="grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border">
           {facts.map(({ label, value }) => (
-            <div key={label} className="bg-accent px-5 py-4 flex flex-col gap-1">
-              <span className="font-serif text-2xl leading-tight text-primary">{value}</span>
+            <div key={label} className="bg-accent px-5 py-5 flex flex-col gap-1.5">
+              <span className="font-serif text-xl md:text-2xl leading-tight text-primary">{value}</span>
               <span className="font-sans text-xs text-muted-foreground">{label}</span>
             </div>
           ))}

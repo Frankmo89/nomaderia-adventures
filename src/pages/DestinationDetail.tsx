@@ -26,6 +26,8 @@ import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destin
 import type { Tables } from "@/integrations/supabase/types";
 import QuickFactsRow from "@/components/destinations/QuickFactsRow";
 import DifficultyBadge from "@/components/destinations/DifficultyBadge";
+import HowToGetThere, { type LodgingOption } from "@/components/destinations/HowToGetThere";
+import CredibilityBar from "@/components/destinations/CredibilityBar";
 
 type Destination = Tables<"destinations">;
 
@@ -68,6 +70,16 @@ interface DestExt {
   altitude_warning?: boolean | null;
   beginner_friendly?: boolean | null;
   not_ideal_if?: string[] | null;
+  // access / getting-there fields
+  nearest_airport?: string | null;
+  nearest_town?: string | null;
+  drive_time_from_la?: string | null;
+  drive_time_from_san_diego?: string | null;
+  getting_there_markdown?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  lodging_info?: LodgingOption[] | null;
+  last_verified_at?: string | null;
 }
 
 function firstSentence(text: string): string {
@@ -303,18 +315,20 @@ const DestinationDetail = () => {
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
-          {/* Dot indicators */}
+          {/* Dot indicators — 44px touch targets for accessibility */}
           {heroImages.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20">
               {heroImages.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => heroApi?.scrollTo(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    i === heroIndex ? "bg-white scale-125" : "bg-white/50"
-                  }`}
+                  className="w-11 h-11 flex items-center justify-center"
                   aria-label={`Ir a imagen ${i + 1}`}
-                />
+                >
+                  <span className={`w-2 h-2 rounded-full transition-all duration-300 block ${
+                    i === heroIndex ? "bg-white scale-125" : "bg-white/50"
+                  }`} />
+                </button>
               ))}
             </div>
           )}
@@ -351,12 +365,12 @@ const DestinationDetail = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="py-10 border-b border-border"
+          className="py-14 border-b border-border"
         >
           <div className="container mx-auto px-4 max-w-3xl">
-            <h2 className="font-serif text-3xl font-bold text-foreground mb-4">Por qué ir</h2>
+            <h2 className="font-serif text-3xl font-bold text-foreground mb-6">Por qué ir</h2>
             {whyText && (
-              <div className="prose prose-stone max-w-none text-foreground/80 mb-6">
+              <div className="prose prose-stone max-w-none text-foreground/80 leading-relaxed mb-8">
                 <ReactMarkdown>{whyText}</ReactMarkdown>
               </div>
             )}
@@ -365,9 +379,9 @@ const DestinationDetail = () => {
                 {highlights.map((item, i) => {
                   const Icon = HIGHLIGHT_ICONS[i] ?? Compass;
                   return (
-                    <div key={i} className="flex items-start gap-3 rounded-lg bg-accent/50 px-4 py-3">
+                    <div key={i} className="flex items-start gap-3 rounded-lg bg-accent/50 px-4 py-3 hover:bg-accent transition-colors">
                       <Icon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                      <span className="text-sm text-foreground/80 leading-snug">{item}</span>
+                      <span className="text-sm text-foreground/80 leading-relaxed">{item}</span>
                     </div>
                   );
                 })}
@@ -386,15 +400,16 @@ const DestinationDetail = () => {
       />
 
       {/* Content */}
-      <section className="py-12">
+      <section className="py-16">
         <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8">
           <div className="flex-1 min-w-0">
             <Tabs defaultValue="can-i" className="w-full" onValueChange={setActiveTab}>
-              <TabsList className="bg-muted mb-6 flex-wrap">
+              <TabsList className="bg-muted mb-8 h-auto py-1.5 flex-wrap gap-1">
                 <TabsTrigger value="can-i">¿Puedo Hacerlo?</TabsTrigger>
                 <TabsTrigger value="prep">Preparación Física</TabsTrigger>
                 <TabsTrigger value="itinerary">Itinerario</TabsTrigger>
                 <TabsTrigger value="gear">Qué Llevar</TabsTrigger>
+                <TabsTrigger value="how-to-get">Cómo Llegar</TabsTrigger>
               </TabsList>
               <TabsContent value="can-i">
                 <AnimatePresence mode="wait">
@@ -406,7 +421,7 @@ const DestinationDetail = () => {
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
                     {/* Desglose escaneable */}
-                    <div className="space-y-5 mb-8">
+                    <div className="space-y-6 mb-10">
                       {/* Nivel */}
                       <div className="flex items-start gap-3">
                         <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
@@ -455,13 +470,13 @@ const DestinationDetail = () => {
 
                     {/* No es ideal si… */}
                     {((dest as Destination & DestExt).not_ideal_if ?? []).length > 0 && (
-                      <div className="mb-8">
+                      <div className="border-t border-border pt-6 mb-10">
                         <p className="text-xs font-sans text-muted-foreground uppercase tracking-wide mb-3">No es ideal si…</p>
                         <div className="flex flex-wrap gap-2">
                           {((dest as Destination & DestExt).not_ideal_if ?? []).map((item, i) => (
                             <span
                               key={i}
-                              className="text-xs px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full"
+                              className="text-xs px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full"
                             >
                               {item}
                             </span>
@@ -472,17 +487,17 @@ const DestinationDetail = () => {
 
                     {/* Preguntas frecuentes */}
                     {fears.length > 0 && (
-                      <>
-                        <h3 className="font-serif text-2xl text-foreground mb-4">Preguntas Frecuentes</h3>
+                      <div className="border-t border-border pt-6">
+                        <h3 className="font-serif text-2xl text-foreground mb-5">Preguntas Frecuentes</h3>
                         <Accordion type="single" collapsible className="w-full">
                           {fears.map((f, i) => (
                             <AccordionItem key={i} value={`fear-${i}`} className="border-border">
                               <AccordionTrigger className="text-foreground hover:text-primary">{f.miedo}</AccordionTrigger>
-                              <AccordionContent className="text-muted-foreground">{f.respuesta}</AccordionContent>
+                              <AccordionContent className="text-muted-foreground leading-relaxed">{f.respuesta}</AccordionContent>
                             </AccordionItem>
                           ))}
                         </Accordion>
-                      </>
+                      </div>
                     )}
                   </motion.div>
                 </AnimatePresence>
@@ -496,9 +511,14 @@ const DestinationDetail = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <div className="prose max-w-none text-foreground/90">
-                      <ReactMarkdown components={markdownComponents}>{dest.preparation_plan || "Contenido próximamente."}</ReactMarkdown>
-                    </div>
+                    {dest.preparation_plan
+                      ? <div className="prose prose-stone max-w-none text-foreground/90 leading-relaxed prose-headings:font-serif prose-headings:text-foreground">
+                          <ReactMarkdown components={markdownComponents}>{dest.preparation_plan}</ReactMarkdown>
+                        </div>
+                      : <div className="py-16 text-center">
+                          <p className="text-sm text-muted-foreground">Contenido próximamente.</p>
+                        </div>
+                    }
                   </motion.div>
                 </AnimatePresence>
               </TabsContent>
@@ -511,9 +531,14 @@ const DestinationDetail = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <div className="prose max-w-none text-foreground/90">
-                      <ReactMarkdown components={markdownComponents}>{dest.itinerary_markdown || "Contenido próximamente."}</ReactMarkdown>
-                    </div>
+                    {dest.itinerary_markdown
+                      ? <div className="prose prose-stone max-w-none text-foreground/90 leading-relaxed prose-headings:font-serif prose-headings:text-foreground">
+                          <ReactMarkdown components={markdownComponents}>{dest.itinerary_markdown}</ReactMarkdown>
+                        </div>
+                      : <div className="py-16 text-center">
+                          <p className="text-sm text-muted-foreground">Contenido próximamente.</p>
+                        </div>
+                    }
                   </motion.div>
                 </AnimatePresence>
               </TabsContent>
@@ -526,9 +551,42 @@ const DestinationDetail = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <div className="prose max-w-none text-foreground/90">
-                      <ReactMarkdown components={markdownComponents}>{dest.gear_list_markdown || "Contenido próximamente."}</ReactMarkdown>
-                    </div>
+                    {dest.gear_list_markdown
+                      ? <div className="prose prose-stone max-w-none text-foreground/90 leading-relaxed prose-headings:font-serif prose-headings:text-foreground">
+                          <ReactMarkdown components={markdownComponents}>{dest.gear_list_markdown}</ReactMarkdown>
+                        </div>
+                      : <div className="py-16 text-center">
+                          <p className="text-sm text-muted-foreground">Contenido próximamente.</p>
+                        </div>
+                    }
+                  </motion.div>
+                </AnimatePresence>
+              </TabsContent>
+              <TabsContent value="how-to-get">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {(() => {
+                      const ext = dest as Destination & DestExt;
+                      return (
+                        <HowToGetThere
+                          nearestAirport={ext.nearest_airport}
+                          nearestTown={ext.nearest_town}
+                          driveTimeFromLA={ext.drive_time_from_la}
+                          driveTimeFromSD={ext.drive_time_from_san_diego}
+                          gettingThereMarkdown={ext.getting_there_markdown}
+                          cellSignalStatus={dest.cell_signal_status}
+                          lodgingInfo={ext.lodging_info}
+                          latitude={ext.latitude}
+                          longitude={ext.longitude}
+                        />
+                      );
+                    })()}
                   </motion.div>
                 </AnimatePresence>
               </TabsContent>
@@ -537,7 +595,7 @@ const DestinationDetail = () => {
           <aside className="w-full lg:w-80 shrink-0">
             <div className="lg:sticky lg:top-24 space-y-4">
               <PermitScarcity destinationSlug={slug || ""} />
-              <Card className="bg-card border-border">
+              <Card className="bg-card border-border hover:shadow-md transition-shadow duration-200">
                 <CardHeader>
                   <CardTitle className="font-serif text-xl text-card-foreground">Reserva Tu Viaje</CardTitle>
                   {dest.best_season && (
@@ -707,9 +765,9 @@ const DestinationDetail = () => {
       </Dialog>
 
       {/* Compartir */}
-      <section className="pb-8">
+      <section className="py-10">
         <div className="container mx-auto px-4 max-w-3xl">
-          <div className="pt-6 border-t border-border">
+          <div className="pt-8 border-t border-border">
             <ShareButtons
               url={window.location.href}
               title={dest.title}
@@ -746,10 +804,13 @@ const DestinationDetail = () => {
         </section>
       )}
 
-      <div className="my-8 container mx-auto px-4">
+      <div className="my-12 container mx-auto px-4 max-w-3xl">
         <ConciergeChat
           destinationSlug={dest.slug}
           destinationTitle={dest.title}
+        />
+        <CredibilityBar
+          lastVerifiedAt={(dest as Destination & DestExt).last_verified_at}
         />
       </div>
 
