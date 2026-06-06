@@ -22,7 +22,7 @@ interface GenerateDraftRequest {
 interface ExampleDestination {
   short_description: string | null;
   full_guide_markdown: string | null;
-  common_fears: Array<{ question?: string; answer?: string }> | null;
+  common_fears: Array<{ miedo?: string; respuesta?: string }> | null;
 }
 
 interface StepAResearchOutput {
@@ -48,7 +48,7 @@ interface DestinationDraft {
   gear_list_markdown: string;
   itinerary_markdown: string;
   full_guide_markdown: string;
-  common_fears: Array<{ question: string; answer: string }>;
+  common_fears: Array<{ miedo: string; respuesta: string }>;
   experience_type: string | null;
   tags: string[];
   verify_flags: string[];
@@ -210,10 +210,10 @@ function buildDestinationDraftSchema() {
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["question", "answer"],
+          required: ["miedo", "respuesta"],
           properties: {
-            question: { type: "string" },
-            answer: { type: "string" },
+            miedo: { type: "string" },
+            respuesta: { type: "string" },
           },
         },
       },
@@ -249,7 +249,7 @@ function buildFewShotBlock(example: ExampleDestination | null): string {
   const fears = Array.isArray(example.common_fears)
     ? example.common_fears
         .slice(0, 3)
-        .map((fear) => `- Q: ${fear.question || ""}\n  A: ${fear.answer || ""}`)
+        .map((fear) => `- Q: ${fear.miedo || ""}\n  A: ${fear.respuesta || ""}`)
         .join("\n")
     : "";
 

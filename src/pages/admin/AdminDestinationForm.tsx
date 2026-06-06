@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { VerifyFieldBadge } from "@/components/admin/VerifyFieldBadge";
@@ -49,6 +50,20 @@ const emptyForm = {
   full_guide_markdown: "", preparation_plan: "", itinerary_markdown: "",
   gear_list_markdown: "", permit_alert_url: "", flights_url: "", hotels_url: "", insurance_url: "",
   tours_url: "", tickets_url: "", car_rental_url: "", transfer_url: "",
+  // Extended fields — ADR-009 cast until Frank regenera tipos
+  why_visit_markdown: "",
+  has_nonresident_surcharge: false,
+  nonresident_surcharge: "",
+  max_elevation_ft: "",
+  altitude_warning: false,
+  beginner_friendly: true,
+  drive_time_from_la: "",
+  drive_time_from_san_diego: "",
+  nearest_airport: "",
+  nearest_town: "",
+  getting_there_markdown: "",
+  last_verified_at: "",
+  internal_notes: "",
 };
 
 type FormState = typeof emptyForm;
@@ -202,6 +217,68 @@ const AffiliateFields = ({ form, set }: { form: FormState; set: (k: string, v: s
   </Card>
 );
 
+// --- Collapsible sections for extended fields ---
+
+const CollapsibleCard = ({ title, sectionKey, children }: { title: string; sectionKey: string; children: ReactNode }) => (
+  <Card className="bg-card border-border">
+    <Accordion type="single" collapsible>
+      <AccordionItem value={sectionKey} className="border-none">
+        <AccordionTrigger className="px-6 py-4 text-card-foreground font-serif text-lg hover:no-underline [&[data-state=open]]:text-primary">
+          {title}
+        </AccordionTrigger>
+        <AccordionContent>
+          <div className="px-6 pb-6 space-y-4">
+            {children}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  </Card>
+);
+
+const CharacteristicsFields = ({ form, set }: { form: FormState; set: (k: string, v: string | boolean) => void }) => (
+  <CollapsibleCard title="Características del Destino" sectionKey="characteristics">
+    {field("Por qué ir (markdown)", <Textarea rows={5} value={form.why_visit_markdown} onChange={(e) => set("why_visit_markdown", e.target.value)} className={`${inputCls} font-mono text-sm`} placeholder="Texto de venta del destino en markdown..." />)}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {field("Elevación Máxima (pies)", <Input type="number" value={form.max_elevation_ft} onChange={(e) => set("max_elevation_ft", e.target.value)} className={inputCls} placeholder="Ej: 8800" />)}
+    </div>
+    <div className="flex flex-wrap gap-6 pt-2">
+      <div className="flex items-center gap-2">
+        <Switch id="beginner_friendly" checked={form.beginner_friendly} onCheckedChange={(v) => set("beginner_friendly", v)} />
+        <Label htmlFor="beginner_friendly" className="text-card-foreground">Apto para principiantes</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch id="altitude_warning" checked={form.altitude_warning} onCheckedChange={(v) => set("altitude_warning", v)} />
+        <Label htmlFor="altitude_warning" className="text-card-foreground">Advertencia de altitud</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch id="has_nonresident_surcharge" checked={form.has_nonresident_surcharge} onCheckedChange={(v) => set("has_nonresident_surcharge", v)} />
+        <Label htmlFor="has_nonresident_surcharge" className="text-card-foreground">Recargo para no-residentes</Label>
+      </div>
+    </div>
+    {form.has_nonresident_surcharge && field("Recargo no-residentes (USD)", <Input type="number" value={form.nonresident_surcharge} onChange={(e) => set("nonresident_surcharge", e.target.value)} className={inputCls} placeholder="Ej: 100" />)}
+  </CollapsibleCard>
+);
+
+const LogisticsFields = ({ form, set }: { form: FormState; set: (k: string, v: string | boolean) => void }) => (
+  <CollapsibleCard title="Logística y Cómo Llegar" sectionKey="logistics">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {field("Aeropuerto más cercano", <Input value={form.nearest_airport} onChange={(e) => set("nearest_airport", e.target.value)} className={inputCls} placeholder="Ej: LAX, SAN" />)}
+      {field("Ciudad / pueblo más cercano", <Input value={form.nearest_town} onChange={(e) => set("nearest_town", e.target.value)} className={inputCls} placeholder="Ej: Fresno, CA" />)}
+      {field("Tiempo desde Los Ángeles", <Input value={form.drive_time_from_la} onChange={(e) => set("drive_time_from_la", e.target.value)} className={inputCls} placeholder="Ej: 4h 30min en auto" />)}
+      {field("Tiempo desde San Diego", <Input value={form.drive_time_from_san_diego} onChange={(e) => set("drive_time_from_san_diego", e.target.value)} className={inputCls} placeholder="Ej: 6h en auto" />)}
+    </div>
+    {field("Cómo Llegar (markdown)", <Textarea rows={6} value={form.getting_there_markdown} onChange={(e) => set("getting_there_markdown", e.target.value)} className={`${inputCls} font-mono text-sm`} />)}
+  </CollapsibleCard>
+);
+
+const InternalFields = ({ form, set }: { form: FormState; set: (k: string, v: string | boolean) => void }) => (
+  <CollapsibleCard title="Control Interno" sectionKey="internal">
+    {field("Última verificación", <Input type="date" value={form.last_verified_at} onChange={(e) => set("last_verified_at", e.target.value)} className={inputCls} />)}
+    {field("Notas internas (solo admin)", <Textarea rows={4} value={form.internal_notes} onChange={(e) => set("internal_notes", e.target.value)} className={inputCls} placeholder="Notas privadas sobre este destino..." />)}
+  </CollapsibleCard>
+);
+
 // --- Main component ---
 
 const AdminDestinationForm = () => {
@@ -274,6 +351,7 @@ const AdminDestinationForm = () => {
     const { data } = await supabase.from("destinations").select("*").eq("id", id).maybeSingle();
     if (!data) return;
     const aff = (data.affiliate_links as Record<string, string>) || {};
+    const raw = data as Record<string, unknown>;
     setForm({
       title: data.title, slug: data.slug, country: data.country, region: data.region || "",
       base_city: data.base_city || "", access_type: data.access_type || "", cell_signal_status: data.cell_signal_status || "",
@@ -289,8 +367,22 @@ const AdminDestinationForm = () => {
       tours_url: aff.tours_url || "", tickets_url: aff.tickets_url || "",
       car_rental_url: aff.car_rental_url || "", transfer_url: aff.transfer_url || "",
       permit_alert_url: aff.permit_alert_url || "",
+      // Extended fields via ADR-009 cast
+      why_visit_markdown: (raw.why_visit_markdown as string | null) ?? "",
+      has_nonresident_surcharge: (raw.has_nonresident_surcharge as boolean | null) ?? false,
+      nonresident_surcharge: raw.nonresident_surcharge != null ? String(raw.nonresident_surcharge as number) : "",
+      max_elevation_ft: raw.max_elevation_ft != null ? String(raw.max_elevation_ft as number) : "",
+      altitude_warning: (raw.altitude_warning as boolean | null) ?? false,
+      beginner_friendly: (raw.beginner_friendly as boolean | null) ?? true,
+      drive_time_from_la: (raw.drive_time_from_la as string | null) ?? "",
+      drive_time_from_san_diego: (raw.drive_time_from_san_diego as string | null) ?? "",
+      nearest_airport: (raw.nearest_airport as string | null) ?? "",
+      nearest_town: (raw.nearest_town as string | null) ?? "",
+      getting_there_markdown: (raw.getting_there_markdown as string | null) ?? "",
+      last_verified_at: raw.last_verified_at ? (raw.last_verified_at as string).slice(0, 10) : "",
+      internal_notes: (raw.internal_notes as string | null) ?? "",
     });
-    setParkCode((data as Record<string, unknown>).park_code as string | null ?? null);
+    setParkCode(raw.park_code as string | null ?? null);
     setFears((data.common_fears as unknown as Fear[]) || []);
     setGalleryImages((data.gallery_images as string[]) || []);
   }, [id, isEdit]);
@@ -475,9 +567,28 @@ const AdminDestinationForm = () => {
       })),
     };
 
+    // Extended fields not in generated types — ADR-009 cast required
+    const extPayload = {
+      why_visit_markdown: form.why_visit_markdown || null,
+      has_nonresident_surcharge: form.has_nonresident_surcharge,
+      nonresident_surcharge: form.nonresident_surcharge ? Number(form.nonresident_surcharge) : null,
+      max_elevation_ft: form.max_elevation_ft ? Number(form.max_elevation_ft) : null,
+      altitude_warning: form.altitude_warning,
+      beginner_friendly: form.beginner_friendly,
+      drive_time_from_la: form.drive_time_from_la || null,
+      drive_time_from_san_diego: form.drive_time_from_san_diego || null,
+      nearest_airport: form.nearest_airport || null,
+      nearest_town: form.nearest_town || null,
+      getting_there_markdown: form.getting_there_markdown || null,
+      last_verified_at: form.last_verified_at || null,
+      internal_notes: form.internal_notes || null,
+    };
+
+    const fullPayload = { ...payload, ...extPayload };
+    const dbClient = supabase as unknown as SupabaseClient;
     const result = isEdit
-      ? await supabase.from("destinations").update(payload).eq("id", id)
-      : await supabase.from("destinations").insert(payload).select("id").single();
+      ? await dbClient.from("destinations").update(fullPayload).eq("id", id)
+      : await dbClient.from("destinations").insert(fullPayload).select("id").single();
 
     setSaving(false);
     if (result.error) {
@@ -485,7 +596,7 @@ const AdminDestinationForm = () => {
       return;
     }
 
-    if (!isEdit && aiDraftResponse && "data" in result && result.data?.id) {
+    if (!isEdit && aiDraftResponse && result.data?.id) {
       const aiMetaClient = supabase as unknown as SupabaseClient;
       const { error: aiMetaError } = await aiMetaClient
         .from("destination_ai_meta")
@@ -595,6 +706,9 @@ const AdminDestinationForm = () => {
           verifyFlags={verifyFlags}
         />
         <MarkdownFields form={form} set={set} verifyFlags={verifyFlags} />
+        <CharacteristicsFields form={form} set={set} />
+        <LogisticsFields form={form} set={set} />
+        <InternalFields form={form} set={set} />
         <AffiliateFields form={form} set={set} />
         <div className="flex gap-4">
           <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90 text-primary-foreground">

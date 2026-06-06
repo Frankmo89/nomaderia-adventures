@@ -78,11 +78,12 @@ interface PermitInfo {
 
 interface SignatureHike {
   nombre?: string;
-  distancia?: string;
+  distancia_km?: number | null;
+  duracion_horas?: number | null;
   dificultad?: string;
-  tiempo?: string;
-  permiso_requerido?: boolean;
-  descripcion?: string;
+  desnivel_m?: number | null;
+  apto_principiante?: boolean;
+  nota?: string | null;
 }
 
 interface LodgingInfo {
@@ -264,13 +265,14 @@ function buildDestinationFicha(dest: DestinationRow): string {
       for (const h of dest.signature_hikes as SignatureHike[]) {
         if (!h) continue;
         const parts: string[] = [];
-        if (val(h.nombre))    parts.push(val(h.nombre)!);
-        if (val(h.distancia)) parts.push(`: ${val(h.distancia)}`);
-        if (val(h.dificultad)) parts.push(`, dificultad ${val(h.dificultad)}`);
-        if (val(h.tiempo))    parts.push(`, ${val(h.tiempo)}`);
+        if (val(h.nombre))            parts.push(val(h.nombre)!);
+        if (h.distancia_km != null)   parts.push(`: ${h.distancia_km} km`);
+        if (val(h.dificultad))        parts.push(`, dificultad ${val(h.dificultad)}`);
+        if (h.duracion_horas != null) parts.push(`, ${h.duracion_horas} h`);
+        if (h.desnivel_m != null)     parts.push(`, ${h.desnivel_m} m desnivel`);
         parts.push(".");
-        if (h.permiso_requerido) parts.push(" Requiere permiso.");
-        if (val(h.descripcion))  parts.push(` ${val(h.descripcion)}`);
+        if (h.apto_principiante === true) parts.push(" Apto para principiantes.");
+        if (val(h.nota))              parts.push(` ${val(h.nota)}`);
         const line = parts.join("").trim();
         if (line) lines.push(line);
       }

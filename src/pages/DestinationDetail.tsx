@@ -174,7 +174,13 @@ const DestinationDetail = () => {
 
   const fears = useMemo(() => {
     if (!dest) return [];
-    return (dest.common_fears as Array<{ miedo: string; respuesta: string }>) || [];
+    const raw = (dest.common_fears as Array<Record<string, unknown>> | null) ?? [];
+    return raw
+      .map((f) => ({
+        miedo: (typeof f.miedo === "string" ? f.miedo : typeof f.question === "string" ? f.question : "").trim(),
+        respuesta: (typeof f.respuesta === "string" ? f.respuesta : typeof f.answer === "string" ? f.answer : "").trim(),
+      }))
+      .filter((f) => f.miedo && f.respuesta);
   }, [dest]);
 
   const jsonLd = useMemo(() => {
@@ -452,17 +458,26 @@ const DestinationDetail = () => {
               <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
               <div className="space-y-2 text-sm">
                 <p className="font-semibold text-amber-900">
-                  Tarifa adicional para no-residentes de EE. UU.
+                  Tarifa de entrada según residencia (2026)
                 </p>
-                <p className="text-amber-800 leading-relaxed">
-                  Los visitantes de 16 años o más que{" "}
-                  <strong>no sean residentes de EE. UU.</strong> pagan{" "}
-                  <strong>
-                    ${(dest as Destination & DestExt).nonresident_surcharge ?? 100} USD adicionales por persona
-                  </strong>{" "}
-                  al ingresar a este parque (tarifa 2026).{" "}
-                  Niños de 15 años o menores: exentos.
-                </p>
+                <ul className="text-amber-800 space-y-1 leading-relaxed list-none">
+                  <li>
+                    <span className="font-medium">Residentes y ciudadanos de EE. UU.:</span>{" "}
+                    tarifa estándar de entrada, sin recargo adicional.
+                  </li>
+                  <li>
+                    <span className="font-medium">No-residentes de EE. UU. (16 años o más):</span>{" "}
+                    tarifa estándar{" "}
+                    <strong>
+                      + ${(dest as Destination & DestExt).nonresident_surcharge ?? 100} USD adicionales por persona
+                    </strong>{" "}
+                    al ingresar.
+                  </li>
+                  <li>
+                    <span className="font-medium">Niños de 15 años o menores:</span>{" "}
+                    exentos del recargo adicional.
+                  </li>
+                </ul>
                 <p className="text-amber-800 leading-relaxed">
                   Si planeas visitar 2 o más parques con este recargo, el{" "}
                   <strong>pase America the Beautiful para no-residentes ($250 USD)</strong>{" "}
@@ -478,7 +493,7 @@ const DestinationDetail = () => {
                   .
                 </p>
                 <p className="text-xs text-amber-700">
-                  Verifica el monto exacto en nps.gov antes de tu visita — las tarifas pueden actualizarse.
+                  Verifica las tarifas exactas en nps.gov antes de tu visita — pueden actualizarse.
                 </p>
               </div>
             </div>
@@ -689,9 +704,9 @@ const DestinationDetail = () => {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                   {/* WhatsApp — canal de cierre principal */}
-                  <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full font-semibold">
+                  <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full font-semibold text-sm whitespace-normal h-auto py-2">
                     <a href={buildWhatsAppLink(whatsappMessage)} target="_blank" rel="noopener noreferrer">
-                      <MessageSquare className="mr-2 h-4 w-4" /> ¿Listo para ir? Te armamos el itinerario completo →
+                      <MessageSquare className="mr-2 h-4 w-4 shrink-0" /> ¿Listo para ir? Te armamos el itinerario completo →
                     </a>
                   </Button>
                   {permitAlertUrl && (

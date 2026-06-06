@@ -93,6 +93,7 @@ interface ParkRow {
   top_activities: string[] | null;
   signature_hikes: unknown[] | null;
   common_fears: unknown[] | null;
+  lodging_info: unknown[] | null;
   meta_title: string | null;
   meta_description: string | null;
   tags: string[] | null;
@@ -116,6 +117,14 @@ interface SignatureHike {
 interface CommonFear {
   miedo: string;
   respuesta: string;
+}
+
+interface LodgingInfo {
+  nombre: string;
+  tipo: string;
+  rango_precio_usd: string | null;
+  reserva_url: string | null;
+  notas: string | null;
 }
 
 interface ParkContentAI {
@@ -154,6 +163,7 @@ interface ParkContentAI {
   top_activities?: string[];
   signature_hikes?: unknown[];
   common_fears?: unknown[];
+  lodging_info?: unknown[];
   meta_title?: string;
   meta_description?: string;
   tags?: string[];
@@ -254,6 +264,11 @@ EXIGIDO en cada campo de texto:
   → nota debe ser 1-2 oraciones con lo que hace ÚNICO ese sendero en este parque, no una descripción genérica.
 - common_fears: [{miedo:string, respuesta:string}]
   → respuesta debe citar condiciones reales del parque, no consejos universales.
+- lodging_info: [{nombre:string, tipo:string, rango_precio_usd:string|null, reserva_url:string|null, notas:string|null}]
+  → tipo: "hotel", "lodge", "cabañas", "camping", "glamping", "hostel" u otro.
+  → rango_precio_usd: e.g. "$25–$50/noche" o null si se desconoce.
+  → reserva_url: URL de Recreation.gov, el sitio oficial o null. No inventes URLs.
+  → Incluye solo opciones dentro o en las inmediaciones del parque con datos verificables.
 
 ---
 
@@ -370,6 +385,9 @@ Devuelve SOLO este JSON. Omite campos que no puedas rellenar con seguridad.
     { "miedo": "¿Qué hago si me encuentro con un oso?", "respuesta": "..." },
     { "miedo": "¿Puedo ir sin reservar nada?", "respuesta": "..." }
   ],
+  "lodging_info": [
+    { "nombre": "Nombre del lodge/hotel/campsite", "tipo": "lodge", "rango_precio_usd": "$150–$250/noche", "reserva_url": null, "notas": "..." }
+  ],
   "meta_title": "Parque Nacional X | Guía en español para principiantes",
   "meta_description": "Qué ver y hacer en el Parque Nacional X. Guía completa en español para hispanohablantes.",
   "tags": ["parque-nacional", "california", "senderismo"],
@@ -438,6 +456,19 @@ function coerceCommonFear(item: unknown): CommonFear | null {
   const respuesta = typeof f.respuesta === "string" ? f.respuesta.trim() : "";
   if (!miedo || !respuesta) return null;
   return { miedo, respuesta };
+}
+
+function coerceLodgingInfo(item: unknown): LodgingInfo | null {
+  if (typeof item !== "object" || item === null) return null;
+  const l = item as Record<string, unknown>;
+  if (typeof l.nombre !== "string" || !l.nombre.trim()) return null;
+  return {
+    nombre: l.nombre.trim(),
+    tipo: typeof l.tipo === "string" ? l.tipo.trim() : "",
+    rango_precio_usd: typeof l.rango_precio_usd === "string" ? l.rango_precio_usd : null,
+    reserva_url: typeof l.reserva_url === "string" ? l.reserva_url : null,
+    notas: typeof l.notas === "string" ? l.notas : null,
+  };
 }
 
 // ─── Patch builder ───────────────────────────────────────────────────────────
@@ -545,6 +576,16 @@ function buildPatch(
     }
   }
 
+  // lodging_info: validate JSONB contract before writing
+  if (Array.isArray(ai.lodging_info) && ai.lodging_info.length > 0) {
+    if (force || isEmptyArray(row.lodging_info)) {
+      const valid = ai.lodging_info
+        .map(coerceLodgingInfo)
+        .filter((l): l is LodgingInfo => l !== null);
+      if (valid.length > 0) patch.lodging_info = valid;
+    }
+  }
+
   // entrance fees: only from NPS source, only when currently empty
   if (
     npsData?.entranceFees?.length &&
@@ -636,7 +677,7 @@ serve(async (req) => {
       "max_elevation_ft, altitude_warning, beginner_friendly",
       "wildlife, water_availability, safety_markdown, accessibility_markdown",
       "full_guide_markdown, preparation_plan, gear_list_markdown, itinerary_markdown",
-      "top_activities, signature_hikes, common_fears",
+      "top_activities, signature_hikes, common_fears, lodging_info",
       "meta_title, meta_description, tags",
       "good_for, not_ideal_if, internal_notes",
     ].join(", ");
