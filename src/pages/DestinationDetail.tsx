@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +56,15 @@ const markdownComponents = {
     </figure>
   ),
 };
+
+// Columns added post-type-generation — remove cast once Frank regenerates types (ADR-009)
+interface DestExt {
+  why_visit_markdown?: string | null;
+  top_activities?: string[] | null;
+  signature_hikes?: Array<{ nombre: string }> | null;
+}
+
+const HIGHLIGHT_ICONS = [Sparkles, Mountain, Compass] as const;
 
 const DestinationPageMeta = ({ destination }: { destination: Destination }) => {
   usePageMeta({
@@ -136,7 +145,7 @@ const DestinationDetail = () => {
 
   const fears = useMemo(() => {
     if (!dest) return [];
-    return (dest.common_fears as Array<{ question: string; answer: string }>) || [];
+    return (dest.common_fears as Array<{ miedo: string; respuesta: string }>) || [];
   }, [dest]);
 
   const jsonLd = useMemo(() => {
@@ -188,14 +197,41 @@ const DestinationDetail = () => {
       "@type": "FAQPage",
       mainEntity: fears.map((f) => ({
         "@type": "Question",
-        name: f.question,
+        name: f.miedo,
         acceptedAnswer: {
           "@type": "Answer",
-          text: f.answer,
+          text: f.respuesta,
         },
       })),
     };
   }, [dest, fears]);
+
+  const whyText = useMemo(() => {
+    if (!dest) return null;
+    const ext = dest as Destination & DestExt;
+    return ext.why_visit_markdown?.trim() || dest.short_description?.trim() || null;
+  }, [dest]);
+
+  const highlights = useMemo(() => {
+    if (!dest) return [];
+    const ext = dest as Destination & DestExt;
+    const items: string[] = [];
+    for (const a of ext.top_activities ?? []) {
+      if (items.length >= 3) break;
+      if (a?.trim()) items.push(a.trim());
+    }
+    if (items.length < 3) {
+      const hikeName = ext.signature_hikes?.[0]?.nombre?.trim();
+      if (hikeName) items.push(hikeName);
+    }
+    if (items.length < 3) {
+      for (const t of (dest.tags as string[] | null) ?? []) {
+        if (items.length >= 3) break;
+        if (t?.trim()) items.push(t.trim());
+      }
+    }
+    return items.slice(0, 3);
+  }, [dest]);
 
   if (isLoading) return (
     <main className="bg-background min-h-screen">
@@ -298,6 +334,38 @@ const DestinationDetail = () => {
           </div>
         </div>
       </section>
+
+      {/* Por qué ir */}
+      {(whyText || highlights.length > 0) && (
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="py-10 border-b border-border"
+        >
+          <div className="container mx-auto px-4 max-w-3xl">
+            <h2 className="font-serif text-3xl font-bold text-foreground mb-4">Por qué ir</h2>
+            {whyText && (
+              <div className="prose prose-stone max-w-none text-foreground/80 mb-6">
+                <ReactMarkdown>{whyText}</ReactMarkdown>
+              </div>
+            )}
+            {highlights.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {highlights.map((item, i) => {
+                  const Icon = HIGHLIGHT_ICONS[i] ?? Compass;
+                  return (
+                    <div key={i} className="flex items-start gap-3 rounded-lg bg-accent/50 px-4 py-3">
+                      <Icon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                      <span className="text-sm text-foreground/80 leading-snug">{item}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </motion.section>
+      )}
 
       {/* Content */}
       <section className="py-12">
