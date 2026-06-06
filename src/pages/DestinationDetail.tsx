@@ -86,6 +86,7 @@ interface DestExt {
   has_nonresident_surcharge?: boolean | null;
   nonresident_surcharge?: number | null;
   good_for?: string[] | null;
+  recreation_gov_url?: string | null;
 }
 
 function firstSentence(text: string): string {
@@ -690,7 +691,7 @@ const DestinationDetail = () => {
                   {/* WhatsApp — canal de cierre principal */}
                   <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full font-semibold">
                     <a href={buildWhatsAppLink(whatsappMessage)} target="_blank" rel="noopener noreferrer">
-                      <MessageSquare className="mr-2 h-4 w-4" /> ¿Listo para ir? Te armamos el itinerario →
+                      <MessageSquare className="mr-2 h-4 w-4" /> ¿Listo para ir? Te armamos el itinerario completo →
                     </a>
                   </Button>
                   {permitAlertUrl && (
@@ -749,13 +750,21 @@ const DestinationDetail = () => {
                       </a>
                     </Button>
                   )}
-                  {(dest as Destination & DestExt).nps_url && (
-                    <Button asChild variant="outline" className={bookingOutlineBtn}>
-                      <a href={(dest as Destination & DestExt).nps_url!} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="mr-2 h-4 w-4" /> Información oficial del parque
-                      </a>
-                    </Button>
-                  )}
+                  {(() => {
+                    const ext = dest as Destination & DestExt;
+                    const url = ext.recreation_gov_url ?? ext.nps_url;
+                    if (!url) return null;
+                    const label = ext.recreation_gov_url
+                      ? "Reservas en Recreation.gov"
+                      : "Información oficial del parque";
+                    return (
+                      <Button asChild variant="outline" className={bookingOutlineBtn}>
+                        <a href={url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" /> {label}
+                        </a>
+                      </Button>
+                    );
+                  })()}
                   <div className="border-t border-border pt-3 mt-3 flex flex-col gap-2">
                     <Link to="/gear" className="text-sm text-primary hover:underline flex items-center gap-1">
                       🎒 Ver guía de equipo recomendado
