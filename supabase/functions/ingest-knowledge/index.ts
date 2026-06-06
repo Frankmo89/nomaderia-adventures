@@ -94,8 +94,12 @@ interface LodgingInfo {
 }
 
 interface CommonFear {
+  // legacy keys (pre-generate-park-content v2)
   question?: string;
   answer?: string;
+  // current contract (generate-park-content v2)
+  miedo?: string;
+  respuesta?: string;
 }
 
 interface DestinationRow {
@@ -324,8 +328,10 @@ function buildDestinationFicha(dest: DestinationRow): string {
   if (Array.isArray(dest.common_fears)) {
     const qaLines: string[] = [];
     for (const f of dest.common_fears as CommonFear[]) {
-      if (f.question && f.answer)
-        qaLines.push(`**P: ${f.question}**\nR: ${f.answer}`);
+      const q = f.miedo ?? f.question;
+      const a = f.respuesta ?? f.answer;
+      if (q && a)
+        qaLines.push(`**P: ${q}**\nR: ${a}`);
     }
     if (qaLines.length)
       blocks.push(`## Dudas comunes\n${qaLines.join("\n\n")}`);

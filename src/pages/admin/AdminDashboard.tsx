@@ -280,7 +280,7 @@ const AdminDashboard = () => {
   };
 
   const [genStatus, setGenStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
-  const [genResult, setGenResult] = useState<{ processed: number; updated: number; failed: number } | null>(null);
+  const [genResult, setGenResult] = useState<{ procesados: number; restantes: number } | null>(null);
 
   const handleGenContent = async () => {
     setGenStatus("loading");
@@ -289,9 +289,8 @@ const AdminDashboard = () => {
       const { data, error } = await supabase.functions.invoke("generate-park-content");
       if (error) throw error;
       setGenResult({
-        processed: (data as { processed?: number }).processed ?? 0,
-        updated:   (data as { updated?: number }).updated    ?? 0,
-        failed:    (data as { failed?: number }).failed      ?? 0,
+        procesados: (data as { procesados?: number }).procesados ?? 0,
+        restantes:  (data as { restantes?: number }).restantes  ?? 0,
       });
       setGenStatus("done");
     } catch (err) {
@@ -646,7 +645,7 @@ const AdminDashboard = () => {
         </Button>
         {genStatus === "done" && genResult && (
           <span className="text-sm text-[#166534] font-medium">
-            ✓ {genResult.updated} generados · {genResult.failed} errores ({genResult.processed} en batch)
+            ✓ {genResult.procesados} procesados · {genResult.restantes} restantes
           </span>
         )}
         {genStatus === "error" && (
