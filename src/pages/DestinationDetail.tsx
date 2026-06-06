@@ -881,7 +881,7 @@ const DestinationDetail = () => {
       <div className="container mx-auto px-4 py-8 text-center">
         <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>↑ Volver arriba</Button>
       </div>
-      <StickyMobileCTA whatsappMessage={whatsappMessage} permitAlertUrl={permitAlertUrl} />
+      <StickyMobileCTA whatsappMessage={whatsappMessage} permitAlertUrl={permitAlertUrl} estimatedBudgetUsd={dest.estimated_budget_usd ?? null} />
       <Footer />
     </main>
   );
