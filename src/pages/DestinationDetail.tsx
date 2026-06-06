@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain, Zap, MessageSquare, ExternalLink } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain, Zap, MessageSquare, ExternalLink, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -82,6 +82,8 @@ interface DestExt {
   lodging_info?: LodgingOption[] | null;
   last_verified_at?: string | null;
   nps_url?: string | null;
+  has_nonresident_surcharge?: boolean | null;
+  nonresident_surcharge?: number | null;
 }
 
 function firstSentence(text: string): string {
@@ -400,6 +402,53 @@ const DestinationDetail = () => {
         maxElevationFt={(dest as Destination & DestExt).max_elevation_ft}
         bestSeason={dest.best_season}
       />
+
+      {/* Recargo no-residentes — solo si has_nonresident_surcharge = true */}
+      {(dest as Destination & DestExt).has_nonresident_surcharge && (
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="border-b border-border"
+        >
+          <div className="container mx-auto px-4 max-w-3xl py-6">
+            <div className="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-amber-900">
+                  Tarifa adicional para no-residentes de EE. UU.
+                </p>
+                <p className="text-amber-800 leading-relaxed">
+                  Los visitantes de 16 años o más que{" "}
+                  <strong>no sean residentes de EE. UU.</strong> pagan{" "}
+                  <strong>
+                    ${(dest as Destination & DestExt).nonresident_surcharge ?? 100} USD adicionales por persona
+                  </strong>{" "}
+                  al ingresar a este parque (tarifa 2026).{" "}
+                  Niños de 15 años o menores: exentos.
+                </p>
+                <p className="text-amber-800 leading-relaxed">
+                  Si planeas visitar 2 o más parques con este recargo, el{" "}
+                  <strong>pase America the Beautiful para no-residentes ($250 USD)</strong>{" "}
+                  puede ser más conveniente. Consulta las opciones en{" "}
+                  <a
+                    href={(dest as Destination & DestExt).nps_url ?? "https://www.nps.gov"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-amber-900 transition-colors"
+                  >
+                    nps.gov
+                  </a>
+                  .
+                </p>
+                <p className="text-xs text-amber-700">
+                  Verifica el monto exacto en nps.gov antes de tu visita — las tarifas pueden actualizarse.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+      )}
 
       {/* Content */}
       <section className="py-16">
