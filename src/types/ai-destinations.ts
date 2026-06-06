@@ -35,8 +35,8 @@ export interface DestinationDraft {
   itinerary_markdown: string;
   full_guide_markdown: string;
   common_fears: Array<{
-    question: string;
-    answer: string;
+    miedo: string;
+    respuesta: string;
   }>;
   experience_type: string | null;
   tags: string[];

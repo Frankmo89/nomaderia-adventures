@@ -20,7 +20,7 @@ import type { GenerateDraftResponse } from "@/types/ai-destinations";
 import ImageUpload from "@/components/dashboard/ImageUpload";
 import MultiMediaUpload from "@/components/dashboard/MultiMediaUpload";
 
-interface Fear { question: string; answer: string; }
+interface Fear { miedo: string; respuesta: string; }
 
 interface CandidateParams {
   title: string;
@@ -146,8 +146,8 @@ const FaqFields = ({ fears, onAdd, onRemove, onUpdate, verifyFlags }: {
       {fears.map((f, i) => (
         <div key={i} className="flex gap-2 items-start">
           <div className="flex-1 space-y-2">
-            <Input placeholder="Pregunta" value={f.question} onChange={(e) => onUpdate(i, "question", e.target.value)} className={inputCls} />
-            <Textarea placeholder="Respuesta" value={f.answer} onChange={(e) => onUpdate(i, "answer", e.target.value)} className={inputCls} />
+            <Input placeholder="Pregunta" value={f.miedo} onChange={(e) => onUpdate(i, "miedo", e.target.value)} className={inputCls} />
+            <Textarea placeholder="Respuesta" value={f.respuesta} onChange={(e) => onUpdate(i, "respuesta", e.target.value)} className={inputCls} />
           </div>
           <Button type="button" variant="ghost" size="icon" aria-label={`Eliminar pregunta ${i + 1}`} title={`Eliminar pregunta ${i + 1}`} onClick={() => onRemove(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
         </div>
@@ -334,8 +334,8 @@ const AdminDestinationForm = () => {
           tags: response.draft.tags.join(", "),
         }));
         setFears(response.draft.common_fears.map((fear) => ({
-          question: fear.question,
-          answer: fear.answer,
+          miedo: fear.miedo,
+          respuesta: fear.respuesta,
         })));
       },
       onError: (error) => {
@@ -502,7 +502,7 @@ const AdminDestinationForm = () => {
         />
         <FaqFields
           fears={fears}
-          onAdd={() => setFears([...fears, { question: "", answer: "" }])}
+          onAdd={() => setFears([...fears, { miedo: "", respuesta: "" }])}
           onRemove={(i) => setFears(fears.filter((_, idx) => idx !== i))}
           onUpdate={(i, key, val) => setFears(fears.map((f, idx) => (idx === i ? { ...f, [key]: val } : f)))}
           verifyFlags={verifyFlags}

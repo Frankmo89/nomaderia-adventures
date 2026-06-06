@@ -223,20 +223,54 @@ Responde SOLO con un objeto JSON válido — sin markdown fences, sin texto ante
 Incluye solo los campos sobre los que tienes confianza razonable; omite los demás.
 Agrega en el campo "verificar" los nombres de campos con datos que deberían confirmarse en fuentes oficiales.
 
-CONTRATOS JSONB OBLIGATORIOS:
-- signature_hikes: [{nombre:string, distancia_km:number|null, duracion_horas:number|null, dificultad:string, desnivel_m:number|null, apto_principiante:boolean, nota:string|null}]
-- common_fears: [{miedo:string, respuesta:string}]
+---
 
-RESTRICCIONES DE LONGITUD:
-- full_guide_markdown: ≤400 palabras, Markdown con secciones ##
-- itinerary_markdown: ≤250 palabras, formato por días
-- preparation_plan: ≤150 palabras, lista Markdown
-- gear_list_markdown: ≤150 palabras, lista por categoría
+### VOZ Y TONO — REGLA NÚMERO UNO
+
+Escribe como un amigo experto que conoce el parque de memoria, no como un folleto turístico.
+Cada párrafo debe sentirse específico a ESTE parque: usa sus formaciones geológicas reales, sus
+microdestinos reales (valles, miradores, ríos con nombre), su fauna característica. Si el dato viene
+de la API de NPS, anclalo en el texto.
+
+PROHIBIDO — si escribes cualquiera de estos patrones, el borrador falla:
+- Frases genéricas sin geografía específica: "el parque ofrece paisajes impresionantes", "no te olvides de
+  hidratarte", "usa calzado cómodo", "planea con anticipación", "disfruta de la naturaleza", "un destino
+  imperdible para los amantes del outdoor".
+- Listas de viñetas cortas sin contexto (ej. "- Botas de trail\n- Mochila\n- Agua"). Cada ítem de lista
+  debe tener al menos una oración de contexto específico del parque.
+- Párrafos de relleno que podrían aplicar a cualquier parque de EE. UU.
+
+EXIGIDO en cada campo de texto:
+- Al menos un topónimo real (sendero, cumbre, lago, valle, río) del parque.
+- Conexión explícita entre el consejo y la geografía: ¿por qué ese equipo? ¿por qué esa temporada?
+  ¿qué pasa exactamente si no lo haces?
+- Voz activa, presente, con urgencia narrativa. Que quien lee sienta que YA está ahí.
+
+---
+
+### CONTRATOS JSONB OBLIGATORIOS
+
+- signature_hikes: [{nombre:string, distancia_km:number|null, duracion_horas:number|null, dificultad:string, desnivel_m:number|null, apto_principiante:boolean, nota:string|null}]
+  → nota debe ser 1-2 oraciones con lo que hace ÚNICO ese sendero en este parque, no una descripción genérica.
+- common_fears: [{miedo:string, respuesta:string}]
+  → respuesta debe citar condiciones reales del parque, no consejos universales.
+
+---
+
+### RESTRICCIONES DE LONGITUD
+
+- full_guide_markdown: ≤400 palabras, Markdown con secciones ## — párrafos densos, no listas vacías
+- itinerary_markdown: ≤250 palabras, formato por días — cada día nombra lugares concretos
+- preparation_plan: ≤150 palabras, lista Markdown — cada ítem explica el por qué específico del parque
+- gear_list_markdown: ≤150 palabras, lista por categoría — cada ítem tiene contexto del terreno real
 - weather_markdown, getting_there_markdown, safety_markdown: ≤150 palabras cada uno
 - accessibility_markdown: ≤100 palabras
-- Texto plano (best_season, wildlife, etc.): 1-3 oraciones
+- Texto plano (best_season, wildlife, etc.): 1-3 oraciones con datos concretos, no generalidades
 
-REGLAS EXACTAS:
+---
+
+### REGLAS EXACTAS
+
 - difficulty_level: EXACTAMENTE "easy", "moderate" o "challenging" (sin más texto)
 - beginner_friendly: boolean (true si alguien sin experiencia puede disfrutar el parque)
 - altitude_warning: boolean (true si > 7000 pies con ganancia de elevación significativa)
