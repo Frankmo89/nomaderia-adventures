@@ -29,6 +29,7 @@ import QuickFactsRow from "@/components/destinations/QuickFactsRow";
 import DifficultyBadge from "@/components/destinations/DifficultyBadge";
 import HowToGetThere, { type LodgingOption } from "@/components/destinations/HowToGetThere";
 import CredibilityBar from "@/components/destinations/CredibilityBar";
+import ItineraryDayCards from "@/components/destinations/ItineraryDayCards";
 
 type Destination = Tables<"destinations">;
 
@@ -84,6 +85,7 @@ interface DestExt {
   nps_url?: string | null;
   has_nonresident_surcharge?: boolean | null;
   nonresident_surcharge?: number | null;
+  good_for?: string[] | null;
 }
 
 function firstSentence(text: string): string {
@@ -259,6 +261,21 @@ const DestinationDetail = () => {
     return items.slice(0, 3);
   }, [dest]);
 
+  const chipItems = useMemo(() => {
+    if (!dest) return [];
+    const ext = dest as Destination & DestExt;
+    const items: string[] = [];
+    for (const g of ext.good_for ?? []) {
+      if (items.length >= 8) break;
+      if (g?.trim()) items.push(g.trim());
+    }
+    for (const t of (dest.tags as string[] | null) ?? []) {
+      if (items.length >= 8) break;
+      if (t?.trim()) items.push(t.trim());
+    }
+    return items;
+  }, [dest]);
+
   if (isLoading) return (
     <main className="bg-background min-h-screen">
       <Navbar />
@@ -402,6 +419,24 @@ const DestinationDetail = () => {
         maxElevationFt={(dest as Destination & DestExt).max_elevation_ft}
         bestSeason={dest.best_season}
       />
+
+      {/* Chip row: good_for + tags */}
+      {chipItems.length > 0 && (
+        <div className="border-b border-border">
+          <div className="container mx-auto px-4 max-w-3xl py-3">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              {chipItems.map((item, i) => (
+                <span
+                  key={i}
+                  className="shrink-0 bg-accent border border-border text-foreground/70 text-xs rounded-full px-3 py-1"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recargo no-residentes — solo si has_nonresident_surcharge = true */}
       {(dest as Destination & DestExt).has_nonresident_surcharge && (
@@ -583,9 +618,7 @@ const DestinationDetail = () => {
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
                     {dest.itinerary_markdown
-                      ? <div className="prose prose-stone max-w-none text-foreground/90 leading-relaxed prose-headings:font-serif prose-headings:text-foreground">
-                          <ReactMarkdown components={markdownComponents}>{dest.itinerary_markdown}</ReactMarkdown>
-                        </div>
+                      ? <ItineraryDayCards markdown={dest.itinerary_markdown} components={markdownComponents} />
                       : <div className="py-16 text-center">
                           <p className="text-sm text-muted-foreground">Contenido próximamente.</p>
                         </div>
