@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +24,8 @@ import { ConciergeChat } from "@/components/ConciergeChat";
 import { SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 import type { Tables } from "@/integrations/supabase/types";
+import QuickFactsRow from "@/components/destinations/QuickFactsRow";
+import DifficultyBadge from "@/components/destinations/DifficultyBadge";
 
 type Destination = Tables<"destinations">;
 
@@ -62,6 +64,14 @@ interface DestExt {
   why_visit_markdown?: string | null;
   top_activities?: string[] | null;
   signature_hikes?: Array<{ nombre: string }> | null;
+  max_elevation_ft?: number | null;
+  altitude_warning?: boolean | null;
+  beginner_friendly?: boolean | null;
+  not_ideal_if?: string[] | null;
+}
+
+function firstSentence(text: string): string {
+  return text.match(/[^.!?]+[.!?]/)?.[0]?.trim() ?? text.trim();
 }
 
 const HIGHLIGHT_ICONS = [Sparkles, Mountain, Compass] as const;
@@ -367,6 +377,14 @@ const DestinationDetail = () => {
         </motion.section>
       )}
 
+      {/* Quick Facts */}
+      <QuickFactsRow
+        daysNeeded={dest.days_needed}
+        budgetUsd={dest.estimated_budget_usd}
+        maxElevationFt={(dest as Destination & DestExt).max_elevation_ft}
+        bestSeason={dest.best_season}
+      />
+
       {/* Content */}
       <section className="py-12">
         <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8">
@@ -387,19 +405,80 @@ const DestinationDetail = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {dest.difficulty_description && (
-                      <div className="prose max-w-none mb-8">
-                        <p className="text-foreground/90 text-lg leading-relaxed">{dest.difficulty_description}</p>
+                    {/* Desglose escaneable */}
+                    <div className="space-y-5 mb-8">
+                      {/* Nivel */}
+                      <div className="flex items-start gap-3">
+                        <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-xs font-sans text-muted-foreground uppercase tracking-wide">Nivel</span>
+                          <DifficultyBadge
+                            difficultyLevel={dest.difficulty_level}
+                            beginnerFriendly={(dest as Destination & DestExt).beginner_friendly}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Elevación máxima */}
+                      {(dest as Destination & DestExt).max_elevation_ft != null && (
+                        <div className="flex items-start gap-3">
+                          <Mountain className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                          <div className="flex flex-col gap-1.5">
+                            <span className="text-xs font-sans text-muted-foreground uppercase tracking-wide">Elevación máxima</span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-foreground">
+                                {(dest as Destination & DestExt).max_elevation_ft!.toLocaleString("en-US")} ft
+                              </span>
+                              {(dest as Destination & DestExt).altitude_warning && (
+                                <span className="text-xs px-2.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full">
+                                  ⚠ Posible mal de altura
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Lo más duro */}
+                      {dest.difficulty_description && (
+                        <div className="flex items-start gap-3">
+                          <Zap className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                          <div className="flex flex-col gap-1.5">
+                            <span className="text-xs font-sans text-muted-foreground uppercase tracking-wide">Lo más duro</span>
+                            <p className="text-foreground/90 leading-relaxed">
+                              {firstSentence(dest.difficulty_description)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* No es ideal si… */}
+                    {((dest as Destination & DestExt).not_ideal_if ?? []).length > 0 && (
+                      <div className="mb-8">
+                        <p className="text-xs font-sans text-muted-foreground uppercase tracking-wide mb-3">No es ideal si…</p>
+                        <div className="flex flex-wrap gap-2">
+                          {((dest as Destination & DestExt).not_ideal_if ?? []).map((item, i) => (
+                            <span
+                              key={i}
+                              className="text-xs px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full"
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
+
+                    {/* Preguntas frecuentes */}
                     {fears.length > 0 && (
                       <>
                         <h3 className="font-serif text-2xl text-foreground mb-4">Preguntas Frecuentes</h3>
                         <Accordion type="single" collapsible className="w-full">
                           {fears.map((f, i) => (
                             <AccordionItem key={i} value={`fear-${i}`} className="border-border">
-                              <AccordionTrigger className="text-foreground hover:text-primary">{f.question}</AccordionTrigger>
-                              <AccordionContent className="text-muted-foreground">{f.answer}</AccordionContent>
+                              <AccordionTrigger className="text-foreground hover:text-primary">{f.miedo}</AccordionTrigger>
+                              <AccordionContent className="text-muted-foreground">{f.respuesta}</AccordionContent>
                             </AccordionItem>
                           ))}
                         </Accordion>
