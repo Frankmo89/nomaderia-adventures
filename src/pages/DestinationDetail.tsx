@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain, Zap } from "lucide-react";
+import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain, Zap, MessageSquare, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +22,7 @@ import ShareButtons from "@/components/ShareButtons";
 import PermitScarcity from "@/components/PermitScarcity";
 import { ConciergeChat } from "@/components/ConciergeChat";
 import { SITE_URL, usePageMeta } from "@/hooks/use-seo";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 import type { Tables } from "@/integrations/supabase/types";
 import QuickFactsRow from "@/components/destinations/QuickFactsRow";
@@ -80,6 +81,7 @@ interface DestExt {
   longitude?: number | null;
   lodging_info?: LodgingOption[] | null;
   last_verified_at?: string | null;
+  nps_url?: string | null;
 }
 
 function firstSentence(text: string): string {
@@ -603,6 +605,12 @@ const DestinationDetail = () => {
                   )}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
+                  {/* WhatsApp — canal de cierre principal */}
+                  <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full font-semibold">
+                    <a href={buildWhatsAppLink(whatsappMessage)} target="_blank" rel="noopener noreferrer">
+                      <MessageSquare className="mr-2 h-4 w-4" /> ¿Listo para ir? Te armamos el itinerario →
+                    </a>
+                  </Button>
                   {permitAlertUrl && (
                     <Button asChild className="bg-[#D97706] hover:bg-[#D97706]/90 text-white w-full font-semibold">
                       <a href={permitAlertUrl} target="_blank" rel="noopener noreferrer">
@@ -659,10 +667,12 @@ const DestinationDetail = () => {
                       </a>
                     </Button>
                   )}
-                  {!affiliateLinks.flights_url && !affiliateLinks.hotels_url && !affiliateLinks.tours_url && !affiliateLinks.tickets_url && !affiliateLinks.car_rental_url && !affiliateLinks.transfer_url && !affiliateLinks.insurance_url && (
-                    <p className="text-sm text-card-foreground/60">
-                      Enlaces de reserva próximamente.
-                    </p>
+                  {(dest as Destination & DestExt).nps_url && (
+                    <Button asChild variant="outline" className={bookingOutlineBtn}>
+                      <a href={(dest as Destination & DestExt).nps_url!} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" /> Información oficial del parque
+                      </a>
+                    </Button>
                   )}
                   <div className="border-t border-border pt-3 mt-3 flex flex-col gap-2">
                     <Link to="/gear" className="text-sm text-primary hover:underline flex items-center gap-1">
