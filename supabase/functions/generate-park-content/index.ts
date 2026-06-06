@@ -54,7 +54,6 @@ interface ParkRow {
   designation: string | null;
   region: string | null;
   is_published: boolean;
-  nps_description: string | null;
   research_status: string | null;
   entrance_fee_usd: number | null;
   entrance_fee_type: string | null;
@@ -270,8 +269,6 @@ function buildUserPrompt(
         .join("\n");
       lines.push(`\nTarifas de entrada NPS:\n${feeStr}`);
     }
-  } else if (row.nps_description) {
-    lines.push(`\nDescripción NPS:\n${row.nps_description}`);
   }
 
   if (things.length > 0) {
@@ -594,7 +591,7 @@ serve(async (req) => {
 
     const SELECT_COLS = [
       "id, park_code, official_name, title, designation, region",
-      "nps_description, research_status, is_published",
+      "research_status, is_published",
       "entrance_fee_usd, entrance_fee_type",
       "short_description, why_visit_markdown",
       "difficulty_level, difficulty_description, days_needed, min_days, max_days",
