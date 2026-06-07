@@ -338,6 +338,7 @@ Source: `src/App.tsx`
 - `src/integrations/supabase/types.ts` (generated typed schema)
 - `src/lib/budget-calc.ts` (local computation, no fetch)
 - `src/lib/whatsapp.ts` (WhatsApp URL builder, no fetch)
+- **SOUL (fuente única):** `NOMADERIA_SOUL.md` → `scripts/build-soul.ts` genera (a) `supabase/functions/_shared/nomaderia-soul.ts` (prompt runtime para la IA) y (b) `src/data/soul.generated.ts` (datos estructurados para el dashboard). Datos volátiles globales en `supabase/functions/_shared/nomaderia-facts.ts` (fechados; values en ⚠️ VERIFICAR hasta que Frank los confirme en nps.gov). Página admin de solo lectura: `/admin/soul` ("Nuestro SOUL").
 
 ---
 
