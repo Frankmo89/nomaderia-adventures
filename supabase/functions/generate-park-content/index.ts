@@ -258,6 +258,65 @@ EXIGIDO en cada campo de texto:
 
 ---
 
+### CONTENIDO POR SECCIÓN — MÍNIMOS NO NEGOCIABLES
+
+**preparation_plan** (4 a 6 tips, no menos):
+Cada tip debe ser específico y accionable con números, marcas o nombres de lugar reales — nunca categorías.
+Malo: "lleva ropa abrigadora" o "equipo de supervivencia".
+Bueno: "saco de dormir certificado a -10°C — en agosto las noches en Tuolumne Meadows (2,620 m) bajan a 3°C".
+Cada tip debe poder responder: ¿por qué lo necesito en ESTE parque, en ESTA condición?
+
+**itinerary_markdown** (cada día, obligatorio cuatro elementos):
+(1) hora de llegada o salida sugerida, (2) nombre específico del lugar o trailhead, (3) distancia en km o duración estimada, (4) una cosa concreta que hacer.
+Malo: "Día 1 — Llegada y exploración del parque."
+Bueno: "**Día 1** — Llega antes de las 10 a.m. al Valley Visitor Center (US-41 N desde Fresno, 1:30 h). Camina el Valley Loop Trail oeste (8 km, 2 h planas) hasta Mirror Lake."
+
+**gear_list_markdown** (items específicos, no categorías):
+Organizado en dos subsecciones: ### Esencial y ### Opcional.
+Cada ítem nombra la especificación técnica o una referencia de producto cuando aplica, y una razón breve ligada al terreno real de este parque.
+Malo: "- Botas de trail".
+Bueno: "- Botas de trail con tobillera media (p. ej. Salomon X Ultra o equivalente) — el granito mojado de Mist Trail es resbaladizo con zapatillas de running."
+Si debes mencionar comunicación de emergencia, especifica: "comunicador satelital (Garmin inReach Mini o similar), no solo 'dispositivo de emergencia'".
+
+**full_guide_markdown** (guía completa con intro específica):
+Las primeras 2 oraciones deben ser imposibles de copiar a otro parque — cero elogios genéricos a la naturaleza.
+Debe nombrar al menos 3 senderos, miradores o zonas con nombre propio y una descripción honesta de cada uno (qué lo hace distinto, para quién es ideal, qué esperar en condiciones normales).
+Secciones mínimas obligatorias: ## Introducción, ## Qué hacer, ## Dónde dormir (puede referenciar lodging_info).
+
+---
+
+### FRASES TERMINANTEMENTE PROHIBIDAS (en todos los campos de texto)
+
+Además del PROHIBIDO de VOZ Y TONO, las siguientes palabras y frases están vetadas.
+Si alguna aparece en tu respuesta, el borrador falla la revisión:
+- "majestuosidad" / "majestuoso/a"
+- "embárcate" (en cualquier conjugación o variante)
+- "paraíso" / "paraíso natural"
+- "espectáculos naturales"
+- "aventura inolvidable"
+- "equipo de supervivencia" sin especificar qué — escribe siempre la lista concreta:
+  "saco de dormir a -10°C, comunicador satelital Garmin inReach o similar, filtro de agua Sawyer Squeeze"
+
+---
+
+### EJEMPLO: preparation_plan bien hecho (montaña / parque remoto)
+
+Así debe verse preparation_plan para un parque de alta montaña. Observa: cada ítem
+cita un lugar, elevación o condición específica. El ejemplo usa Yosemite solo como
+referencia de formato — adapta al parque real que estés generando.
+
+"## Preparación
+- **Reserva el timed entry con 5 meses de anticipación** en recreation.gov — sin reserva
+  no entras en junio-agosto aunque tengas entrada pagada ($35/vehículo).
+- **Saco de dormir a 0°C como mínimo** si duermes en Tuolumne Meadows (2,620 m):
+  incluso en julio las noches bajan a 3-5°C.
+- **3 litros de agua por día de senderismo** — no hay fuentes entre trailheads en el
+  sector del valle; lleva filtro Sawyer Squeeze o pastillas Aquatabs para fuentes remotas.
+- **Bastones de trekking para Mist Trail**: los peldaños de granito mojado por el spray
+  de Vernal Fall son resbaladizos — los bastones reducen el impacto en rodillas al bajar."
+
+---
+
 ### CONTRATOS JSONB OBLIGATORIOS
 
 - signature_hikes: [{nombre:string, distancia_km:number|null, duracion_horas:number|null, dificultad:string, desnivel_m:number|null, apto_principiante:boolean, nota:string|null}]
