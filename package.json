@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run build:soul",
     "build": "npm run generate-sitemap && vite build",
     "build:dev": "vite build --mode development",
+    "build:soul": "tsx scripts/build-soul.ts",
+    "verify:soul": "tsx scripts/build-soul.ts && git diff --exit-code supabase/functions/_shared/nomaderia-soul.ts src/data/soul.generated.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
