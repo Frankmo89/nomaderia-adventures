@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
-import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock, TrendingUp, TrendingDown, RefreshCw, Wand2 } from "lucide-react";
+import { MapPin, BookOpen, Users, Plus, FileText, Compass, BarChart3, Mail, Bell, MessageCircle, Clock, TrendingUp, TrendingDown, RefreshCw, Wand2, Tent } from "lucide-react";
 import { STATUS_CONFIG } from "@/components/admin/LeadStatusBadge";
 import type { LeadStatus } from "@/components/admin/LeadStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -282,6 +282,9 @@ const AdminDashboard = () => {
   const [genStatus, setGenStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [genResult, setGenResult] = useState<{ procesados: number; restantes: number } | null>(null);
 
+  const [ridbStatus, setRidbStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [ridbResult, setRidbResult] = useState<{ procesados: number; restantes: number; sin_match: number } | null>(null);
+
   const handleGenContent = async () => {
     setGenStatus("loading");
     setGenResult(null);
@@ -296,6 +299,26 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error("[generate-park-content]", err);
       setGenStatus("error");
+    }
+  };
+
+  const handleRidbIngest = async () => {
+    setRidbStatus("loading");
+    setRidbResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("ingest-park-permits", {
+        body: { limit: 5 },
+      });
+      if (error) throw error;
+      setRidbResult({
+        procesados:  (data as { procesados?: number }).procesados   ?? 0,
+        restantes:   (data as { restantes?: number }).restantes    ?? 0,
+        sin_match:   (data as { sin_match?: number }).sin_match    ?? 0,
+      });
+      setRidbStatus("done");
+    } catch (err) {
+      console.error("[RIDB ingest]", err);
+      setRidbStatus("error");
     }
   };
 
@@ -651,6 +674,25 @@ const AdminDashboard = () => {
         {genStatus === "error" && (
           <span className="text-sm text-red-500 font-medium">
             Error al generar — ver consola.
+          </span>
+        )}
+        <Button
+          variant="outline"
+          className="bg-white border border-[#E7E2D9] text-[#1C1917] hover:bg-[#F5F0E8] disabled:opacity-60"
+          onClick={handleRidbIngest}
+          disabled={ridbStatus === "loading"}
+        >
+          <Tent className={cn("h-4 w-4 mr-2", ridbStatus === "loading" && "animate-spin")} />
+          {ridbStatus === "loading" ? "Jalando RIDB…" : "Ingestar Permisos y Campamentos (RIDB)"}
+        </Button>
+        {ridbStatus === "done" && ridbResult && (
+          <span className="text-sm text-[#166534] font-medium">
+            ✓ {ridbResult.procesados} procesados · {ridbResult.restantes} restantes · {ridbResult.sin_match} sin match
+          </span>
+        )}
+        {ridbStatus === "error" && (
+          <span className="text-sm text-red-500 font-medium">
+            Error al jalar RIDB — ver consola.
           </span>
         )}
       </div>

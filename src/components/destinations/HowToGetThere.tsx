@@ -5,9 +5,14 @@ import { cn } from "@/lib/utils";
 export interface LodgingOption {
   nombre?: string;
   tipo?: string;
+  // v2 shape (ingest-park-permits — numeric price)
+  precio_usd?: number | null;
+  precio_nota?: string | null;
+  dentro_del_parque?: boolean;
+  // v1 shape (generate-park-content — string range)
   rango_precio_usd?: string;
-  reserva_url?: string;
   notas?: string;
+  reserva_url?: string;
 }
 
 interface HowToGetThereProps {
@@ -124,12 +129,23 @@ export default function HowToGetThere({
                           {l.tipo}
                         </span>
                       )}
-                      {l.rango_precio_usd && (
-                        <span className="text-xs font-semibold text-primary">{l.rango_precio_usd}</span>
+                      {l.dentro_del_parque != null && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/10 text-secondary border border-secondary/20">
+                          {l.dentro_del_parque ? "Dentro del parque" : "Fuera del parque"}
+                        </span>
                       )}
+                      {l.precio_usd != null ? (
+                        <span className="text-xs font-semibold text-primary">
+                          ${l.precio_usd}/noche
+                        </span>
+                      ) : l.rango_precio_usd ? (
+                        <span className="text-xs font-semibold text-primary">{l.rango_precio_usd}</span>
+                      ) : null}
                     </div>
-                    {l.notas && (
-                      <p className="text-sm text-muted-foreground leading-snug">{l.notas}</p>
+                    {(l.precio_nota ?? l.notas) && (
+                      <p className="text-sm text-muted-foreground leading-snug">
+                        {l.precio_nota ?? l.notas}
+                      </p>
                     )}
                     {l.reserva_url && (
                       <a

@@ -45,6 +45,24 @@ referenciar esta lista primero.
       Secrets:
       - `supabase secrets set RESEND_API_KEY=re_xxxxx`
       - `supabase secrets set SITE_URL=https://nomaderia.com`
+- [ ] **Configurar `RIDB_API_KEY` para `ingest-park-permits`**:
+  1. Obtener API key gratuita en https://ridb.recreation.gov/landing (registro gratuito)
+  2. `supabase secrets set RIDB_API_KEY=<tu_key>`
+  3. Desplegar la función: `supabase functions deploy ingest-park-permits`
+  4. Invocarla (requiere sesión admin activa en el navegador):
+     ```javascript
+     // Procesar los primeros 5 parques sin publicar (default)
+     await supabase.functions.invoke('ingest-park-permits')
+     // Procesar un parque específico (force=true para ya publicados)
+     await supabase.functions.invoke('ingest-park-permits', { body: { park_code: 'yose', force: true } })
+     // Procesar batch de 10
+     await supabase.functions.invoke('ingest-park-permits', { body: { limit: 10 } })
+     ```
+  5. La función retorna `{ procesados, restantes, sin_match, detalle }`.
+  6. **Campos propios (únicos):** `lodging_info` (camping), `camping_available`, `recreation_gov_url`, `requires_permit`, `timed_entry_required`, `permits_info`, `internal_notes` (append).
+  7. **Limitación conocida:** `cuando_abre` y `fecha_limite` siempre null (RIDB no expone fechas de apertura de manera confiable). Completar manualmente en `/admin/destinations`.
+  8. **`ingest-knowledge`** necesita actualización futura para leer los campos v2 de `permits_info` (`url`, `nota_escasez`, `como_aplicar`) — actualmente lee v1 y degrada suave.
+- [ ] **`camping_available` — migración SQL pendiente**: la Edge Function `ingest-park-permits` escribe este campo pero la columna puede no existir en la DB. Crear migración `ADD COLUMN camping_available BOOLEAN DEFAULT false` en `destinations` si aún no fue aplicada.
 - [ ] **Configurar `NPS_API_KEY` para `ingest-national-parks`**:
   1. Obtener API key gratuita en https://www.nps.gov/subjects/developer/get-started.htm
   2. `supabase secrets set NPS_API_KEY=<tu_key>`
@@ -132,6 +150,10 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-06-07] `AdminDashboard` — botón "Ingestar Permisos y Campamentos (RIDB)" en Quick Actions (mismo patrón que NPS). Llama `supabase.functions.invoke('ingest-park-permits', { body: { limit: 5 } })`; muestra spinner mientras corre; al completar muestra `✓ N procesados · N restantes · N sin match`; en error muestra texto rojo. Nuevo icon `Tent` (lucide). Estado: `ridbStatus` + `ridbResult`. TypeScript clean, build passes.
+- [2026-06-07] `AdminDestinationForm` — botón "Jalar permisos/campamentos de RIDB" en la card de edición, debajo del botón de AI content. Llama `supabase.functions.invoke('ingest-park-permits', { body: { park_code, force: ridbForce } })`; después de completar llama `loadDestination()` para refrescar el formulario. Toggle "Forzar (re-jalar)" independiente del toggle de AI overwrite. Muestra éxito/error inline. Deshabilitado si `park_code` es null. Nuevo icon `Tent` (lucide). Estados: `isRidbPulling`, `ridbForce`, `ridbPullResult`, `ridbPullError`. TypeScript clean, build passes.
+- [2026-06-07] `ingest-park-permits` — nueva Edge Function `supabase/functions/ingest-park-permits/index.ts`. Fuente: RIDB API v1 (`ridb.recreation.gov/api/v1`) con header `apikey`. Rate limiting: sliding-window ≤46 req/min. Body: `{ park_code?, force?, limit? (default 5) }`. Flujo por parque: (1) `GET /recareas?query={nombre}` → selección por similitud de nombre × cercanía geográfica, soporta múltiples RecAreas; (2) `GET /recareas/{id}/facilities` → filtra "Campground" y "Permit Entrance"; (3) `GET /facilities/{id}/campsites` para precio (best-effort, primeros 3 campgrounds); (4) `GET /facilities/{id}/permitentrances` + `GET /permits?query` para permisos. Campos propios: `lodging_info` (forma v2: `precio_usd`, `precio_nota`, `dentro_del_parque`, `reserva_url`), `camping_available`, `recreation_gov_url`, `requires_permit`, `timed_entry_required`, `permits_info` (forma v2: `cuando_abre=null`, `fecha_limite=null`, `como_aplicar`, `url`, `nota_escasez`). No-destructivo por defecto: `force=false` solo escribe campos vacíos; `force=true` refresca pero preserva entradas `lodging_info` con `tipo != "camping"`. Nunca baja `requires_permit`/`timed_entry_required` a false. Salta `is_published=true` salvo `force=true`. Si tipo de permiso incierto: más conservador (`first_come`) + `internal_notes` append `[RIDB] ⚠️ VERIFICAR tipo de permiso`. Retorna `{ procesados, restantes, sin_match, detalle }`. Auth: `requireAdmin`. TypeScript clean (Deno). **Pendiente:** `RIDB_API_KEY` secret + deploy (ver Pendientes Humanos). **Schema v2 documentado** en `docs/jsonb-contracts.md`. `HowToGetThere.tsx` actualizado para leer formas v1 y v2 de `lodging_info` (backward-compat).
 
 - [2026-06-06] `AdminDestinationForm` — 13 campos extendidos añadidos al formulario de edición de destinos. Tres secciones colapsables (Accordion shadcn): "Características del Destino" (`why_visit_markdown`, `max_elevation_ft`, `altitude_warning`, `beginner_friendly`, `has_nonresident_surcharge`, `nonresident_surcharge` visible solo si el toggle está activo), "Logística y Cómo Llegar" (`nearest_airport`, `nearest_town`, `drive_time_from_la`, `drive_time_from_san_diego`, `getting_there_markdown`), "Control Interno" (`last_verified_at` como date input, `internal_notes`). Form state: nuevos campos en `emptyForm`; `beginner_friendly` default `true`. Load: cast `data as Record<string, unknown>` para los campos extendidos (ADR-009); `last_verified_at` cargado como `YYYY-MM-DD` (`.slice(0, 10)`). Save: `extPayload` + `fullPayload` enviado con `supabase as unknown as SupabaseClient` (ADR-009). `internal_notes` no tiene migración SQL — anotado en pendientes. TypeScript clean, build passes.
 

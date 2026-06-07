@@ -82,34 +82,51 @@ Array<{
 
 Opciones de hospedaje dentro o en las inmediaciones del parque.
 
+### Forma v2 — canónica (writer: `ingest-park-permits`)
+
 ```ts
 Array<{
-  nombre:           string;        // nombre del establecimiento o campsite
-  tipo:             string;        // "hotel" | "lodge" | "cabañas" | "camping" | "glamping" | "hostel"
-  rango_precio_usd: string | null; // ej. "$25–$50/noche" o null si se desconoce
-  reserva_url:      string | null; // URL de Recreation.gov, sitio oficial, o null — NO inventar
-  notas:            string | null; // distancia al parque, temporada, disponibilidad, etc.
+  nombre:            string;        // nombre del campground / establecimiento
+  tipo:              string;        // "camping" | "lodge" | "hotel" | "hostal"
+  precio_usd:        number | null; // tarifa numérica por noche, null si desconocida
+  precio_nota:       string | null; // nota textual sobre precio ("Ver Recreation.gov para tarifas actuales")
+  dentro_del_parque: boolean;       // true si está ≤20 km del centro del parque
+  reserva_url:       string | null; // URL de Recreation.gov — NO inventar
 }>
 ```
 
-**Ejemplo**
+### Forma v1 — legacy (writer: `generate-park-content`)
+
+```ts
+Array<{
+  nombre:           string;
+  tipo:             string;        // "hotel" | "lodge" | "cabañas" | "camping" | "glamping" | "hostel"
+  rango_precio_usd: string | null; // ej. "$25–$50/noche"
+  reserva_url:      string | null;
+  notas:            string | null;
+}>
+```
+
+**Ejemplo v2 (camping, RIDB)**
 
 ```json
 [
-  { "nombre": "Yosemite Valley Lodge", "tipo": "lodge",
-    "rango_precio_usd": "$300–$500/noche", "reserva_url": null, "notas": "Única opción dentro del valle." },
   { "nombre": "Upper Pines Campground", "tipo": "camping",
-    "rango_precio_usd": "$36/noche", "reserva_url": "https://www.recreation.gov/camping/campgrounds/232447",
-    "notas": "Requiere reserva con hasta 5 meses de anticipación." }
+    "precio_usd": 36, "precio_nota": null,
+    "dentro_del_parque": true,
+    "reserva_url": "https://www.recreation.gov/camping/campgrounds/232447" }
 ]
 ```
 
+**Regla de coexistencia:** `ingest-park-permits` solo escribe entradas `tipo:"camping"` y preserva entradas con `tipo != "camping"` escritas por otros writers. Los readers deben soportar ambas formas.
+
 **Writers:**
-- `generate-park-content` ✅ — escribe este contrato (añadido 2026-06-06, con coercer `coerceLodgingInfo`)
+- `generate-park-content` ✅ — escribe forma v1 (con coercer `coerceLodgingInfo`)
+- `ingest-park-permits` ✅ — escribe forma v2, solo `tipo:"camping"` (añadido 2026-06-07)
 
 **Readers:**
-- `HowToGetThere.tsx` (`LodgingOption`) ✅ — misma forma
-- `ingest-knowledge` (`LodgingInfo`) ✅ — misma forma
+- `HowToGetThere.tsx` (`LodgingOption`) ✅ — soporta v1 y v2 (backward-compat añadido 2026-06-07)
+- `ingest-knowledge` (`LodgingInfo`) — lee `reserva_url` (campo presente en ambas formas); ignora campos de precio
 
 ---
 
@@ -117,38 +134,54 @@ Array<{
 
 Permisos requeridos para senderos, zonas o entradas con horario programado.
 
+### Forma v2 — canónica (writer: `ingest-park-permits`)
+
 ```ts
 Array<{
-  nombre:                  string;        // nombre del permiso, ej. "Half Dome Day Hike Permit"
-  tipo:                    string;        // "lottery" | "reservation" | "first_come" | "timed_entry"
-  dificultad_de_conseguir: string | null; // ej. "Alta — lotería, 1-2% de prob." o null
-  cuando_abre:             string | null; // ej. "Marzo (para temporada mayo–oct)" o fecha específica
-  reserva_url:             string | null; // URL de Recreation.gov o sitio oficial — NO inventar
-  notas:                   string | null; // alternativas, fechas, cupos, consejos
+  nombre:       string;        // nombre oficial del permiso, ej. "Half Dome Day Hike Permit"
+  tipo:         string;        // "timed_entry" | "lottery" | "first_come" | "reserved" | "none"
+  cuando_abre:  null;          // SIEMPRE null — nunca inventar fechas (ADR-008)
+  fecha_limite: null;          // SIEMPRE null — nunca inventar fechas (ADR-008)
+  como_aplicar: string | null; // instrucción breve: "Reservar en Recreation.gov", "Lotería en rec.gov"
+  url:          string | null; // enlace oficial Recreation.gov — NO inventar
+  nota_escasez: string | null; // null (RIDB no provee datos de escasez); completar manualmente
 }>
 ```
 
-**Ejemplo**
+**Ejemplo v2**
 
 ```json
 [
   { "nombre": "Half Dome Day Hike Permit", "tipo": "lottery",
-    "dificultad_de_conseguir": "Alta — lotería previa al día, ~1-2% de aceptación",
-    "cuando_abre": "Marzo (para temporada mayo–octubre)",
-    "reserva_url": "https://www.recreation.gov/permits/4988808",
-    "notas": "También disponible lotería el día anterior. Máximo 6 personas por grupo." }
+    "cuando_abre": null, "fecha_limite": null,
+    "como_aplicar": "Participar en la lotería en Recreation.gov durante el período de inscripción",
+    "url": "https://www.recreation.gov/permits/4988808",
+    "nota_escasez": null }
 ]
 ```
 
+### Forma v1 — legacy (de referencia, nunca se escribió a prod)
+
+```ts
+Array<{
+  nombre:                  string;
+  tipo:                    string;        // "lottery" | "reservation" | "first_come" | "timed_entry"
+  dificultad_de_conseguir: string | null;
+  cuando_abre:             string | null;
+  reserva_url:             string | null;
+  notas:                   string | null;
+}>
+```
+
+> La forma v1 estuvo documentada pero nunca fue escrita a producción (`generate-park-content` no escribe `permits_info`). `ingest-knowledge` lee opcionalmente `p.dificultad_de_conseguir`, `p.reserva_url`, `p.notas` — campos que estarán ausentes en entradas v2, lo que causa degradación suave del texto RAG (sin crash). Actualizar `ingest-knowledge` para leer también los campos v2 es una mejora futura.
+
 **Writers:**
 - `generate-park-content` — **NO escribe `permits_info`** (instrucción explícita: no inventar datos de permisos).
-- `ingest-park-permits` — **TODO: función futura**. Cuando se implemente, debe escribir exactamente este contrato.
+- `ingest-park-permits` ✅ — escribe forma v2 (implementado 2026-06-07)
 
 **Readers:**
-- `ingest-knowledge` ✅ — lee este contrato para construir texto RAG
+- `ingest-knowledge` — lee forma v1; degrada suavemente con forma v2 (no crash)
 - `DestinationDetail.tsx` — **no renderiza `permits_info` todavía** (pendiente sección UI en backlog)
-
-> **Para quien implemente `ingest-park-permits`:** las claves exactas son `nombre`, `tipo`, `dificultad_de_conseguir`, `cuando_abre`, `reserva_url`, `notas`. No usar `permit_type`, `url` ni otras variantes.
 
 ---
 

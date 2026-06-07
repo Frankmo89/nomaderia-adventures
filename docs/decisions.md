@@ -154,6 +154,13 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   primero `docs/seccion-9-concierge-ia.md` y verificar el TRIGGER antes de
   responder. No re-litigar la arquitectura.
 
+### ADR-011 — `lodging_info` y `permits_info`: evolución de contratos JSONB (v1 → v2)
+- **Fecha:** 2026-06
+- **Estado:** Vigente
+- **Contexto:** `ingest-park-permits` introduce un writer nuevo para `permits_info` (antes sin writer) y un writer alternativo para `lodging_info` (antes solo `generate-park-content`). Las formas v1 usan campos string (`rango_precio_usd`, `notas`, `dificultad_de_conseguir`, `reserva_url`); las formas v2 usan campos más precisos (`precio_usd` numérico, `precio_nota`, `dentro_del_parque`, `url`, `nota_escasez`, `como_aplicar`).
+- **Decisión:** Adoptar formas v2 como canónicas. Los readers (`HowToGetThere.tsx`) soportan ambas formas con fallback. `ingest-knowledge` degrada suavemente con v2 (no crash; actualización futura). `ingest-park-permits` preserva entradas `lodging_info` con `tipo != "camping"` escritas por otros writers.
+- **Consecuencias:** Ver `docs/jsonb-contracts.md` para los contratos exactos. No reintroducir campos v1 en nuevos writers. Completar `ingest-knowledge` para leer v2 cuando se requiera RAG con permisos más completo.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)

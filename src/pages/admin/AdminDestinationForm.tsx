@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Loader2, Plus, Sparkles, Tent, Trash2 } from "lucide-react";
 import { VerifyFieldBadge } from "@/components/admin/VerifyFieldBadge";
 import { AIDraftProgressOverlay } from "@/components/admin/AIDraftProgressOverlay";
 import { AIDraftSourcesPanel } from "@/components/admin/AIDraftSourcesPanel";
@@ -294,6 +294,10 @@ const AdminDestinationForm = () => {
   const [parkCode, setParkCode] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [forceOverwrite, setForceOverwrite] = useState(false);
+  const [isRidbPulling, setIsRidbPulling] = useState(false);
+  const [ridbForce, setRidbForce] = useState(false);
+  const [ridbPullResult, setRidbPullResult] = useState<{ procesados: number; sin_match: number } | null>(null);
+  const [ridbPullError, setRidbPullError] = useState<string | null>(null);
   const [aiDraftResponse, setAiDraftResponse] = useState<GenerateDraftResponse | null>(null);
   const [draftProgressIndex, setDraftProgressIndex] = useState(0);
   const [draftErrorMessage, setDraftErrorMessage] = useState<string | null>(null);
@@ -507,6 +511,32 @@ const AdminDestinationForm = () => {
     }
   };
 
+  const handleRidbPull = async () => {
+    if (!parkCode) return;
+    setIsRidbPulling(true);
+    setRidbPullResult(null);
+    setRidbPullError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("ingest-park-permits", {
+        body: { park_code: parkCode, force: ridbForce },
+      });
+      if (error) throw error;
+      const d = data as { procesados?: number; sin_match?: number };
+      setRidbPullResult({
+        procesados: d.procesados ?? 0,
+        sin_match:  d.sin_match  ?? 0,
+      });
+      // Reload form to show freshly written fields (lodging_info, permits_info, etc.)
+      await loadDestination();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al jalar datos RIDB";
+      setRidbPullError(msg);
+      console.error("[RIDB pull]", err);
+    } finally {
+      setIsRidbPulling(false);
+    }
+  };
+
   const handleCancelAutoFill = () => {
     draftAutofillCanceledRef.current = true;
     resetDraft();
@@ -674,6 +704,47 @@ const AdminDestinationForm = () => {
                 <p className="text-xs text-muted-foreground">
                   Código NPS: <span className="font-mono text-foreground">{parkCode}</span>
                 </p>
+              )}
+            </div>
+
+            {/* RIDB: pull permits & campgrounds */}
+            <div className="border-t border-border/50 pt-3 mt-1 flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+              <Button
+                type="button"
+                disabled={isRidbPulling || !parkCode}
+                onClick={handleRidbPull}
+                variant="outline"
+                className="border-border text-foreground hover:bg-muted shrink-0"
+              >
+                {isRidbPulling
+                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Jalando RIDB…</>
+                  : <><Tent className="h-4 w-4 mr-2" />Jalar permisos/campamentos de RIDB</>
+                }
+              </Button>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="ridb-force"
+                  checked={ridbForce}
+                  onCheckedChange={setRidbForce}
+                  disabled={isRidbPulling}
+                />
+                <Label htmlFor="ridb-force" className="text-sm text-muted-foreground cursor-pointer">
+                  Forzar (re-jalar aunque ya haya datos)
+                </Label>
+              </div>
+              {!parkCode && (
+                <p className="text-xs text-muted-foreground italic">
+                  Sin código NPS — <code className="text-xs">park_code</code> no configurado.
+                </p>
+              )}
+              {ridbPullResult && (
+                <p className="text-xs text-[#166534] font-medium">
+                  ✓ {ridbPullResult.procesados} procesado{ridbPullResult.procesados !== 1 ? "s" : ""}
+                  {ridbPullResult.sin_match > 0 && ` · ${ridbPullResult.sin_match} sin match`}
+                </p>
+              )}
+              {ridbPullError && (
+                <p className="text-xs text-destructive font-medium">{ridbPullError}</p>
               )}
             </div>
           </CardContent>
