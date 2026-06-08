@@ -11,7 +11,7 @@ const STROKE_D =
   "M0,55 L60,30 L120,50 L180,15 L240,40 L300,8 L360,35 L420,18 L480,42 L540,22 L600,45 L640,28 L680,38";
 
 const cardStyle: React.CSSProperties = {
-  background: "#FFFFFF",
+  background: "#F5F5F4",
   border: "0.5px solid #E5E7EB",
 };
 
