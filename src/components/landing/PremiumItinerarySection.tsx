@@ -74,7 +74,7 @@ const PremiumItinerarySection = () => {
         setPanelVisible(true);
       }, 600);
       return () => clearTimeout(tid);
-    }, 4000);
+    }, 8000);
     return () => clearInterval(id);
   }, []);
 
