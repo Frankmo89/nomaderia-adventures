@@ -1,10 +1,6 @@
 import { motion } from "framer-motion";
-import { Gauge, Ticket, Footprints, Globe, Check } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Gauge, Ticket, Footprints, Globe } from "lucide-react";
 import Reveal from "@/components/editorial/Reveal";
-import { products } from "@/config/pricing";
 
 const benefits = [
   {
@@ -80,65 +76,6 @@ const PremiumItinerarySection = () => {
             ))}
           </div>
 
-          {/* Pricing card */}
-          <div className="max-w-lg mx-auto mb-8">
-            {products.map((product, i) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <Card className="relative flex flex-col h-full bg-white card-depth border-2 border-primary">
-                  <CardHeader className="text-center pt-7 pb-3">
-                    <h3 className="font-serif text-xl text-foreground mb-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-2xl font-bold text-foreground">
-                      ${product.priceUSD} {product.currency}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="flex-1 pt-0">
-                    <ul className="space-y-2">
-                      {product.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                          <span className="text-foreground/70 text-sm">
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      asChild
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      <a
-                        href={product.ctaUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Diseña mi aventura por WhatsApp
-                      </a>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Link to full details */}
-          <div className="text-center">
-            <Link
-              to="/servicios"
-              className="text-primary hover:text-primary/80 font-medium transition-colors"
-            >
-              Ver todos los detalles →
-            </Link>
-          </div>
         </div>
       </div>
     </section>
