@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-import { Bell } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
 import DidYouKnowSection from "@/components/landing/DidYouKnowSection";
@@ -78,14 +76,6 @@ const Index = () => {
       <JsonLd data={jsonLdData} />
       <JsonLd data={organizationLd} />
       <HeroSection />
-      <section className="bg-wash-clay py-8">
-        <Reveal className="container mx-auto px-4 text-center">
-          <Link to="/sentinel" className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
-            <Bell className="w-4 h-4" />
-            Alertas Yosemite — Cupos de Fundador $29 USD
-          </Link>
-        </Reveal>
-      </section>
       {/* I5: ridge divider — hero area → SocialProof */}
       <SectionDivider variant="ridge" />
       <SocialProof />
