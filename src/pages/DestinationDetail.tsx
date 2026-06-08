@@ -18,6 +18,7 @@ import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import SEO from "@/components/SEO";
 import JsonLd from "@/components/JsonLd";
+import { PRICING } from "@/config/pricing";
 import ShareButtons from "@/components/ShareButtons";
 import PermitScarcity from "@/components/PermitScarcity";
 import { ConciergeChat } from "@/components/ConciergeChat";
@@ -890,7 +891,7 @@ const DestinationDetail = () => {
                   {permitAlertUrl && (
                     <Button asChild className="bg-[#D97706] hover:bg-[#D97706]/90 text-white w-full font-semibold">
                       <a href={permitAlertUrl} target="_blank" rel="noopener noreferrer">
-                        <Bell className="mr-2 h-4 w-4" /> Alerta de permisos — $29 USD
+                        <Bell className="mr-2 h-4 w-4" /> Alerta de permisos — ${PRICING.solucionCompleta} USD
                       </a>
                     </Button>
                   )}

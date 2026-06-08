@@ -11,6 +11,7 @@ import PremiumItinerarySection from "@/components/landing/PremiumItinerarySectio
 import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
+import { PRICING } from "@/config/pricing";
 import { useMemo } from "react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ const Index = () => {
         name: "United States",
       },
       knowsLanguage: "es",
-      priceRange: "$29-$49 USD",
+      priceRange: `$${PRICING.solucionCompleta} USD`,
     }),
     []
   );

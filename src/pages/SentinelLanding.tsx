@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { usePageMeta, SITE_URL } from "@/hooks/use-seo";
+import { PRICING } from "@/config/pricing";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -231,7 +232,7 @@ const SentinelLanding = () => {
                 <h2 className="font-serif text-2xl font-bold text-[#F5F0EB] mb-2">
                   Acceso Anticipado
                 </h2>
-                <p className="text-4xl font-bold text-[#D97706] mb-2">$29 USD</p>
+                <p className="text-4xl font-bold text-[#D97706] mb-2">${PRICING.solucionCompleta} USD</p>
                 <p className="text-[#F5F0EB]/80 mb-6">
                   Te conseguimos tu cupo en Yosemite esta temporada
                 </p>
