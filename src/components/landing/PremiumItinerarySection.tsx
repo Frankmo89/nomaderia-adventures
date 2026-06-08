@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Gauge, Ticket, Footprints, Globe, Check } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -5,6 +6,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import Reveal from "@/components/editorial/Reveal";
 import { products } from "@/config/pricing";
+import { supabase } from "@/integrations/supabase/client";
 
 const benefits = [
   {
@@ -29,12 +31,67 @@ const benefits = [
   },
 ];
 
+function shuffled<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 const PremiumItinerarySection = () => {
+  const [photoPool, setPhotoPool] = useState<string[]>([]);
+  const [cardPhotos, setCardPhotos] = useState<string[]>(["", "", "", ""]);
+  const [panelVisible, setPanelVisible] = useState(true);
+
+  useEffect(() => {
+    supabase.storage
+      .from("destinations")
+      .list("", { limit: 20 })
+      .then(({ data }) => {
+        if (!data) return;
+        const urls = data
+          .filter(
+            (f) =>
+              f.id !== null && /\.(jpe?g|png|webp|avif)$/i.test(f.name)
+          )
+          .map(
+            (f) =>
+              supabase.storage.from("destinations").getPublicUrl(f.name).data
+                .publicUrl
+          );
+        if (urls.length >= 4) {
+          setPhotoPool(urls);
+          setCardPhotos(shuffled(urls).slice(0, 4));
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    if (photoPool.length < 4) return;
+    const id = setInterval(() => {
+      setPanelVisible(false);
+      const tid = setTimeout(() => {
+        setCardPhotos(shuffled(photoPool).slice(0, 4));
+        setPanelVisible(true);
+      }, 600);
+      return () => clearTimeout(tid);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [photoPool]);
+
   return (
     <section className="section-editorial relative overflow-hidden bg-wash-clay section-recessed">
       {/* Background texture */}
       <div className="absolute inset-0 bg-secondary/5" />
-      <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, hsl(var(--secondary) / 0.08) 0%, transparent 60%), radial-gradient(circle at 80% 20%, hsl(var(--trail) / 0.06) 0%, transparent 50%)" }} />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 20% 50%, hsl(var(--secondary) / 0.08) 0%, transparent 60%), radial-gradient(circle at 80% 20%, hsl(var(--trail) / 0.06) 0%, transparent 50%)",
+        }}
+      />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-5xl mx-auto">
@@ -58,8 +115,8 @@ const PremiumItinerarySection = () => {
             Sin plantillas genéricas. Sin rutas de turista.
           </Reveal>
 
-          {/* Benefits grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-12">
+          {/* Benefits grid — 2×2 Fiverr Pro style */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
             {benefits.map((b, i) => (
               <motion.div
                 key={b.title}
@@ -67,20 +124,55 @@ const PremiumItinerarySection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-start gap-4 p-5 rounded-2xl bg-card/60 border border-secondary/15 hover:border-secondary/30 transition-colors"
+                className="flex flex-row min-h-[160px] rounded-lg overflow-hidden bg-card/60"
+                style={{ border: "0.5px solid rgba(22, 101, 52, 0.2)" }}
               >
-                <div className="shrink-0 p-2.5 rounded-xl bg-secondary/15">
-                  <b.icon className="h-5 w-5 text-secondary" />
+                {/* Left: icon + text */}
+                <div className="flex-1 p-5 flex flex-col justify-center gap-2">
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: "#FEF3C7" }}
+                  >
+                    <b.icon className="h-5 w-5" style={{ color: "#D97706" }} />
+                  </div>
+                  <p className="font-serif font-semibold text-foreground text-base leading-snug">
+                    {b.title}
+                  </p>
+                  <p className="font-sans text-sm text-foreground/75 leading-relaxed">
+                    {b.desc}
+                  </p>
                 </div>
-                <div>
-                  <p className="font-semibold text-foreground mb-1">{b.title}</p>
-                  <p className="text-sm text-foreground/80 leading-relaxed">{b.desc}</p>
-                </div>
+
+                {/* Right: rotating photo panel */}
+                <div
+                  className="shrink-0 bg-accent"
+                  style={{
+                    width: 130,
+                    backgroundImage: cardPhotos[i]
+                      ? `url(${cardPhotos[i]})`
+                      : undefined,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    opacity: panelVisible ? 1 : 0,
+                    transition: "opacity 0.6s ease",
+                  }}
+                />
               </motion.div>
             ))}
           </div>
 
-          {/* Pricing card */}
+          {/* Single CTA */}
+          <div className="text-center mb-14">
+            <Button
+              asChild
+              className="text-white px-8 hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: "#D97706" }}
+            >
+              <Link to="/servicios">Ver qué incluye el servicio →</Link>
+            </Button>
+          </div>
+
+          {/* Pricing card — unchanged */}
           <div className="max-w-lg mx-auto mb-8">
             {products.map((product, i) => (
               <motion.div
@@ -128,16 +220,6 @@ const PremiumItinerarySection = () => {
                 </Card>
               </motion.div>
             ))}
-          </div>
-
-          {/* Link to full details */}
-          <div className="text-center">
-            <Link
-              to="/servicios"
-              className="text-primary hover:text-primary/80 font-medium transition-colors"
-            >
-              Ver todos los detalles →
-            </Link>
           </div>
         </div>
       </div>

@@ -151,6 +151,8 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-06-07] **PremiumItinerarySection — nuevo benefits grid 2×2 Fiverr Pro style con fotos rotativas**: Reemplazado el grid de beneficios (flex simple icon+text) por tarjetas 2×2 con panel de foto derecha de ancho fijo (130px). Cada tarjeta: flex row, min-h 160px, border 0.5px, esquina redondeada; izquierda flex:1 con badge ámbar `#FEF3C7`, título Playfair, descripción Inter; derecha background-image cover con transición opacity 0.6s. Al montar, consulta `supabase.storage.from('destinations').list('', { limit: 20 })`, filtra archivos imagen, construye URLs con `getPublicUrl()`, asigna 4 fotos barajadas aleatoriamente; rota cada 4 s con nuevo shuffle + fade. Añadido CTA único centrado "Ver qué incluye el servicio →" → `/servicios` (botón ámbar `#D97706`), eliminado link "Ver todos los detalles →". Sección header, subtítulo y pricing card intactos. `tsc --noEmit` + `npm run build` pasan.
+
 - [2026-06-07] **Homepage — eliminado banner "Alertas Yosemite — Cupos de Fundador $29 USD"**: Removida la sección `<section className="bg-wash-clay py-8">` que enlazaba a `/sentinel` (producto descontinuado) de `src/pages/Index.tsx`. Eliminados imports sin uso `Link` (react-router-dom) y `Bell` (lucide-react). `tsc --noEmit` + `npm run build` pasan.
 
 - [2026-06-07] **Homepage — eliminada sección de pricing cards**: Removida la tarjeta de precios (`{/* Pricing card */}`) y el link "Ver todos los detalles →" de `PremiumItinerarySection.tsx`. Se limpiaron imports sin uso (`Link`, `Card*`, `Button`, `Check`, `products`). La sección conserva el heading, subtítulo y la grilla de 4 beneficios. `tsc --noEmit` + `npm run build` pasan.
