@@ -1,185 +1,188 @@
-import { useEffect, useState } from "react";
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-} from "framer-motion";
-import { Users, MapPin, ShieldCheck, BookOpen } from "lucide-react";
-import Reveal, { RevealGroup } from "@/components/editorial/Reveal";
+import { useRef } from "react";
+import { motion, useInView, useReducedMotion } from "framer-motion";
+import { MapPin, BookOpen, Clock, ShieldCheck } from "lucide-react";
 import { usePublicStats } from "@/hooks/use-public-stats";
+import { PRICING } from "@/config/pricing";
 
-/** Animated counter that counts from 0 to `target` when visible */
-const AnimatedCounter = ({
-  target,
-  suffix = "",
-}: {
-  target: number;
-  suffix?: string;
-}) => {
-  const [hasEnteredViewport, setHasEnteredViewport] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
-  const motionVal = useMotionValue(0);
-  const display = useTransform(motionVal, (v) => `${Math.round(v)}${suffix}`);
+const BG_URL =
+  "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200&q=80";
 
-  useEffect(() => {
-    if (!hasEnteredViewport) return;
+const FILL_D =
+  "M0,90 L0,55 L60,30 L120,50 L180,15 L240,40 L300,8 L360,35 L420,18 L480,42 L540,22 L600,45 L640,28 L680,38 L680,90 Z";
 
-    if (prefersReducedMotion) {
-      motionVal.set(target);
-      return;
-    }
+const STROKE_D =
+  "M0,55 L60,30 L120,50 L180,15 L240,40 L300,8 L360,35 L420,18 L480,42 L540,22 L600,45 L640,28 L680,38";
 
-    const controls = animate(motionVal, target, {
-      duration: 1.1,
-      ease: "easeOut",
-    });
-
-    return () => controls.stop();
-  }, [hasEnteredViewport, motionVal, prefersReducedMotion, target]);
-
-  return (
-    <motion.span
-      aria-live="polite"
-      aria-atomic="true"
-      role="status"
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      onViewportEnter={() => setHasEnteredViewport(true)}
-    >
-      {display}
-    </motion.span>
-  );
+const glassStyle: React.CSSProperties = {
+  background: "rgba(5,30,15,0.65)",
+  border: "1px solid rgba(110,231,183,0.25)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
 };
 
 const SocialProof = () => {
   const { data: stats, isLoading } = usePublicStats();
+  const svgWrapRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(svgWrapRef, { once: true });
+  const reduced = useReducedMotion();
 
-  // Keep quiz social proof hidden until the signal is strong enough.
-  const dataStats = [
-    stats?.quizResponses && stats.quizResponses >= 50
-      ? {
-          icon: Users,
-          value: stats.quizResponses,
-          suffix: "",
-          label: "Aventureros han hecho el quiz",
-          sublabel: "y encontraron su destino ideal",
-          isTap: false,
-        }
-      : null,
-    stats?.destinations && stats.destinations > 0
-      ? {
-          icon: MapPin,
-          value: stats.destinations,
-          suffix: "",
-          label: "Destinos guiados",
-          sublabel: "con guías completas para principiantes",
-          isTap: false,
-        }
-      : null,
-    stats?.blogPosts && stats.blogPosts > 0
-      ? {
-          icon: BookOpen,
-          value: stats.blogPosts,
-          suffix: "",
-          label: "Guías publicadas",
-          sublabel: "aventura outdoor en español",
-          isTap: false,
-        }
-      : null,
-  ].filter(Boolean) as Array<{
-    icon: typeof Users;
-    value: number;
-    suffix: string;
-    label: string;
-    sublabel: string;
-    isTap: boolean;
-  }>;
-
-  // TAP credential is always shown — it is a real certification, not a number
-  const tapCard = {
-    icon: ShieldCheck,
-    value: 0,
-    suffix: "",
-    label: "Agente de viajes certificada",
-    sublabel: "National TAP Test — The Travel Institute, USA",
-    isTap: true,
-  };
-
-  const visibleStats = [...dataStats, tapCard];
-
-  // Show nothing while loading to avoid a flash of stale/zero numbers
   if (isLoading) return null;
 
+  const destCount = stats?.destinations ?? 0;
+  const guideCount = stats?.blogPosts ?? 0;
+
+  const STAT_CARDS = [
+    { Icon: MapPin,      value: String(destCount),             label: "Destinos cubiertos con guía completa" },
+    { Icon: BookOpen,    value: String(guideCount),            label: "Guías escritas en español de verdad" },
+    { Icon: Clock,       value: "24h",                         label: "Tiempo máximo de entrega del itinerario" },
+    { Icon: ShieldCheck, value: `$${PRICING.solucionCompleta}`, label: "Precio único, todo incluido, sin sorpresas" },
+  ];
+
+  const strokeOffset = reduced || inView ? 0 : 1200;
+
   return (
-    <section className="section-editorial bg-wash-sand relative overflow-hidden section-recessed">
-      <div className="container mx-auto px-5 relative z-10">
-        {/* Header */}
-        <Reveal className="text-center mb-12 sm:mb-16">
-          <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary mb-3 block">
-            Respaldado por datos reales
-          </span>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
-            ¿Por Qué Confiar en Nomaderia?
-          </h2>
-        </Reveal>
+    <section className="relative overflow-hidden" style={{ minHeight: 560 }}>
+      {/* CSS keyframe for background pan */}
+      <style>{`
+        @keyframes trust-pan {
+          from { background-position: center 40%; }
+          to   { background-position: center 60%; }
+        }
+        .trust-bg { animation: trust-pan 20s ease-in-out infinite alternate; }
+      `}</style>
 
-        {/* Stats grid */}
-        <RevealGroup className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto" stagger>
-          {visibleStats.map((stat) => (
+      {/* Photo background */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-cover trust-bg"
+        style={{ backgroundImage: `url(${BG_URL})` }}
+      />
+
+      {/* Dark green overlay */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(10,40,20,0.78), rgba(5,30,15,0.88))",
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 container mx-auto px-5 py-20 sm:py-28">
+
+        {/* Label */}
+        <p
+          className="text-xs tracking-[0.25em] uppercase font-semibold mb-5 text-center"
+          style={{ color: "#6EE7B7" }}
+        >
+          RESPALDADO POR DATOS REALES
+        </p>
+
+        {/* Narrative */}
+        <p
+          className="text-center max-w-2xl mx-auto mb-14 leading-relaxed"
+          style={{
+            fontFamily: "Georgia, 'Playfair Display', serif",
+            fontSize: "20px",
+            color: "#ECFDF5",
+          }}
+        >
+          Desde 2024, llevamos a{" "}
+          <em style={{ color: "#FCD34D", fontStyle: "italic" }}>
+            hispanos residentes en EE.UU.
+          </em>{" "}
+          a sus primeras aventuras en los parques nacionales — en español, sin suposiciones.
+        </p>
+
+        {/* Stats grid 2×2 */}
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto mb-10">
+          {STAT_CARDS.map(({ Icon, value, label }, i) => (
             <motion.div
-              key={stat.label}
-              className="bg-card rounded-2xl p-8 text-center border border-stone/70 card-depth"
+              key={label}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45, delay: i * 0.08 }}
+              className="rounded-2xl p-6 text-center"
+              style={glassStyle}
             >
-              {/* Icon */}
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-sand mb-5 border border-stone/70">
-                {stat.isTap ? (
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <ShieldCheck className="h-7 w-7 text-[#D97706]" />
-                  </motion.div>
-                ) : (
-                  <stat.icon className="h-7 w-7 text-[#D97706]" />
-                )}
-              </div>
-
-              {/* Value */}
-              <p className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-2">
-                {stat.isTap ? (
-                  "TAP"
-                ) : (
-                  <AnimatedCounter
-                    target={stat.value}
-                    suffix={stat.suffix}
-                  />
-                )}
+              <Icon
+                className="mx-auto mb-3 h-6 w-6"
+                style={{ color: "#6EE7B7" }}
+              />
+              <p
+                className="font-serif text-3xl sm:text-4xl font-bold mb-1"
+                style={{ color: "#ECFDF5" }}
+              >
+                {value}
               </p>
-
-              {/* Label */}
-              <p className="text-foreground/80 font-medium text-sm sm:text-base mb-1">
-                {stat.label}
-              </p>
-              <p className="text-muted-foreground text-xs sm:text-sm">
-                {stat.sublabel}
+              <p className="text-xs sm:text-sm leading-snug" style={{ color: "#A7F3D0" }}>
+                {label}
               </p>
             </motion.div>
           ))}
-        </RevealGroup>
+        </div>
 
-        {/* CTA */}
-        <Reveal className="text-center mt-10 sm:mt-14">
-          <motion.a
-            href="#quiz"
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.1 }}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98]"
+        {/* TAP badge strip */}
+        <div
+          className="max-w-2xl mx-auto pt-8 flex flex-col sm:flex-row items-center gap-4"
+          style={{ borderTop: "1px solid rgba(110,231,183,0.2)" }}
+        >
+          <div
+            className="flex items-center gap-3 rounded-xl px-5 py-3 shrink-0"
+            style={glassStyle}
           >
-            🧭 Descubre tu destino ideal
-          </motion.a>
-        </Reveal>
+            <ShieldCheck className="h-6 w-6 shrink-0" style={{ color: "#6EE7B7" }} />
+            <div className="text-left">
+              <p className="text-xs font-semibold leading-tight" style={{ color: "#ECFDF5" }}>
+                Certificación TAP
+              </p>
+              <p className="text-xs leading-tight" style={{ color: "#A7F3D0" }}>
+                The Travel Institute, EE.UU.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-sm text-center sm:text-left" style={{ color: "#A7F3D0" }}>
+            Agente de viajes certificado — no somos un blog ni una app genérica.
+            Servicio profesional en español.
+          </p>
+        </div>
+      </div>
+
+      {/* Mountain SVG draw-on — triggered by inView */}
+      <div ref={svgWrapRef} className="absolute bottom-0 left-0 w-full pointer-events-none">
+        <svg
+          viewBox="0 0 680 90"
+          preserveAspectRatio="none"
+          className="w-full"
+          style={{ display: "block" }}
+          aria-hidden="true"
+        >
+          {/* Fill fades in once stroke animation completes */}
+          <motion.path
+            d={FILL_D}
+            fill="rgba(5,30,15,0.7)"
+            stroke="none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: inView ? 1 : 0 }}
+            transition={{ delay: reduced ? 0 : 2.8, duration: 0.6 }}
+          />
+          {/* Stroke draw-on */}
+          <motion.path
+            d={STROKE_D}
+            fill="none"
+            stroke="rgba(110,231,183,0.5)"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={1200}
+            initial={{ strokeDashoffset: 1200 }}
+            animate={{ strokeDashoffset: strokeOffset }}
+            transition={{ duration: 2.8, ease: "easeOut" }}
+          />
+        </svg>
       </div>
     </section>
   );
