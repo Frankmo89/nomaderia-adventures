@@ -10,11 +10,9 @@ const FILL_D =
 const STROKE_D =
   "M0,55 L60,30 L120,50 L180,15 L240,40 L300,8 L360,35 L420,18 L480,42 L540,22 L600,45 L640,28 L680,38";
 
-const glassStyle: React.CSSProperties = {
-  background: "rgba(5,30,15,0.65)",
-  border: "1px solid rgba(110,231,183,0.25)",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+const cardStyle: React.CSSProperties = {
+  background: "#FFFFFF",
+  border: "0.5px solid #E5E7EB",
 };
 
 const SocialProof = () => {
@@ -38,7 +36,7 @@ const SocialProof = () => {
   const strokeOffset = reduced || inView ? 0 : 1200;
 
   return (
-    <section className="relative overflow-hidden" style={{ minHeight: 560, background: '#0a2814' }}>
+    <section className="relative overflow-hidden" style={{ minHeight: 560, background: '#FAFAFA' }}>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-5 py-20 sm:py-28">
@@ -46,7 +44,7 @@ const SocialProof = () => {
         {/* Label */}
         <p
           className="text-xs tracking-[0.25em] uppercase font-semibold mb-5 text-center"
-          style={{ color: "#6EE7B7" }}
+          style={{ color: "#D97706" }}
         >
           RESPALDADO POR DATOS REALES
         </p>
@@ -57,11 +55,11 @@ const SocialProof = () => {
           style={{
             fontFamily: "Georgia, 'Playfair Display', serif",
             fontSize: "20px",
-            color: "#ECFDF5",
+            color: "#1C1917",
           }}
         >
           Desde 2024, llevamos a{" "}
-          <em style={{ color: "#FCD34D", fontStyle: "italic" }}>
+          <em style={{ color: "#166534", fontStyle: "italic" }}>
             hispanos residentes en EE.UU.
           </em>{" "}
           a sus primeras aventuras en los parques nacionales — en español, sin suposiciones.
@@ -77,19 +75,19 @@ const SocialProof = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: i * 0.08 }}
               className="rounded-2xl p-6 text-center"
-              style={glassStyle}
+              style={cardStyle}
             >
               <Icon
                 className="mx-auto mb-3 h-6 w-6"
-                style={{ color: "#6EE7B7" }}
+                style={{ color: "#D97706" }}
               />
               <p
                 className="font-serif text-3xl sm:text-4xl font-bold mb-1"
-                style={{ color: "#ECFDF5" }}
+                style={{ color: "#1C1917" }}
               >
                 {value}
               </p>
-              <p className="text-xs sm:text-sm leading-snug" style={{ color: "#A7F3D0" }}>
+              <p className="text-xs sm:text-sm leading-snug" style={{ color: "#78716C" }}>
                 {label}
               </p>
             </motion.div>
@@ -99,24 +97,24 @@ const SocialProof = () => {
         {/* TAP badge strip */}
         <div
           className="max-w-2xl mx-auto pt-8 flex flex-col sm:flex-row items-center gap-4"
-          style={{ borderTop: "1px solid rgba(110,231,183,0.2)" }}
+          style={{ borderTop: "0.5px solid #E5E7EB" }}
         >
           <div
             className="flex items-center gap-3 rounded-xl px-5 py-3 shrink-0"
-            style={glassStyle}
+            style={{ background: "#1C1917" }}
           >
-            <ShieldCheck className="h-6 w-6 shrink-0" style={{ color: "#6EE7B7" }} />
+            <ShieldCheck className="h-6 w-6 shrink-0" style={{ color: "#FAFAFA" }} />
             <div className="text-left">
-              <p className="text-xs font-semibold leading-tight" style={{ color: "#ECFDF5" }}>
+              <p className="text-xs font-semibold leading-tight" style={{ color: "#FAFAFA" }}>
                 Certificación TAP
               </p>
-              <p className="text-xs leading-tight" style={{ color: "#A7F3D0" }}>
+              <p className="text-xs leading-tight" style={{ color: "#FAFAFA" }}>
                 The Travel Institute, EE.UU.
               </p>
             </div>
           </div>
 
-          <p className="text-sm text-center sm:text-left" style={{ color: "#A7F3D0" }}>
+          <p className="text-sm text-center sm:text-left" style={{ color: "#78716C" }}>
             Agente de viajes certificado — no somos un blog ni una app genérica.
             Servicio profesional en español.
           </p>
@@ -135,7 +133,7 @@ const SocialProof = () => {
           {/* Fill fades in once stroke animation completes */}
           <motion.path
             d={FILL_D}
-            fill="rgba(5,30,15,0.7)"
+            fill="rgba(229,231,235,0.5)"
             stroke="none"
             initial={{ opacity: 0 }}
             animate={{ opacity: inView ? 1 : 0 }}
@@ -145,7 +143,7 @@ const SocialProof = () => {
           <motion.path
             d={STROKE_D}
             fill="none"
-            stroke="rgba(110,231,183,0.5)"
+            stroke="rgba(22,101,52,0.3)"
             strokeWidth={1.5}
             strokeLinecap="round"
             strokeLinejoin="round"
