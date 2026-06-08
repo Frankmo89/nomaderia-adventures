@@ -6,7 +6,6 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import Reveal from "@/components/editorial/Reveal";
 import { products } from "@/config/pricing";
-import { supabase } from "@/integrations/supabase/client";
 
 const benefits = [
   {
@@ -40,46 +39,44 @@ function shuffled<T>(arr: T[]): T[] {
   return a;
 }
 
+const SUPABASE_URL =
+  "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/media_gallery";
+
+const photos = [
+  `${SUPABASE_URL}/00f4bec5-78fa-4416-91fd-12c8319e9d49.jpeg`,
+  `${SUPABASE_URL}/0971bffa-5cc8-4d0e-8c81-27f6cd4aef7a.jpeg`,
+  `${SUPABASE_URL}/2171f956-08ac-4156-9644-178aa01e241e.jpeg`,
+  `${SUPABASE_URL}/349defac-d3ac-474c-a03a-ab262fb49b8f.jpeg`,
+  `${SUPABASE_URL}/391bde98-0b99-4773-ad0d-f5c7e50107e4.jpeg`,
+  `${SUPABASE_URL}/3a72e5c0-b2a1-485b-b3fb-bf958b815579.jpeg`,
+  `${SUPABASE_URL}/3bd94287-e5c1-46f9-9e5c-1bad3b82068b.jpeg`,
+  `${SUPABASE_URL}/3fdc4c24-45ab-42e8-abae-a45d4bff242a.jpeg`,
+  `${SUPABASE_URL}/59e22d4c-75d0-4ab7-86b4-54774328a333.jpeg`,
+  `${SUPABASE_URL}/78ca25d9-466c-4580-92ad-3d1f56d57ad2.jpeg`,
+  `${SUPABASE_URL}/947b0c74-2096-46f5-b91b-62aa68f8142e.jpeg`,
+  `${SUPABASE_URL}/b4a7fef0-0082-4e60-98cc-37cadf3ad004.jpeg`,
+  `${SUPABASE_URL}/bfa161c7-c696-4d19-a1a9-4c8a8b31acc6.jpeg`,
+  `${SUPABASE_URL}/c29ff6ac-f25b-4011-9ac7-1d31121e9e71.jpeg`,
+  `${SUPABASE_URL}/feeb5de1-333e-48bc-9bbd-caff00902fcc.jpeg`,
+];
+
 const PremiumItinerarySection = () => {
-  const [photoPool, setPhotoPool] = useState<string[]>([]);
-  const [cardPhotos, setCardPhotos] = useState<string[]>(["", "", "", ""]);
+  const [cardPhotos, setCardPhotos] = useState<string[]>(() =>
+    shuffled(photos).slice(0, 4)
+  );
   const [panelVisible, setPanelVisible] = useState(true);
 
   useEffect(() => {
-    supabase.storage
-      .from("media_gallery")
-      .list("", { limit: 20 })
-      .then(({ data }) => {
-        if (!data) return;
-        const urls = data
-          .filter(
-            (f) =>
-              f.id !== null && /\.(jpe?g|png|webp|avif)$/i.test(f.name)
-          )
-          .map(
-            (f) =>
-              supabase.storage.from("media_gallery").getPublicUrl(f.name).data
-                .publicUrl
-          );
-        if (urls.length >= 4) {
-          setPhotoPool(urls);
-          setCardPhotos(shuffled(urls).slice(0, 4));
-        }
-      });
-  }, []);
-
-  useEffect(() => {
-    if (photoPool.length < 4) return;
     const id = setInterval(() => {
       setPanelVisible(false);
       const tid = setTimeout(() => {
-        setCardPhotos(shuffled(photoPool).slice(0, 4));
+        setCardPhotos(shuffled(photos).slice(0, 4));
         setPanelVisible(true);
       }, 600);
       return () => clearTimeout(tid);
     }, 4000);
     return () => clearInterval(id);
-  }, [photoPool]);
+  }, []);
 
   return (
     <section className="section-editorial relative overflow-hidden bg-wash-clay section-recessed">
