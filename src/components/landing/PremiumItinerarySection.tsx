@@ -47,7 +47,7 @@ const PremiumItinerarySection = () => {
 
   useEffect(() => {
     supabase.storage
-      .from("destinations")
+      .from("media_gallery")
       .list("", { limit: 20 })
       .then(({ data }) => {
         if (!data) return;
@@ -58,7 +58,7 @@ const PremiumItinerarySection = () => {
           )
           .map(
             (f) =>
-              supabase.storage.from("destinations").getPublicUrl(f.name).data
+              supabase.storage.from("media_gallery").getPublicUrl(f.name).data
                 .publicUrl
           );
         if (urls.length >= 4) {
