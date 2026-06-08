@@ -4,9 +4,6 @@ import { MapPin, BookOpen, Clock, ShieldCheck } from "lucide-react";
 import { usePublicStats } from "@/hooks/use-public-stats";
 import { PRICING } from "@/config/pricing";
 
-const BG_URL =
-  "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200&q=80";
-
 const FILL_D =
   "M0,90 L0,55 L60,30 L120,50 L180,15 L240,40 L300,8 L360,35 L420,18 L480,42 L540,22 L600,45 L640,28 L680,38 L680,90 Z";
 
@@ -41,32 +38,7 @@ const SocialProof = () => {
   const strokeOffset = reduced || inView ? 0 : 1200;
 
   return (
-    <section className="relative overflow-hidden" style={{ minHeight: 560 }}>
-      {/* CSS keyframe for background pan */}
-      <style>{`
-        @keyframes trust-pan {
-          from { background-position: center 40%; }
-          to   { background-position: center 60%; }
-        }
-        .trust-bg { animation: trust-pan 20s ease-in-out infinite alternate; }
-      `}</style>
-
-      {/* Photo background */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-cover trust-bg"
-        style={{ backgroundImage: `url(${BG_URL})` }}
-      />
-
-      {/* Dark green overlay */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(10,40,20,0.78), rgba(5,30,15,0.88))",
-        }}
-      />
+    <section className="relative overflow-hidden" style={{ minHeight: 560, background: '#0a2814' }}>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-5 py-20 sm:py-28">
