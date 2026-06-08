@@ -23,6 +23,26 @@ import MultiMediaUpload from "@/components/dashboard/MultiMediaUpload";
 
 interface Fear { miedo: string; respuesta: string; }
 
+// Matches the keys consumed by TrailCards.tsx and the jsonb-contracts canonical form
+interface HikeRow {
+  nombre: string;
+  distancia_km: string;    // stored as number in DB; string in form state
+  duracion_horas: string;
+  desnivel_m: string;
+  apto_principiante: boolean;
+  nota: string;
+}
+
+// Matches lodging_info v2 canonical form consumed by HowToGetThere.tsx
+interface LodgingRow {
+  nombre: string;
+  tipo: string;
+  precio_usd: string;      // stored as number in DB; string in form state
+  precio_nota: string;
+  dentro_del_parque: boolean;
+  reserva_url: string;
+}
+
 interface GenerateParkResult {
   ok: boolean;
   procesados: number;
@@ -279,6 +299,96 @@ const InternalFields = ({ form, set }: { form: FormState; set: (k: string, v: st
   </CollapsibleCard>
 );
 
+const SignatureHikesFields = ({
+  hikes,
+  onAdd,
+  onRemove,
+  onUpdate,
+}: {
+  hikes: HikeRow[];
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  onUpdate: (i: number, key: keyof HikeRow, val: string | boolean) => void;
+}) => (
+  <CollapsibleCard title="Senderos destacados" sectionKey="hikes">
+    {hikes.map((h, i) => (
+      <div key={i} className="border border-border rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-muted-foreground">Sendero {i + 1}</span>
+          <Button type="button" variant="ghost" size="icon" aria-label={`Eliminar sendero ${i + 1}`} onClick={() => onRemove(i)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {field("Nombre", <Input value={h.nombre} onChange={(e) => onUpdate(i, "nombre", e.target.value)} className={inputCls} placeholder="Delicate Arch Trail" />)}
+          {field("Distancia (km)", <Input type="number" step="0.1" min="0" value={h.distancia_km} onChange={(e) => onUpdate(i, "distancia_km", e.target.value)} className={inputCls} placeholder="4.8" />)}
+          {field("Duración (horas)", <Input type="number" step="0.5" min="0" value={h.duracion_horas} onChange={(e) => onUpdate(i, "duracion_horas", e.target.value)} className={inputCls} placeholder="3.0" />)}
+          {field("Desnivel (m)", <Input type="number" min="0" value={h.desnivel_m} onChange={(e) => onUpdate(i, "desnivel_m", e.target.value)} className={inputCls} placeholder="147" />)}
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch id={`hike-apto-${i}`} checked={h.apto_principiante} onCheckedChange={(v) => onUpdate(i, "apto_principiante", v)} />
+          <Label htmlFor={`hike-apto-${i}`} className="text-card-foreground text-sm">Apto para principiantes</Label>
+        </div>
+        {field("Nota", <Textarea rows={2} value={h.nota} onChange={(e) => onUpdate(i, "nota", e.target.value)} className={inputCls} placeholder="1-2 oraciones sobre este sendero..." />)}
+      </div>
+    ))}
+    <Button type="button" variant="outline" size="sm" onClick={onAdd} className="border-border text-foreground">
+      <Plus className="h-4 w-4 mr-1" /> Agregar Sendero
+    </Button>
+  </CollapsibleCard>
+);
+
+const LODGING_TIPOS = ["camping", "lodge", "hotel", "cabaña", "glamping", "hostal"] as const;
+
+const LodgingFields = ({
+  lodging,
+  onAdd,
+  onRemove,
+  onUpdate,
+}: {
+  lodging: LodgingRow[];
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  onUpdate: (i: number, key: keyof LodgingRow, val: string | boolean) => void;
+}) => (
+  <CollapsibleCard title="Hospedaje" sectionKey="lodging">
+    {lodging.map((l, i) => (
+      <div key={i} className="border border-border rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-muted-foreground">Opción {i + 1}</span>
+          <Button type="button" variant="ghost" size="icon" aria-label={`Eliminar hospedaje ${i + 1}`} onClick={() => onRemove(i)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {field("Nombre", <Input value={l.nombre} onChange={(e) => onUpdate(i, "nombre", e.target.value)} className={inputCls} placeholder="Yosemite Valley Lodge" />)}
+          <div>
+            {fieldLabel("Tipo", false)}
+            <Select value={l.tipo} onValueChange={(v) => onUpdate(i, "tipo", v)}>
+              <SelectTrigger className={inputCls}><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+              <SelectContent>
+                {LODGING_TIPOS.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {field("Precio desde (USD/noche)", <Input type="number" min="0" value={l.precio_usd} onChange={(e) => onUpdate(i, "precio_usd", e.target.value)} className={inputCls} placeholder="89" />)}
+          {field("Nota de precio", <Input value={l.precio_nota} onChange={(e) => onUpdate(i, "precio_nota", e.target.value)} className={inputCls} placeholder="Varía por temporada" />)}
+          {field("URL para reservar", <Input value={l.reserva_url} onChange={(e) => onUpdate(i, "reserva_url", e.target.value)} className={inputCls} placeholder="https://..." />)}
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch id={`lodging-inside-${i}`} checked={l.dentro_del_parque} onCheckedChange={(v) => onUpdate(i, "dentro_del_parque", v)} />
+          <Label htmlFor={`lodging-inside-${i}`} className="text-card-foreground text-sm">Dentro del parque</Label>
+        </div>
+      </div>
+    ))}
+    <Button type="button" variant="outline" size="sm" onClick={onAdd} className="border-border text-foreground">
+      <Plus className="h-4 w-4 mr-1" /> Agregar Hospedaje
+    </Button>
+  </CollapsibleCard>
+);
+
 // --- Main component ---
 
 const AdminDestinationForm = () => {
@@ -289,6 +399,8 @@ const AdminDestinationForm = () => {
   const { toast } = useToast();
   const [form, setForm] = useState(emptyForm);
   const [fears, setFears] = useState<Fear[]>([]);
+  const [hikes, setHikes] = useState<HikeRow[]>([]);
+  const [lodging, setLodging] = useState<LodgingRow[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [parkCode, setParkCode] = useState<string | null>(null);
@@ -388,6 +500,27 @@ const AdminDestinationForm = () => {
     });
     setParkCode(raw.park_code as string | null ?? null);
     setFears((data.common_fears as unknown as Fear[]) || []);
+
+    const rawHikes = (raw.signature_hikes as Array<Record<string, unknown>> | null) ?? [];
+    setHikes(rawHikes.map((h) => ({
+      nombre: (h.nombre as string | null) ?? "",
+      distancia_km: h.distancia_km != null ? String(h.distancia_km) : "",
+      duracion_horas: h.duracion_horas != null ? String(h.duracion_horas) : "",
+      desnivel_m: h.desnivel_m != null ? String(h.desnivel_m) : "",
+      apto_principiante: (h.apto_principiante as boolean | null) ?? false,
+      nota: (h.nota as string | null) ?? "",
+    })));
+
+    const rawLodging = (raw.lodging_info as Array<Record<string, unknown>> | null) ?? [];
+    setLodging(rawLodging.map((l) => ({
+      nombre: (l.nombre as string | null) ?? "",
+      tipo: (l.tipo as string | null) ?? "",
+      precio_usd: l.precio_usd != null ? String(l.precio_usd) : "",
+      precio_nota: (l.precio_nota as string | null) ?? (l.notas as string | null) ?? "",
+      dentro_del_parque: (l.dentro_del_parque as boolean | null) ?? false,
+      reserva_url: (l.reserva_url as string | null) ?? "",
+    })));
+
     setGalleryImages((data.gallery_images as string[]) || []);
   }, [id, isEdit]);
 
@@ -612,6 +745,22 @@ const AdminDestinationForm = () => {
       getting_there_markdown: form.getting_there_markdown || null,
       last_verified_at: form.last_verified_at || null,
       internal_notes: form.internal_notes || null,
+      signature_hikes: hikes.filter((h) => h.nombre.trim()).map((h) => ({
+        nombre: h.nombre.trim(),
+        distancia_km: h.distancia_km ? Number(h.distancia_km) : null,
+        duracion_horas: h.duracion_horas ? Number(h.duracion_horas) : null,
+        desnivel_m: h.desnivel_m ? Number(h.desnivel_m) : null,
+        apto_principiante: h.apto_principiante,
+        nota: h.nota.trim() || null,
+      })),
+      lodging_info: lodging.filter((l) => l.nombre.trim()).map((l) => ({
+        nombre: l.nombre.trim(),
+        tipo: l.tipo || null,
+        precio_usd: l.precio_usd ? Number(l.precio_usd) : null,
+        precio_nota: l.precio_nota.trim() || null,
+        dentro_del_parque: l.dentro_del_parque,
+        reserva_url: l.reserva_url.trim() || null,
+      })),
     };
 
     const fullPayload = { ...payload, ...extPayload };
@@ -777,6 +926,18 @@ const AdminDestinationForm = () => {
           verifyFlags={verifyFlags}
         />
         <MarkdownFields form={form} set={set} verifyFlags={verifyFlags} />
+        <SignatureHikesFields
+          hikes={hikes}
+          onAdd={() => setHikes([...hikes, { nombre: "", distancia_km: "", duracion_horas: "", desnivel_m: "", apto_principiante: false, nota: "" }])}
+          onRemove={(i) => setHikes(hikes.filter((_, idx) => idx !== i))}
+          onUpdate={(i, key, val) => setHikes(hikes.map((h, idx) => (idx === i ? { ...h, [key]: val } : h)))}
+        />
+        <LodgingFields
+          lodging={lodging}
+          onAdd={() => setLodging([...lodging, { nombre: "", tipo: "", precio_usd: "", precio_nota: "", dentro_del_parque: false, reserva_url: "" }])}
+          onRemove={(i) => setLodging(lodging.filter((_, idx) => idx !== i))}
+          onUpdate={(i, key, val) => setLodging(lodging.map((l, idx) => (idx === i ? { ...l, [key]: val } : l)))}
+        />
         <CharacteristicsFields form={form} set={set} />
         <LogisticsFields form={form} set={set} />
         <InternalFields form={form} set={set} />

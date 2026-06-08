@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import { Plane, Car, Signal, Tent, Hotel, MapPin, type LucideIcon } from "lucide-react";
+import { Plane, Car, Signal, MapPin, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface LodgingOption {
@@ -44,6 +44,97 @@ function InfoRow({
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide mb-0.5">{label}</p>
         <p className="text-sm text-foreground font-medium">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function LodgingCard({
+  lodging: l,
+  fullWidth = false,
+}: {
+  lodging: LodgingOption;
+  fullWidth?: boolean;
+}) {
+  const priceDisplay = l.precio_usd != null
+    ? `Desde $${l.precio_usd}/noche`
+    : l.rango_precio_usd
+    ? l.rango_precio_usd
+    : null;
+  const note = l.precio_nota ?? l.notas ?? null;
+
+  return (
+    <div
+      className="bg-white rounded-xl shrink-0 flex flex-col"
+      style={{
+        width:     fullWidth ? "100%" : 280,
+        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+        padding:   "10px 12px",
+      }}
+    >
+      {/* Type badge */}
+      {l.tipo && (
+        <span
+          className="font-sans self-start mb-2"
+          style={{
+            background:   "#F3F4F6",
+            border:       "1px solid #E5E7EB",
+            borderRadius: 999,
+            padding:      "3px 10px",
+            fontSize:     12,
+            color:        "#4B5563",
+          }}
+        >
+          {l.tipo}
+          {l.dentro_del_parque != null && (
+            <> · {l.dentro_del_parque ? "Dentro del parque" : "Fuera del parque"}</>
+          )}
+        </span>
+      )}
+
+      {/* Name */}
+      {l.nombre && (
+        <span
+          className="font-sans font-semibold text-[#1C1917] leading-snug"
+          style={{ fontSize: 15 }}
+        >
+          {l.nombre}
+        </span>
+      )}
+
+      {/* Note */}
+      {note && (
+        <p
+          className="font-sans text-[#6B7280] mt-1 line-clamp-2"
+          style={{ fontSize: 12, lineHeight: 1.45 }}
+        >
+          {note}
+        </p>
+      )}
+
+      <div style={{ height: 8 }} />
+
+      {/* Price + link row */}
+      <div className="flex items-center justify-between gap-2 mt-auto">
+        {priceDisplay && (
+          <span
+            className="font-sans text-[#1C1917]"
+            style={{ fontSize: 14 }}
+          >
+            {priceDisplay}
+          </span>
+        )}
+        {l.reserva_url && (
+          <a
+            href={l.reserva_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-sans text-[#D97706] hover:underline shrink-0 ml-auto"
+            style={{ fontSize: 13 }}
+          >
+            Ver opciones →
+          </a>
+        )}
       </div>
     </div>
   );
@@ -112,56 +203,31 @@ export default function HowToGetThere({
       {lodging.length > 0 && (
         <div>
           <h4 className="font-serif text-xl text-foreground mb-4">Hospedaje</h4>
-          <div className="space-y-3">
-            {lodging.map((l, i) => {
-              const isCamping = l.tipo?.toLowerCase().includes("camp");
-              const LodgingIcon = isCamping ? Tent : Hotel;
-              return (
-                <div key={i} className="flex items-start gap-3 p-4 rounded-xl border border-border bg-card">
-                  <LodgingIcon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      {l.nombre && (
-                        <span className="font-medium text-foreground text-sm">{l.nombre}</span>
-                      )}
-                      {l.tipo && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-accent text-muted-foreground border border-border">
-                          {l.tipo}
-                        </span>
-                      )}
-                      {l.dentro_del_parque != null && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/10 text-secondary border border-secondary/20">
-                          {l.dentro_del_parque ? "Dentro del parque" : "Fuera del parque"}
-                        </span>
-                      )}
-                      {l.precio_usd != null ? (
-                        <span className="text-xs font-semibold text-primary">
-                          ${l.precio_usd}/noche
-                        </span>
-                      ) : l.rango_precio_usd ? (
-                        <span className="text-xs font-semibold text-primary">{l.rango_precio_usd}</span>
-                      ) : null}
-                    </div>
-                    {(l.precio_nota ?? l.notas) && (
-                      <p className="text-sm text-muted-foreground leading-snug">
-                        {l.precio_nota ?? l.notas}
-                      </p>
-                    )}
-                    {l.reserva_url && (
-                      <a
-                        href={l.reserva_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block mt-2 text-xs text-primary hover:underline"
-                      >
-                        Ver opciones →
-                      </a>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+
+          {lodging.length === 1 ? (
+            // Single entry → full-width card
+            <LodgingCard lodging={lodging[0]} fullWidth />
+          ) : (
+            // Multiple entries → horizontal scroll
+            <div className="relative">
+              <div
+                className="flex overflow-x-auto gap-3 scrollbar-hide"
+                style={{ paddingLeft: 0, paddingRight: 28 }}
+              >
+                {lodging.slice(0, 3).map((l, i) => (
+                  <LodgingCard key={i} lodging={l} />
+                ))}
+              </div>
+              {/* Right fade mask */}
+              <div
+                className="absolute right-0 top-0 h-full pointer-events-none"
+                style={{
+                  width: 28,
+                  background: "linear-gradient(to left, #FAFAFA 0px, transparent 28px)",
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

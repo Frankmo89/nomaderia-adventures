@@ -22,8 +22,9 @@ const WHATSAPP_NUM = "18588996802";
 const SITE_URL     = "https://nomaderia.com";
 const EMBED_MODEL  = "text-embedding-3-small";
 const CHAT_MODEL   = "gpt-4o-mini";
-const MAX_CHUNKS   = 6;    // chunks de contexto que se pasan al agente
-const MIN_SIMILARITY = 0.4; // umbral mínimo de relevancia
+const MAX_CHUNKS        = 6;   // chunks de contexto que se pasan al agente
+const MAX_CHUNKS_SCOPED = 20;  // wider net when filtering by slug
+const MIN_SIMILARITY    = 0.4; // umbral mínimo de relevancia
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ function deduplicateSources(chunks: KnowledgeChunk[]): Source[] {
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `Eres el asistente de aventuras de Nomaderia, un servicio de concierge en español para hispanos en EE.UU. que quieren hacer su primer viaje de senderismo. Frank Molina, agente TAP certificado, es quien respalda toda la información.
+const SYSTEM_PROMPT_BASE = `Eres el asistente de aventuras de Nomaderia, un servicio de concierge en español para hispanos en EE.UU. que quieren hacer su primer viaje de senderismo. Frank Molina, agente TAP certificado, es quien respalda toda la información.
 
 REGLAS ESTRICTAS:
 1. Responde SIEMPRE en español, tono amigable y directo, como un amigo experto.
@@ -119,6 +120,14 @@ NUNCA:
 - Inventes requisitos de visa, permisos, precios o disponibilidades específicas.
 - Recomiendes marcas o productos que no estén en el contexto.
 - Digas que puedes hacer reservas o procesar pagos.`;
+
+function buildSystemPrompt(destinationSlug?: string): string {
+  if (!destinationSlug) return SYSTEM_PROMPT_BASE;
+  return `${SYSTEM_PROMPT_BASE}
+
+IMPORTANTE — MODO PARQUE ESPECÍFICO:
+El usuario está leyendo la guía de "${destinationSlug}". Responde ÚNICAMENTE con información de ese parque. Si el contexto no contiene la respuesta o la pregunta es sobre otro destino, dilo claramente: "Me enfoco solo en este parque. Para otras preguntas, Frank puede ayudarte."`;
+}
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
@@ -154,20 +163,20 @@ serve(async (req) => {
     // ── 3. Búsqueda por similitud en knowledge_chunks ─────────────────────────
     const supabase = createClient(SUPA_URL, SUPA_ANON);
 
-    // Si hay destination_slug, primero buscamos en ese destino específico
     let chunks: KnowledgeChunk[] = [];
 
     if (destination_slug) {
+      // Retrieve a wider net and then hard-filter to this park only.
+      // Never fall back to other parks' chunks — wrong-park answers are worse
+      // than a honest "no tengo información".
       const { data: destChunks } = await supabase.rpc("match_knowledge_chunks", {
         query_embedding: queryEmbedding,
-        match_count:     MAX_CHUNKS,
+        match_count:     MAX_CHUNKS_SCOPED,
         min_similarity:  MIN_SIMILARITY,
       });
-      // Filtrar por slug si vienen de ese destino
-      const filtered = (destChunks ?? []).filter(
+      chunks = (destChunks ?? []).filter(
         (c: KnowledgeChunk) => c.metadata?.slug === destination_slug
-      );
-      chunks = filtered.length >= 2 ? filtered : (destChunks ?? []);
+      ).slice(0, MAX_CHUNKS);
     } else {
       const { data } = await supabase.rpc("match_knowledge_chunks", {
         query_embedding: queryEmbedding,
@@ -209,7 +218,7 @@ serve(async (req) => {
         max_tokens:  600,
         temperature: 0.3, // baja temperatura → respuestas más precisas, menos creativas
         messages: [
-          { role: "system",  content: SYSTEM_PROMPT },
+          { role: "system",  content: buildSystemPrompt(destination_slug) },
           {
             role:    "user",
             content: `CONTEXTO:\n${context}\n\nPREGUNTA DEL USUARIO:\n${question}`,

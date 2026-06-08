@@ -23,7 +23,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Destination = Tables<"destinations">;
 
-type DestSortKey = "title" | "country" | "difficulty_level" | "created_at";
+type DestSortKey = "title" | "country" | "difficulty_level" | "created_at" | "updated_at";
 
 const difficultyLabel: Record<string, string> = {
   easy: "Fácil",
@@ -37,6 +37,7 @@ const getDestValue = (d: Destination, key: DestSortKey): string => {
     case "country": return d.country ?? "";
     case "difficulty_level": return d.difficulty_level ?? "";
     case "created_at": return d.created_at;
+    case "updated_at": return d.updated_at;
   }
 };
 
@@ -164,6 +165,7 @@ const AdminDestinations = () => {
               <SortableHeader label="Dificultad" sortKey="difficulty_level" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground">Publicado</TableHead>
               <SortableHeader label="Creado" sortKey="created_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
+              <SortableHeader label="Actualizado" sortKey="updated_at" activeSortKey={sortState.sortKey} sortDir={sortState.sortDir} onSort={handleSort} />
               <TableHead className="text-foreground text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -176,12 +178,13 @@ const AdminDestinations = () => {
                   <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-10 rounded-full" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-14" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-14" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="p-0">
+                <TableCell colSpan={7} className="p-0">
                   <AdminEmptyState
                     icon={MapPin}
                     title="Aún no hay destinos"
@@ -192,7 +195,7 @@ const AdminDestinations = () => {
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="p-0">
+                <TableCell colSpan={7} className="p-0">
                   <AdminEmptyState
                     icon={Search}
                     title={`Sin resultados para "${search}"`}
@@ -215,6 +218,9 @@ const AdminDestinations = () => {
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
                     {new Date(d.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap text-sm">
+                    {new Date(d.updated_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

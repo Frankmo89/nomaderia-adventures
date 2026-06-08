@@ -1,4 +1,6 @@
+import { CalendarDays, Mountain, DollarSign, Sun } from "lucide-react";
 import { motion } from "framer-motion";
+import type { LucideIcon } from "lucide-react";
 
 interface QuickFactsRowProps {
   daysNeeded?: string | null;
@@ -8,32 +10,72 @@ interface QuickFactsRowProps {
 }
 
 interface Fact {
+  Icon: LucideIcon;
   label: string;
   value: string;
 }
 
-export default function QuickFactsRow({ daysNeeded, budgetUsd, maxElevationFt, bestSeason }: QuickFactsRowProps) {
+export default function QuickFactsRow({
+  daysNeeded,
+  budgetUsd,
+  maxElevationFt,
+  bestSeason,
+}: QuickFactsRowProps) {
   const facts: Fact[] = [];
-  if (daysNeeded?.trim()) facts.push({ label: "Duración", value: daysNeeded.trim() });
-  if (budgetUsd != null) facts.push({ label: "Presupuesto estimado", value: `~$${budgetUsd.toLocaleString("en-US")} USD` });
-  if (maxElevationFt != null) facts.push({ label: "Elevación máxima", value: `${maxElevationFt.toLocaleString("en-US")} ft` });
-  if (bestSeason?.trim()) facts.push({ label: "Mejor temporada", value: bestSeason.trim() });
+  if (daysNeeded?.trim())
+    facts.push({ Icon: CalendarDays, label: "DÍAS", value: daysNeeded.trim() });
+  if (maxElevationFt != null)
+    facts.push({
+      Icon: Mountain,
+      label: "ELEVACIÓN",
+      value: `${maxElevationFt.toLocaleString("en-US")} ft`,
+    });
+  if (budgetUsd != null)
+    facts.push({
+      Icon: DollarSign,
+      label: "PRESUPUESTO",
+      value: `~$${budgetUsd.toLocaleString("en-US")}`,
+    });
+  if (bestSeason?.trim())
+    facts.push({ Icon: Sun, label: "TEMPORADA", value: bestSeason.trim() });
 
   if (facts.length === 0) return null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="py-10 border-b border-border"
     >
-      <div className="container mx-auto px-4 max-w-3xl">
-        <div className="grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border">
-          {facts.map(({ label, value }) => (
-            <div key={label} className="bg-accent px-5 py-5 flex flex-col gap-1.5">
-              <span className="font-serif text-xl md:text-2xl leading-tight text-primary">{value}</span>
-              <span className="font-sans text-xs text-muted-foreground">{label}</span>
+      <div
+        className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden"
+        style={{ padding: "12px 0" }}
+      >
+        <div className="flex">
+          {facts.map(({ Icon, label, value }, i) => (
+            <div
+              key={label}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 px-2 ${
+                i < facts.length - 1 ? "border-r border-[#E5E7EB]" : ""
+              }`}
+              style={{ minHeight: 56 }}
+            >
+              <Icon
+                className="text-[#D97706]"
+                style={{ width: 18, height: 18 }}
+              />
+              <span
+                className="font-sans font-semibold text-[#1C1917] text-center leading-tight"
+                style={{ fontSize: 16 }}
+              >
+                {value}
+              </span>
+              <span
+                className="font-sans text-[#6B7280] tracking-[0.06em] uppercase text-center"
+                style={{ fontSize: 11 }}
+              >
+                {label}
+              </span>
             </div>
           ))}
         </div>

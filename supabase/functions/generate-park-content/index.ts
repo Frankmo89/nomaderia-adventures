@@ -108,7 +108,6 @@ interface SignatureHike {
   nombre: string;
   distancia_km: number | null;
   duracion_horas: number | null;
-  dificultad: string;
   desnivel_m: number | null;
   apto_principiante: boolean;
   nota: string | null;
@@ -122,9 +121,10 @@ interface CommonFear {
 interface LodgingInfo {
   nombre: string;
   tipo: string;
-  rango_precio_usd: string | null;
+  precio_usd: number | null;
+  precio_nota: string;
   reserva_url: string | null;
-  notas: string | null;
+  dentro_del_parque: boolean;
 }
 
 interface ParkContentAI {
@@ -319,15 +319,34 @@ referencia de formato — adapta al parque real que estés generando.
 
 ### CONTRATOS JSONB OBLIGATORIOS
 
-- signature_hikes: [{nombre:string, distancia_km:number|null, duracion_horas:number|null, dificultad:string, desnivel_m:number|null, apto_principiante:boolean, nota:string|null}]
-  → nota debe ser 1-2 oraciones con lo que hace ÚNICO ese sendero en este parque, no una descripción genérica.
+- top_activities / good_for: etiquetas en español con formato Título (primera letra mayúscula).
+  Correcto: ["Senderismo", "Observación de fauna", "Fotografía de paisajes"]
+  PROHIBIDO: ["senderismo", "hiking", "observación-de-fauna"] — sin slugs, sin inglés, sin todo-minúsculas.
+
+- signature_hikes: genera 2-3 entradas con EXACTAMENTE estas claves — sin añadir ni quitar:
+  [{ "nombre": string, "distancia_km": number|null, "duracion_horas": number|null, "desnivel_m": number|null, "apto_principiante": boolean, "nota": string|null }]
+  → distancia_km / duracion_horas / desnivel_m: SOLO números. Nunca strings ni rangos ("4-6 km" → INCORRECTO).
+  → apto_principiante: true SOLO si una persona sin entrenamiento atlético puede completarlo de forma segura.
+  → nota: 1-2 oraciones concretas sobre lo que hace único ESTE sendero en ESTE parque — cero relleno.
+  → Si no puedes verificar un valor numérico, omite ese campo — NO inventes.
+  → NO incluyas la clave "dificultad" — esa clave está prohibida en signature_hikes.
+
 - common_fears: [{miedo:string, respuesta:string}]
   → respuesta debe citar condiciones reales del parque, no consejos universales.
-- lodging_info: [{nombre:string, tipo:string, rango_precio_usd:string|null, reserva_url:string|null, notas:string|null}]
-  → tipo: "hotel", "lodge", "cabañas", "camping", "glamping", "hostel" u otro.
-  → rango_precio_usd: e.g. "$25–$50/noche" o null si se desconoce.
-  → reserva_url: URL de Recreation.gov, el sitio oficial o null. No inventes URLs.
-  → Incluye solo opciones dentro o en las inmediaciones del parque con datos verificables.
+
+- lodging_info: genera 2-3 opciones con EXACTAMENTE estas claves — sin añadir ni quitar:
+  [{ "nombre": string, "tipo": string, "precio_usd": number|null, "precio_nota": string, "reserva_url": string|null, "dentro_del_parque": boolean }]
+  → tipo: EXACTAMENTE uno de: "camping" | "lodge" | "hotel" | "cabaña" | "glamping" | "hostal"
+  → precio_nota: SIEMPRE incluye — rango legible en español, e.g. "~$45–$80/noche".
+  → precio_usd: número SOLO si conoces UNA tarifa específica verificada; si no, null.
+  → reserva_url: URL real de Recreation.gov o del sitio oficial; null si no la conoces.
+  → dentro_del_parque: true si el alojamiento está dentro del perímetro del parque.
+  → NUNCA inventes precios. Precio desconocido → precio_nota: "⚠️ VERIFICAR precio actual".
+  → PROHIBIDO incluir los campos legacy rango_precio_usd y notas.
+
+- max_elevation_ft: NO uses el punto más alto del parque si los visitantes no acceden ahí.
+  Usa la cota máxima realista alcanzable en los senderos listados.
+  Si no puedes verificarlo con seguridad, devuelve null y menciona la elevación en prosa dentro de getting_there_markdown o full_guide_markdown.
 
 ---
 
@@ -435,9 +454,10 @@ Devuelve SOLO este JSON. Omite campos que no puedas rellenar con seguridad.
   "preparation_plan": "## Preparación\\n- Reserva con 6 meses de anticipación\\n- ...",
   "gear_list_markdown": "## Qué Llevar\\n### Esencial\\n- Botas de trail\\n### Opcional\\n- ...",
   "itinerary_markdown": "## Itinerario Sugerido\\n### Día 1\\n...",
-  "top_activities": ["senderismo", "observación de fauna", "fotografía de paisajes"],
+  "top_activities": ["Senderismo", "Observación de fauna", "Fotografía de paisajes"],
   "signature_hikes": [
-    { "nombre": "Nombre del sendero", "distancia_km": 4.8, "duracion_horas": 3.0, "dificultad": "moderada", "desnivel_m": 147, "apto_principiante": true, "nota": "El sendero más icónico" }
+    { "nombre": "Nombre del sendero", "distancia_km": 4.8, "duracion_horas": 3.0, "desnivel_m": 147, "apto_principiante": true, "nota": "1-2 oraciones concretas — qué hace único este sendero." },
+    { "nombre": "Otro sendero", "distancia_km": 12.5, "duracion_horas": 6.0, "desnivel_m": 520, "apto_principiante": false, "nota": "Solo para quienes ya han hecho senderismo de montaña." }
   ],
   "common_fears": [
     { "miedo": "¿Es muy difícil para alguien sin experiencia?", "respuesta": "..." },
@@ -445,13 +465,14 @@ Devuelve SOLO este JSON. Omite campos que no puedas rellenar con seguridad.
     { "miedo": "¿Puedo ir sin reservar nada?", "respuesta": "..." }
   ],
   "lodging_info": [
-    { "nombre": "Nombre del lodge/hotel/campsite", "tipo": "lodge", "rango_precio_usd": "$150–$250/noche", "reserva_url": null, "notas": "..." }
+    { "nombre": "Nombre del lodge/campsite", "tipo": "lodge", "precio_usd": null, "precio_nota": "~$150–$250/noche según temporada", "reserva_url": "https://www.recreation.gov/...", "dentro_del_parque": true },
+    { "nombre": "Campamento X", "tipo": "camping", "precio_usd": 30, "precio_nota": "$30/noche por sitio", "reserva_url": "https://www.recreation.gov/...", "dentro_del_parque": true }
   ],
   "meta_title": "Parque Nacional X | Guía en español para principiantes",
   "meta_description": "Qué ver y hacer en el Parque Nacional X. Guía completa en español para hispanohablantes.",
   "tags": ["parque-nacional", "california", "senderismo"],
-  "good_for": ["familias con niños", "principiantes en outdoor", "fotógrafos"],
-  "not_ideal_if": ["necesitas sombra constante en verano", "tienes movilidad reducida en senderos"],
+  "good_for": ["Familias con niños", "Principiantes en outdoor", "Fotógrafos"],
+  "not_ideal_if": ["Necesitas sombra constante en verano", "Tienes movilidad reducida en senderos"],
   "verificar": ["drive_time_from_la", "max_elevation_ft"]
 }`);
 
@@ -499,12 +520,12 @@ function coerceSignatureHike(item: unknown): SignatureHike | null {
   if (typeof h.nombre !== "string" || !h.nombre.trim()) return null;
   return {
     nombre: h.nombre.trim(),
-    distancia_km: typeof h.distancia_km === "number" ? h.distancia_km : null,
-    duracion_horas: typeof h.duracion_horas === "number" ? h.duracion_horas : null,
-    dificultad: typeof h.dificultad === "string" ? h.dificultad : "moderada",
-    desnivel_m: typeof h.desnivel_m === "number" ? h.desnivel_m : null,
-    apto_principiante: typeof h.apto_principiante === "boolean" ? h.apto_principiante : true,
-    nota: typeof h.nota === "string" ? h.nota : null,
+    distancia_km: typeof h.distancia_km === "number" && Number.isFinite(h.distancia_km) ? h.distancia_km : null,
+    duracion_horas: typeof h.duracion_horas === "number" && Number.isFinite(h.duracion_horas) ? h.duracion_horas : null,
+    desnivel_m: typeof h.desnivel_m === "number" && Number.isFinite(h.desnivel_m) ? h.desnivel_m : null,
+    // Only true if the AI explicitly set it — never default to true
+    apto_principiante: h.apto_principiante === true,
+    nota: typeof h.nota === "string" ? h.nota.trim() || null : null,
   };
 }
 
@@ -517,16 +538,30 @@ function coerceCommonFear(item: unknown): CommonFear | null {
   return { miedo, respuesta };
 }
 
+const VALID_LODGING_TIPOS = new Set(["camping", "lodge", "hotel", "cabaña", "glamping", "hostal"]);
+
 function coerceLodgingInfo(item: unknown): LodgingInfo | null {
   if (typeof item !== "object" || item === null) return null;
   const l = item as Record<string, unknown>;
   if (typeof l.nombre !== "string" || !l.nombre.trim()) return null;
+  const tipo = typeof l.tipo === "string" ? l.tipo.trim() : "";
+  const precio_nota =
+    typeof l.precio_nota === "string" && l.precio_nota.trim()
+      ? l.precio_nota.trim()
+      : "⚠️ VERIFICAR precio actual";
   return {
     nombre: l.nombre.trim(),
-    tipo: typeof l.tipo === "string" ? l.tipo.trim() : "",
-    rango_precio_usd: typeof l.rango_precio_usd === "string" ? l.rango_precio_usd : null,
-    reserva_url: typeof l.reserva_url === "string" ? l.reserva_url : null,
-    notas: typeof l.notas === "string" ? l.notas : null,
+    tipo: VALID_LODGING_TIPOS.has(tipo) ? tipo : tipo,
+    precio_usd:
+      typeof l.precio_usd === "number" && Number.isFinite(l.precio_usd)
+        ? l.precio_usd
+        : null,
+    precio_nota,
+    reserva_url:
+      typeof l.reserva_url === "string" && l.reserva_url.trim()
+        ? l.reserva_url.trim()
+        : null,
+    dentro_del_parque: l.dentro_del_parque === true,
   };
 }
 

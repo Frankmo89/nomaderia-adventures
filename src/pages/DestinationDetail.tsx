@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { Clock, DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain, Zap, MessageSquare, ExternalLink, AlertTriangle } from "lucide-react";
+import { DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain, MessageSquare, ExternalLink, AlertTriangle, Share2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +30,8 @@ import DifficultyBadge from "@/components/destinations/DifficultyBadge";
 import HowToGetThere, { type LodgingOption } from "@/components/destinations/HowToGetThere";
 import CredibilityBar from "@/components/destinations/CredibilityBar";
 import ItineraryDayCards from "@/components/destinations/ItineraryDayCards";
+import TrailCards, { type SignatureHike } from "@/components/destinations/TrailCards";
+import { buildChipItems } from "@/lib/chip-labels";
 
 type Destination = Tables<"destinations">;
 
@@ -67,7 +69,7 @@ const markdownComponents = {
 interface DestExt {
   why_visit_markdown?: string | null;
   top_activities?: string[] | null;
-  signature_hikes?: Array<{ nombre: string }> | null;
+  signature_hikes?: SignatureHike[] | null;
   max_elevation_ft?: number | null;
   altitude_warning?: boolean | null;
   beginner_friendly?: boolean | null;
@@ -89,9 +91,6 @@ interface DestExt {
   recreation_gov_url?: string | null;
 }
 
-function firstSentence(text: string): string {
-  return text.match(/[^.!?]+[.!?]/)?.[0]?.trim() ?? text.trim();
-}
 
 const HIGHLIGHT_ICONS = [Sparkles, Mountain, Compass] as const;
 
@@ -271,17 +270,16 @@ const DestinationDetail = () => {
   const chipItems = useMemo(() => {
     if (!dest) return [];
     const ext = dest as Destination & DestExt;
-    const items: string[] = [];
-    for (const g of ext.good_for ?? []) {
-      if (items.length >= 8) break;
-      if (g?.trim()) items.push(g.trim());
-    }
-    for (const t of (dest.tags as string[] | null) ?? []) {
-      if (items.length >= 8) break;
-      if (t?.trim()) items.push(t.trim());
-    }
-    return items;
+    return buildChipItems(ext.good_for, dest.tags as string[] | null);
   }, [dest]);
+
+  const handleShare = useCallback(() => {
+    if (navigator.share) {
+      navigator.share({ title: dest?.title ?? "", url: window.location.href }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href).catch(() => {});
+    }
+  }, [dest?.title]);
 
   if (isLoading) return (
     <main className="bg-background min-h-screen">
@@ -321,7 +319,11 @@ const DestinationDetail = () => {
 
       {/* Hero Carousel */}
       <section className="pt-20">
-        <div className="h-[80vh] md:h-[90vh] flex items-end relative overflow-hidden">
+        {/* Image: 52vh, min 260px, max 360px, edge-to-edge */}
+        <div
+          className="relative overflow-hidden w-full"
+          style={{ height: "clamp(260px, 52vh, 360px)" }}
+        >
           {/* Embla viewport */}
           <div ref={heroRef} className="absolute inset-0 overflow-hidden">
             <div className="flex h-full">
@@ -340,50 +342,150 @@ const DestinationDetail = () => {
             </div>
           </div>
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+          {/* Floating back button */}
+          <Link
+            to="/#destinos"
+            className="absolute top-4 left-4 z-20 flex items-center justify-center rounded-full"
+            style={{
+              width: 36, height: 36,
+              background: "rgba(0,0,0,0.32)",
+              backdropFilter: "blur(4px)",
+            }}
+            aria-label="Volver a destinos"
+          >
+            <ChevronLeft className="h-5 w-5 text-white" />
+          </Link>
 
-          {/* Dot indicators — 44px touch targets for accessibility */}
+          {/* Floating share button */}
+          <button
+            onClick={handleShare}
+            className="absolute top-4 right-4 z-20 flex items-center justify-center rounded-full"
+            style={{
+              width: 36, height: 36,
+              background: "rgba(0,0,0,0.32)",
+              backdropFilter: "blur(4px)",
+            }}
+            aria-label="Compartir"
+          >
+            <Share2 className="h-4 w-4 text-white" />
+          </button>
+
+          {/* Pagination dots / counter — 10px above bottom edge of image */}
           {heroImages.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-20">
-              {heroImages.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => heroApi?.scrollTo(i)}
-                  className="w-11 h-11 flex items-center justify-center"
-                  aria-label={`Ir a imagen ${i + 1}`}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center gap-[6px]"
+              style={{ bottom: 10 }}
+            >
+              {heroImages.length <= 6 ? (
+                heroImages.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => heroApi?.scrollTo(i)}
+                    className="flex items-center justify-center"
+                    style={{ width: 28, height: 28 }}
+                    aria-label={`Ir a imagen ${i + 1}`}
+                  >
+                    <span
+                      className="rounded-full block transition-all duration-300"
+                      style={{
+                        width:      i === heroIndex ? 7 : 5,
+                        height:     i === heroIndex ? 7 : 5,
+                        background: i === heroIndex ? "white" : "rgba(255,255,255,0.4)",
+                      }}
+                    />
+                  </button>
+                ))
+              ) : (
+                <span
+                  className="font-sans text-white rounded-full px-2 py-0.5"
+                  style={{ fontSize: 12, background: "rgba(0,0,0,0.4)" }}
                 >
-                  <span className={`w-2 h-2 rounded-full transition-all duration-300 block ${
-                    i === heroIndex ? "bg-white scale-125" : "bg-white/50"
-                  }`} />
-                </button>
-              ))}
+                  {heroIndex + 1} / {heroImages.length}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Content below image: overline → title → location → chips → quick-facts */}
+        <div className="px-5 pt-5">
+          {/* Overline */}
+          <p
+            className="font-sans uppercase text-[#D97706]"
+            style={{ fontSize: 11, letterSpacing: "0.08em", fontWeight: 500 }}
+          >
+            {dest.experience_type ?? "Parque Nacional"}
+          </p>
+
+          <div style={{ height: 4 }} />
+
+          {/* Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="font-serif font-bold text-[#1C1917]"
+            style={{ fontSize: "clamp(26px, 7vw, 32px)", lineHeight: 1.15 }}
+          >
+            {dest.title}
+          </motion.h1>
+
+          <div style={{ height: 6 }} />
+
+          {/* Location */}
+          <p className="font-sans text-[#6B7280]" style={{ fontSize: 13 }}>
+            {countryFlag[dest.country] || "🏔"} {dest.country}
+            {dest.region ? ` · ${dest.region}` : ""}
+          </p>
+
+          <div style={{ height: 12 }} />
+
+          {/* Chip row */}
+          {chipItems.length > 0 && (
+            <div className="relative">
+              <div
+                className="flex overflow-x-auto gap-2 scrollbar-hide"
+                style={{ paddingRight: 28 }}
+              >
+                {chipItems.map((item, i) => (
+                  <span
+                    key={i}
+                    className="shrink-0 font-sans text-[#4B5563]"
+                    style={{
+                      background:   "#F3F4F6",
+                      border:       "1px solid #E5E7EB",
+                      borderRadius: 999,
+                      padding:      "6px 12px",
+                      height:       30,
+                      fontSize:     13,
+                      lineHeight:   "18px",
+                      display:      "inline-flex",
+                      alignItems:   "center",
+                    }}
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+              {/* Right fade mask */}
+              <div
+                className="absolute right-0 top-0 h-full pointer-events-none"
+                style={{
+                  width:      28,
+                  background: "linear-gradient(to left, #FAFAFA, transparent)",
+                }}
+              />
             </div>
           )}
 
-          {/* Hero text content */}
-          <div className="container mx-auto px-4 pb-10 relative z-10">
-            <nav className="text-sm flex items-center gap-1 mb-4" aria-label="Breadcrumb">
-              <Link to="/" className="text-white/60 hover:text-white">Inicio</Link>
-              <span className="text-white/40">/</span>
-              <Link to="/#destinos" className="text-white/60 hover:text-white">Destinos</Link>
-              <span className="text-white/40">/</span>
-              <span className="text-white/70 truncate max-w-[200px]" aria-current="page">{dest.title}</span>
-            </nav>
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="font-serif text-4xl md:text-6xl font-bold text-white mb-3 text-shadow-card">
-              {dest.title}
-            </motion.h1>
-            <p className="text-lg text-white/70 mb-4">
-              {countryFlag[dest.country] || ""} {dest.country} {dest.region ? `· ${dest.region}` : ""}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Badge className={difficultyColor[dest.difficulty_level]}>{difficultyLabel[dest.difficulty_level]}</Badge>
-              <Badge variant="outline" className="border-white/20 text-white"><Clock className="h-3 w-3 mr-1" /> {dest.days_needed}</Badge>
-              {dest.estimated_budget_usd && <Badge variant="outline" className="border-white/20 text-white"><DollarSign className="h-3 w-3 mr-1" /> ~${dest.estimated_budget_usd} USD</Badge>}
-              {dest.best_season && <Badge variant="outline" className="border-white/20 text-white">🗓 {dest.best_season}</Badge>}
-            </div>
-          </div>
+          <div style={{ height: 24 }} />
+
+          {/* Quick-facts stat row */}
+          <QuickFactsRow
+            daysNeeded={dest.days_needed}
+            budgetUsd={dest.estimated_budget_usd}
+            maxElevationFt={(dest as Destination & DestExt).max_elevation_ft}
+            bestSeason={dest.best_season}
+          />
         </div>
       </section>
 
@@ -417,32 +519,6 @@ const DestinationDetail = () => {
             )}
           </div>
         </motion.section>
-      )}
-
-      {/* Quick Facts */}
-      <QuickFactsRow
-        daysNeeded={dest.days_needed}
-        budgetUsd={dest.estimated_budget_usd}
-        maxElevationFt={(dest as Destination & DestExt).max_elevation_ft}
-        bestSeason={dest.best_season}
-      />
-
-      {/* Chip row: good_for + tags */}
-      {chipItems.length > 0 && (
-        <div className="border-b border-border">
-          <div className="container mx-auto px-4 max-w-3xl py-3">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-              {chipItems.map((item, i) => (
-                <span
-                  key={i}
-                  className="shrink-0 bg-accent border border-border text-foreground/70 text-xs rounded-full px-3 py-1"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Recargo no-residentes — solo si has_nonresident_surcharge = true */}
@@ -506,12 +582,37 @@ const DestinationDetail = () => {
         <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8">
           <div className="flex-1 min-w-0">
             <Tabs defaultValue="can-i" className="w-full" onValueChange={setActiveTab}>
-              <TabsList className="bg-muted mb-8 h-auto py-1.5 flex-wrap gap-1">
-                <TabsTrigger value="can-i">¿Puedo Hacerlo?</TabsTrigger>
-                <TabsTrigger value="prep">Preparación Física</TabsTrigger>
-                <TabsTrigger value="itinerary">Itinerario</TabsTrigger>
-                <TabsTrigger value="gear">Qué Llevar</TabsTrigger>
-                <TabsTrigger value="how-to-get">Cómo Llegar</TabsTrigger>
+              <TabsList className="bg-background sticky top-20 z-30 mb-8 h-auto py-2 flex-wrap gap-1.5 shadow-sm border-b border-border rounded-none px-0 w-full justify-start overflow-x-auto scrollbar-hide">
+                <TabsTrigger
+                  value="can-i"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                >
+                  ¿Puedo Hacerlo?
+                </TabsTrigger>
+                <TabsTrigger
+                  value="prep"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                >
+                  Preparación
+                </TabsTrigger>
+                <TabsTrigger
+                  value="itinerary"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                >
+                  Itinerario
+                </TabsTrigger>
+                <TabsTrigger
+                  value="gear"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                >
+                  Qué Llevar
+                </TabsTrigger>
+                <TabsTrigger
+                  value="how-to-get"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                >
+                  Cómo Llegar
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="can-i">
                 <AnimatePresence mode="wait">
@@ -522,74 +623,151 @@ const DestinationDetail = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* Desglose escaneable */}
-                    <div className="space-y-6 mb-10">
-                      {/* Nivel */}
-                      <div className="flex items-start gap-3">
-                        <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                        <div className="flex flex-col gap-1.5">
-                          <span className="text-xs font-sans text-muted-foreground uppercase tracking-wide">Nivel</span>
-                          <DifficultyBadge
-                            difficultyLevel={dest.difficulty_level}
-                            beginnerFriendly={(dest as Destination & DestExt).beginner_friendly}
-                          />
-                        </div>
+                    {/* ── Difficulty panel (Component 3) ── */}
+                    <div
+                      className="bg-white border border-[#E5E7EB] rounded-2xl"
+                      style={{ padding: 20 }}
+                    >
+                      <h2
+                        className="font-serif font-bold text-[#1C1917]"
+                        style={{ fontSize: 22 }}
+                      >
+                        ¿Puedo Hacerlo?
+                      </h2>
+
+                      {/* A — badge + anchor stat */}
+                      <div className="flex items-center gap-3 mt-2 flex-wrap">
+                        <DifficultyBadge
+                          difficultyLevel={dest.difficulty_level}
+                          beginnerFriendly={(dest as Destination & DestExt).beginner_friendly}
+                          size="md"
+                        />
+                        {dest.days_needed && (
+                          <span className="font-sans text-[#6B7280]" style={{ fontSize: 13 }}>
+                            {dest.days_needed}
+                          </span>
+                        )}
                       </div>
 
-                      {/* Elevación máxima */}
-                      {(dest as Destination & DestExt).max_elevation_ft != null && (
-                        <div className="flex items-start gap-3">
-                          <Mountain className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                          <div className="flex flex-col gap-1.5">
-                            <span className="text-xs font-sans text-muted-foreground uppercase tracking-wide">Elevación máxima</span>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-foreground">
-                                {(dest as Destination & DestExt).max_elevation_ft!.toLocaleString("en-US")} ft
-                              </span>
-                              {(dest as Destination & DestExt).altitude_warning && (
-                                <span className="text-xs px-2.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full">
-                                  ⚠ Posible mal de altura
+                      {/* B — 2×2 stat grid */}
+                      {(() => {
+                        const ext = dest as Destination & DestExt;
+                        const cells = [
+                          { label: "DURACIÓN",  value: dest.days_needed },
+                          { label: "ELEVACIÓN", value: ext.max_elevation_ft != null ? `${ext.max_elevation_ft.toLocaleString("en-US")} ft` : null },
+                          { label: "TEMPORADA", value: dest.best_season },
+                          { label: "PRINCIPIANTE", value: ext.beginner_friendly === true ? "Sí ✓" : ext.beginner_friendly === false ? "No recomendado" : null },
+                        ].filter((c) => c.value);
+                        if (!cells.length) return null;
+                        return (
+                          <div
+                            className="grid grid-cols-2 border border-[#E5E7EB] rounded-xl overflow-hidden"
+                            style={{ marginTop: 12 }}
+                          >
+                            {cells.map(({ label, value }, i) => (
+                              <div
+                                key={label}
+                                className="flex flex-col items-center justify-center text-center"
+                                style={{
+                                  padding: 12,
+                                  borderRight:  (i % 2 === 0) ? "1px solid #E5E7EB" : undefined,
+                                  borderBottom: (i < cells.length - 2) ? "1px solid #E5E7EB" : undefined,
+                                }}
+                              >
+                                <span
+                                  className="font-sans font-semibold text-[#1C1917]"
+                                  style={{ fontSize: 17 }}
+                                >
+                                  {value}
                                 </span>
-                              )}
-                            </div>
+                                <span
+                                  className="font-sans text-[#6B7280] uppercase tracking-[0.06em] mt-0.5"
+                                  style={{ fontSize: 11 }}
+                                >
+                                  {label}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
-                      {/* Lo más duro */}
+                      {/* C — "Lo más duro" callout */}
                       {dest.difficulty_description && (
-                        <div className="flex items-start gap-3">
-                          <Zap className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                          <div className="flex flex-col gap-1.5">
-                            <span className="text-xs font-sans text-muted-foreground uppercase tracking-wide">Lo más duro</span>
-                            <p className="text-foreground/90 leading-relaxed">
-                              {firstSentence(dest.difficulty_description)}
+                        <div
+                          className="flex gap-3"
+                          style={{ marginTop: 16 }}
+                        >
+                          <div
+                            className="shrink-0 rounded-full"
+                            style={{ width: 3, background: "#D97706", alignSelf: "stretch" }}
+                          />
+                          <div style={{ paddingLeft: 0 }}>
+                            <p
+                              className="font-sans uppercase text-[#D97706]"
+                              style={{ fontSize: 11, letterSpacing: "0.06em", fontWeight: 500 }}
+                            >
+                              LO MÁS DURO
+                            </p>
+                            <div style={{ height: 4 }} />
+                            <p
+                              className="font-sans text-[#1C1917] leading-relaxed"
+                              style={{ fontSize: 15 }}
+                            >
+                              {dest.difficulty_description}
                             </p>
                           </div>
                         </div>
                       )}
-                    </div>
 
-                    {/* No es ideal si… */}
-                    {((dest as Destination & DestExt).not_ideal_if ?? []).length > 0 && (
-                      <div className="border-t border-border pt-6 mb-10">
-                        <p className="text-xs font-sans text-muted-foreground uppercase tracking-wide mb-3">No es ideal si…</p>
-                        <div className="flex flex-wrap gap-2">
+                      {/* altitude warning banner */}
+                      {(dest as Destination & DestExt).altitude_warning && (
+                        <div
+                          className="flex items-center gap-2 rounded-lg"
+                          style={{ marginTop: 12, background: "#FEF3C7", padding: "8px 12px" }}
+                        >
+                          <AlertTriangle className="h-4 w-4 shrink-0" style={{ color: "#92400E" }} />
+                          <span className="font-sans" style={{ fontSize: 13, color: "#92400E" }}>
+                            Posible mal de altura en este destino
+                          </span>
+                        </div>
+                      )}
+
+                      {/* D — "No ideal si…" */}
+                      {((dest as Destination & DestExt).not_ideal_if ?? []).length > 0 && (
+                        <div style={{ marginTop: 16 }}>
+                          <p
+                            className="font-sans uppercase text-[#6B7280]"
+                            style={{ fontSize: 11, letterSpacing: "0.06em" }}
+                          >
+                            NO IDEAL SI...
+                          </p>
+                          <div style={{ height: 8 }} />
                           {((dest as Destination & DestExt).not_ideal_if ?? []).map((item, i) => (
-                            <span
+                            <p
                               key={i}
-                              className="text-xs px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full"
+                              className="font-sans text-[#4B5563] flex gap-2"
+                              style={{ fontSize: 14, marginBottom: 4 }}
                             >
+                              <span style={{ color: "#D97706" }}>✗</span>
                               {item}
-                            </span>
+                            </p>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
-                    {/* Preguntas frecuentes */}
+                    {/* ── Trail cards (Component 4) ── */}
+                    {(() => {
+                      const hikes = ((dest as Destination & DestExt).signature_hikes ?? []).filter(
+                        (h) => h?.nombre?.trim()
+                      );
+                      return hikes.length > 0 ? <TrailCards hikes={hikes} /> : null;
+                    })()}
+
+                    {/* ── FAQ accordion ── */}
                     {fears.length > 0 && (
-                      <div className="border-t border-border pt-6">
+                      <div className="border-t border-border pt-6 mt-8">
                         <h3 className="font-serif text-2xl text-foreground mb-5">Preguntas Frecuentes</h3>
                         <Accordion type="single" collapsible className="w-full">
                           {fears.map((f, i) => (
