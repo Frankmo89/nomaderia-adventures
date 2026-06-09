@@ -63,47 +63,61 @@ const HeroSection = () => {
     <section className="relative min-h-screen overflow-hidden">
       <style>{KEN_BURNS_CSS}</style>
 
-      {/* Photo slideshow — 4 slides stacked, crossfade via opacity */}
-      {slides.map((photo, i) => (
-        <div
-          key={photo}
-          aria-hidden={i !== active}
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 1,
-            opacity: i === active ? 1 : 0,
-            transition: "opacity 1.2s ease",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage: `url(${photo})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              animation: "hero-ken-burns 8s ease-in-out infinite alternate",
-              animationDelay: `${i * -2}s`,
-            }}
-          />
-        </div>
-      ))}
-
-      {/* Gradient scrim — sky stays clean, bottom text zone is readable */}
+      {/* Background layer — slides + scrim, clipped to soft mountain silhouette */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          zIndex: 2,
-          background:
-            "linear-gradient(to bottom, transparent 40%, rgba(10,25,10,0.6) 70%, rgba(10,25,10,0.88) 100%)",
+          zIndex: 1,
+          WebkitMaskImage: "url('/hero-mask.svg')",
+          maskImage: "url('/hero-mask.svg')",
+          WebkitMaskSize: "100% 100%",
+          maskSize: "100% 100%",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
         }}
-      />
+      >
+        {/* Photo slides — 4 stacked, crossfade via opacity */}
+        {slides.map((photo, i) => (
+          <div
+            key={photo}
+            aria-hidden={i !== active}
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: i === active ? 1 : 0,
+              transition: "opacity 1.2s ease",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage: `url(${photo})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                animation: "hero-ken-burns 8s ease-in-out infinite alternate",
+                animationDelay: `${i * -2}s`,
+              }}
+            />
+          </div>
+        ))}
 
-      {/* Content — bottom-left */}
+        {/* Gradient scrim — sky stays clean, bottom text zone is readable */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 10,
+            background:
+              "linear-gradient(to bottom, transparent 40%, rgba(10,25,10,0.6) 70%, rgba(10,25,10,0.88) 100%)",
+          }}
+        />
+      </div>
+
+      {/* Content — bottom-left, padded above the clipped curve (~78% safe zone) */}
       <div
-        className="absolute bottom-0 left-0 max-w-2xl px-8 pb-12 md:px-14 md:pb-16 lg:px-20 lg:pb-20"
+        className="absolute bottom-0 left-0 max-w-2xl px-8 pb-[25vh] md:px-14 lg:px-20"
         style={{ zIndex: 3 }}
       >
         {/* TAP badge */}
@@ -168,10 +182,10 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      {/* Dot indicators — bottom-right */}
+      {/* Dot indicators — right, kept above the clipped curve */}
       <div
-        className="absolute bottom-8 right-8 flex items-center gap-2"
-        style={{ zIndex: 4 }}
+        className="absolute right-8 flex items-center gap-2"
+        style={{ zIndex: 4, bottom: "22%" }}
       >
         {slides.map((_, i) => (
           <button

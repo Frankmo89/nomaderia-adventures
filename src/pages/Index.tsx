@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import JsonLd from "@/components/JsonLd";
 import Reveal from "@/components/editorial/Reveal";
 import SectionDivider from "@/components/landing/SectionDivider";
-import { TerrainDivider } from "@/components/landing/TerrainDivider";
 
 const CTA_WHATSAPP_MESSAGE = '¡Hola! Estoy listo para diseñar mi viaje a medida.';
 
@@ -78,7 +77,6 @@ const Index = () => {
       <JsonLd data={jsonLdData} />
       <JsonLd data={organizationLd} />
       <HeroSection />
-      <TerrainDivider />
       <SocialProof />
       <PremiumItinerarySection />
       <TravelInsuranceSection />

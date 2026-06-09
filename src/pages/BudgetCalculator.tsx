@@ -211,11 +211,11 @@ const BudgetCalculator = () => {
               <div className="space-y-5">
                 {/* Destination */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <label htmlFor="destination-select" className="text-sm font-medium text-foreground flex items-center gap-2">
                     <Compass className="w-4 h-4 text-primary" /> Destino
                   </label>
                   <Select value={selectedSlug} onValueChange={(v) => { setSelectedSlug(v); setCalculated(false); }}>
-                    <SelectTrigger className="bg-background border-border shadow-sm h-11">
+                    <SelectTrigger id="destination-select" aria-label="Seleccionar destino" className="bg-background border-border shadow-sm h-11">
                       <SelectValue placeholder="¿A dónde quieres ir?" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border z-50">
@@ -228,11 +228,11 @@ const BudgetCalculator = () => {
 
                 {/* Origin */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <label htmlFor="origin-select" className="text-sm font-medium text-foreground flex items-center gap-2">
                     <Plane className="w-4 h-4 text-primary" /> Punto de partida
                   </label>
                   <Select value={origin} onValueChange={setOrigin}>
-                    <SelectTrigger className="bg-background border-border shadow-sm h-11">
+                    <SelectTrigger id="origin-select" aria-label="Seleccionar punto de partida" className="bg-background border-border shadow-sm h-11">
                       <SelectValue placeholder="Selecciona tu zona" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border z-50">
@@ -245,8 +245,9 @@ const BudgetCalculator = () => {
 
                 {/* Days */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Duración (días)</label>
+                  <label htmlFor="days-input" className="text-sm font-medium text-foreground">Duración (días)</label>
                   <Input
+                    id="days-input"
                     type="number"
                     min={1}
                     max={60}
@@ -258,8 +259,9 @@ const BudgetCalculator = () => {
 
                 {/* Flight Cost */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Costo de vuelos (USD)</label>
+                  <label htmlFor="flight-cost-input" className="text-sm font-medium text-foreground">Costo de vuelos (USD)</label>
                   <Input
+                    id="flight-cost-input"
                     type="number"
                     min={0}
                     value={flightCost}
@@ -280,15 +282,18 @@ const BudgetCalculator = () => {
                       return (
                         <button
                           key={opt.value}
+                          type="button"
+                          aria-label={`Seleccionar estilo de viaje: ${opt.label}`}
+                          aria-pressed={isSelected}
                           onClick={() => { setComfort(opt.value); setCalculated(false); }}
                           className={`flex flex-col items-center justify-center rounded-xl border p-3 transition-all duration-200 ${
                             isSelected
-                              ? "border-primary bg-primary/10 text-primary shadow-sm ring-1 ring-primary"
-                              : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-muted"
+                              ? "border-primary bg-primary/10 text-primary-foreground dark:text-primary shadow-sm ring-1 ring-primary"
+                              : "border-border bg-background text-foreground/80 hover:border-primary/40 hover:bg-muted hover:text-foreground"
                           }`}
                         >
-                          <Icon className={`h-5 w-5 mb-1.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                          <span className="text-xs font-medium w-full text-center truncate">{opt.label}</span>
+                          <Icon className={`h-5 w-5 mb-1.5 ${isSelected ? "text-primary-foreground dark:text-primary" : "text-foreground/80"}`} />
+                          <span className="text-xs font-semibold w-full text-center truncate">{opt.label}</span>
                         </button>
                       );
                     })}
@@ -477,9 +482,7 @@ const BudgetCalculator = () => {
                             </div>
                           ) : (
                             <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-                              <Input
-                                type="email"
-                                placeholder="tu@email.com"
+                              <Input aria-label="Correo electrónico" type="email" placeholder="tu@email.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -507,3 +510,4 @@ const BudgetCalculator = () => {
 };
 
 export default BudgetCalculator;
+
