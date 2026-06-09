@@ -164,314 +164,342 @@ const BudgetCalculator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-24">
+    <div className="min-h-screen bg-neutral-50 dark:bg-background text-foreground flex flex-col">
       <Navbar />
 
-      {/* Hero with image slider */}
-      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
-        {/* Background image slider */}
-        {heroImages.length === 0 ? (
-          <div className="absolute inset-0 bg-neutral-800" />
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={heroImages[heroIndex]}
-              src={heroImages[heroIndex]}
-              alt=""
-              role="presentation"
-              className="absolute inset-0 w-full h-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1, ease: "easeInOut" }}
-              loading="eager"
-              decoding="async"
-            />
-          </AnimatePresence>
-        )}
+      <main className="flex-1 pb-24">
+        {/* Hero Section */}
+        <section className="relative h-[45vh] min-h-[380px] flex items-center justify-center overflow-hidden bg-neutral-900">
+          <HeroSlider images={heroImages} />
 
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-black/30" />
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-neutral-50 dark:to-background pointer-events-none" />
 
-        {/* Content */}
-        <div className="relative z-10 text-center px-4">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4"
-            style={{ textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}
-          >
-            Calculadora de Presupuesto
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-xl text-white/90 max-w-lg mx-auto font-sans"
-            style={{ textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}
-          >
-            Estima cuánto costará tu aventura según destino, duración y estilo de viaje.
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Two-column layout */}
-      <section className="max-w-6xl mx-auto px-4 pt-10 pb-8 grid lg:grid-cols-2 gap-10">
-        {/* Left: Form */}
-        <div className="space-y-6">
-          <div className="grid sm:grid-cols-2 gap-4">
-            {/* Destination */}
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Destino</label>
-              <Select value={selectedSlug} onValueChange={(v) => { setSelectedSlug(v); setCalculated(false); }}>
-                <SelectTrigger className="bg-muted border-border">
-                  <SelectValue placeholder="Selecciona un destino" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  {destinations.map((d) => (
-                    <SelectItem key={d.id} value={d.slug}>{d.title}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Origin */}
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">¿Desde qué zona viajarías?</label>
-              <Select value={origin} onValueChange={setOrigin}>
-                <SelectTrigger className="bg-muted border-border">
-                  <SelectValue placeholder="Selecciona tu zona" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  {originZones.map((z) => (
-                    <SelectItem key={z} value={z}>{z}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Days */}
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Duración (días)</label>
-              <Input
-                type="number"
-                min={1}
-                max={60}
-                value={days}
-                onChange={(e) => { setDays(Number(e.target.value) || 1); setCalculated(false); }}
-                className="bg-muted border-border"
-              />
-            </div>
-
-            {/* Flight Cost */}
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Costo de vuelos/transporte (USD)</label>
-              <Input
-                type="number"
-                min={0}
-                value={flightCost}
-                onChange={(e) => { setFlightCost(Number(e.target.value) || 0); setCalculated(false); }}
-                className="bg-muted border-border"
-                placeholder="0"
-              />
-            </div>
-
-            {/* Comfort */}
-            <div className="space-y-2 sm:col-span-2">
-              <label className="text-sm text-muted-foreground">Nivel de confort</label>
-              <div className="flex gap-2">
-                {comfortOptions.map((opt) => {
-                  const Icon = opt.icon;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => { setComfort(opt.value); setCalculated(false); }}
-                      className={`flex-1 min-w-0 rounded-lg border px-3 py-2 text-xs sm:text-sm text-center transition-colors ${
-                        comfort === opt.value
-                          ? "border-primary bg-primary/20 text-primary-foreground"
-                          : "border-border bg-muted text-muted-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      <Icon className="mx-auto h-5 w-5 mb-1" />
-                      <span className="truncate block">{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <Button
-            size="lg"
-            className="w-full text-lg"
-            disabled={!selectedSlug || days < 1}
-            onClick={handleCalculate}
-          >
-            Calcular Presupuesto
-          </Button>
-        </div>
-
-        {/* Right: Results + Image */}
-        <div>
-          <AnimatePresence>
-            {breakdown && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
+          {/* Content */}
+          <div className="relative z-10 text-center px-4 w-full max-w-4xl mx-auto -mt-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="mx-auto"
+            >
+              <h1
+                className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight drop-shadow-xl"
               >
-                {/* Destination image */}
-                {selectedDest?.hero_image_url && (
-                  <motion.img
-                    src={selectedDest.hero_image_url}
-                    alt={selectedDest.title}
-                    className="w-full h-48 object-cover rounded-xl mb-6"
-                    loading="lazy"
-                    decoding="async"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6 }}
-                  />
-                )}
+                Calculadora de Presupuesto
+              </h1>
+              <p
+                className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-sans font-light drop-shadow-md"
+              >
+                Planifica tu próxima aventura con estimaciones reales para tu viaje.
+              </p>
+            </motion.div>
+          </div>
+        </section>
 
-                {/* Total */}
-                <div className="text-center mb-8">
-                  <p className="text-muted-foreground text-sm mb-1">Presupuesto estimado para {days} días</p>
-                  <h2 className="text-4xl sm:text-5xl font-bold text-primary">
-                    ${breakdown.total.toLocaleString()} USD
-                  </h2>
-                  {selectedDest && (
-                    <p className="text-muted-foreground mt-2">
-                      {selectedDest.title}, {selectedDest.country}
-                      {origin && <> · Desde: {origin}</>}
-                    </p>
-                  )}
+        {/* Main Content Layout */}
+        <section className="max-w-6xl mx-auto px-4 -mt-20 relative z-20">
+          <div className="grid lg:grid-cols-12 gap-6 items-start">
+            
+            {/* Left: Form */}
+            <div className="lg:col-span-5 xl:col-span-4 bg-card border border-border/50 rounded-2xl shadow-xl p-6 sm:p-8 backdrop-blur-xl">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold font-serif mb-1 text-foreground">Configura tu Viaje</h2>
+                <p className="text-sm text-muted-foreground">Ajusta los detalles para obtener un estimado preciso.</p>
+              </div>
+
+              <div className="space-y-5">
+                {/* Destination */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Compass className="w-4 h-4 text-primary" /> Destino
+                  </label>
+                  <Select value={selectedSlug} onValueChange={(v) => { setSelectedSlug(v); setCalculated(false); }}>
+                    <SelectTrigger className="bg-background border-border shadow-sm h-11">
+                      <SelectValue placeholder="¿A dónde quieres ir?" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      {destinations.map((d) => (
+                        <SelectItem key={d.id} value={d.slug}>{d.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Visual bar breakdown */}
-                <div className="space-y-4 mb-8">
-                  {breakdown.items.map((item, i) => {
-                    const maxVal = breakdown.total;
-                    const widthPct = maxVal > 0 ? Math.max((item.amount / maxVal) * 100, 8) : 8;
-                    const Icon = item.icon;
-                    return (
-                      <motion.div
-                        key={item.label}
-                        initial={{ opacity: 0, x: -30 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 * i, duration: 0.4 }}
-                        className="flex items-center gap-3"
-                      >
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: item.color + "22" }}>
-                          <Icon className="h-5 w-5" style={{ color: item.color }} />
+                {/* Origin */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Plane className="w-4 h-4 text-primary" /> Punto de partida
+                  </label>
+                  <Select value={origin} onValueChange={setOrigin}>
+                    <SelectTrigger className="bg-background border-border shadow-sm h-11">
+                      <SelectValue placeholder="Selecciona tu zona" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      {originZones.map((z) => (
+                        <SelectItem key={z} value={z}>{z}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Days */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Duración (días)</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={days}
+                    onChange={(e) => { setDays(Number(e.target.value) || 1); setCalculated(false); }}
+                    className="bg-background border-border shadow-sm h-11 text-base"
+                  />
+                </div>
+
+                {/* Flight Cost */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Costo de vuelos (USD)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={flightCost}
+                    onChange={(e) => { setFlightCost(Number(e.target.value) || 0); setCalculated(false); }}
+                    className="bg-background border-border shadow-sm h-11 text-base"
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-muted-foreground">Si ya conoces el costo, ingrésalo aquí.</p>
+                </div>
+
+                {/* Comfort */}
+                <div className="space-y-3 pt-2">
+                  <label className="text-sm font-medium text-foreground">Estilo de viaje</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {comfortOptions.map((opt) => {
+                      const Icon = opt.icon;
+                      const isSelected = comfort === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => { setComfort(opt.value); setCalculated(false); }}
+                          className={`flex flex-col items-center justify-center rounded-xl border p-3 transition-all duration-200 ${
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary shadow-sm ring-1 ring-primary"
+                              : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-muted"
+                          }`}
+                        >
+                          <Icon className={`h-5 w-5 mb-1.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                          <span className="text-xs font-medium w-full text-center truncate">{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                size="lg"
+                className="w-full text-base h-12 mt-8 rounded-xl font-medium shadow-md transition-all hover:shadow-lg active:scale-[0.98]"
+                disabled={!selectedSlug || days < 1}
+                onClick={handleCalculate}
+              >
+                Calcular Presupuesto
+              </Button>
+            </div>
+
+            {/* Right: Results + Image */}
+            <div className="lg:col-span-7 xl:col-span-8 lg:sticky lg:top-24">
+              <AnimatePresence mode="wait">
+                {!calculated ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="h-full min-h-[400px] flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border/60 rounded-2xl bg-card/50"
+                  >
+                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                      <Compass className="h-10 w-10 text-primary/60" />
+                    </div>
+                    <h3 className="text-2xl font-serif font-medium text-foreground mb-3">Descubre tu presupuesto ideal</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto text-sm">
+                      Completa la información en el panel izquierdo y haz clic en calcular para ver un desglose detallado de los costos de tu viaje.
+                    </p>
+                  </motion.div>
+                ) : breakdown && (
+                  <motion.div
+                    key="results"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-card border border-border/50 rounded-2xl shadow-xl overflow-hidden"
+                  >
+                    {/* Destination Image Header */}
+                    {selectedDest?.hero_image_url && (
+                      <div className="relative h-48 sm:h-56 w-full">
+                        <img
+                          src={selectedDest.hero_image_url}
+                          alt={selectedDest.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+                        <div className="absolute bottom-4 left-6 right-6 text-white">
+                          <p className="text-white/80 text-sm font-medium mb-1 drop-shadow-sm">Presupuesto estimado para {days} días</p>
+                          <h2 className="text-3xl sm:text-4xl font-bold drop-shadow-md">
+                            ${breakdown.total.toLocaleString()} <span className="text-xl font-normal opacity-80">USD</span>
+                          </h2>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-foreground font-medium">{item.label}</span>
-                            <span className="text-muted-foreground">
-                              ${item.amount.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="h-3 rounded-full bg-muted overflow-hidden">
+                      </div>
+                    )}
+
+                    <div className="p-6 sm:p-8">
+                      {/* Destination Summary */}
+                      <div className="mb-8 pb-6 border-b border-border/50 flex flex-wrap gap-y-2 justify-between items-end">
+                        <div>
+                          <h3 className="text-xl font-bold text-foreground">
+                            {selectedDest?.title}, {selectedDest?.country}
+                          </h3>
+                          {origin && <p className="text-sm text-muted-foreground mt-1">Desde: {origin}</p>}
+                        </div>
+                        <div className="text-right">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                            <Star className="w-3.5 h-3.5" />
+                            {comfortOptions.find((c) => c.value === comfort)?.label}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Visual bar breakdown */}
+                      <div className="space-y-5 mb-8">
+                        {breakdown.items.map((item, i) => {
+                          const maxVal = breakdown.total;
+                          const widthPct = maxVal > 0 ? Math.max((item.amount / maxVal) * 100, 4) : 4;
+                          const Icon = item.icon;
+                          return (
                             <motion.div
-                              className="h-full rounded-full"
-                              style={{ backgroundColor: item.color }}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${widthPct}%` }}
-                              transition={{ delay: 0.15 * i, duration: 0.6, ease: "easeOut" }}
-                            />
-                          </div>
+                              key={item.label}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.1 * i, duration: 0.4 }}
+                              className="group"
+                            >
+                              <div className="flex justify-between text-sm mb-2">
+                                <span className="text-foreground font-medium flex items-center gap-2">
+                                  <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" style={{ color: item.color }} />
+                                  {item.label}
+                                </span>
+                                <span className="font-semibold text-foreground">
+                                  ${item.amount.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="h-2.5 rounded-full bg-muted overflow-hidden relative">
+                                <motion.div
+                                  className="absolute top-0 left-0 h-full rounded-full"
+                                  style={{ backgroundColor: item.color }}
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${widthPct}%` }}
+                                  transition={{ delay: 0.2 + 0.1 * i, duration: 0.7, ease: "easeOut" }}
+                                />
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+
+                      <p className="text-xs text-muted-foreground text-center mb-8 bg-muted/30 py-3 rounded-lg">
+                        Estimaciones basadas en costos reales de mercado. Vuelos calculados según tu entrada.
+                      </p>
+
+                      {/* CTAs */}
+                      <div className="grid sm:grid-cols-2 gap-3 mb-8">
+                        {selectedDest?.affiliate_links?.flights_url &&
+                          /^https?:\/\//i.test(selectedDest.affiliate_links.flights_url) && (
+                            <a href={selectedDest.affiliate_links.flights_url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-primary/5 hover:text-primary transition-colors">
+                                <Plane className="h-4 w-4" /> Buscar Vuelos <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
+                              </Button>
+                            </a>
+                          )}
+                        {selectedDest?.affiliate_links?.hotels_url &&
+                          /^https?:\/\//i.test(selectedDest.affiliate_links.hotels_url) && (
+                            <a href={selectedDest.affiliate_links.hotels_url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-primary/5 hover:text-primary transition-colors">
+                                <Hotel className="h-4 w-4" /> Buscar Hoteles <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
+                              </Button>
+                            </a>
+                          )}
+                        {selectedDest?.affiliate_links?.tours_url &&
+                          /^https?:\/\//i.test(selectedDest.affiliate_links.tours_url) && (
+                            <a href={selectedDest.affiliate_links.tours_url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-primary/5 hover:text-primary transition-colors">
+                                <Compass className="h-4 w-4" /> Tours y Actividades <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
+                              </Button>
+                            </a>
+                          )}
+                        {selectedDest?.affiliate_links?.insurance_url &&
+                          /^https?:\/\//i.test(selectedDest.affiliate_links.insurance_url) && (
+                            <a href={selectedDest.affiliate_links.insurance_url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-primary/5 hover:text-primary transition-colors">
+                                <ShieldCheck className="h-4 w-4" /> Seguro de Viaje <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
+                              </Button>
+                            </a>
+                          )}
+                        {selectedDest && (
+                          <Link to={`/destinos/${selectedDest.slug}`} className="sm:col-span-2 mt-2">
+                            <Button className="w-full gap-2 h-12 text-base">
+                              <Compass className="h-5 w-5" /> Ver Guía del Destino <ArrowRight className="h-5 w-5 ml-auto" />
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+
+                      {/* Email capture */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6, duration: 0.4 }}
+                        className="rounded-xl border border-primary/20 bg-primary/5 p-6 text-center relative overflow-hidden"
+                      >
+                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+                        
+                        <div className="relative z-10">
+                          <Mail className="mx-auto h-8 w-8 text-primary mb-3" />
+                          <h3 className="font-semibold text-lg mb-1 text-foreground">¿Quieres tips para ahorrar en tu viaje?</h3>
+                          <p className="text-muted-foreground text-sm mb-5">
+                            Recibe consejos de presupuesto, ofertas de vuelos y guías exclusivas.
+                          </p>
+                          {emailDone ? (
+                            <div className="bg-green-500/10 text-green-600 dark:text-green-400 p-3 rounded-lg font-medium inline-flex items-center gap-2">
+                              ¡Gracias! Te mantendremos al tanto 🏔️
+                            </div>
+                          ) : (
+                            <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+                              <Input
+                                type="email"
+                                placeholder="tu@email.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="bg-background border-border shadow-sm h-11 flex-1"
+                              />
+                              <Button type="submit" disabled={emailLoading} className="whitespace-nowrap h-11 shadow-sm">
+                                {emailLoading ? "Suscribiendo..." : "Suscribirme"}
+                              </Button>
+                            </form>
+                          )}
                         </div>
                       </motion.div>
-                    );
-                  })}
-                </div>
-
-                {/* Disclaimer */}
-                <p className="text-xs text-muted-foreground text-center mb-8">
-                  Estimaciones basadas en costos reales de mercado. Vuelos calculados según tu entrada.
-                </p>
-
-                {/* CTAs */}
-                <div className="grid sm:grid-cols-2 gap-3 mb-8">
-                  {selectedDest?.affiliate_links?.flights_url &&
-                    /^https?:\/\//i.test(selectedDest.affiliate_links.flights_url) && (
-                      <a href={selectedDest.affiliate_links.flights_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="outline" className="w-full gap-2">
-                          <Plane className="h-4 w-4" /> Buscar Vuelos <ArrowRight className="h-4 w-4 ml-auto" />
-                        </Button>
-                      </a>
-                    )}
-                  {selectedDest?.affiliate_links?.hotels_url &&
-                    /^https?:\/\//i.test(selectedDest.affiliate_links.hotels_url) && (
-                      <a href={selectedDest.affiliate_links.hotels_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="outline" className="w-full gap-2">
-                          <Hotel className="h-4 w-4" /> Buscar Hoteles <ArrowRight className="h-4 w-4 ml-auto" />
-                        </Button>
-                      </a>
-                    )}
-                  {selectedDest?.affiliate_links?.tours_url &&
-                    /^https?:\/\//i.test(selectedDest.affiliate_links.tours_url) && (
-                      <a href={selectedDest.affiliate_links.tours_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="outline" className="w-full gap-2">
-                          <Compass className="h-4 w-4" /> Ver Tours y Actividades <ArrowRight className="h-4 w-4 ml-auto" />
-                        </Button>
-                      </a>
-                    )}
-                  {selectedDest?.affiliate_links?.insurance_url &&
-                    /^https?:\/\//i.test(selectedDest.affiliate_links.insurance_url) && (
-                      <a href={selectedDest.affiliate_links.insurance_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="outline" className="w-full gap-2">
-                          <ShieldCheck className="h-4 w-4" /> Seguro de Viaje <ArrowRight className="h-4 w-4 ml-auto" />
-                        </Button>
-                      </a>
-                    )}
-                  {selectedDest && (
-                    <Link to={`/destinos/${selectedDest.slug}`}>
-                      <Button variant="secondary" className="w-full gap-2">
-                        <Compass className="h-4 w-4" /> Ver Guía del Destino <ArrowRight className="h-4 w-4 ml-auto" />
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Email capture */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6, duration: 0.4 }}
-                  className="rounded-xl border border-border bg-muted/50 p-6 text-center"
-                >
-                  <Mail className="mx-auto h-8 w-8 text-primary mb-2" />
-                  <h3 className="font-semibold text-lg mb-1">¿Quieres tips para ahorrar en tu viaje?</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Recibe consejos de presupuesto, ofertas de vuelos y guías exclusivas.
-                  </p>
-                  {emailDone ? (
-                    <p className="text-primary font-medium">¡Gracias! Te mantendremos al tanto 🏔️</p>
-                  ) : (
-                    <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                      <Input
-                        type="email"
-                        placeholder="tu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="bg-background text-foreground h-11"
-                      />
-                      <Button type="submit" disabled={emailLoading} className="whitespace-nowrap h-11">
-                        {emailLoading ? "..." : "Suscribirme"}
-                      </Button>
-                    </form>
-                  )}
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </section>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </section>
+      </main>
 
       <Footer />
     </div>
