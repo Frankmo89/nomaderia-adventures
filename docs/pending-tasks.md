@@ -96,8 +96,8 @@ referenciar esta lista primero.
 - [ ] **⚠ VERIFICAR ANTES DE PUBLICAR — Apilamiento de tarifas en callout no-residentes (DP-5):** El callout muestra el recargo de $100 USD (campo `nonresident_surcharge`) y menciona el pase America the Beautiful a $250 USD. Lo que NO se confirmó y debe verificarse manualmente en nps.gov antes de que el parque quede publicado: (a) si el recargo aplica encima de la tarifa base de entrada por vehículo ($35 típico) o en lugar de ella; (b) si el pase America the Beautiful ($250) cubre o sustituye el recargo $100 en todos los parques marcados; (c) si la tarifa 2026 de $100 sigue vigente. Mientras no se verifique, el callout omite intencionalmente la mecánica de apilamiento ($35 + $100 vs $250) para evitar información incorrecta. Los 12 parques con `has_nonresident_surcharge = true` actualmente son: Acadia, Bryce Canyon, Everglades, Glacier, Grand Canyon, Grand Teton, Rocky Mountain, Sequoia, Kings Canyon, Yellowstone, Yosemite, Zion.
 - [ ] **Limpiar precios MXN / legacy en Edge Functions** —
       `supabase/functions/send-drip-emails/index.ts` y
-      `send-quiz-results/index.ts` aún contienen precios MXN y/o nombres del
-      sistema viejo. Alinear al modelo $29 / $49 USD (ADR-003).
+      `send-quiz-results/index.ts` aún contienen precios MXN, $29 USD o nombres del
+      sistema viejo. Alinear al modelo de producto único de $49 USD (ADR-012).
 - [ ] **Logo final** — subir a Supabase y actualizar `src/config/assets.ts`
       (resolver el `TODO` de la línea 7).
 

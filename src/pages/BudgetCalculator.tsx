@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,40 @@ const originZones = [
   "Otro lugar",
 ];
 
+const HeroSlider = ({ images }: { images: string[] }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const id = setInterval(() => {
+      setIndex((prev) => (prev + 1) % images.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [images.length]);
+
+  if (images.length === 0) {
+    return <div className="absolute inset-0 bg-neutral-800" />;
+  }
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.img
+        key={images[index]}
+        src={images[index]}
+        alt=""
+        role="presentation"
+        className="absolute inset-0 w-full h-full object-cover"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 1, ease: "easeInOut" }}
+        loading="eager"
+        decoding="async"
+      />
+    </AnimatePresence>
+  );
+};
+
 const BudgetCalculator = () => {
   useCanonical();
   usePageMeta({
@@ -50,8 +84,6 @@ const BudgetCalculator = () => {
   const { toast } = useToast();
 
   /* ---------- Hero image slider ---------- */
-  const [heroIndex, setHeroIndex] = useState(0);
-
   const heroImages = useMemo(
     () =>
       destinations
@@ -64,21 +96,14 @@ const BudgetCalculator = () => {
     [destinations],
   );
 
-  const advanceHero = useCallback(() => {
-    setHeroIndex((prev) => (heroImages.length > 0 ? (prev + 1) % heroImages.length : 0));
-  }, [heroImages.length]);
-
-  useEffect(() => {
-    if (heroImages.length <= 1) return;
-    const id = setInterval(advanceHero, 5000);
-    return () => clearInterval(id);
-  }, [advanceHero, heroImages.length]);
-
   useEffect(() => {
     document.title = "Calculadora de Presupuesto | Nomaderia";
   }, []);
 
-  const selectedDest = destinations.find((d) => d.slug === selectedSlug);
+  const selectedDest = useMemo(
+    () => destinations.find((d) => d.slug === selectedSlug),
+    [destinations, selectedSlug]
+  );
 
   const breakdown = useMemo(() => {
     if (!calculated || !selectedDest) return null;

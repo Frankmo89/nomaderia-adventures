@@ -52,7 +52,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-003 — Pivote de precios: 2 productos + bundle, sin MXN
 - **Fecha:** 2026-05
-- **Estado:** Vigente (reemplaza Escapada/Aventura/Expedición y todo precio MXN)
+- **Estado:** Reemplazada (→ ADR-012)
 - **Contexto:** El sistema de 3 tiers por duración (Escapada/Aventura/Expedición)
   con precios duales USD/MXN era difícil de comunicar y de cobrar manualmente.
 - **Decisión:** Tres SKUs claros, **USD únicamente**:
@@ -160,6 +160,13 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Contexto:** `ingest-park-permits` introduce un writer nuevo para `permits_info` (antes sin writer) y un writer alternativo para `lodging_info` (antes solo `generate-park-content`). Las formas v1 usan campos string (`rango_precio_usd`, `notas`, `dificultad_de_conseguir`, `reserva_url`); las formas v2 usan campos más precisos (`precio_usd` numérico, `precio_nota`, `dentro_del_parque`, `url`, `nota_escasez`, `como_aplicar`).
 - **Decisión:** Adoptar formas v2 como canónicas. Los readers (`HowToGetThere.tsx`) soportan ambas formas con fallback. `ingest-knowledge` degrada suavemente con v2 (no crash; actualización futura). `ingest-park-permits` preserva entradas `lodging_info` con `tipo != "camping"` escritas por otros writers.
 - **Consecuencias:** Ver `docs/jsonb-contracts.md` para los contratos exactos. No reintroducir campos v1 en nuevos writers. Completar `ingest-knowledge` para leer v2 cuando se requiera RAG con permisos más completo.
+
+### ADR-012 — Catálogo simplificado: Producto único a $49 USD
+- **Fecha:** 2026-06
+- **Estado:** Vigente (reemplaza ADR-003)
+- **Contexto:** Se detectó que ofrecer múltiples SKUs (Alerta a $29, Itinerario a $29, Bundle a $49) generaba fricción. En `src/config/pricing.ts` se colapsó el catálogo a una sola oferta.
+- **Decisión:** Un solo producto: **Itinerario Completo Nomaderia a $49 USD**. Todo CTA de venta, componente visual y Edge Function (emails) debe referenciar exclusivamente este producto.
+- **Consecuencias:** No reintroducir SKUs de $29 USD ni modelos separados. Refactorizar las Edge Functions `send-drip-emails` y `send-quiz-results` para eliminar paquetes antiguos y usar solo el producto de $49 USD.
 
 ---
 
