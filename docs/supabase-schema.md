@@ -148,6 +148,8 @@ Indexes: `share_token`, `status`
 ```json
 {
   "version": 1,
+  "parque": "Yosemite National Park",
+  "hero_image_url": "https://...",
   "dias": [
     {
       "dia": 1,
@@ -172,6 +174,10 @@ Indexes: `share_token`, `status`
 ```
 
 **`tipo` values:** `ruta` | `comida` | `alojamiento` | `traslado` | `tip_seguridad` | `permiso` | `costo` | `nota`
+
+**Root-level optional fields (only meaningful in `client_itineraries`):**
+- `parque`: human-readable park name shown in the client title (e.g. `"Yosemite National Park"`). When absent, `ClientItineraryView` falls back to `"Tu itinerario — N días, firstName"` — never a brand name.
+- `hero_image_url`: URL of the hero image shown at the top of `/i/:token`. When absent, a dark-green gradient is shown.
 
 **Field conventions:**
 - `precio_usd`: number or null — never a string range

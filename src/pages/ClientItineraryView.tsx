@@ -448,7 +448,7 @@ export default function ClientItineraryView() {
 
   const content = itinerary?.content;
   const dias = content?.dias ?? [];
-  const parque = content?.parque ?? "Nomaderia";
+  const parque = content?.parque ?? null;
   const heroImageUrl = content?.hero_image_url;
   const firstName = (itinerary?.client_name ?? "").split(" ")[0];
 
@@ -467,7 +467,7 @@ export default function ClientItineraryView() {
         : null;
 
   usePageMeta({
-    title: itinerary ? `Tu ${parque} — Nomadería` : "Itinerario — Nomadería",
+    title: itinerary ? (parque ? `Tu ${parque} — Nomadería` : "Tu itinerario — Nomadería") : "Itinerario — Nomadería",
     description: "Tu itinerario personalizado de Nomadería.",
     robots: "noindex, nofollow",
   });
@@ -515,6 +515,7 @@ export default function ClientItineraryView() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans">
+      <div className="max-w-xl mx-auto">
       {/* ── HERO IMAGE ───────────────────────────────────────────────── */}
       <div className="w-full overflow-hidden" style={{ height: "min(40vh, 220px)" }}>
         {heroImageUrl ? (
@@ -545,7 +546,7 @@ export default function ClientItineraryView() {
           className="font-serif leading-tight mb-3"
           style={{ fontSize: "25px", color: "#1C1917" }}
         >
-          Tu {parque} — {dias.length} {dias.length === 1 ? "día" : "días"}
+          {parque ? `Tu ${parque}` : "Tu itinerario"} — {dias.length} {dias.length === 1 ? "día" : "días"}
           {firstName ? `, ${firstName}` : ""}
         </h1>
         <div className="flex flex-wrap gap-2">
@@ -636,6 +637,7 @@ export default function ClientItineraryView() {
             <strong>Escríbenos</strong> — tu concierge sigue contigo.
           </p>
         </a>
+      </div>
       </div>
     </div>
   );
