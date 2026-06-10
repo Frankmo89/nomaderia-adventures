@@ -103,12 +103,107 @@ contacted_at      timestamptz                    → se llena al marcar "contact
 created_at        timestamptz
 ```
 
+### `itinerary_templates`
+```
+id              uuid PK
+destination_id  uuid NOT NULL → references destinations(id)
+title           text NOT NULL                    -- e.g. "Joshua Tree — 2 días esencial"
+summary         text                             -- short admin-facing description
+suggested_days  int NOT NULL DEFAULT 2
+content         jsonb NOT NULL DEFAULT '{"version":1,"dias":[]}'
+                -- See "content JSONB shape (v1)" section below
+research_status text NOT NULL DEFAULT 'ai_draft' -- ai_draft | revisado | publicado
+is_published    boolean NOT NULL DEFAULT false
+created_at      timestamptz NOT NULL
+updated_at      timestamptz NOT NULL             -- auto-updated via trigger
+```
+Index: `destination_id`
+
+### `client_itineraries`
+```
+id              uuid PK
+template_id     uuid → references itinerary_templates(id)  (nullable — cloned-from)
+request_id      uuid → references itinerary_requests(id)   (nullable — links intake)
+client_name     text NOT NULL
+client_email    text
+client_whatsapp text                             -- digits only, e.g. 16195551234
+trip_start      date
+trip_end        date
+party           jsonb NOT NULL DEFAULT '{}'
+                -- shape: {"adultos":2,"ninos":1,"nivel":"principiante",
+                --         "miedos":["osos","perderse"],"presupuesto_usd":800,"notas":""}
+content         jsonb NOT NULL DEFAULT '{"version":1,"dias":[]}'
+                -- See "content JSONB shape (v1)" section below
+share_token     text NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(12),'hex')
+status          text NOT NULL DEFAULT 'borrador'
+                -- CHECK: borrador | entregado | viaje_activo | completado | archivado
+delivered_at    timestamptz
+created_at      timestamptz NOT NULL
+updated_at      timestamptz NOT NULL             -- auto-updated via trigger
+```
+Indexes: `share_token`, `status`
+
+### content JSONB shape (v1) — shared by `itinerary_templates` and `client_itineraries`
+
+```json
+{
+  "version": 1,
+  "dias": [
+    {
+      "dia": 1,
+      "titulo": "Llegada y primer sendero",
+      "bloques": [
+        {
+          "id": "<uuid>",
+          "tipo": "ruta",
+          "titulo": "Hidden Valley Trail",
+          "contenido_md": "Sendero circular de 1.6 km...",
+          "horario": "8:00–9:30",
+          "precio_usd": null,
+          "precio_nota": null,
+          "fuente_url": "https://www.nps.gov/jotr/...",
+          "afiliado_url": null,
+          "verify_flag": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+**`tipo` values:** `ruta` | `comida` | `alojamiento` | `traslado` | `tip_seguridad` | `permiso` | `costo` | `nota`
+
+**Field conventions:**
+- `precio_usd`: number or null — never a string range
+- `precio_nota`: human-readable note on price volatility (always string if price present)
+- `fuente_url`: official source required (nps.gov, recreation.gov, etc.)
+- `verify_flag`: null for stable data; `"⚠️ VERIFICAR (IA) [YYYY-MM-DD]"` for volatile AI-generated data
+- All content in Spanish
+
 ## RLS (Row Level Security)
 
 - **Tablas de contenido** (`destinations`, `gear_articles`, `blog_posts`): SELECT público con filtro `is_published = true`. INSERT/UPDATE/DELETE solo admin via `has_role()`.
 - **`quiz_responses`**: INSERT público (anon + authenticated). SELECT solo admin.
 - **`newsletter_subscribers`**: INSERT público. SELECT solo admin.
 - **`itinerary_requests`**: SELECT solo admin. INSERT solo admin (migración `20260609000000` eliminó el INSERT público). UPDATE solo admin (política explícita añadida para cubrir writes de `status`/`contacted_at`).
+- **`itinerary_templates`**: ALL (SELECT/INSERT/UPDATE/DELETE) solo admin via `has_role()`. Sin acceso público.
+- **`client_itineraries`**: ALL solo admin via `has_role()`. Sin acceso público directo. El acceso de clientes se hace exclusivamente vía RPC `get_itinerary_by_token()`.
+
+## RPCs (Remote Procedure Calls)
+
+### `get_itinerary_by_token(p_token text)`
+
+```sql
+RETURNS TABLE (client_name text, trip_start date, trip_end date,
+               content jsonb, status text, updated_at timestamptz)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+```
+
+- **Purpose:** Public entry point for the client-facing itinerary page (`/i/:token` or similar).
+- **Visibility filter:** Only returns rows where `status IN ('entregado','viaje_activo','completado')`.
+- **Excluded fields:** `client_email`, `client_whatsapp`, `party`, `template_id`, `request_id`, `share_token`, `delivered_at` — none are returned.
+- **Grants:** EXECUTE to `anon` and `authenticated`.
+- **Migration:** `20260609100000_create_itinerary_builder_tables.sql`
 
 ## Autenticación
 

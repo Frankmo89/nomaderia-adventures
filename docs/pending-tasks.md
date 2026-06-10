@@ -28,6 +28,10 @@ referenciar esta lista primero.
 - [ ] **Regenerar tipos de Supabase** (requiere `SUPABASE_ACCESS_TOKEN`):
       `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`
       → elimina los casts `as unknown as SupabaseClient` (ver ADR-009).
+- [ ] **Frank: aplicar migración `create_itinerary_builder_tables` y regenerar tipos**:
+  correr `supabase db push` para crear `public.itinerary_templates`, `public.client_itineraries` y el RPC `get_itinerary_by_token`, y después regenerar tipos con
+  `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
+  Nota: `gen_random_bytes` requiere la extensión `pgcrypto` — si falla, habilitarla en Supabase Dashboard → Database → Extensions antes de aplicar.
 - [ ] **Aplicar nueva migración `destination_ai_meta` y regenerar tipos**:
   aplicar migration en Supabase y después correr
   `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
@@ -150,6 +154,8 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-06-09] **Itinerary Builder — migración de base de datos (Fase 1)** — nueva migración `supabase/migrations/20260609100000_create_itinerary_builder_tables.sql`: (1) tabla `public.itinerary_templates` (per-park drafts): PK uuid, FK `destination_id` → `destinations`, campos `title/summary/suggested_days/content/research_status/is_published/created_at/updated_at`, índice en `destination_id`, trigger `update_updated_at_column` reutilizado, RLS admin-only; (2) tabla `public.client_itineraries` (per-client instances): PK uuid, FKs opcionales a `itinerary_templates` y `itinerary_requests`, campos `client_name/client_email/client_whatsapp/trip_start/trip_end/party/content/share_token/status/delivered_at/created_at/updated_at`, CHECK de status (borrador|entregado|viaje_activo|completado|archivado), índices en `share_token` y `status`, trigger reutilizado, RLS admin-only; (3) RPC `public.get_itinerary_by_token(p_token text)` SECURITY DEFINER, retorna solo `client_name/trip_start/trip_end/content/status/updated_at` para status en ('entregado','viaje_activo','completado'), GRANT a anon+authenticated; (4) `docs/supabase-schema.md` actualizado con ambas tablas, shape JSONB v1, RPC y políticas. ⚠️ **Frank debe aplicar la migración y regenerar tipos** (ver Pendientes Humanos). `tsc --noEmit` + `npm run build` pasan (no hay cambios de código fuente).
 
 - [2026-06-09] **Investigación UX — Vista de itinerario para el cliente (mobile web)** — investigación solo lectura en Mobbin (Airbnb, Wanderlog, GetYourGuide, AllTrails, Hopper, Trip.com, Vrbo, Tripadvisor, Pangea, Google Maps Timeline, Viator, Nike Run Club). Entregable: `docs/research-itinerary-client-view.md`. Top 3 patrones recomendados: (1) mapa hero estático + nav de días sticky horizontal (Trip.com / Wanderlog); (2) timeline vertical con dot izquierdo + tarjetas por tipo de bloque con tratamiento visual diferenciado por tipo (Airbnb "Your Itinerary" / GetYourGuide stat rows); (3) precios honestos con nota de volatilidad + CTAs afiliados como servicio (Hopper / GetYourGuide). Análisis de cómo competidores presentan precios y diferenciación de Nomaderia (link a fuente oficial + nota de volatilidad en cada precio). 6 preguntas abiertas para mockup (token vs auth, offline, días máx, compartir, common_fears por día vs al final, affiliate links personalizados). Sin cambios de código.
 
