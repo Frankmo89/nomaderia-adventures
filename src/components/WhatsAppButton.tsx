@@ -6,8 +6,9 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 const WhatsAppButton = () => {
   const { pathname } = useLocation();
 
-  // Ocultar en /admin y subrutas de admin
+  // Ocultar en /admin y en la vista de itinerario de cliente (tiene su propio CTA)
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
+  if (pathname.startsWith("/i/")) return null;
 
   const message = "Hola Nomaderia 👋 Tengo una pregunta sobre mis próximas aventuras.";
   const whatsappUrl = buildWhatsAppLink(message);

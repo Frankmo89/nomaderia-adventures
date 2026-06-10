@@ -54,6 +54,7 @@ const AdminLeads = lazyWithRetry(() => import("./pages/admin/AdminLeads"));
 const AdminSoul = lazyWithRetry(() => import("./pages/admin/AdminSoul"));
 const AdminItineraryTemplates = lazyWithRetry(() => import("./pages/admin/AdminItineraryTemplates"));
 const AdminItineraryTemplateEditor = lazyWithRetry(() => import("./pages/admin/AdminItineraryTemplateEditor"));
+const ClientItineraryView = lazyWithRetry(() => import("./pages/ClientItineraryView"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,6 +96,7 @@ const App = () => (
               <Route path="/sentinel" element={<ErrorBoundary><SentinelLanding /></ErrorBoundary>} />
               <Route path="/servicios" element={<ErrorBoundary><Servicios /></ErrorBoundary>} />
               <Route path="/sobre-nosotros" element={<ErrorBoundary><SobreNosotros /></ErrorBoundary>} />
+              <Route path="/i/:token" element={<ErrorBoundary><ClientItineraryView /></ErrorBoundary>} />
               <Route path="/admin/login" element={<ErrorBoundary><AdminLogin /></ErrorBoundary>} />
               <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
                 <Route index element={<AdminDashboard />} />
