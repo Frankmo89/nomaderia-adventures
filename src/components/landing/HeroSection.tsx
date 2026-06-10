@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -9,110 +9,161 @@ const WHATSAPP_URL = buildWhatsAppLink(
   "Hola Frank, quiero planear mi primera aventura"
 );
 
-const SUPABASE_URL =
-  "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/media_gallery";
+const HERO_VIDEOS = [
+  {
+    video:
+      "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/media_gallery/4e9c4d7f-3cad-4023-8e89-0e58e2167648.mp4",
+    poster:
+      "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/media_gallery/bfa161c7-c696-4d19-a1a9-4c8a8b31acc6.jpeg",
+  },
+  {
+    video:
+      "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/media_gallery/d25e6cfd-aba3-4770-8b77-a24a16322ce8.mp4",
+    poster:
+      "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/media_gallery/c18358ba-aecd-4a55-8c61-3e27679537c8.jpeg",
+  },
+] as const;
 
-const ALL_PHOTOS = [
-  `${SUPABASE_URL}/00f4bec5-78fa-4416-91fd-12c8319e9d49.jpeg`,
-  `${SUPABASE_URL}/0971bffa-5cc8-4d0e-8c81-27f6cd4aef7a.jpeg`,
-  `${SUPABASE_URL}/2171f956-08ac-4156-9644-178aa01e241e.jpeg`,
-  `${SUPABASE_URL}/349defac-d3ac-474c-a03a-ab262fb49b8f.jpeg`,
-  `${SUPABASE_URL}/391bde98-0b99-4773-ad0d-f5c7e50107e4.jpeg`,
-  `${SUPABASE_URL}/3a72e5c0-b2a1-485b-b3fb-bf958b815579.jpeg`,
-  `${SUPABASE_URL}/3bd94287-e5c1-46f9-9e5c-1bad3b82068b.jpeg`,
-  `${SUPABASE_URL}/3fdc4c24-45ab-42e8-abae-a45d4bff242a.jpeg`,
-  `${SUPABASE_URL}/59e22d4c-75d0-4ab7-86b4-54774328a333.jpeg`,
-  `${SUPABASE_URL}/78ca25d9-466c-4580-92ad-3d1f56d57ad2.jpeg`,
-  `${SUPABASE_URL}/947b0c74-2096-46f5-b91b-62aa68f8142e.jpeg`,
-  `${SUPABASE_URL}/b4a7fef0-0082-4e60-98cc-37cadf3ad004.jpeg`,
-  `${SUPABASE_URL}/bfa161c7-c696-4d19-a1a9-4c8a8b31acc6.jpeg`,
-  `${SUPABASE_URL}/c29ff6ac-f25b-4011-9ac7-1d31121e9e71.jpeg`,
-  `${SUPABASE_URL}/feeb5de1-333e-48bc-9bbd-caff00902fcc.jpeg`,
-];
-
-function shuffled<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+interface NetworkInformation {
+  saveData?: boolean;
+  effectiveType?: string;
 }
 
-const KEN_BURNS_CSS = `
-@keyframes hero-ken-burns {
-  from { transform: scale(1.0) translateX(0px); }
-  to   { transform: scale(1.08) translateX(-12px); }
-}
-`;
+const MASK_STYLE: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  zIndex: 1,
+  WebkitMaskImage: "url('/hero-mask.svg')",
+  maskImage: "url('/hero-mask.svg')",
+  WebkitMaskSize: "100% 100%",
+  maskSize: "100% 100%",
+  WebkitMaskRepeat: "no-repeat",
+  maskRepeat: "no-repeat",
+};
 
-const SLIDE_DURATION = 5000;
+const SCRIM_STYLE: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  zIndex: 10,
+  background:
+    "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(10,25,10,0.65) 70%, rgba(10,25,10,0.88) 100%)",
+};
+
+const VIDEO_BASE_STYLE: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  transition: "opacity 1.2s ease",
+};
 
 const HeroSection = () => {
-  const [slides] = useState<string[]>(() => shuffled(ALL_PHOTOS).slice(0, 4));
+  const [shouldUseVideo, setShouldUseVideo] = useState(false);
   const [active, setActive] = useState(0);
+  const activeRef = useRef(0);
+  const videoRef0 = useRef<HTMLVideoElement>(null);
+  const videoRef1 = useRef<HTMLVideoElement>(null);
 
+  const getRef = (i: number) => (i === 0 ? videoRef0 : videoRef1);
+
+  // Detect reduced-motion / saveData / slow network once on mount
   useEffect(() => {
-    const id = setInterval(() => {
-      setActive((prev) => (prev + 1) % slides.length);
-    }, SLIDE_DURATION);
-    return () => clearInterval(id);
-  }, [slides.length]);
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    const conn = (
+      navigator as Navigator & { connection?: NetworkInformation }
+    ).connection;
+    const saveData = conn?.saveData === true;
+    const slowNet =
+      conn?.effectiveType === "2g" || conn?.effectiveType === "slow-2g";
+    setShouldUseVideo(!prefersReduced && !saveData && !slowNet);
+  }, []);
+
+  // Attach 'ended' listeners and kick off first clip
+  useEffect(() => {
+    if (!shouldUseVideo) return;
+
+    const v0 = videoRef0.current;
+    const v1 = videoRef1.current;
+    if (!v0) return;
+
+    const advance = (fromIndex: number) => {
+      const next = fromIndex === 0 ? 1 : 0;
+      const nextVid = getRef(next).current;
+      if (!nextVid) return;
+      nextVid.currentTime = 0;
+      nextVid.play().catch(() => {});
+      activeRef.current = next;
+      setActive(next);
+    };
+
+    const handler0 = () => advance(0);
+    const handler1 = () => advance(1);
+
+    v0.addEventListener("ended", handler0);
+    v1?.addEventListener("ended", handler1);
+    v0.play().catch(() => {});
+
+    return () => {
+      v0.removeEventListener("ended", handler0);
+      v1?.removeEventListener("ended", handler1);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldUseVideo]);
+
+  const jumpTo = (i: number) => {
+    getRef(activeRef.current).current?.pause();
+    const nextVid = getRef(i).current;
+    if (!nextVid) return;
+    nextVid.currentTime = 0;
+    nextVid.play().catch(() => {});
+    activeRef.current = i;
+    setActive(i);
+  };
 
   return (
     <section className="relative min-h-screen overflow-hidden">
-      <style>{KEN_BURNS_CSS}</style>
-
-      {/* Background layer — slides + scrim, clipped to soft mountain silhouette */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          WebkitMaskImage: "url('/hero-mask.svg')",
-          maskImage: "url('/hero-mask.svg')",
-          WebkitMaskSize: "100% 100%",
-          maskSize: "100% 100%",
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
-        }}
-      >
-        {/* Photo slides — 4 stacked, crossfade via opacity */}
-        {slides.map((photo, i) => (
-          <div
-            key={photo}
-            aria-hidden={i !== active}
+      {/* Background layer — videos + scrim, clipped to soft mountain silhouette */}
+      <div style={MASK_STYLE}>
+        {shouldUseVideo ? (
+          <>
+            {HERO_VIDEOS.map((item, i) => (
+              <video
+                key={item.video}
+                ref={getRef(i)}
+                muted
+                playsInline
+                preload="metadata"
+                poster={item.poster}
+                aria-hidden="true"
+                style={{
+                  ...VIDEO_BASE_STYLE,
+                  opacity: i === active ? 1 : 0,
+                }}
+              >
+                <source src={item.video} type="video/mp4" />
+              </video>
+            ))}
+          </>
+        ) : (
+          <img
+            src={HERO_VIDEOS[0].poster}
+            alt=""
+            aria-hidden="true"
             style={{
               position: "absolute",
               inset: 0,
-              opacity: i === active ? 1 : 0,
-              transition: "opacity 1.2s ease",
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
             }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                backgroundImage: `url(${photo})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                animation: "hero-ken-burns 8s ease-in-out infinite alternate",
-                animationDelay: `${i * -2}s`,
-              }}
-            />
-          </div>
-        ))}
+          />
+        )}
 
-        {/* Gradient scrim — sky stays clean, bottom text zone is readable */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 10,
-            background:
-              "linear-gradient(to bottom, transparent 40%, rgba(10,25,10,0.6) 70%, rgba(10,25,10,0.88) 100%)",
-          }}
-        />
+        {/* Netflix-pattern gradient scrim */}
+        <div style={SCRIM_STYLE} />
       </div>
 
       {/* Content — bottom-left, padded above the clipped curve (~78% safe zone) */}
@@ -182,29 +233,32 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      {/* Dot indicators — right, kept above the clipped curve */}
-      <div
-        className="absolute right-8 flex items-center gap-2"
-        style={{ zIndex: 4, bottom: "22%" }}
-      >
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActive(i)}
-            aria-label={`Ir a foto ${i + 1}`}
-            style={{
-              height: 6,
-              width: i === active ? 20 : 6,
-              borderRadius: 3,
-              background: i === active ? "#FAFAFA" : "rgba(255,255,255,0.35)",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              transition: "all 0.3s ease",
-            }}
-          />
-        ))}
-      </div>
+      {/* Dot indicators — 2 dots, shown only when video is active */}
+      {shouldUseVideo && (
+        <div
+          className="absolute right-8 flex items-center gap-2"
+          style={{ zIndex: 4, bottom: "22%" }}
+        >
+          {HERO_VIDEOS.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => jumpTo(i)}
+              aria-label={`Ir a video ${i + 1}`}
+              style={{
+                height: 6,
+                width: i === active ? 20 : 6,
+                borderRadius: 3,
+                background:
+                  i === active ? "#FAFAFA" : "rgba(255,255,255,0.35)",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                transition: "all 0.3s ease",
+              }}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };
