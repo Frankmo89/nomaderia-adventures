@@ -125,102 +125,303 @@ export type Database = {
         }
         Relationships: []
       }
+      client_itineraries: {
+        Row: {
+          client_email: string | null
+          client_name: string
+          client_whatsapp: string | null
+          content: Json
+          created_at: string
+          delivered_at: string | null
+          id: string
+          party: Json
+          request_id: string | null
+          share_token: string
+          status: string
+          template_id: string | null
+          trip_end: string | null
+          trip_start: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name: string
+          client_whatsapp?: string | null
+          content?: Json
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          party?: Json
+          request_id?: string | null
+          share_token?: string
+          status?: string
+          template_id?: string | null
+          trip_end?: string | null
+          trip_start?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string
+          client_whatsapp?: string | null
+          content?: Json
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          party?: Json
+          request_id?: string | null
+          share_token?: string
+          status?: string
+          template_id?: string | null
+          trip_end?: string | null
+          trip_start?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_itineraries_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "itinerary_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_itineraries_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "itinerary_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       destinations: {
         Row: {
           access_type: string | null
+          accessibility_markdown: string | null
           affiliate_links: Json | null
+          altitude_warning: boolean | null
           base_city: string | null
+          beginner_friendly: boolean | null
           best_season: string | null
+          camping_available: boolean | null
           cell_signal_status: string | null
           common_fears: Json | null
           country: string
           created_at: string
           days_needed: string | null
+          designation: string | null
           difficulty_description: string | null
           difficulty_level: string
+          drive_time_from_la: string | null
+          drive_time_from_san_diego: string | null
+          entrance_fee_type: string | null
+          entrance_fee_usd: number | null
           estimated_budget_usd: number | null
           experience_type: string | null
           featured: boolean | null
           full_guide_markdown: string | null
           gallery_images: string[] | null
           gear_list_markdown: string | null
+          getting_there_markdown: string | null
+          good_for: string[] | null
+          has_nonresident_surcharge: boolean | null
           has_premium_itinerary: boolean | null
           hero_image_url: string | null
           id: string
+          internal_notes: string | null
           is_published: boolean | null
           itinerary_markdown: string | null
+          last_verified_at: string | null
+          latitude: number | null
+          lodging_info: Json | null
+          longitude: number | null
+          max_days: number | null
+          max_elevation_ft: number | null
+          meta_description: string | null
+          meta_title: string | null
+          min_days: number | null
+          nearest_airport: string | null
+          nearest_town: string | null
+          nonresident_surcharge: number | null
+          not_ideal_if: string[] | null
+          nps_url: string | null
+          official_name: string | null
+          park_code: string | null
+          peak_season: string | null
+          permits_info: Json | null
           premium_itinerary_price: number | null
           preparation_plan: string | null
+          recreation_gov_url: string | null
           region: string | null
+          requires_permit: boolean | null
+          research_status: string | null
+          safety_markdown: string | null
+          season_to_avoid: string | null
+          seasonal_closures: string | null
           short_description: string | null
+          signature_hikes: Json | null
           slug: string
           tags: string[] | null
+          timed_entry_required: boolean | null
           title: string
+          top_activities: string[] | null
           updated_at: string
+          water_availability: string | null
+          weather_markdown: string | null
+          why_visit_markdown: string | null
+          wildlife: string | null
         }
         Insert: {
           access_type?: string | null
+          accessibility_markdown?: string | null
           affiliate_links?: Json | null
+          altitude_warning?: boolean | null
           base_city?: string | null
+          beginner_friendly?: boolean | null
           best_season?: string | null
+          camping_available?: boolean | null
           cell_signal_status?: string | null
           common_fears?: Json | null
           country: string
           created_at?: string
           days_needed?: string | null
+          designation?: string | null
           difficulty_description?: string | null
           difficulty_level?: string
+          drive_time_from_la?: string | null
+          drive_time_from_san_diego?: string | null
+          entrance_fee_type?: string | null
+          entrance_fee_usd?: number | null
           estimated_budget_usd?: number | null
           experience_type?: string | null
           featured?: boolean | null
           full_guide_markdown?: string | null
           gallery_images?: string[] | null
           gear_list_markdown?: string | null
+          getting_there_markdown?: string | null
+          good_for?: string[] | null
+          has_nonresident_surcharge?: boolean | null
           has_premium_itinerary?: boolean | null
           hero_image_url?: string | null
           id?: string
+          internal_notes?: string | null
           is_published?: boolean | null
           itinerary_markdown?: string | null
+          last_verified_at?: string | null
+          latitude?: number | null
+          lodging_info?: Json | null
+          longitude?: number | null
+          max_days?: number | null
+          max_elevation_ft?: number | null
+          meta_description?: string | null
+          meta_title?: string | null
+          min_days?: number | null
+          nearest_airport?: string | null
+          nearest_town?: string | null
+          nonresident_surcharge?: number | null
+          not_ideal_if?: string[] | null
+          nps_url?: string | null
+          official_name?: string | null
+          park_code?: string | null
+          peak_season?: string | null
+          permits_info?: Json | null
           premium_itinerary_price?: number | null
           preparation_plan?: string | null
+          recreation_gov_url?: string | null
           region?: string | null
+          requires_permit?: boolean | null
+          research_status?: string | null
+          safety_markdown?: string | null
+          season_to_avoid?: string | null
+          seasonal_closures?: string | null
           short_description?: string | null
+          signature_hikes?: Json | null
           slug: string
           tags?: string[] | null
+          timed_entry_required?: boolean | null
           title: string
+          top_activities?: string[] | null
           updated_at?: string
+          water_availability?: string | null
+          weather_markdown?: string | null
+          why_visit_markdown?: string | null
+          wildlife?: string | null
         }
         Update: {
           access_type?: string | null
+          accessibility_markdown?: string | null
           affiliate_links?: Json | null
+          altitude_warning?: boolean | null
           base_city?: string | null
+          beginner_friendly?: boolean | null
           best_season?: string | null
+          camping_available?: boolean | null
           cell_signal_status?: string | null
           common_fears?: Json | null
           country?: string
           created_at?: string
           days_needed?: string | null
+          designation?: string | null
           difficulty_description?: string | null
           difficulty_level?: string
+          drive_time_from_la?: string | null
+          drive_time_from_san_diego?: string | null
+          entrance_fee_type?: string | null
+          entrance_fee_usd?: number | null
           estimated_budget_usd?: number | null
           experience_type?: string | null
           featured?: boolean | null
           full_guide_markdown?: string | null
           gallery_images?: string[] | null
           gear_list_markdown?: string | null
+          getting_there_markdown?: string | null
+          good_for?: string[] | null
+          has_nonresident_surcharge?: boolean | null
           has_premium_itinerary?: boolean | null
           hero_image_url?: string | null
           id?: string
+          internal_notes?: string | null
           is_published?: boolean | null
           itinerary_markdown?: string | null
+          last_verified_at?: string | null
+          latitude?: number | null
+          lodging_info?: Json | null
+          longitude?: number | null
+          max_days?: number | null
+          max_elevation_ft?: number | null
+          meta_description?: string | null
+          meta_title?: string | null
+          min_days?: number | null
+          nearest_airport?: string | null
+          nearest_town?: string | null
+          nonresident_surcharge?: number | null
+          not_ideal_if?: string[] | null
+          nps_url?: string | null
+          official_name?: string | null
+          park_code?: string | null
+          peak_season?: string | null
+          permits_info?: Json | null
           premium_itinerary_price?: number | null
           preparation_plan?: string | null
+          recreation_gov_url?: string | null
           region?: string | null
+          requires_permit?: boolean | null
+          research_status?: string | null
+          safety_markdown?: string | null
+          season_to_avoid?: string | null
+          seasonal_closures?: string | null
           short_description?: string | null
+          signature_hikes?: Json | null
           slug?: string
           tags?: string[] | null
+          timed_entry_required?: boolean | null
           title?: string
+          top_activities?: string[] | null
           updated_at?: string
+          water_availability?: string | null
+          weather_markdown?: string | null
+          why_visit_markdown?: string | null
+          wildlife?: string | null
         }
         Relationships: []
       }
@@ -304,6 +505,53 @@ export type Database = {
           status?: Database["public"]["Enums"]["lead_status"]
         }
         Relationships: []
+      }
+      itinerary_templates: {
+        Row: {
+          content: Json
+          created_at: string
+          destination_id: string
+          id: string
+          is_published: boolean
+          research_status: string
+          suggested_days: number
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          destination_id: string
+          id?: string
+          is_published?: boolean
+          research_status?: string
+          suggested_days?: number
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          destination_id?: string
+          id?: string
+          is_published?: boolean
+          research_status?: string
+          suggested_days?: number
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_templates_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       knowledge_chunks: {
         Row: {
@@ -482,6 +730,7 @@ export type Database = {
           fitness_level: string | null
           id: string
           interest: string | null
+          is_us_resident: boolean | null
           main_barrier: string | null
           recommended_destinations: string[] | null
           status: Database["public"]["Enums"]["lead_status"]
@@ -496,6 +745,7 @@ export type Database = {
           fitness_level?: string | null
           id?: string
           interest?: string | null
+          is_us_resident?: boolean | null
           main_barrier?: string | null
           recommended_destinations?: string[] | null
           status?: Database["public"]["Enums"]["lead_status"]
@@ -510,6 +760,7 @@ export type Database = {
           fitness_level?: string | null
           id?: string
           interest?: string | null
+          is_us_resident?: boolean | null
           main_barrier?: string | null
           recommended_destinations?: string[] | null
           status?: Database["public"]["Enums"]["lead_status"]
@@ -607,6 +858,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_itinerary_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          client_name: string
+          content: Json
+          status: string
+          trip_end: string
+          trip_start: string
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

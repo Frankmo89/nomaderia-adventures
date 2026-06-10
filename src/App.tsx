@@ -52,6 +52,8 @@ const SystemAudit = lazyWithRetry(() => import("./pages/admin/SystemAudit"));
 const AdminSentinelLeads = lazyWithRetry(() => import("./pages/admin/AdminSentinelLeads"));
 const AdminLeads = lazyWithRetry(() => import("./pages/admin/AdminLeads"));
 const AdminSoul = lazyWithRetry(() => import("./pages/admin/AdminSoul"));
+const AdminItineraryTemplates = lazyWithRetry(() => import("./pages/admin/AdminItineraryTemplates"));
+const AdminItineraryTemplateEditor = lazyWithRetry(() => import("./pages/admin/AdminItineraryTemplateEditor"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -116,6 +118,8 @@ const App = () => (
                 <Route path="sentinel-leads" element={<AdminSentinelLeads />} />
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="soul" element={<AdminSoul />} />
+                <Route path="itinerary-templates" element={<AdminItineraryTemplates />} />
+                <Route path="itinerary-templates/:id" element={<AdminItineraryTemplateEditor />} />
               </Route>
               <Route path="*" element={<NotFound />} />
               </Routes>
