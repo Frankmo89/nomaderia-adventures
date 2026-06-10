@@ -98,6 +98,8 @@ email             text NOT NULL
 destination       text NOT NULL                  → texto libre
 estimated_budget  text                           → "menos-de-500"|"500-1000"|"1000-2500"|"2500-5000"|"mas-de-5000"
 message           text                           → requerimientos especiales (opcional)
+status            lead_status NOT NULL DEFAULT 'nuevo'  → enum: "nuevo"|"contactado"|"convertido"
+contacted_at      timestamptz                    → se llena al marcar "contactado"
 created_at        timestamptz
 ```
 
@@ -106,7 +108,7 @@ created_at        timestamptz
 - **Tablas de contenido** (`destinations`, `gear_articles`, `blog_posts`): SELECT público con filtro `is_published = true`. INSERT/UPDATE/DELETE solo admin via `has_role()`.
 - **`quiz_responses`**: INSERT público (anon + authenticated). SELECT solo admin.
 - **`newsletter_subscribers`**: INSERT público. SELECT solo admin.
-- **`itinerary_requests`**: INSERT público. SELECT solo admin.
+- **`itinerary_requests`**: SELECT solo admin. INSERT solo admin (migración `20260609000000` eliminó el INSERT público). UPDATE solo admin (política explícita añadida para cubrir writes de `status`/`contacted_at`).
 
 ## Autenticación
 
