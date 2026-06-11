@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Download, Search, Map, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Download, Search, Map, MessageCircle, FilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -309,14 +310,29 @@ const AdminItineraryRequests = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Button
-                      size="sm"
-                      className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-xs"
-                      onClick={() => handleWhatsApp(r)}
-                    >
-                      <MessageCircle className="h-3.5 w-3.5 mr-1" />
-                      WA
-                    </Button>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Button
+                        size="sm"
+                        className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-xs"
+                        onClick={() => handleWhatsApp(r)}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                        WA
+                      </Button>
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="border-border text-foreground hover:bg-muted text-xs"
+                      >
+                        <Link
+                          to={`/admin/client-itineraries/new?name=${encodeURIComponent(r.name)}&email=${encodeURIComponent(r.email)}&destination=${encodeURIComponent(r.destination)}`}
+                        >
+                          <FilePlus className="h-3.5 w-3.5 mr-1" />
+                          Crear itinerario
+                        </Link>
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">
                     {new Date(r.created_at).toLocaleDateString("es-MX")}

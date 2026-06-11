@@ -3,7 +3,7 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare, Users,
   LogOut, FileText, Compass, Mail, ImageIcon, ShieldCheck, ChevronDown,
-  BellRing, BellPlus, Target, Menu, Inbox, Sparkles, LayoutList,
+  BellRing, BellPlus, Target, Menu, Inbox, Sparkles, LayoutList, ScrollText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -40,6 +40,7 @@ const navGroups: NavGroup[] = [
       { label: "Leads de Alerta", href: "/admin/sentinel-leads", icon: Target, alert: true },
       { label: "Quiz Responses", href: "/admin/quiz-responses", icon: MessageSquare },
       { label: "Solicitudes", href: "/admin/itinerary-requests", icon: Compass },
+      { label: "Itinerarios de Clientes", href: "/admin/client-itineraries", icon: ScrollText },
       { label: "Plantillas de Itinerario", href: "/admin/itinerary-templates", icon: LayoutList },
       { label: "Alertas de Permiso", href: "/admin/permit-alerts", icon: BellPlus },
       { label: "Ventanas de Permiso", href: "/admin/permit-windows", icon: BellRing },

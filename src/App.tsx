@@ -54,6 +54,9 @@ const AdminLeads = lazyWithRetry(() => import("./pages/admin/AdminLeads"));
 const AdminSoul = lazyWithRetry(() => import("./pages/admin/AdminSoul"));
 const AdminItineraryTemplates = lazyWithRetry(() => import("./pages/admin/AdminItineraryTemplates"));
 const AdminItineraryTemplateEditor = lazyWithRetry(() => import("./pages/admin/AdminItineraryTemplateEditor"));
+const AdminClientItineraries = lazyWithRetry(() => import("./pages/admin/AdminClientItineraries"));
+const AdminClientItineraryNew = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryNew"));
+const AdminClientItineraryDetail = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryDetail"));
 const ClientItineraryView = lazyWithRetry(() => import("./pages/ClientItineraryView"));
 
 const queryClient = new QueryClient({
@@ -122,6 +125,9 @@ const App = () => (
                 <Route path="soul" element={<AdminSoul />} />
                 <Route path="itinerary-templates" element={<AdminItineraryTemplates />} />
                 <Route path="itinerary-templates/:id" element={<AdminItineraryTemplateEditor />} />
+                <Route path="client-itineraries" element={<AdminClientItineraries />} />
+                <Route path="client-itineraries/new" element={<AdminClientItineraryNew />} />
+                <Route path="client-itineraries/:id" element={<AdminClientItineraryDetail />} />
               </Route>
               <Route path="*" element={<NotFound />} />
               </Routes>
