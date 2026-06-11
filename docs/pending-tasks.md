@@ -394,3 +394,32 @@ Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
   `itinerary_requests`, `AdminItineraryRequests`, hooks SEO
   (`useCanonical`/`useJsonLd`/`usePageMeta`), LoadingSkeletons, ErrorBoundary,
   auditoría Radix (12 paquetes no usados eliminados).
+
+## Changelog 2026-06-10/11 — Base de contenido completa (63 parques)
+
+Sesión Claude Projects: auditoría + generación masiva de contenido SOUL.
+
+### Hecho
+- Corrección de 42 títulos: 5 traducciones literales revertidas (Petrified Forest,
+  Crater Lake, Great Basin, Wind Cave, Guadalupe Mountains), 30+ títulos en inglés
+  estandarizados a "Parque Nacional X". Slugs intactos. park_code agregado a kica/redw.
+- 24 parques completados con contenido SOUL (~38 campos c/u): texto completo,
+  itinerarios por duración escalada, preparation_plan con "Plan sencillo" numerado,
+  signature_hikes (4-5 c/u) y lodging_info (3-5 c/u) en JSONB con contrato estándar.
+- Batches: Pacific NW + Yellowstone (4) → Suroeste (5) → Este popular (5) →
+  Resto Este/Centro (5) → Agua/Islas (5) → Hawái+Caribe (3) → Alaska (6).
+- Todo en research_status='ai_draft', is_published=false, datos volátiles
+  flagueados ⚠️ VERIFICAR (IA) [2026-06-10] en internal_notes (concatenado, no pisado).
+
+### Lecciones técnicas
+- SQL largo para pegar en dashboard: dollar-quoting $tx$...$tx$ con saltos reales,
+  NUNCA E'...\n' (se corrompe al copiar desde móvil).
+- Móvil: un parque = un bloque; verificar "1 row updated" y que el paste termine en WHERE.
+- Error "relation does not exist" = proyecto equivocado en el selector del dashboard.
+
+### Pendiente (revisión humana antes de publicar)
+- [ ] Revisar los 61 ai_drafts: verificar todos los ⚠️ VERIFICAR (tarifas, timed entry,
+      temporadas, operadores) contra nps.gov/recreation.gov antes de is_published=true
+- [ ] Priorizar publicación por relevancia SoCal (los 11 con recargo 2026 primero)
+- [ ] Identificar la fila 63 nueva y decidir si cierra el pendiente seki/sequ/kica
+- [ ] Re-ingestión RAG con la base completa (después de validar el ingest con Gran Cañón)
