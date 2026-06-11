@@ -186,6 +186,54 @@ Indexes: `share_token`, `status`
 - `verify_flag`: null for stable data; `"⚠️ VERIFICAR (IA) [YYYY-MM-DD]"` for volatile AI-generated data
 - All content in Spanish
 
+### `park_live_data`
+
+Datos live de APIs oficiales, sincronizados por `sync-park-live-data`. Nunca editados manualmente; se sobrescriben en cada sync run.
+
+```
+id              uuid PK
+park_code       text NOT NULL UNIQUE           → FK lógica a destinations.park_code
+destination_id  uuid NOT NULL → destinations(id) ON DELETE CASCADE
+-- NPS /parks (full mode)
+entrance_fees   jsonb                          → [{cost, description, title}]
+operating_hours jsonb                          → [{name, description, standardHours, exceptions}]
+images          jsonb                          → [{url, altText, title, caption, credit}]
+lat_long        text                           → "lat:X, long:Y" (raw NPS string)
+-- NPS /alerts (ambos modos)
+alerts          jsonb                          → [{id, title, description, category, url, lastIndexedDate}]
+-- RIDB campgrounds (full mode)
+campgrounds     jsonb                          → [{facilityId, nombre, reservation_url}]
+-- Sync metadata
+sync_errors     jsonb NOT NULL DEFAULT '[]'   → [{step, error}] del último sync run
+synced_at       timestamptz NOT NULL
+created_at      timestamptz NOT NULL
+updated_at      timestamptz NOT NULL
+```
+
+**Modos de sync (`sync-park-live-data`):**
+- `mode: "full"` (default): refresca todos los campos. Usar al ingestar por primera vez o semanalmente.
+- `mode: "alerts"`: solo actualiza `alerts` + `sync_errors` + `synced_at`. Los demás campos no se tocan. Pensado para cron diario ligero.
+
+**Migration:** `20260611000000_create_park_live_data.sql`
+
+---
+
+## SOUL / Live Data Boundary (REGLA CRÍTICA)
+
+> Esta regla existe para que ningún agente sobrescriba contenido editorial con datos de APIs.
+
+| Tabla | Quién escribe | Contenido | Puede sobrescribirse |
+|-------|--------------|-----------|----------------------|
+| `destinations` | Humanos + Edge Functions editoriales (`generate-park-content`, `ingest-park-permits`, `ingest-national-parks`) | Texto curado en español, slugs, is_published, campos de negocio | **NUNCA** por sync jobs |
+| `park_live_data` | `sync-park-live-data` únicamente | Datos volátiles de NPS + RIDB (fees, hours, alerts, campgrounds) | Sí — overwrite en cada sync run |
+
+**Regla para Edge Functions:**
+- Si un dato viene de NPS o RIDB y cambia regularmente (alertas, horarios, tarifas) → **`park_live_data`**.
+- Si es contenido editorial en español o dato de negocio (slug, título, is_published, affiliate_links) → **`destinations`**.
+- Una Edge Function que escriba a `destinations` debe documentar explícitamente qué campos propios escribe y nunca tocar campos editoriales.
+
+---
+
 ## RLS (Row Level Security)
 
 - **Tablas de contenido** (`destinations`, `gear_articles`, `blog_posts`): SELECT público con filtro `is_published = true`. INSERT/UPDATE/DELETE solo admin via `has_role()`.
@@ -194,6 +242,7 @@ Indexes: `share_token`, `status`
 - **`itinerary_requests`**: SELECT solo admin. INSERT solo admin (migración `20260609000000` eliminó el INSERT público). UPDATE solo admin (política explícita añadida para cubrir writes de `status`/`contacted_at`).
 - **`itinerary_templates`**: ALL (SELECT/INSERT/UPDATE/DELETE) solo admin via `has_role()`. Sin acceso público.
 - **`client_itineraries`**: ALL solo admin via `has_role()`. Sin acceso público directo. El acceso de clientes se hace exclusivamente vía RPC `get_itinerary_by_token()`.
+- **`park_live_data`**: SELECT público (sin filtro — todos los parques con datos live son públicos). ALL solo admin via `has_role()`.
 
 ## RPCs (Remote Procedure Calls)
 

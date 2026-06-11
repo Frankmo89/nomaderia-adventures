@@ -45,6 +45,22 @@ referenciar esta lista primero.
 - [ ] **Frank: aplicar migración `create_permit_alerts_tables` y regenerar tipos**:
   correr `supabase db push` para crear `public.permit_windows` y `public.permit_alerts`, y después regenerar tipos con
   `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
+- [ ] **Aplicar migración `create_park_live_data` y desplegar `sync-park-live-data`**:
+  1. `supabase db push` para crear `public.park_live_data` (migración `20260611000000`).
+  2. `supabase functions deploy sync-park-live-data`
+  3. Primera corrida completa (desde consola del navegador en `/admin`):
+     ```javascript
+     // Sync completo de todos los parques (fees, hours, images, alerts, campgrounds)
+     await supabase.functions.invoke('sync-park-live-data')
+     // Solo alertas de un parque
+     await supabase.functions.invoke('sync-park-live-data', { body: { park_codes: ['yose'], mode: 'alerts' } })
+     // Modo alertas diario (todos los parques, ligero)
+     await supabase.functions.invoke('sync-park-live-data', { body: { mode: 'alerts' } })
+     ```
+  4. Retorna `{ ok, mode, total, synced, failed, detalle }`.
+  5. Para alertas diarias automáticas, programar con pg_cron o cron-job.org llamando a la función con `{ mode: "alerts" }` y el header `Authorization: Bearer <admin_jwt>`.
+  6. **`NPS_API_KEY`** ya debe estar configurado (usado por `ingest-national-parks`). **`RIDB_API_KEY`** es opcional; si está configurado, se agregan links de campamentos a `park_live_data.campgrounds`.
+  7. **SOUL/Live boundary**: esta función escribe ÚNICAMENTE en `park_live_data`. NUNCA modifica `destinations`.
 - [ ] **Secrets de Edge Functions** en Supabase Dashboard → Edge Functions →
       Secrets:
       - `supabase secrets set RESEND_API_KEY=re_xxxxx`
@@ -154,6 +170,8 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-06-11] **Edge Function `sync-park-live-data` + migración `park_live_data`**: nueva función que sincroniza datos live de NPS y RIDB en una tabla separada (`public.park_live_data`) sin tocar nunca `destinations`. Acepta `{ park_codes?: string[], mode?: "alerts" | "full" }`. Modo `full` (default): NPS `/parks` (entrance_fees, operating_hours, images, lat_long) + NPS `/alerts` + RIDB campgrounds (filtrados a Campground facilities). Modo `alerts`: solo refresca `alerts` del NPS, preserva todos los demás campos — pensado para cron diario ligero. RIDB es opcional (si no hay `RIDB_API_KEY` configurado, los campamentos se omiten sin error). Rate limiting: sliding-window ≤46 req/min para RIDB + 300ms de delay entre parques para NPS. Per-park failures capturadas en `sync_errors` JSONB sin abortar el batch. SOUL/Live boundary documentado: `destinations` = contenido editorial humano (nunca overwrite); `park_live_data` = datos volátiles de APIs oficiales (overwrite en cada sync). Migracion `20260611000000_create_park_live_data.sql` crea la tabla con RLS: SELECT público, ALL solo admin. **Pendiente**: Frank debe aplicar la migración y desplegar la función (ver Pendientes Humanos). `tsc --noEmit` + `npm run build` pasan (sin cambios en código fuente).
 
 - [2026-06-10] **Pipeline intake → itinerario de cliente → entrega** — flujo completo en el panel admin: (1) `ItineraryBlockEditor` extraído como componente compartido en `src/components/admin/ItineraryBlockEditor.tsx`; `AdminItineraryTemplateEditor` refactorizado como wrapper delgado (~65 líneas). (2) `AdminClientItineraries` (`/admin/client-itineraries`) — lista con `client_name`, parque (fallback 3-niveles: `content.parque` → template→destination → "—"), fechas de viaje, chip de estado, `updated_at`, búsqueda, ordenación, paginación 25/página. (3) `AdminClientItineraryNew` (`/admin/client-itineraries/new`) — formulario RHF+Zod con selector de plantilla publicada (copia JSONB al crear), campos de cliente (nombre, email, whatsapp, fechas), campos de grupo (adultos, niños, nivel, miedos como tag-input con Badges, presupuesto, notas), prefill via query params `?name=&email=&destination=`. (4) `AdminClientItineraryDetail` (`/admin/client-itineraries/:id`) — panel de entrega (Copiar link → `nomaderia.com/i/{token}`, Enviar por WhatsApp al número del cliente, Copiar versión texto con emojis por tipo) + select de estado que stampa `delivered_at` al → "entregado" + editor de bloques reutilizado. (5) Sidebar actualizado con "Itinerarios de Clientes" (icono ScrollText). (6) `App.tsx` con 3 nuevas rutas lazy. (7) `AdminItineraryRequests` — botón "Crear itinerario" por fila (additive only, sin cambios en queries). Todo el texto en español. `tsc --noEmit` + `npm run build` pasan.
 
