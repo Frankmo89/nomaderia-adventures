@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { requireAdmin } from "../_shared/admin-auth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -357,24 +356,12 @@ serve(async (req) => {
       );
     }
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-    let callerLabel: string;
-
-    if (bearerToken && bearerToken === SUPABASE_SERVICE_ROLE_KEY) {
-      callerLabel = "service_role";
-    } else {
-      const { user, error: authError } = await requireAdmin(req, corsHeaders);
-      if (authError) return authError;
-      callerLabel = user.email ?? user.id;
-    }
-
     const body = (await req.json().catch(() => ({}))) as RequestBody;
     const mode: "alerts" | "full" = body.mode === "alerts" ? "alerts" : "full";
     const filterCodes = (body.park_codes ?? []).map((c: string) => c.toLowerCase());
 
     console.log(
-      `[sync-park-live-data] iniciado por ${callerLabel} — mode=${mode}` +
+      `[sync-park-live-data] iniciado — mode=${mode}` +
         (filterCodes.length > 0
           ? ` park_codes=[${filterCodes.join(",")}]`
           : " (todos los parques)"),
