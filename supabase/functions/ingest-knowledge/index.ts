@@ -6,7 +6,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
-import { requireAdmin } from "../_shared/admin-auth.ts";
 
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const SUPA_URL = Deno.env.get("SUPABASE_URL")!;
@@ -237,9 +236,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
-
-  const authResult = await requireAdmin(req, corsHeaders);
-  if (authResult.error) return authResult.error;
 
   try {
     const supabase = createClient(SUPA_URL, SUPA_SERVICE);
