@@ -168,6 +168,13 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Decisión:** Un solo producto: **Itinerario Completo Nomaderia a $49 USD**. Todo CTA de venta, componente visual y Edge Function (emails) debe referenciar exclusivamente este producto.
 - **Consecuencias:** No reintroducir SKUs de $29 USD ni modelos separados. Refactorizar las Edge Functions `send-drip-emails` y `send-quiz-results` para eliminar paquetes antiguos y usar solo el producto de $49 USD.
 
+### ADR-013 — `ingest-knowledge`: section-based chunking + regla de exclusión de datos volátiles
+- **Fecha:** 2026-06
+- **Estado:** Vigente (reemplaza el enfoque "ficha monolítica" de 2026-06-05)
+- **Contexto:** El pipeline anterior generaba una "ficha" única por parque y la dividía en secciones genéricas (`section: "Presentación"`, etc.). Esto hacía difícil recuperar secciones específicas por relevancia y mezclaba contenido de distintas secciones en un mismo chunk.
+- **Decisión:** Un chunk por sección por parque. Cada sección tiene un `source_field` fijo (`why_visit`, `guide`, `itinerary`, `preparation`, `gear`, `safety`, `getting_there`, `weather`, `accessibility`, `profile`, `hikes`, `lodging`). El prefijo `"Parque: {title} — Sección: {source_field}\n\n"` hace cada chunk auto-contenido. Secciones > ~800 tokens se dividen con ~100 tokens de overlap. **Regla de exclusión de datos volátiles:** `park_live_data` (entrance fees, alerts, campground availability) NUNCA se embebe — sus datos cambian con frecuencia y embeddings obsoletos inducen respuestas incorrectas. Solo se embebe contenido editorial estable de `destinations`.
+- **Consecuencias:** `ingest-knowledge` lee únicamente `public.destinations`. No debe leer `park_live_data` en ninguna versión futura sin repensar la estrategia de refresh de chunks. Cuando `content_version` exista en destinations, usarla para omitir parques sin cambios. La columna `section` en metadata se preserva para compatibilidad con `concierge-agent`.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)
