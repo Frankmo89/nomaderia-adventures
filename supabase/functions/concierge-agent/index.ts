@@ -1,11 +1,12 @@
 // supabase/functions/concierge-agent/index.ts
-// Nomaderia Adventures — Concierge IA con RAG
+// Nomaderia Adventures — Concierge IA con RAG + Datos en Vivo
 //
 // Flujo:
 //   1. Recibe pregunta del usuario
 //   2. Convierte pregunta a embedding (OpenAI)
 //   3. Busca chunks relevantes en knowledge_chunks (pgvector)
-//   4. Genera respuesta con GPT-4o-mini citando el contexto
+//   3.5 Carga datos en vivo de park_live_data para los parques encontrados
+//   4. Genera respuesta con GPT-4o-mini citando el contexto + datos vivos
 //   5. Si detecta que necesita acción humana → handoff a Frank por WhatsApp
 //
 // Input:  { question: string, destination_slug?: string }
@@ -38,10 +39,18 @@ interface Source {
 interface KnowledgeChunk {
   id:          string;
   content:     string;
-  metadata:    { slug?: string; title?: string; section?: string };
+  metadata:    { slug?: string; title?: string; section?: string; park_code?: string; park_title?: string };
   source_table: string;
   source_field: string;
   similarity:  number;
+}
+
+interface ParkLiveRow {
+  park_code:     string;
+  entrance_fees: Array<{ cost: string; title: string; description: string }> | null;
+  alerts:        Array<{ id: string; title: string; description: string; category: string; url: string }> | null;
+  campgrounds:   Array<{ facilityId: string; nombre: string; reservation_url: string }> | null;
+  synced_at:     string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -104,6 +113,69 @@ function deduplicateSources(chunks: KnowledgeChunk[]): Source[] {
   return sources;
 }
 
+// ─── Live data helpers ────────────────────────────────────────────────────────
+
+const MONTHS_ES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+function formatDateEs(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${d.getUTCDate()} ${MONTHS_ES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+function isStale(syncedAt: string): boolean {
+  return (Date.now() - new Date(syncedAt).getTime()) > 7 * 24 * 60 * 60 * 1000;
+}
+
+/** Builds the DATOS EN VIVO block injected into the system prompt */
+function buildLiveDataBlock(liveRows: ParkLiveRow[], parkTitles: Map<string, string>): string {
+  const singlePark = liveRows.length === 1;
+
+  const parkBlocks = liveRows.map(row => {
+    const title   = parkTitles.get(row.park_code) ?? row.park_code;
+    const dateStr = formatDateEs(row.synced_at);
+    const stale   = isStale(row.synced_at);
+
+    // Entrance fee — prefer per-vehicle entry
+    const fees = row.entrance_fees ?? [];
+    const vehicleFee = fees.find(f =>
+      f.title?.toLowerCase().includes('vehicle') ||
+      f.description?.toLowerCase().includes('vehicle')
+    ) ?? fees[0];
+    const feeAmount = vehicleFee ? parseFloat(vehicleFee.cost) : NaN;
+    const feeLine = Number.isFinite(feeAmount) && feeAmount > 0
+      ? `- Entrada: $${feeAmount.toFixed(0)} por vehículo (7 días)`
+      : '- Entrada: dato no disponible';
+
+    // Alerts (max 3, title only)
+    const allAlerts  = row.alerts ?? [];
+    const shownAlerts = allAlerts.slice(0, 3);
+    const alertsLine  = shownAlerts.length > 0
+      ? `- Alertas activas (${allAlerts.length}): ${shownAlerts.map(a => a.title).join(' · ')}`
+      : `- Alertas activas (0): ninguna`;
+
+    // Campgrounds (max 3, with reservation URL)
+    const shownCamps = (row.campgrounds ?? []).slice(0, 3);
+    const campsLine  = shownCamps.length > 0
+      ? `- Campamentos con reserva: ${shownCamps.map(c => `${c.nombre} (${c.reservation_url})`).join(', ')}`
+      : '';
+
+    const staleWarning = stale
+      ? `⚠️ Datos no actualizados desde hace más de 7 días — verifica en nps.gov`
+      : '';
+
+    const parkHeader = singlePark
+      ? `🏕️ ${title}`
+      : `🏕️ ${title} (verificado: ${dateStr})`;
+
+    return [parkHeader, feeLine, alertsLine, campsLine, staleWarning]
+      .filter(Boolean)
+      .join('\n');
+  });
+
+  const headerDate = singlePark ? `(verificado: ${formatDateEs(liveRows[0].synced_at)}) ` : '';
+  return `---\nDATOS EN VIVO ${headerDate}\n${parkBlocks.join('\n\n')}\n---`;
+}
+
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
 const SYSTEM_PROMPT_BASE = `Eres el asistente de aventuras de Nomaderia, un servicio de concierge en español para hispanos en EE.UU. que quieren hacer su primer viaje de senderismo. Frank Molina, agente TAP certificado, es quien respalda toda la información.
@@ -116,17 +188,29 @@ REGLAS ESTRICTAS:
 5. Al final de tu respuesta incluye las fuentes relevantes en formato: [Fuente: título - sección].
 6. Máximo 3 párrafos. Respuestas claras y útiles, no largas.
 
+DATOS VIVOS — REGLAS IMPORTANTES:
+- Para precios de entrada, cierres y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO (si está disponible) y cita la fecha de verificación.
+- Si los datos vivos tienen más de 7 días o no existen, dilo con honestidad y dirige al usuario a nps.gov/{park_code}.
+- Nunca inventes precios ni fechas. Honestidad sobre completitud.
+
 NUNCA:
 - Inventes requisitos de visa, permisos, precios o disponibilidades específicas.
 - Recomiendes marcas o productos que no estén en el contexto.
 - Digas que puedes hacer reservas o procesar pagos.`;
 
-function buildSystemPrompt(destinationSlug?: string): string {
-  if (!destinationSlug) return SYSTEM_PROMPT_BASE;
-  return `${SYSTEM_PROMPT_BASE}
+function buildSystemPrompt(destinationSlug?: string, liveDataBlock?: string): string {
+  let prompt = SYSTEM_PROMPT_BASE;
 
-IMPORTANTE — MODO PARQUE ESPECÍFICO:
+  if (destinationSlug) {
+    prompt += `\n\nIMPORTANTE — MODO PARQUE ESPECÍFICO:
 El usuario está leyendo la guía de "${destinationSlug}". Responde ÚNICAMENTE con información de ese parque. Si el contexto no contiene la respuesta o la pregunta es sobre otro destino, dilo claramente: "Me enfoco solo en este parque. Para otras preguntas, Frank puede ayudarte."`;
+  }
+
+  if (liveDataBlock) {
+    prompt += `\n\n${liveDataBlock}`;
+  }
+
+  return prompt;
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -199,6 +283,34 @@ serve(async (req) => {
       );
     }
 
+    // ── 3.5. Fetch live park data for retrieved chunks ────────────────────────
+    // Extract unique park_codes from destination chunks only.
+    // Volatile data (fees, alerts, campgrounds) comes exclusively from
+    // park_live_data — never from knowledge_chunks (ADR-013).
+    const parkCodeMap = new Map<string, string>(); // park_code → park_title
+    for (const chunk of chunks) {
+      if (chunk.source_table === "destinations" && chunk.metadata.park_code) {
+        parkCodeMap.set(
+          chunk.metadata.park_code,
+          chunk.metadata.park_title ?? chunk.metadata.title ?? chunk.metadata.park_code
+        );
+      }
+    }
+
+    let liveDataBlock = "";
+    if (parkCodeMap.size > 0) {
+      const { data: liveRows, error: liveErr } = await supabase
+        .from("park_live_data")
+        .select("park_code, entrance_fees, alerts, campgrounds, synced_at")
+        .in("park_code", [...parkCodeMap.keys()]);
+
+      // Silently skip if table not yet deployed or query fails — live data is
+      // informational and must not crash the concierge.
+      if (!liveErr && liveRows?.length) {
+        liveDataBlock = buildLiveDataBlock(liveRows as ParkLiveRow[], parkCodeMap);
+      }
+    }
+
     // ── 5. Construir contexto para el agente ──────────────────────────────────
     const context = chunks
       .map((c, i) =>
@@ -218,7 +330,7 @@ serve(async (req) => {
         max_tokens:  600,
         temperature: 0.3, // baja temperatura → respuestas más precisas, menos creativas
         messages: [
-          { role: "system",  content: buildSystemPrompt(destination_slug) },
+          { role: "system",  content: buildSystemPrompt(destination_slug, liveDataBlock) },
           {
             role:    "user",
             content: `CONTEXTO:\n${context}\n\nPREGUNTA DEL USUARIO:\n${question}`,
