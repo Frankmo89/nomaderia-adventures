@@ -15,7 +15,6 @@ type ClientRow = Tables<"client_itineraries"> & {
   itinerary_templates: {
     destinations: { title: string } | null;
   } | null;
-  friendly_slug?: string | null; // added in migration 20260614000000, not yet in generated types (ADR-009)
 };
 
 interface PartyShape {

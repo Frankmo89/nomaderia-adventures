@@ -133,6 +133,7 @@ export type Database = {
           content: Json
           created_at: string
           delivered_at: string | null
+          friendly_slug: string | null
           id: string
           party: Json
           request_id: string | null
@@ -150,6 +151,7 @@ export type Database = {
           content?: Json
           created_at?: string
           delivered_at?: string | null
+          friendly_slug?: string | null
           id?: string
           party?: Json
           request_id?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           content?: Json
           created_at?: string
           delivered_at?: string | null
+          friendly_slug?: string | null
           id?: string
           party?: Json
           request_id?: string | null
@@ -203,9 +206,12 @@ export type Database = {
           base_city: string | null
           beginner_friendly: boolean | null
           best_season: string | null
+          best_sunrise_sunset_spots: Json | null
           camping_available: boolean | null
           cell_signal_status: string | null
           common_fears: Json | null
+          con_ninos_markdown: string | null
+          content_version: number | null
           country: string
           created_at: string
           days_needed: string | null
@@ -218,7 +224,10 @@ export type Database = {
           entrance_fee_usd: number | null
           estimated_budget_usd: number | null
           experience_type: string | null
+          faqs: Json | null
           featured: boolean | null
+          food_and_dining_markdown: string | null
+          food_nearby_markdown: string | null
           full_guide_markdown: string | null
           gallery_images: string[] | null
           gear_list_markdown: string | null
@@ -249,12 +258,16 @@ export type Database = {
           park_code: string | null
           peak_season: string | null
           permits_info: Json | null
+          pet_policy_markdown: string | null
+          pet_policy_status: string | null
+          photo_spots: Json | null
           premium_itinerary_price: number | null
           preparation_plan: string | null
           recreation_gov_url: string | null
           region: string | null
           requires_permit: boolean | null
           research_status: string | null
+          rv_max_length_ft: number | null
           safety_markdown: string | null
           season_to_avoid: string | null
           seasonal_closures: string | null
@@ -263,6 +276,7 @@ export type Database = {
           slug: string
           tags: string[] | null
           timed_entry_required: boolean | null
+          timezone: string | null
           title: string
           top_activities: string[] | null
           updated_at: string
@@ -279,9 +293,12 @@ export type Database = {
           base_city?: string | null
           beginner_friendly?: boolean | null
           best_season?: string | null
+          best_sunrise_sunset_spots?: Json | null
           camping_available?: boolean | null
           cell_signal_status?: string | null
           common_fears?: Json | null
+          con_ninos_markdown?: string | null
+          content_version?: number | null
           country: string
           created_at?: string
           days_needed?: string | null
@@ -294,7 +311,10 @@ export type Database = {
           entrance_fee_usd?: number | null
           estimated_budget_usd?: number | null
           experience_type?: string | null
+          faqs?: Json | null
           featured?: boolean | null
+          food_and_dining_markdown?: string | null
+          food_nearby_markdown?: string | null
           full_guide_markdown?: string | null
           gallery_images?: string[] | null
           gear_list_markdown?: string | null
@@ -325,12 +345,16 @@ export type Database = {
           park_code?: string | null
           peak_season?: string | null
           permits_info?: Json | null
+          pet_policy_markdown?: string | null
+          pet_policy_status?: string | null
+          photo_spots?: Json | null
           premium_itinerary_price?: number | null
           preparation_plan?: string | null
           recreation_gov_url?: string | null
           region?: string | null
           requires_permit?: boolean | null
           research_status?: string | null
+          rv_max_length_ft?: number | null
           safety_markdown?: string | null
           season_to_avoid?: string | null
           seasonal_closures?: string | null
@@ -339,6 +363,7 @@ export type Database = {
           slug: string
           tags?: string[] | null
           timed_entry_required?: boolean | null
+          timezone?: string | null
           title: string
           top_activities?: string[] | null
           updated_at?: string
@@ -355,9 +380,12 @@ export type Database = {
           base_city?: string | null
           beginner_friendly?: boolean | null
           best_season?: string | null
+          best_sunrise_sunset_spots?: Json | null
           camping_available?: boolean | null
           cell_signal_status?: string | null
           common_fears?: Json | null
+          con_ninos_markdown?: string | null
+          content_version?: number | null
           country?: string
           created_at?: string
           days_needed?: string | null
@@ -370,7 +398,10 @@ export type Database = {
           entrance_fee_usd?: number | null
           estimated_budget_usd?: number | null
           experience_type?: string | null
+          faqs?: Json | null
           featured?: boolean | null
+          food_and_dining_markdown?: string | null
+          food_nearby_markdown?: string | null
           full_guide_markdown?: string | null
           gallery_images?: string[] | null
           gear_list_markdown?: string | null
@@ -401,12 +432,16 @@ export type Database = {
           park_code?: string | null
           peak_season?: string | null
           permits_info?: Json | null
+          pet_policy_markdown?: string | null
+          pet_policy_status?: string | null
+          photo_spots?: Json | null
           premium_itinerary_price?: number | null
           preparation_plan?: string | null
           recreation_gov_url?: string | null
           region?: string | null
           requires_permit?: boolean | null
           research_status?: string | null
+          rv_max_length_ft?: number | null
           safety_markdown?: string | null
           season_to_avoid?: string | null
           seasonal_closures?: string | null
@@ -415,6 +450,7 @@ export type Database = {
           slug?: string
           tags?: string[] | null
           timed_entry_required?: boolean | null
+          timezone?: string | null
           title?: string
           top_activities?: string[] | null
           updated_at?: string
@@ -636,6 +672,71 @@ export type Database = {
           source?: string | null
         }
         Relationships: []
+      }
+      park_live_data: {
+        Row: {
+          alerts: Json | null
+          campgrounds: Json | null
+          coordinates: Json | null
+          created_at: string | null
+          destination_id: string | null
+          entrance_fee_usd: number | null
+          entrance_fees: Json | null
+          images: Json | null
+          lat_long: string | null
+          nps_images: Json | null
+          operating_hours: Json | null
+          park_code: string
+          permits: Json | null
+          sync_errors: Json | null
+          synced_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          alerts?: Json | null
+          campgrounds?: Json | null
+          coordinates?: Json | null
+          created_at?: string | null
+          destination_id?: string | null
+          entrance_fee_usd?: number | null
+          entrance_fees?: Json | null
+          images?: Json | null
+          lat_long?: string | null
+          nps_images?: Json | null
+          operating_hours?: Json | null
+          park_code: string
+          permits?: Json | null
+          sync_errors?: Json | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          alerts?: Json | null
+          campgrounds?: Json | null
+          coordinates?: Json | null
+          created_at?: string | null
+          destination_id?: string | null
+          entrance_fee_usd?: number | null
+          entrance_fees?: Json | null
+          images?: Json | null
+          lat_long?: string | null
+          nps_images?: Json | null
+          operating_hours?: Json | null
+          park_code?: string
+          permits?: Json | null
+          sync_errors?: Json | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "park_live_data_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permit_alerts: {
         Row: {

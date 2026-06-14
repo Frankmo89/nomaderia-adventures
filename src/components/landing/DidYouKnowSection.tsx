@@ -46,7 +46,7 @@ const CardContent = ({ dest, isLarge = false }: { dest: DestinationCard; isLarge
         alt={dest.title}
         loading="lazy"
         decoding="async"
-        className="absolute inset-0 w-full h-full object-cover object-top img-warm transition-transform duration-[10000ms] ease-linear group-hover:scale-110"
+        className="absolute inset-0 w-full h-full object-cover object-top img-warm transition-transform [transition-duration:10000ms] ease-linear group-hover:scale-110"
       />
     ) : (
       <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 to-primary/20" />

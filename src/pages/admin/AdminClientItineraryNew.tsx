@@ -14,7 +14,6 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -134,9 +133,7 @@ const AdminClientItineraryNew = () => {
       status: "borrador",
     };
 
-    // friendly_slug not in generated types yet (ADR-009) — use SupabaseClient cast
-    const db = supabase as unknown as SupabaseClient;
-    let { data, error } = await db
+    let { data, error } = await supabase
       .from("client_itineraries")
       .insert({ ...basePayload, friendly_slug: friendlySlug })
       .select("id")
@@ -145,7 +142,7 @@ const AdminClientItineraryNew = () => {
     // Retry once on unique constraint violation (slug collision, ~1 in 36^4)
     if (error?.code === "23505") {
       friendlySlug = generateFriendlySlug(values.client_name, parkTitle);
-      const retry = await db
+      const retry = await supabase
         .from("client_itineraries")
         .insert({ ...basePayload, friendly_slug: friendlySlug })
         .select("id")
