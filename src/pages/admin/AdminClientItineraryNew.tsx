@@ -14,9 +14,11 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
+import { generateFriendlySlug } from "@/lib/generate-slug";
 import type { ContentV1 } from "@/components/admin/ItineraryBlockEditor";
 
 type TemplateOption = Pick<Tables<"itinerary_templates">, "id" | "title" | "content">;
@@ -93,16 +95,23 @@ const AdminClientItineraryNew = () => {
   const onSubmit = async (values: FormValues) => {
     setSaving(true);
 
+    const selectedTpl = values.template_id
+      ? templates.find((t) => t.id === values.template_id)
+      : undefined;
+
     let content: ContentV1 = { version: 1, dias: [] };
-    if (values.template_id) {
-      const tpl = templates.find((t) => t.id === values.template_id);
-      if (tpl?.content) {
-        const raw = tpl.content as unknown as ContentV1;
-        content = raw?.version === 1 && Array.isArray(raw.dias)
-          ? JSON.parse(JSON.stringify(raw))
-          : { version: 1, dias: [] };
-      }
+    if (selectedTpl?.content) {
+      const raw = selectedTpl.content as unknown as ContentV1;
+      content = raw?.version === 1 && Array.isArray(raw.dias)
+        ? JSON.parse(JSON.stringify(raw))
+        : { version: 1, dias: [] };
     }
+
+    const parkTitle =
+      (selectedTpl?.content as unknown as ContentV1 | null)?.parque ??
+      selectedTpl?.title ??
+      "";
+    let friendlySlug = generateFriendlySlug(values.client_name, parkTitle);
 
     const party = {
       adultos: values.adultos,
@@ -113,21 +122,37 @@ const AdminClientItineraryNew = () => {
       notas: values.notas || null,
     };
 
-    const { data, error } = await supabase
+    const basePayload = {
+      template_id: values.template_id || null,
+      client_name: values.client_name,
+      client_email: values.client_email || null,
+      client_whatsapp: values.client_whatsapp || null,
+      trip_start: values.trip_start || null,
+      trip_end: values.trip_end || null,
+      party,
+      content: JSON.parse(JSON.stringify(content)),
+      status: "borrador",
+    };
+
+    // friendly_slug not in generated types yet (ADR-009) — use SupabaseClient cast
+    const db = supabase as unknown as SupabaseClient;
+    let { data, error } = await db
       .from("client_itineraries")
-      .insert({
-        template_id: values.template_id || null,
-        client_name: values.client_name,
-        client_email: values.client_email || null,
-        client_whatsapp: values.client_whatsapp || null,
-        trip_start: values.trip_start || null,
-        trip_end: values.trip_end || null,
-        party,
-        content: JSON.parse(JSON.stringify(content)),
-        status: "borrador",
-      })
+      .insert({ ...basePayload, friendly_slug: friendlySlug })
       .select("id")
       .single();
+
+    // Retry once on unique constraint violation (slug collision, ~1 in 36^4)
+    if (error?.code === "23505") {
+      friendlySlug = generateFriendlySlug(values.client_name, parkTitle);
+      const retry = await db
+        .from("client_itineraries")
+        .insert({ ...basePayload, friendly_slug: friendlySlug })
+        .select("id")
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
 
     setSaving(false);
 

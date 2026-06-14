@@ -15,6 +15,7 @@ type ClientRow = Tables<"client_itineraries"> & {
   itinerary_templates: {
     destinations: { title: string } | null;
   } | null;
+  friendly_slug?: string | null; // added in migration 20260614000000, not yet in generated types (ADR-009)
 };
 
 interface PartyShape {
@@ -61,8 +62,8 @@ function getPark(row: ClientRow, content: ContentV1): string {
 function generateTextVersion(row: ClientRow, content: ContentV1): string {
   const parque = getPark(row, content) || "Tu destino";
   const dias = content.dias.length;
-  const token = row.share_token;
-  const link = `https://nomaderia.com/i/${token}`;
+  const identifier = row.friendly_slug ?? row.share_token;
+  const link = `https://nomaderia.com/i/${identifier}`;
 
   const lines: string[] = [];
   lines.push(`🏔️ Tu itinerario — ${parque} (${dias} ${dias === 1 ? "día" : "días"})`);
@@ -163,7 +164,8 @@ const AdminClientItineraryDetail = () => {
 
   const handleCopyLink = async () => {
     if (!row) return;
-    const link = `https://nomaderia.com/i/${row.share_token}`;
+    const identifier = row.friendly_slug ?? row.share_token;
+    const link = `https://nomaderia.com/i/${identifier}`;
     await navigator.clipboard.writeText(link);
     setCopyLinkDone(true);
     toast({ title: "Link copiado", description: link });
@@ -172,7 +174,8 @@ const AdminClientItineraryDetail = () => {
 
   const handleWhatsApp = () => {
     if (!row) return;
-    const link = `https://nomaderia.com/i/${row.share_token}`;
+    const identifier = row.friendly_slug ?? row.share_token;
+    const link = `https://nomaderia.com/i/${identifier}`;
     const msg = `Hola ${row.client_name}, aquí está tu itinerario personalizado de Nomaderia 🏔️\n\nVer todos los detalles: ${link}\n\n¿Tienes preguntas? ¡Escríbeme aquí mismo! — Frank, Nomaderia Adventures 🌿`;
     const phone = row.client_whatsapp?.replace(/\D/g, "") ?? "";
     const url = phone
