@@ -39,7 +39,12 @@ export function useConcierge() {
     }): Promise<ConciergeResponse> => {
       const { data, error } = await supabase.functions.invoke<ConciergeResponse>(
         "concierge-agent",
-        { body: { question, destination_slug } }
+        {
+          body: { question, destination_slug },
+          headers: {
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }
       );
       if (error) throw new Error(error.message);
       if (!data)  throw new Error("Respuesta vacía del concierge");
