@@ -250,17 +250,32 @@ serve(async (req) => {
     let chunks: KnowledgeChunk[] = [];
 
     if (destination_slug) {
-      // Retrieve a wider net and then hard-filter to this park only.
-      // Never fall back to other parks' chunks — wrong-park answers are worse
-      // than a honest "no tengo información".
-      const { data: destChunks } = await supabase.rpc("match_knowledge_chunks", {
-        query_embedding: queryEmbedding,
-        match_count:     MAX_CHUNKS_SCOPED,
-        min_similarity:  MIN_SIMILARITY,
-      });
-      chunks = (destChunks ?? []).filter(
-        (c: KnowledgeChunk) => c.metadata?.slug === destination_slug
-      ).slice(0, MAX_CHUNKS);
+      const { data: destRow } = await supabase
+        .from("destinations")
+        .select("park_code")
+        .eq("slug", destination_slug)
+        .single();
+
+      const parkCode = destRow?.park_code;
+
+      if (parkCode) {
+        const { data: destChunks } = await supabase.rpc("match_knowledge_chunks", {
+          query_embedding: queryEmbedding,
+          match_count:     MAX_CHUNKS_SCOPED,
+          min_similarity:  MIN_SIMILARITY,
+        });
+        chunks = (destChunks ?? []).filter(
+          (c: KnowledgeChunk) => c.metadata?.park_code === parkCode
+        ).slice(0, MAX_CHUNKS);
+      } else {
+        // slug not found → general search
+        const { data } = await supabase.rpc("match_knowledge_chunks", {
+          query_embedding: queryEmbedding,
+          match_count:     MAX_CHUNKS,
+          min_similarity:  MIN_SIMILARITY,
+        });
+        chunks = data ?? [];
+      }
     } else {
       const { data } = await supabase.rpc("match_knowledge_chunks", {
         query_embedding: queryEmbedding,
