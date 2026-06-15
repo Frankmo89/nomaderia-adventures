@@ -4,10 +4,11 @@
 // Flujo:
 //   1. Recibe pregunta del usuario
 //   2. Convierte pregunta a embedding (OpenAI)
-//   3. Busca chunks relevantes en knowledge_chunks (pgvector)
-//   3.5 Carga datos en vivo de park_live_data para los parques encontrados
-//   4. Genera respuesta con GPT-4o-mini citando el contexto + datos vivos
-//   5. Si detecta que necesita acción humana → handoff a Frank por WhatsApp
+//   3. Resuelve el parque en contexto (si hay guía abierta)
+//   4. Busca chunks en knowledge_chunks (pgvector), pre-filtrando por parque
+//   5. Carga datos en vivo de park_live_data (incl. alias kica→seki) ANTES de escalar
+//   6. Escala SOLO si no hay ni chunks ni datos en vivo relevantes
+//   7-9. Genera respuesta con GPT-4o-mini citando contexto + datos vivos y responde
 //
 // Input:  { question: string, destination_slug?: string }
 // Output: { answer: string, sources: Source[], escalate: boolean, whatsapp_url?: string }
@@ -23,9 +24,24 @@ const WHATSAPP_NUM = "18588996802";
 const SITE_URL     = "https://nomaderia.com";
 const EMBED_MODEL  = "text-embedding-3-small";
 const CHAT_MODEL   = "gpt-4o-mini";
-const MAX_CHUNKS        = 6;   // chunks de contexto que se pasan al agente
-const MAX_CHUNKS_SCOPED = 20;  // wider net when filtering by slug
-const MIN_SIMILARITY    = 0.4; // umbral mínimo de relevancia
+const MAX_CHUNKS     = 6;   // chunks de contexto que se pasan al agente
+const MIN_SIMILARITY = 0.4; // umbral mínimo de relevancia
+
+// FIX 1 — live-data park aliases.
+// NPS publishes live data (entrance fees, alerts, campgrounds) for some adjacent
+// parks under a SINGLE shared park_code. Our editorial `destinations` keep
+// separate codes per park, so park_live_data has no row under the editorial code.
+// Map those editorial codes to the code NPS actually uses for live data.
+//   - Kings Canyon ("kica") shares Sequoia's live data under "seki" (verified:
+//     the "kica" park_live_data row is empty; all fees live under "seki").
+//   - "sequ" is defensive only — no destination currently uses it, but if Sequoia
+//     were ever re-coded it would resolve here too.
+// This aliases ONLY the live-data lookup; RAG chunk retrieval still uses the
+// editorial park_code unchanged.
+const LIVE_DATA_PARK_ALIAS: Record<string, string> = {
+  kica: "seki",
+  sequ: "seki",
+};
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -146,6 +162,18 @@ function buildLiveDataBlock(liveRows: ParkLiveRow[], parkTitles: Map<string, str
       ? `- Entrada: $${feeAmount.toFixed(0)} por vehículo (7 días)`
       : '- Entrada: dato no disponible';
 
+    // Nonresident surcharge — answers "soy mexicano, ¿pago más?".
+    // Surfaced separately because it stacks on top of the base entrance fee.
+    const nonresFee = fees.find(f =>
+      f.title?.toLowerCase().includes('nonresident') ||
+      f.title?.toLowerCase().includes('non-resident') ||
+      f.description?.toLowerCase().includes('nonresident')
+    );
+    const nonresAmount = nonresFee ? parseFloat(nonresFee.cost) : NaN;
+    const nonresLine = Number.isFinite(nonresAmount) && nonresAmount > 0
+      ? `- Tarifa para no residentes de EE.UU.: $${nonresAmount.toFixed(0)} por persona (16+ años), adicional a la entrada base`
+      : '';
+
     // Alerts (max 3, title only)
     const allAlerts  = row.alerts ?? [];
     const shownAlerts = allAlerts.slice(0, 3);
@@ -167,7 +195,7 @@ function buildLiveDataBlock(liveRows: ParkLiveRow[], parkTitles: Map<string, str
       ? `🏕️ ${title}`
       : `🏕️ ${title} (verificado: ${dateStr})`;
 
-    return [parkHeader, feeLine, alertsLine, campsLine, staleWarning]
+    return [parkHeader, feeLine, nonresLine, alertsLine, campsLine, staleWarning]
       .filter(Boolean)
       .join('\n');
   });
@@ -244,49 +272,83 @@ serve(async (req) => {
     // ── 2. Embedding de la pregunta ───────────────────────────────────────────
     const queryEmbedding = await embedQuery(question);
 
-    // ── 3. Búsqueda por similitud en knowledge_chunks ─────────────────────────
     const supabase = createClient(SUPA_URL, SUPA_ANON);
 
-    let chunks: KnowledgeChunk[] = [];
-
+    // ── 3. Resolver el parque en contexto (si hay una guía abierta) ───────────
+    // Se resuelve ANTES de la búsqueda para (a) pre-filtrar chunks por parque
+    // (FIX 2) y (b) poder cargar datos en vivo aunque la búsqueda RAG vuelva
+    // vacía (FIX 3).
+    let contextParkCode:  string | null = null;
+    let contextParkTitle: string | null = null;
     if (destination_slug) {
       const { data: destRow } = await supabase
         .from("destinations")
-        .select("park_code")
+        .select("park_code, title")
         .eq("slug", destination_slug)
         .single();
-
-      const parkCode = destRow?.park_code;
-
-      if (parkCode) {
-        const { data: destChunks } = await supabase.rpc("match_knowledge_chunks", {
-          query_embedding: queryEmbedding,
-          match_count:     MAX_CHUNKS_SCOPED,
-          min_similarity:  MIN_SIMILARITY,
-        });
-        chunks = (destChunks ?? []).filter(
-          (c: KnowledgeChunk) => c.metadata?.park_code === parkCode
-        ).slice(0, MAX_CHUNKS);
-      } else {
-        // slug not found → general search
-        const { data } = await supabase.rpc("match_knowledge_chunks", {
-          query_embedding: queryEmbedding,
-          match_count:     MAX_CHUNKS,
-          min_similarity:  MIN_SIMILARITY,
-        });
-        chunks = data ?? [];
-      }
-    } else {
-      const { data } = await supabase.rpc("match_knowledge_chunks", {
-        query_embedding: queryEmbedding,
-        match_count:     MAX_CHUNKS,
-        min_similarity:  MIN_SIMILARITY,
-      });
-      chunks = data ?? [];
+      contextParkCode  = destRow?.park_code ?? null;
+      contextParkTitle = destRow?.title ?? null;
     }
 
-    // ── 4. Si no hay contexto relevante → escalar directamente ────────────────
-    if (!chunks.length) {
+    // ── 4. Búsqueda por similitud en knowledge_chunks ─────────────────────────
+    // FIX 2: cuando hay parque en contexto, el pre-filtro por park_code vive
+    // dentro de match_knowledge_chunks (parámetro filter_park_code), así la DB
+    // devuelve los mejores chunks DENTRO del parque en vez de los globales.
+    const { data: chunkData } = await supabase.rpc("match_knowledge_chunks", {
+      query_embedding:  queryEmbedding,
+      match_count:      MAX_CHUNKS,
+      min_similarity:   MIN_SIMILARITY,
+      filter_park_code: contextParkCode, // null → búsqueda global (comportamiento previo)
+    });
+    const chunks: KnowledgeChunk[] = chunkData ?? [];
+
+    // ── 5. Cargar datos en vivo (ANTES de decidir si se escala) ───────────────
+    // Datos volátiles (tarifas, alertas, campamentos) vienen EXCLUSIVAMENTE de
+    // park_live_data — nunca de knowledge_chunks (ADR-013). Se cargan antes del
+    // guardrail de escalación para que el agente pueda responder con ellos aunque
+    // no haya chunks (FIX 3).
+    const parkCodeMap = new Map<string, string>(); // park_code → park_title
+    for (const chunk of chunks) {
+      if (chunk.source_table === "destinations" && chunk.metadata.park_code) {
+        parkCodeMap.set(
+          chunk.metadata.park_code,
+          chunk.metadata.park_title ?? chunk.metadata.title ?? chunk.metadata.park_code
+        );
+      }
+    }
+    // FIX 3: si hay guía abierta, asegura el parque en contexto aunque ningún
+    // chunk lo haya aportado (p. ej. búsqueda vacía) → permite responder tarifas/
+    // alertas desde datos en vivo en lugar de escalar.
+    if (contextParkCode && !parkCodeMap.has(contextParkCode)) {
+      parkCodeMap.set(contextParkCode, contextParkTitle ?? contextParkCode);
+    }
+
+    let liveDataBlock = "";
+    if (parkCodeMap.size > 0) {
+      // FIX 1: mapea cada park_code editorial al código que NPS usa para datos
+      // en vivo (p. ej. kica → seki). El título de display se conserva.
+      const queryCodeToTitle = new Map<string, string>(); // liveCode → park_title
+      for (const [code, title] of parkCodeMap) {
+        const liveCode = LIVE_DATA_PARK_ALIAS[code] ?? code;
+        if (!queryCodeToTitle.has(liveCode)) queryCodeToTitle.set(liveCode, title);
+      }
+
+      const { data: liveRows, error: liveErr } = await supabase
+        .from("park_live_data")
+        .select("park_code, entrance_fees, alerts, campgrounds, synced_at")
+        .in("park_code", [...queryCodeToTitle.keys()]);
+
+      // Silently skip if table not yet deployed or query fails — live data is
+      // informational and must not crash the concierge.
+      if (!liveErr && liveRows?.length) {
+        liveDataBlock = buildLiveDataBlock(liveRows as ParkLiveRow[], queryCodeToTitle);
+      }
+    }
+
+    // ── 6. Guardrail de escalación ────────────────────────────────────────────
+    // Escala SOLO si no hay NI chunks NI datos en vivo relevantes. Antes se
+    // escalaba ante chunks vacíos ignorando los datos en vivo ya inyectados (FIX 3).
+    if (!chunks.length && !liveDataBlock) {
       return new Response(
         JSON.stringify({
           answer:       "No tengo información específica sobre eso en mi base de conocimiento. Frank puede ayudarte con los detalles.",
@@ -298,42 +360,14 @@ serve(async (req) => {
       );
     }
 
-    // ── 3.5. Fetch live park data for retrieved chunks ────────────────────────
-    // Extract unique park_codes from destination chunks only.
-    // Volatile data (fees, alerts, campgrounds) comes exclusively from
-    // park_live_data — never from knowledge_chunks (ADR-013).
-    const parkCodeMap = new Map<string, string>(); // park_code → park_title
-    for (const chunk of chunks) {
-      if (chunk.source_table === "destinations" && chunk.metadata.park_code) {
-        parkCodeMap.set(
-          chunk.metadata.park_code,
-          chunk.metadata.park_title ?? chunk.metadata.title ?? chunk.metadata.park_code
-        );
-      }
-    }
-
-    let liveDataBlock = "";
-    if (parkCodeMap.size > 0) {
-      const { data: liveRows, error: liveErr } = await supabase
-        .from("park_live_data")
-        .select("park_code, entrance_fees, alerts, campgrounds, synced_at")
-        .in("park_code", [...parkCodeMap.keys()]);
-
-      // Silently skip if table not yet deployed or query fails — live data is
-      // informational and must not crash the concierge.
-      if (!liveErr && liveRows?.length) {
-        liveDataBlock = buildLiveDataBlock(liveRows as ParkLiveRow[], parkCodeMap);
-      }
-    }
-
-    // ── 5. Construir contexto para el agente ──────────────────────────────────
+    // ── 7. Construir contexto para el agente ──────────────────────────────────
     const context = chunks
       .map((c, i) =>
         `[${i + 1}] ${c.metadata.title ?? ""} — ${c.metadata.section ?? c.source_field}\n${c.content}`
       )
       .join("\n\n---\n\n");
 
-    // ── 6. Llamar a GPT-4o-mini ───────────────────────────────────────────────
+    // ── 8. Llamar a GPT-4o-mini ───────────────────────────────────────────────
     const chatRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -362,7 +396,7 @@ serve(async (req) => {
     const answer   = chatData.choices[0].message.content as string;
     const sources  = deduplicateSources(chunks);
 
-    // ── 7. Responder ──────────────────────────────────────────────────────────
+    // ── 9. Responder ──────────────────────────────────────────────────────────
     return new Response(
       JSON.stringify({
         answer,
