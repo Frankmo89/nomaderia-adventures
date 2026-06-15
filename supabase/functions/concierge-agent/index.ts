@@ -151,27 +151,38 @@ function buildLiveDataBlock(liveRows: ParkLiveRow[], parkTitles: Map<string, str
     const dateStr = formatDateEs(row.synced_at);
     const stale   = isStale(row.synced_at);
 
-    // Entrance fee — prefer per-vehicle entry
+    // Entrance fees — each fee item is a DISTINCT, clearly-labeled line so the
+    // model never merges them (e.g. confusing the $20 "Per Person" entry with
+    // the $100 "Nonresident" surcharge — the bug this fixes).
     const fees = row.entrance_fees ?? [];
-    const vehicleFee = fees.find(f =>
-      f.title?.toLowerCase().includes('vehicle') ||
-      f.description?.toLowerCase().includes('vehicle')
-    ) ?? fees[0];
-    const feeAmount = vehicleFee ? parseFloat(vehicleFee.cost) : NaN;
-    const feeLine = Number.isFinite(feeAmount) && feeAmount > 0
-      ? `- Entrada: $${feeAmount.toFixed(0)} por vehículo (7 días)`
-      : '- Entrada: dato no disponible';
+    const titleHas = (f: { title?: string }, s: string) =>
+      (f.title ?? '').toLowerCase().includes(s);
 
-    // Nonresident surcharge — answers "soy mexicano, ¿pago más?".
-    // Surfaced separately because it stacks on top of the base entrance fee.
-    const nonresFee = fees.find(f =>
-      f.title?.toLowerCase().includes('nonresident') ||
-      f.title?.toLowerCase().includes('non-resident') ||
-      f.description?.toLowerCase().includes('nonresident')
+    // (1) Standard per-vehicle entry (private vehicle, 7 days) — excludes commercial.
+    const vehicleFee = fees.find(f => titleHas(f, 'vehicle') && !titleHas(f, 'commercial'))
+      ?? fees[0];
+    const vehicleAmount = vehicleFee ? parseFloat(vehicleFee.cost) : NaN;
+    const vehicleLine = Number.isFinite(vehicleAmount) && vehicleAmount > 0
+      ? `- Entrada por vehículo (7 días): $${vehicleAmount.toFixed(0)}`
+      : '- Entrada por vehículo: dato no disponible';
+
+    // (2) Standard per-person entry (on foot / bike) — excludes commercial & nonresident.
+    const perPersonFee = fees.find(f =>
+      (titleHas(f, 'per person') || titleHas(f, 'per-person')) &&
+      !titleHas(f, 'commercial') && !titleHas(f, 'nonresident') && !titleHas(f, 'non-resident')
     );
+    const perPersonAmount = perPersonFee ? parseFloat(perPersonFee.cost) : NaN;
+    const perPersonLine = Number.isFinite(perPersonAmount) && perPersonAmount > 0
+      ? `- Entrada por persona a pie o bici (7 días): $${perPersonAmount.toFixed(0)}`
+      : '';
+
+    // (3) Nonresident surcharge — answers "soy mexicano, ¿pago más?". Matched
+    // SPECIFICALLY by TITLE (not description: other fees mention "nonresident"
+    // in their description and would be picked up by mistake — that was the bug).
+    const nonresFee = fees.find(f => titleHas(f, 'nonresident') || titleHas(f, 'non-resident'));
     const nonresAmount = nonresFee ? parseFloat(nonresFee.cost) : NaN;
     const nonresLine = Number.isFinite(nonresAmount) && nonresAmount > 0
-      ? `- Tarifa para no residentes de EE.UU.: $${nonresAmount.toFixed(0)} por persona (16+ años), adicional a la entrada base`
+      ? `- Tarifa de NO-RESIDENTE (adicional a la entrada base): $${nonresAmount.toFixed(0)} por persona, 16 años o más`
       : '';
 
     // Alerts (max 3, title only)
@@ -195,7 +206,7 @@ function buildLiveDataBlock(liveRows: ParkLiveRow[], parkTitles: Map<string, str
       ? `🏕️ ${title}`
       : `🏕️ ${title} (verificado: ${dateStr})`;
 
-    return [parkHeader, feeLine, nonresLine, alertsLine, campsLine, staleWarning]
+    return [parkHeader, vehicleLine, perPersonLine, nonresLine, alertsLine, campsLine, staleWarning]
       .filter(Boolean)
       .join('\n');
   });
@@ -218,6 +229,8 @@ REGLAS ESTRICTAS:
 
 DATOS VIVOS — REGLAS IMPORTANTES:
 - Para precios de entrada, cierres y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO (si está disponible) y cita la fecha de verificación.
+- Cada línea de tarifa del bloque DATOS EN VIVO es DISTINTA y NO se combina ni se sustituye una por otra. Son tarifas separadas: "Entrada por vehículo", "Entrada por persona" y "Tarifa de NO-RESIDENTE".
+- Cuando te pregunten por el recargo de NO-RESIDENTE o de extranjero (p. ej. "soy mexicano, ¿pago más?"), usa EXCLUSIVAMENTE la línea etiquetada "Tarifa de NO-RESIDENTE". NUNCA respondas ese recargo con la tarifa "por persona" ni con ninguna otra tarifa de entrada.
 - Si los datos vivos tienen más de 7 días o no existen, dilo con honestidad y dirige al usuario a nps.gov/{park_code}.
 - Nunca inventes precios ni fechas. Honestidad sobre completitud.
 
@@ -226,12 +239,23 @@ NUNCA:
 - Recomiendes marcas o productos que no estén en el contexto.
 - Digas que puedes hacer reservas o procesar pagos.`;
 
-function buildSystemPrompt(destinationSlug?: string, liveDataBlock?: string): string {
+function buildSystemPrompt(destinationSlug?: string, liveDataBlock?: string, parkTitle?: string): string {
   let prompt = SYSTEM_PROMPT_BASE;
 
   if (destinationSlug) {
+    const parkLabel = parkTitle ?? destinationSlug;
     prompt += `\n\nIMPORTANTE — MODO PARQUE ESPECÍFICO:
-El usuario está leyendo la guía de "${destinationSlug}". Responde ÚNICAMENTE con información de ese parque. Si el contexto no contiene la respuesta o la pregunta es sobre otro destino, dilo claramente: "Me enfoco solo en este parque. Para otras preguntas, Frank puede ayudarte."`;
+El usuario está leyendo la guía de ${parkLabel}. Distingue DOS casos y NO los confundas:
+
+(A) SCOPE — la pregunta es claramente de OTRO parque/destino o totalmente fuera de tema (p. ej. "¿qué tan lejos está Yosemite?", otro parque por nombre). SOLO en ese caso responde exactamente:
+"Me enfoco solo en este parque. Para otras preguntas, Frank puede ayudarte."
+
+(B) SIN DATOS — la pregunta SÍ es sobre ${parkLabel} pero ni el CONTEXTO ni los DATOS EN VIVO la cubren (p. ej. uso horario, tours, un detalle que falta). Responde:
+"No tengo esa información específica sobre ${parkLabel}, pero Frank puede ayudarte."
+
+REGLAS:
+- Una pregunta sobre ${parkLabel} de la que simplemente no tienes datos es el caso (B), NUNCA el (A).
+- Si el CONTEXTO o los DATOS EN VIVO SÍ contienen la respuesta, respóndela directamente y NUNCA antepongas ninguna de esas dos frases. No mezcles un descargo con una respuesta real.`;
   }
 
   if (liveDataBlock) {
@@ -379,7 +403,7 @@ serve(async (req) => {
         max_tokens:  600,
         temperature: 0.3, // baja temperatura → respuestas más precisas, menos creativas
         messages: [
-          { role: "system",  content: buildSystemPrompt(destination_slug, liveDataBlock) },
+          { role: "system",  content: buildSystemPrompt(destination_slug, liveDataBlock, contextParkTitle ?? undefined) },
           {
             role:    "user",
             content: `CONTEXTO:\n${context}\n\nPREGUNTA DEL USUARIO:\n${question}`,
