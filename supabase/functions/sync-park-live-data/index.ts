@@ -401,21 +401,30 @@ serve(async (req) => {
       try {
         const data = await collectParkData(park, mode, NPS_API_KEY, RIDB_API_KEY);
 
-        // Build upsert payload — alerts mode only updates alerts + metadata
+        // Build upsert payload — alerts mode only updates alerts + metadata.
+        // Only include each field when the corresponding API call succeeded;
+        // on failure, omit it so the upsert leaves the last-known-good value intact.
+        const npsAlertsErr = data.sync_errors.some((e) => e.step === "nps_alerts");
+        const npsParksErr  = data.sync_errors.some((e) => e.step === "nps_parks");
+        const ridbErr      = data.sync_errors.some((e) => e.step === "ridb_campgrounds");
+
         const payload: Record<string, unknown> = {
-          park_code: park.park_code,
+          park_code:      park.park_code,
           destination_id: park.id,
-          alerts: data.alerts,
-          sync_errors: data.sync_errors,
-          synced_at: new Date().toISOString(),
+          sync_errors:    data.sync_errors,
+          synced_at:      new Date().toISOString(),
         };
 
+        if (!npsAlertsErr) payload.alerts = data.alerts;
+
         if (mode === "full") {
-          payload.entrance_fees = data.entrance_fees;
-          payload.operating_hours = data.operating_hours;
-          payload.images = data.images;
-          payload.lat_long = data.lat_long;
-          payload.campgrounds = data.campgrounds;
+          if (!npsParksErr) {
+            payload.entrance_fees   = data.entrance_fees;
+            payload.operating_hours = data.operating_hours;
+            payload.images          = data.images;
+            payload.lat_long        = data.lat_long;
+          }
+          if (!ridbErr) payload.campgrounds = data.campgrounds;
         }
 
         const { error: upsertErr } = await db
