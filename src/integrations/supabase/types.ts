@@ -210,7 +210,7 @@ export type Database = {
           camping_available: boolean | null
           cell_signal_status: string | null
           common_fears: Json | null
-          con_ninos_markdown: string | null
+          with_kids_markdown: string | null
           content_version: number | null
           country: string
           created_at: string
@@ -297,7 +297,7 @@ export type Database = {
           camping_available?: boolean | null
           cell_signal_status?: string | null
           common_fears?: Json | null
-          con_ninos_markdown?: string | null
+          with_kids_markdown?: string | null
           content_version?: number | null
           country: string
           created_at?: string
@@ -384,7 +384,7 @@ export type Database = {
           camping_available?: boolean | null
           cell_signal_status?: string | null
           common_fears?: Json | null
-          con_ninos_markdown?: string | null
+          with_kids_markdown?: string | null
           content_version?: number | null
           country?: string
           created_at?: string

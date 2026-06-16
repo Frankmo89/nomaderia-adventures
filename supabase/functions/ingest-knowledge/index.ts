@@ -52,6 +52,20 @@ interface LodgingEntry {
   reserva_url?: string;
 }
 
+interface FearEntry {
+  miedo?: string;
+  respuesta?: string;
+  question?: string;
+  answer?: string;
+}
+
+interface FaqEntry {
+  pregunta?: string;
+  respuesta?: string;
+  question?: string;
+  answer?: string;
+}
+
 interface DestRow {
   id: string;
   title: string;
@@ -71,8 +85,15 @@ interface DestRow {
   getting_there_markdown: string | null;
   weather_markdown: string | null;
   accessibility_markdown: string | null;
+  with_kids_markdown: string | null;
+  food_and_dining_markdown: string | null;
+  pet_policy_markdown: string | null;
+  seasonal_closures: string | null;
+  wildlife: string | null;
   signature_hikes: SignatureHike[] | null;
   lodging_info: LodgingEntry[] | null;
+  common_fears: FearEntry[] | null;
+  faqs: FaqEntry[] | null;
 }
 
 interface ChunkInput {
@@ -117,6 +138,28 @@ function renderLodging(lodging: LodgingEntry[]): string {
       return `• ${l.nombre}${tipo}${precio ? ` — ${precio}` : ""}`;
     })
     .join("\n");
+}
+
+function renderFears(fears: FearEntry[]): string {
+  return fears
+    .map((f) => {
+      const q = (f.miedo ?? f.question ?? "").trim();
+      const a = (f.respuesta ?? f.answer ?? "").trim();
+      return q && a ? `P: ${q}\nR: ${a}` : (q || a);
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function renderFaqs(faqs: FaqEntry[]): string {
+  return faqs
+    .map((f) => {
+      const q = (f.pregunta ?? f.question ?? "").trim();
+      const a = (f.respuesta ?? f.answer ?? "").trim();
+      return q && a ? `P: ${q}\nR: ${a}` : (q || a);
+    })
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 // ── Section chunker ───────────────────────────────────────────────────────────
@@ -187,6 +230,11 @@ function buildChunks(dest: DestRow): ChunkInput[] {
     [dest.getting_there_markdown, "getting_there"],
     [dest.weather_markdown, "weather"],
     [dest.accessibility_markdown, "accessibility"],
+    [dest.with_kids_markdown, "with_kids"],
+    [dest.food_and_dining_markdown, "food_dining"],
+    [dest.pet_policy_markdown, "pet_policy"],
+    [dest.seasonal_closures, "seasonal_closures"],
+    [dest.wildlife, "wildlife"],
   ];
 
   for (const [text, sf] of textSections) {
@@ -207,6 +255,18 @@ function buildChunks(dest: DestRow): ChunkInput[] {
   if (Array.isArray(dest.lodging_info) && dest.lodging_info.length > 0) {
     const lodgingText = renderLodging(dest.lodging_info as LodgingEntry[]);
     if (lodgingText.trim()) all.push(...chunkSection(dest.title, "lodging", lodgingText));
+  }
+
+  // Common fears: JSONB Q&A → readable text
+  if (Array.isArray(dest.common_fears) && dest.common_fears.length > 0) {
+    const fearsText = renderFears(dest.common_fears as FearEntry[]);
+    if (fearsText.trim()) all.push(...chunkSection(dest.title, "common_fears", fearsText));
+  }
+
+  // FAQs: JSONB Q&A → readable text
+  if (Array.isArray(dest.faqs) && dest.faqs.length > 0) {
+    const faqsText = renderFaqs(dest.faqs as FaqEntry[]);
+    if (faqsText.trim()) all.push(...chunkSection(dest.title, "faqs", faqsText));
   }
 
   return all;
@@ -263,6 +323,8 @@ serve(async (req) => {
       "why_visit_markdown, full_guide_markdown, itinerary_markdown, preparation_plan",
       "gear_list_markdown, safety_markdown, getting_there_markdown, weather_markdown",
       "accessibility_markdown, signature_hikes, lodging_info",
+      "with_kids_markdown, food_and_dining_markdown, pet_policy_markdown",
+      "seasonal_closures, common_fears, faqs, wildlife",
     ].join(", ");
 
     // Try with content_version; if the column doesn't exist PostgREST returns
