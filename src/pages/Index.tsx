@@ -12,7 +12,8 @@ import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { PRICING } from "@/config/pricing";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import JsonLd from "@/components/JsonLd";
@@ -27,6 +28,14 @@ const Index = () => {
     title: "Nomaderia — Aventuras en Parques Nacionales en Español",
     description: "Itinerarios personalizados y alertas de permisos para hispanos en EE. UU. Planea tu aventura en Yosemite, Grand Canyon y más. En español.",
   });
+
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    const id = hash.slice(1);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  }, [hash]);
 
   const ctaWhatsAppUrl = buildWhatsAppLink(CTA_WHATSAPP_MESSAGE);
 

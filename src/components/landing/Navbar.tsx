@@ -9,7 +9,7 @@ const NAV_EASE = [0.22, 1, 0.36, 1] as const;
 import { BRAND_ASSETS } from "@/config/assets";
 
 const navLinks = [
-  { label: "Destinos", href: "#destinos" },
+  { label: "Destinos", href: "/destinos" },
   { label: "Guía de Equipo", href: "/gear" },
   { label: "Blog", href: "/blog" },
   { label: "Servicios", href: "/servicios" },
@@ -131,7 +131,7 @@ const Navbar = () => {
 
             {prefersReducedMotion ? (
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
-                <a href="#quiz">Descubre Tu Aventura</a>
+                <Link to="/#quiz">Descubre Tu Aventura</Link>
               </Button>
             ) : (
               <motion.div
@@ -140,7 +140,7 @@ const Navbar = () => {
                 transition={{ delay: 0.1 + navLinks.length * 0.06, duration: 0.4, ease: NAV_EASE }}
               >
                 <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
-                  <a href="#quiz">Descubre Tu Aventura</a>
+                  <Link to="/#quiz">Descubre Tu Aventura</Link>
                 </Button>
               </motion.div>
             )}
@@ -233,7 +233,7 @@ const Navbar = () => {
                   className="bg-primary text-primary-foreground w-full h-14 text-lg shadow-lg shadow-primary/20"
                   onClick={() => setOpen(false)}
                 >
-                  <a href="#quiz">Descubre Tu Aventura</a>
+                  <Link to="/#quiz">Descubre Tu Aventura</Link>
                 </Button>
               </motion.div>
             </nav>
