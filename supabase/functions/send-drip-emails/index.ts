@@ -163,34 +163,14 @@ function buildItineraryCtaEmail(): string {
       </p>
     </div>
 
-    <!-- Productos -->
+    <!-- Producto -->
     <div style="margin:20px 0;">
-      <h3 style="font-family:'Georgia',serif;font-size:18px;color:#F5F0EB;margin:0 0 16px;">Elige cómo quieres empezar:</h3>
-
-      <!-- Itinerario Personalizado -->
-      <div style="background-color:#292524;border-radius:10px;padding:20px;margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div>
-            <p style="font-family:'Georgia',serif;font-size:17px;color:#F5F0EB;margin:0 0 4px;">🗺️ Itinerario Personalizado</p>
-            <p style="color:#A8A29E;font-size:13px;margin:0 0 8px;line-height:1.5;">Plan día a día · presupuesto detallado · checklist de equipo · tips de seguridad</p>
-            <p style="color:#A8A29E;font-size:12px;margin:0;">Entregado por WhatsApp · Diseñado por Frank (agente TAP)</p>
-          </div>
-          <div style="text-align:right;white-space:nowrap;padding-left:12px;">
-            <p style="font-size:18px;font-weight:700;color:#E86C3A;margin:0;">$29 USD</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Solución Completa -->
       <div style="background-color:#292524;border-radius:10px;padding:20px;margin-bottom:10px;border:1px solid #E86C3A;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div>
-            <p style="font-family:'Georgia',serif;font-size:17px;color:#F5F0EB;margin:0 0 4px;">
-              ✨ Solución Completa
-              <span style="background:#E86C3A;color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;vertical-align:middle;margin-left:6px;">Más popular</span>
-            </p>
-            <p style="color:#A8A29E;font-size:13px;margin:0 0 8px;line-height:1.5;">Itinerario personalizado + Alerta de permisos Yosemite</p>
-            <p style="color:#A8A29E;font-size:12px;margin:0;">Ahorra $9 vs comprar por separado</p>
+            <p style="font-family:'Georgia',serif;font-size:17px;color:#F5F0EB;margin:0 0 4px;">🗺️ Itinerario Completo Nomaderia</p>
+            <p style="color:#A8A29E;font-size:13px;margin:0 0 8px;line-height:1.5;">Plan día a día · presupuesto detallado · checklist de equipo · tips de seguridad</p>
+            <p style="color:#A8A29E;font-size:12px;margin:0;">Entregado por WhatsApp · Diseñado por Frank (agente TAP)</p>
           </div>
           <div style="text-align:right;white-space:nowrap;padding-left:12px;">
             <p style="font-size:18px;font-weight:700;color:#E86C3A;margin:0;">$49 USD</p>
@@ -200,7 +180,7 @@ function buildItineraryCtaEmail(): string {
     </div>
 
     <div style="text-align:center;margin:28px 0 16px;">
-      <a href="https://wa.me/18588996802?text=Hola%20Nomaderia%20%F0%9F%91%8B%20Estoy%20interesado%20en%20el%20Itinerario%20Personalizado.%20%C2%BFMe%20ayudas%20a%20planear%20mi%20aventura%3F"
+      <a href="https://wa.me/18588996802?text=Hola%20Nomaderia%20%F0%9F%91%8B%20Quiero%20mi%20Itinerario%20Completo%20(%2449%20USD)."
          style="display:inline-block;background-color:#25D366;color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
         💬 Solicitar mi itinerario por WhatsApp →
       </a>

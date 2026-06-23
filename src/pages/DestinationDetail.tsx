@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Bell, Sparkles, Mountain, MessageSquare, ExternalLink, AlertTriangle, Share2 } from "lucide-react";
+import { DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Sparkles, Mountain, MessageSquare, ExternalLink, AlertTriangle, Share2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -897,13 +897,6 @@ const DestinationDetail = () => {
                       <MessageSquare className="mr-2 h-4 w-4 shrink-0" /> ¿Listo para ir? Te armamos el itinerario completo →
                     </a>
                   </Button>
-                  {permitAlertUrl && (
-                    <Button asChild className="bg-[#D97706] hover:bg-[#D97706]/90 text-white w-full font-semibold">
-                      <a href={permitAlertUrl} target="_blank" rel="noopener noreferrer">
-                        <Bell className="mr-2 h-4 w-4" /> Alerta de permisos — ${PRICING.solucionCompleta} USD
-                      </a>
-                    </Button>
-                  )}
                   {affiliateLinks.flights_url && (
                     <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full">
                       <a href={affiliateLinks.flights_url} target="_blank" rel="noopener noreferrer">

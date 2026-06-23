@@ -23,7 +23,7 @@ interface DripLog {
 
 const sourceLabels: Record<string, string> = {
   quiz: "Quiz",
-  sentinel: "Alerta de Permisos",
+  sentinel: "Sentinel (Legacy)",
   itinerary: "Itinerario",
 };
 

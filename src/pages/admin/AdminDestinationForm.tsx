@@ -222,8 +222,8 @@ const AffiliateFields = ({ form, set }: { form: FormState; set: (k: string, v: s
     <CardContent className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          {field("URL Alerta de Permisos (Stripe)", <Input value={form.permit_alert_url} onChange={(e) => set("permit_alert_url", e.target.value)} className={inputCls} placeholder="https://buy.stripe.com/..." />)}
-          <p className="text-xs text-muted-foreground mt-1">Solo para parques con permisos difíciles (Yosemite, Grand Canyon)</p>
+          {field("URL Stripe por Destino (opcional)", <Input value={form.permit_alert_url} onChange={(e) => set("permit_alert_url", e.target.value)} className={inputCls} placeholder="https://buy.stripe.com/..." />)}
+          <p className="text-xs text-muted-foreground mt-1">Link de pago específico por parque. Dejar vacío si no aplica.</p>
         </div>
         {field("URL Vuelos", <Input value={form.flights_url} onChange={(e) => set("flights_url", e.target.value)} className={inputCls} placeholder="https://..." />)}
         {field("URL Hoteles", <Input value={form.hotels_url} onChange={(e) => set("hotels_url", e.target.value)} className={inputCls} placeholder="https://..." />)}

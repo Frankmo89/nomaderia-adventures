@@ -146,14 +146,13 @@ serve(async (req) => {
       </table>
     </div>
 
-    <!-- CTA: Itinerario Personalizado -->
     <div style="background-color:#F3F4F6;border-radius:12px;padding:28px;margin:20px 0;text-align:center;border-left:4px solid #D97706;">
       <h3 style="font-family:'Georgia',serif;font-size:18px;color:#1C1917;margin:0 0 10px;">
         ¿Quieres que planifiquemos todo por ti?
       </h3>
       <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 18px;">
         Itinerarios personalizados con plan día a día, presupuesto detallado,
-        checklist de equipo y tips de seguridad. Desde $29 USD.
+        checklist de equipo y tips de seguridad. Itinerario Completo Nomaderia — $49 USD.
       </p>
       <a href="${SITE_URL}/calculadora"
          style="display:inline-block;background-color:#D97706;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">

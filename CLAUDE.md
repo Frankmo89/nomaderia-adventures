@@ -224,7 +224,6 @@ VITE_SITE_URL=                   # https://nomaderia.com
 VITE_WHATSAPP_NUMBER=            # 18588996802 (fallback hardcodeado en whatsapp.ts)
 VITE_GA_MEASUREMENT_ID=          # GA4 — G-CK9STWJDFM
 VITE_SENTRY_DSN=                 # Sentry error tracking (opcional)
-VITE_STRIPE_SENTINEL_URL=        # https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00
 ```
 
 ## Contacto y Redes
