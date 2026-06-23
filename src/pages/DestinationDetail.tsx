@@ -34,6 +34,7 @@ import ItineraryDayCards from "@/components/destinations/ItineraryDayCards";
 import TrailCards, { type SignatureHike } from "@/components/destinations/TrailCards";
 import TrailsSection from "@/components/destinations/TrailsSection";
 import ParkAlertsBanner from "@/components/destinations/ParkAlertsBanner";
+import ParkWeatherCard from "@/components/destinations/ParkWeatherCard";
 import { buildChipItems } from "@/lib/chip-labels";
 import { useParkLiveData } from "@/hooks/use-park-live-data";
 
@@ -799,6 +800,7 @@ const DestinationDetail = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
+                    <ParkWeatherCard weather={parkLiveData?.weather} />
                     {dest.preparation_plan
                       ? <div className="prose prose-stone max-w-none text-foreground/90 leading-relaxed prose-headings:font-serif prose-headings:text-foreground">
                           <ReactMarkdown components={markdownComponents}>{dest.preparation_plan}</ReactMarkdown>
