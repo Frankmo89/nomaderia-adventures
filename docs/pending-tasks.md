@@ -103,6 +103,27 @@ referenciar esta lista primero.
      ```
   5. La función retorna `{ total_national_parks, inserted, updated, failed, photos }`.
   6. Tras la primera corrida, los ~63 parques quedarán en `destinations` con `is_published = false`; publicarlos manualmente desde `/admin/destinations` uno a uno después de curar el contenido español con Opus.
+- [ ] **Frank: agregar columna `weather jsonb` a `park_live_data` y desplegar `sync-park-weather`**:
+  1. En el SQL Editor de Supabase ejecutar:
+     ```sql
+     ALTER TABLE public.park_live_data ADD COLUMN IF NOT EXISTS weather jsonb;
+     ```
+  2. Desplegar la función: `supabase functions deploy sync-park-weather`
+  3. Invocar con el mismo `CRON_SECRET` ya configurado:
+     ```bash
+     curl -X POST https://vrixiuvnhvqafmxlcyex.supabase.co/functions/v1/sync-park-weather \
+       -H "x-cron-secret: <CRON_SECRET>"
+     ```
+     O desde la consola del navegador:
+     ```javascript
+     await fetch("https://vrixiuvnhvqafmxlcyex.supabase.co/functions/v1/sync-park-weather", {
+       method: "POST",
+       headers: { "x-cron-secret": "<CRON_SECRET>" }
+     }).then(r => r.json())
+     ```
+  4. Retorna `{ synced, failed }`. Parks sin coordenadas se omiten (contados en `failed`).
+  5. Para sincronización periódica, programar con cron-job.org o pg_cron (igual que `check-permit-alerts`), por ejemplo diariamente o cada 6 horas.
+  6. **Prerequisito de coordenadas**: la función lee `destinations.latitude` / `destinations.longitude` primero; si son null, intenta parsear `park_live_data.lat_long` (formato NPS: `"lat:X, long:Y"`). Los parques sin coordenadas en ninguna fuente se omiten sin error.
 - [ ] **Frank: configurar secret y cron para alertas de permisos (Paso 8)**:
   - `supabase secrets set CRON_SECRET=<valor_largo_y_unico>`
   - Programar ejecución diaria de `check-permit-alerts` con header `x-cron-secret: <CRON_SECRET>` (pg_cron o cron-job.org).
@@ -174,6 +195,8 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-06-22] **Edge Function `sync-park-weather`** — new function that fills `park_live_data.weather` (jsonb) from the US National Weather Service (api.weather.gov). Auth: `x-cron-secret` header === `CRON_SECRET` (same as `check-permit-alerts`). Pattern: mirrors `sync-park-live-data` (service-role client, 300ms inter-park delay, per-park try/catch, `[sync-park-weather]` log prefix). Reads `destinations.latitude/longitude`; falls back to parsing `park_live_data.lat_long` (NPS string format `"lat:X, long:Y"`) for parks without explicit coords; parks with no coordinates in either source are skipped (counted in `failed`). Two-step NWS call: (1) `GET /points/{lat4},{lng4}` with lat/lng rounded to 4 decimals (api.weather.gov limit); (2) `GET properties.forecast` URL. Both requests send `User-Agent: Nomaderia/1.0 (frank@nomaderia.com)` + `Accept: application/geo+json`. Writes `{ synced_at, source: "weather.gov", periods[0..6]: { name, is_daytime, temp_f, short, detailed, precip_pct, wind } }` via `UPDATE park_live_data SET weather = ... WHERE destination_id = ...` (no other columns touched). Returns `{ synced, failed }`. No changes to existing sync, auth, routing, or other columns. **Prerequisite**: Frank must add `weather jsonb` column and deploy (see Pendientes Humanos). `tsc --noEmit` + `npm run build` pass (deno check not available locally; function reviewed manually for type correctness).
 
 - [2026-06-22] **Park alerts banner — `ParkAlertsBanner` + `useParkLiveData`** — display-only feature; no sync or edge function touched. New hook `src/hooks/use-park-live-data.ts`: `useParkLiveData(destinationId)` selects the `park_live_data` row for the current destination via TanStack Query (ADR-009 cast, local `ParkLiveDataRow` + `ParkAlert` types; 5-min staleTime). New component `src/components/destinations/ParkAlertsBanner.tsx`: collapsed by default — amber `AlertTriangle` + "N alerta(s) en este parque" + chevron; tap to expand an inline list of alerts. Each alert shows a Spanish category badge (`Danger`→"Peligro" red, `Closure`→"Cierre" orange, `Caution`→"Precaución" amber, `Information`→"Información" forest green), the NPS title + description **untranslated** (official safety text), and an "Ver alerta oficial →" link when `url` exists. Sorted Danger/Closure before Caution/Information. Background color switches to `bg-red-50` when any Danger/Closure alert is present. Renders nothing if `alerts` is null or empty. `DestinationDetail.tsx`: imports hook + component, calls `useParkLiveData(dest?.id)`, renders `<ParkAlertsBanner>` between the hero/title section and "Por qué ir" so it cannot be missed. Alert data comes from the existing `park_live_data` sync (`sync-park-live-data` edge function). `tsc --noEmit` + `npm run build` pass.
 
