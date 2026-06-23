@@ -8,10 +8,18 @@ export interface SignatureHike {
   apto_principiante?: boolean | null;
   nota?: string | null;
   difficulty?: string | null;
+  // v2 enriched optional fields
+  tipo?: string | null;
+  apto_ninos?: boolean | null;
+  trailhead_lat?: number | null;
+  trailhead_lng?: number | null;
+  caracteristicas?: string[] | null;
+  enlace_ruta?: string | null;
 }
 
 interface TrailCardsProps {
   hikes: SignatureHike[];
+  showHeading?: boolean;
 }
 
 function inferDifficulty(hike: SignatureHike): string {
@@ -29,17 +37,19 @@ function buildStatsLine(hike: SignatureHike): string {
   return parts.join(" · ");
 }
 
-export default function TrailCards({ hikes }: TrailCardsProps) {
+export default function TrailCards({ hikes, showHeading = true }: TrailCardsProps) {
   if (!hikes.length) return null;
 
   return (
     <div className="mt-8">
-      <h3
-        className="font-serif font-bold text-[#1C1917] mb-4"
-        style={{ fontSize: 22 }}
-      >
-        Senderos destacados
-      </h3>
+      {showHeading && (
+        <h3
+          className="font-serif font-bold text-[#1C1917] mb-4"
+          style={{ fontSize: 22 }}
+        >
+          Senderos destacados
+        </h3>
+      )}
       <div>
         {hikes.map((hike, i) => {
           const difficulty = inferDifficulty(hike);
@@ -55,7 +65,7 @@ export default function TrailCards({ hikes }: TrailCardsProps) {
               }}
             >
               <div style={{ padding: "10px 12px" }}>
-                {/* Row 1: badge + nombre */}
+                {/* Row 1: difficulty badge + nombre + tipo */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <DifficultyBadge difficultyLevel={difficulty} size="sm" />
                   <span
@@ -64,6 +74,14 @@ export default function TrailCards({ hikes }: TrailCardsProps) {
                   >
                     {hike.nombre}
                   </span>
+                  {hike.tipo?.trim() && (
+                    <span
+                      className="font-sans text-[#6B7280] bg-[#F3F4F6] rounded-full px-2 py-0.5"
+                      style={{ fontSize: 12 }}
+                    >
+                      {hike.tipo.trim()}
+                    </span>
+                  )}
                 </div>
 
                 {/* Row 2: stats */}
@@ -76,14 +94,26 @@ export default function TrailCards({ hikes }: TrailCardsProps) {
                   </p>
                 )}
 
-                {/* Row 3: beginner friendly */}
-                {hike.apto_principiante === true && (
-                  <p
-                    className="font-sans text-[#166534] mt-1"
-                    style={{ fontSize: 13 }}
-                  >
-                    ✓ Apto para principiantes
-                  </p>
+                {/* Row 3: beginner + kids badges */}
+                {(hike.apto_principiante === true || hike.apto_ninos === true) && (
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {hike.apto_principiante === true && (
+                      <span
+                        className="font-sans text-[#166534]"
+                        style={{ fontSize: 13 }}
+                      >
+                        ✓ Apto para principiantes
+                      </span>
+                    )}
+                    {hike.apto_ninos === true && (
+                      <span
+                        className="font-sans text-white bg-[#166534] rounded-full px-2 py-0.5"
+                        style={{ fontSize: 12 }}
+                      >
+                        Apta para niños
+                      </span>
+                    )}
+                  </div>
                 )}
 
                 {/* Row 4: nota */}
@@ -94,6 +124,19 @@ export default function TrailCards({ hikes }: TrailCardsProps) {
                   >
                     {hike.nota.trim()}
                   </p>
+                )}
+
+                {/* Row 5: AllTrails link */}
+                {hike.enlace_ruta?.trim() && (
+                  <a
+                    href={hike.enlace_ruta.trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block font-sans text-[#D97706] hover:underline mt-2"
+                    style={{ fontSize: 13 }}
+                  >
+                    Ver ruta en AllTrails →
+                  </a>
                 )}
               </div>
             </div>

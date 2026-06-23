@@ -111,6 +111,13 @@ interface SignatureHike {
   desnivel_m: number | null;
   apto_principiante: boolean;
   nota: string | null;
+  // v2 optional enriched fields
+  tipo?: string | null;
+  apto_ninos?: boolean | null;
+  trailhead_lat?: number | null;
+  trailhead_lng?: number | null;
+  caracteristicas?: string[] | null;
+  enlace_ruta?: string | null;
 }
 
 interface CommonFear {
@@ -323,12 +330,14 @@ referencia de formato — adapta al parque real que estés generando.
   Correcto: ["Senderismo", "Observación de fauna", "Fotografía de paisajes"]
   PROHIBIDO: ["senderismo", "hiking", "observación-de-fauna"] — sin slugs, sin inglés, sin todo-minúsculas.
 
-- signature_hikes: genera 2-3 entradas con EXACTAMENTE estas claves — sin añadir ni quitar:
-  [{ "nombre": string, "distancia_km": number|null, "duracion_horas": number|null, "desnivel_m": number|null, "apto_principiante": boolean, "nota": string|null }]
+- signature_hikes: genera 2-3 entradas con estas claves obligatorias y opcionales:
+  Obligatorias: nombre (string), distancia_km (number|null), duracion_horas (number|null), desnivel_m (number|null), apto_principiante (boolean), nota (string|null)
+  Opcionales (incluye solo si conoces el dato con certeza): tipo ("circuito"|"ida y vuelta"|string), apto_ninos (boolean), trailhead_lat (number), trailhead_lng (number), caracteristicas (string[]), enlace_ruta (string URL de AllTrails)
   → distancia_km / duracion_horas / desnivel_m: SOLO números. Nunca strings ni rangos ("4-6 km" → INCORRECTO).
   → apto_principiante: true SOLO si una persona sin entrenamiento atlético puede completarlo de forma segura.
+  → apto_ninos: true SOLO si es seguro y disfrutable para niños de 6-12 años.
   → nota: 1-2 oraciones concretas sobre lo que hace único ESTE sendero en ESTE parque — cero relleno.
-  → Si no puedes verificar un valor numérico, omite ese campo — NO inventes.
+  → Si no puedes verificar un valor numérico o una URL, omite ese campo — NO inventes.
   → NO incluyas la clave "dificultad" — esa clave está prohibida en signature_hikes.
 
 - common_fears: [{miedo:string, respuesta:string}]
@@ -456,8 +465,8 @@ Devuelve SOLO este JSON. Omite campos que no puedas rellenar con seguridad.
   "itinerary_markdown": "## Itinerario Sugerido\\n### Día 1\\n...",
   "top_activities": ["Senderismo", "Observación de fauna", "Fotografía de paisajes"],
   "signature_hikes": [
-    { "nombre": "Nombre del sendero", "distancia_km": 4.8, "duracion_horas": 3.0, "desnivel_m": 147, "apto_principiante": true, "nota": "1-2 oraciones concretas — qué hace único este sendero." },
-    { "nombre": "Otro sendero", "distancia_km": 12.5, "duracion_horas": 6.0, "desnivel_m": 520, "apto_principiante": false, "nota": "Solo para quienes ya han hecho senderismo de montaña." }
+    { "nombre": "Nombre del sendero", "distancia_km": 4.8, "duracion_horas": 3.0, "desnivel_m": 147, "apto_principiante": true, "nota": "1-2 oraciones concretas — qué hace único este sendero.", "tipo": "circuito", "apto_ninos": true, "trailhead_lat": 37.7495, "trailhead_lng": -119.5332, "enlace_ruta": "https://www.alltrails.com/trail/..." },
+    { "nombre": "Otro sendero", "distancia_km": 12.5, "duracion_horas": 6.0, "desnivel_m": 520, "apto_principiante": false, "nota": "Solo para quienes ya han hecho senderismo de montaña.", "tipo": "ida y vuelta" }
   ],
   "common_fears": [
     { "miedo": "¿Es muy difícil para alguien sin experiencia?", "respuesta": "..." },
@@ -518,7 +527,7 @@ function coerceSignatureHike(item: unknown): SignatureHike | null {
   if (typeof item !== "object" || item === null) return null;
   const h = item as Record<string, unknown>;
   if (typeof h.nombre !== "string" || !h.nombre.trim()) return null;
-  return {
+  const base: SignatureHike = {
     nombre: h.nombre.trim(),
     distancia_km: typeof h.distancia_km === "number" && Number.isFinite(h.distancia_km) ? h.distancia_km : null,
     duracion_horas: typeof h.duracion_horas === "number" && Number.isFinite(h.duracion_horas) ? h.duracion_horas : null,
@@ -527,6 +536,16 @@ function coerceSignatureHike(item: unknown): SignatureHike | null {
     apto_principiante: h.apto_principiante === true,
     nota: typeof h.nota === "string" ? h.nota.trim() || null : null,
   };
+  // v2 optional fields — pass through only if valid
+  if (typeof h.tipo === "string" && h.tipo.trim()) base.tipo = h.tipo.trim();
+  if (typeof h.apto_ninos === "boolean") base.apto_ninos = h.apto_ninos;
+  if (typeof h.trailhead_lat === "number" && Number.isFinite(h.trailhead_lat)) base.trailhead_lat = h.trailhead_lat;
+  if (typeof h.trailhead_lng === "number" && Number.isFinite(h.trailhead_lng)) base.trailhead_lng = h.trailhead_lng;
+  if (Array.isArray(h.caracteristicas) && h.caracteristicas.every((c) => typeof c === "string")) {
+    base.caracteristicas = h.caracteristicas as string[];
+  }
+  if (typeof h.enlace_ruta === "string" && h.enlace_ruta.trim()) base.enlace_ruta = h.enlace_ruta.trim();
+  return base;
 }
 
 function coerceCommonFear(item: unknown): CommonFear | null {

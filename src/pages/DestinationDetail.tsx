@@ -32,7 +32,10 @@ import HowToGetThere, { type LodgingOption } from "@/components/destinations/How
 import CredibilityBar from "@/components/destinations/CredibilityBar";
 import ItineraryDayCards from "@/components/destinations/ItineraryDayCards";
 import TrailCards, { type SignatureHike } from "@/components/destinations/TrailCards";
+import TrailsSection from "@/components/destinations/TrailsSection";
+import ParkAlertsBanner from "@/components/destinations/ParkAlertsBanner";
 import { buildChipItems } from "@/lib/chip-labels";
+import { useParkLiveData } from "@/hooks/use-park-live-data";
 
 type Destination = Tables<"destinations">;
 
@@ -114,6 +117,7 @@ const DestinationDetail = () => {
     dest?.difficulty_level,
     dest?.id
   );
+  const { data: parkLiveData } = useParkLiveData(dest?.id);
 
   // Hero carousel
   const [heroRef, heroApi] = useEmblaCarousel({ loop: true });
@@ -490,6 +494,9 @@ const DestinationDetail = () => {
         </div>
       </section>
 
+      {/* Park alerts — prominently before content, after hero */}
+      <ParkAlertsBanner alerts={parkLiveData?.alerts ?? []} />
+
       {/* Por qué ir */}
       {(whyText || highlights.length > 0) && (
         <motion.section
@@ -521,6 +528,14 @@ const DestinationDetail = () => {
           </div>
         </motion.section>
       )}
+
+      {/* Senderos */}
+      {(() => {
+        const hikes = ((dest as Destination & DestExt).signature_hikes ?? []).filter(
+          (h) => h?.nombre?.trim(),
+        );
+        return hikes.length > 0 ? <TrailsSection hikes={hikes} /> : null;
+      })()}
 
       {/* Recargo no-residentes — solo si has_nonresident_surcharge = true */}
       {(dest as Destination & DestExt).has_nonresident_surcharge && (
@@ -757,14 +772,6 @@ const DestinationDetail = () => {
                         </div>
                       )}
                     </div>
-
-                    {/* ── Trail cards (Component 4) ── */}
-                    {(() => {
-                      const hikes = ((dest as Destination & DestExt).signature_hikes ?? []).filter(
-                        (h) => h?.nombre?.trim()
-                      );
-                      return hikes.length > 0 ? <TrailCards hikes={hikes} /> : null;
-                    })()}
 
                     {/* ── FAQ accordion ── */}
                     {fears.length > 0 && (
