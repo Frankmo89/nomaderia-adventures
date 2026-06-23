@@ -54,6 +54,43 @@ export function useDestinationBySlug(slug: string | undefined) {
   });
 }
 
+export interface ParkCard {
+  id: string;
+  title: string;
+  slug: string;
+  hero_image_url: string | null;
+  difficulty_level: string;
+  experience_type: string | null;
+  short_description: string | null;
+  access_type: string | null;
+  region: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  drive_time_from_san_diego: string | null;
+  nearest_airport: string | null;
+  requires_permit: boolean | null;
+  estimated_budget_usd: number | null;
+  cell_signal_status: string | null;
+}
+
+export function useDestinationsDirectory() {
+  return useQuery<ParkCard[]>({
+    queryKey: ["destinations", "directory"],
+    staleTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("destinations")
+        .select(
+          "id, title, slug, hero_image_url, difficulty_level, experience_type, short_description, access_type, region, latitude, longitude, drive_time_from_san_diego, nearest_airport, requires_permit, estimated_budget_usd, cell_signal_status"
+        )
+        .eq("is_published", true)
+        .order("title");
+      if (error) throw error;
+      return (data as ParkCard[]) ?? [];
+    },
+  });
+}
+
 export function useRelatedDestinations(
   difficultyLevel: string | undefined,
   excludeId: string | undefined
