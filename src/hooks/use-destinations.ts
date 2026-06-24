@@ -94,6 +94,40 @@ export function useDestinationsDirectory() {
   });
 }
 
+export interface HeroPark {
+  id: string;
+  title: string;
+  slug: string;
+  hero_image_url: string | null;
+  difficulty_level: string;
+  region: string | null;
+  requires_permit: boolean | null;
+  drive_time_from_san_diego: string | null;
+  experience_type: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export function useFeaturedHeroPark() {
+  return useQuery<HeroPark[]>({
+    queryKey: ["destinations", "hero-featured"],
+    staleTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("destinations")
+        .select(
+          "id, title, slug, hero_image_url, difficulty_level, region, requires_permit, drive_time_from_san_diego, experience_type, latitude, longitude"
+        )
+        .eq("featured", true)
+        .eq("beginner_friendly", true)
+        .not("hero_image_url", "is", null)
+        .eq("is_published", true);
+      if (error) throw error;
+      return (data as HeroPark[]) ?? [];
+    },
+  });
+}
+
 export function useRelatedDestinations(
   difficultyLevel: string | undefined,
   excludeId: string | undefined
