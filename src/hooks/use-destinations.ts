@@ -73,6 +73,7 @@ export interface ParkCard {
   requires_permit: boolean | null;
   estimated_budget_usd: number | null;
   cell_signal_status: string | null;
+  camping_available: boolean;
 }
 
 export function useDestinationsDirectory() {
@@ -83,7 +84,7 @@ export function useDestinationsDirectory() {
       const { data, error } = await supabase
         .from("destinations")
         .select(
-          "id, title, slug, hero_image_url, difficulty_level, experience_type, short_description, access_type, access_difficulty, region, latitude, longitude, drive_time_from_san_diego, nearest_airport, requires_permit, estimated_budget_usd, cell_signal_status"
+          "id, title, slug, hero_image_url, difficulty_level, experience_type, short_description, access_type, access_difficulty, region, latitude, longitude, drive_time_from_san_diego, nearest_airport, requires_permit, estimated_budget_usd, cell_signal_status, camping_available"
         )
         .eq("is_published", true)
         .order("title");

@@ -290,6 +290,8 @@ const Destinations = () => {
   const [filterAccess, setFilterAccess] = useState<Set<string>>(new Set());
   const [filterStates, setFilterStates] = useState<Set<string>>(new Set());
   const [filterDistance, setFilterDistance] = useState<DistanceFilter>("any");
+  const [filterNoPermit, setFilterNoPermit] = useState(false);
+  const [filterCamping, setFilterCamping] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>("distance");
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -341,6 +343,10 @@ const Destinations = () => {
           if (!isFinite(p.distanceKm)) return false;
           if (getDistanceBucket(p.distanceKm) !== filterDistance) return false;
         }
+        // No-permit toggle
+        if (filterNoPermit && p.requires_permit !== false) return false;
+        // Camping toggle
+        if (filterCamping && p.camping_available !== true) return false;
         return true;
       })
       .sort((a, b) => {
@@ -351,7 +357,7 @@ const Destinations = () => {
         if (!isFinite(b.distanceKm)) return -1;
         return a.distanceKm - b.distanceKm;
       });
-  }, [parksWithDist, search, activeTab, filterAccess, filterStates, filterDistance, sortOrder]);
+  }, [parksWithDist, search, activeTab, filterAccess, filterStates, filterDistance, filterNoPermit, filterCamping, sortOrder]);
 
   function clearAllFilters() {
     setSearch("");
@@ -359,6 +365,8 @@ const Destinations = () => {
     setFilterAccess(new Set());
     setFilterStates(new Set());
     setFilterDistance("any");
+    setFilterNoPermit(false);
+    setFilterCamping(false);
   }
 
   function toggleAccess(val: string) {
@@ -425,7 +433,7 @@ const Destinations = () => {
           </Button>
         </div>
 
-        {/* Difficulty tabs — scrollable horizontally */}
+        {/* Difficulty tabs + quick-filter chips — scrollable horizontally */}
         <div className="flex overflow-x-auto border-t border-stone-100 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((tab) => (
             <button
@@ -441,6 +449,43 @@ const Destinations = () => {
               {tab.label}
             </button>
           ))}
+
+          {/* Separator */}
+          <span className="self-center mx-1 h-4 w-px bg-stone-200 flex-none" aria-hidden />
+
+          {/* 🔓 Sin permiso */}
+          <button
+            onClick={() => setFilterNoPermit((prev) => !prev)}
+            className={cn(
+              "flex-none self-center mx-1 px-3 py-1.5 text-sm font-medium whitespace-nowrap rounded-full border transition-colors",
+              filterNoPermit
+                ? "bg-[#166534] text-white border-[#166534]"
+                : "border-stone-200 text-muted-foreground hover:text-foreground bg-background"
+            )}
+          >
+            🔓 Sin permiso
+          </button>
+
+          {/* 🏕️ Acampar */}
+          <button
+            onClick={() => setFilterCamping((prev) => !prev)}
+            className={cn(
+              "flex-none self-center mx-1 px-3 py-1.5 text-sm font-medium whitespace-nowrap rounded-full border transition-colors",
+              filterCamping
+                ? "bg-[#166534] text-white border-[#166534]"
+                : "border-stone-200 text-muted-foreground hover:text-foreground bg-background"
+            )}
+          >
+            🏕️ Acampar
+          </button>
+
+          {/* Más ▾ — opens the full filter sheet */}
+          <button
+            onClick={() => setSheetOpen(true)}
+            className="flex-none self-center mx-1 mr-3 px-3 py-1.5 text-sm font-medium whitespace-nowrap rounded-full border border-stone-200 text-muted-foreground hover:text-foreground bg-background transition-colors"
+          >
+            Más ▾
+          </button>
         </div>
       </div>
 
