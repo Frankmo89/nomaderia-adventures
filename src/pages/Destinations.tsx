@@ -179,19 +179,19 @@ function ParkListCard({ park }: { park: ParkCard }) {
           <p className="text-sm italic text-muted-foreground mt-1 line-clamp-2">{tagline}</p>
         )}
 
-        {/* Access type + cell signal */}
+        {/* Access difficulty + cell signal */}
         <div className="flex flex-wrap items-center gap-2 mt-2.5">
-          {park.access_type && (
+          {park.access_difficulty && (
             <span
               className={cn(
                 "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border",
-                park.access_type === "facil"
+                park.access_difficulty === "facil"
                   ? "bg-green-50 text-green-800 border-green-200"
                   : "bg-amber-50 text-amber-800 border-amber-200"
               )}
             >
               <Route className="h-3 w-3 shrink-0" />
-              {ACCESS_LABELS[park.access_type] ?? park.access_type}
+              {ACCESS_LABELS[park.access_difficulty] ?? park.access_difficulty}
             </span>
           )}
           <span
@@ -329,8 +329,8 @@ const Destinations = () => {
           !["moderate", "challenging"].includes(p.difficulty_level)
         )
           return false;
-        // Access type (OR within multi-select)
-        if (filterAccess.size > 0 && !filterAccess.has(p.access_type ?? "")) return false;
+        // Access difficulty (OR within multi-select)
+        if (filterAccess.size > 0 && !filterAccess.has(p.access_difficulty ?? "")) return false;
         // State (OR within multi-select — park matches if any of its codes is selected)
         if (filterStates.size > 0) {
           const codes = getRegionCodes(p.region);

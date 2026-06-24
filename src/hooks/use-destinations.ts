@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -63,6 +64,7 @@ export interface ParkCard {
   experience_type: string | null;
   short_description: string | null;
   access_type: string | null;
+  access_difficulty: string | null;
   region: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -81,7 +83,7 @@ export function useDestinationsDirectory() {
       const { data, error } = await supabase
         .from("destinations")
         .select(
-          "id, title, slug, hero_image_url, difficulty_level, experience_type, short_description, access_type, region, latitude, longitude, drive_time_from_san_diego, nearest_airport, requires_permit, estimated_budget_usd, cell_signal_status"
+          "id, title, slug, hero_image_url, difficulty_level, experience_type, short_description, access_type, access_difficulty, region, latitude, longitude, drive_time_from_san_diego, nearest_airport, requires_permit, estimated_budget_usd, cell_signal_status"
         )
         .eq("is_published", true)
         .order("title");
