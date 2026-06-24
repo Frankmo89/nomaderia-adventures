@@ -294,6 +294,7 @@ const Destinations = () => {
   const [filterCamping, setFilterCamping] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>("distance");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [showStates, setShowStates] = useState(false);
 
   // Precompute haversine distance for each park
   const parksWithDist = useMemo<ParkWithDist[]>(
@@ -558,7 +559,8 @@ const Destinations = () => {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent
           side="bottom"
-          className="h-[88vh] flex flex-col gap-0 p-0 rounded-t-2xl overflow-hidden"
+          style={{ height: 'auto', maxHeight: '50vh' }}
+          className="flex flex-col gap-0 p-0 rounded-t-2xl overflow-hidden"
         >
           <SheetHeader className="px-5 pt-5 pb-4 border-b border-stone-100 flex-shrink-0">
             <SheetTitle className="font-serif text-lg text-left">Más filtros</SheetTitle>
@@ -587,24 +589,35 @@ const Destinations = () => {
 
             {/* Estado */}
             <section>
-              <h3 className="text-sm font-semibold text-foreground mb-3">Estado</h3>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                {allStateCodes.map((code) => (
-                  <div key={code} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`state-${code}`}
-                      checked={filterStates.has(code)}
-                      onCheckedChange={() => toggleState(code)}
-                    />
-                    <label
-                      htmlFor={`state-${code}`}
-                      className="text-sm cursor-pointer leading-tight"
-                    >
-                      {STATE_NAMES[code] ?? code}
-                    </label>
-                  </div>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowStates((prev) => !prev)}
+                className="w-full flex items-center justify-between text-sm font-semibold text-foreground py-1"
+              >
+                <span>
+                  Ver por estado{filterStates.size > 0 ? ` (${filterStates.size})` : ""}{" "}
+                  {showStates ? "▲" : "▾"}
+                </span>
+              </button>
+              {showStates && (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-3 overflow-y-auto">
+                  {allStateCodes.map((code) => (
+                    <div key={code} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`state-${code}`}
+                        checked={filterStates.has(code)}
+                        onCheckedChange={() => toggleState(code)}
+                      />
+                      <label
+                        htmlFor={`state-${code}`}
+                        className="text-sm cursor-pointer leading-tight"
+                      >
+                        {STATE_NAMES[code] ?? code}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Distancia desde San Diego */}

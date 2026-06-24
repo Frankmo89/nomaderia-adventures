@@ -196,6 +196,8 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-06-24] **`/destinos` — fix iOS Safari mini-sheet (BUG 1 + BUG 2)** — `SheetContent` `h-[88vh]` reemplazado por `style={{ height: 'auto', maxHeight: '50vh' }}` (fuerza altura parcial en Safari); sección "Estado" convertida a disclosure colapsable (`showStates` state, false por defecto) con toggle "Ver por estado (N) ▾/▲". `tsc --noEmit` + `npm run build` pasan.
+
 - [2026-06-24] Added 🏕️ Acampar chip (camping_available=true, data corrected for 29 parks via park_live_data cross-check)
 
 - [2026-06-24] **`/destinos` — fix filtro "Cómo llegar" y pill de acceso a `access_difficulty`** — el filtro de checkboxes "Cómo llegar" y el pill de la card usaban erróneamente `access_type` en lugar de `access_difficulty`. Cambios: (1) `ParkCard` en `src/hooks/use-destinations.ts`: añadido campo `access_difficulty: string | null`; `access_difficulty` añadido al SELECT de `useDestinationsDirectory`. (2) `src/pages/Destinations.tsx`: filtro `filterAccess` cambiado de `p.access_type` a `p.access_difficulty`; pill de la card (`ParkListCard`) cambiado de `park.access_type` a `park.access_difficulty` en condición, color (`facil` = verde, resto = amber) y label. Valores: `facil`→"En auto, fácil" (verde), `planificacion`→"Requiere planificación" (amber), `aventureros`→"Para aventureros" (amber), `experto`→"Solo expertos" (amber). `tsc --noEmit` + `npm run build` pasan (chunk `Destinations-*.js` ≈ 17.5 kB / gzip 6.4 kB).
