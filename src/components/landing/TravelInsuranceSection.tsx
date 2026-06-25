@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { Shield, HeartPulse, Luggage, Plane, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Shield, HeartPulse, Luggage, Info } from "lucide-react";
 import Reveal from "@/components/editorial/Reveal";
 
 const benefits = [
@@ -15,19 +14,11 @@ const benefits = [
     desc: "Tu mochila, botas y cámara están cubiertos ante pérdida, robo o daño durante toda tu aventura.",
   },
   {
-    icon: Plane,
-    title: "Cancelación de Viaje",
-    desc: "Recupera tu inversión si el clima, salud o imprevistos te obligan a cambiar planes de último momento.",
-  },
-  {
     icon: Shield,
     title: "Cobertura 24/7",
     desc: "Asistencia en español las 24 horas, sin importar la zona horaria o lo remoto del destino.",
   },
 ];
-
-const AFFILIATE_URL =
-  "https://www.travelpayouts.com/click?shmarker=nomaderia&prg=safety&sys=ins";
 
 const TravelInsuranceSection = () => {
   return (
@@ -45,20 +36,19 @@ const TravelInsuranceSection = () => {
         {/* Header */}
         <Reveal className="text-center mb-10 sm:mb-14 max-w-3xl mx-auto">
           <span className="text-secondary text-sm font-semibold tracking-wider uppercase mb-3 block">
-            No salgas sin esto
+            Antes de salir
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Protege Tu{" "}
             <span className="text-[#D97706]">Aventura</span>
           </h2>
           <p className="text-foreground/75 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            Muchos principiantes viajan sin seguro y un accidente en montaña puede implicar gastos médicos muy altos.
-            Cotiza en segundos y viaja tranquilo con una cobertura pensada para tus aventuras.
+            Antes de salir, considera un seguro de viaje: protege tu salud, tu equipo y tu tranquilidad en cualquier aventura.
           </p>
         </Reveal>
 
         {/* Benefits grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 mb-10 sm:mb-14 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 mb-10 max-w-4xl mx-auto">
           {benefits.map((b, i) => (
             <motion.div
               key={b.title}
@@ -81,25 +71,9 @@ const TravelInsuranceSection = () => {
           ))}
         </div>
 
-        {/* CTA */}
-        <Reveal className="text-center">
-          <Button
-            asChild
-            size="lg"
-            className="bg-[#D97706] hover:bg-[#D97706]/90 text-[#F5F0EB] text-base px-10 py-6 rounded-2xl font-semibold shadow-lg shadow-[#D97706]/20 hover:shadow-[#D97706]/30 transition-all"
-          >
-            <a
-              href={AFFILIATE_URL}
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-            >
-              Cotizar Mi Seguro de Viaje
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </a>
-          </Button>
-          <p className="text-xs text-foreground/70 mt-3">
-            Desde $2 USD/día · Compara aseguradoras en minutos · Enlace de afiliado
-          </p>
+        <Reveal className="flex items-start gap-2 justify-center text-sm text-foreground/55 max-w-xl mx-auto">
+          <Info className="h-4 w-4 mt-0.5 shrink-0 text-foreground/35" />
+          <p>El seguro de viaje está incluido en tu Itinerario Completo — te ayudamos a conseguirlo.</p>
         </Reveal>
       </div>
     </section>
