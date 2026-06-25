@@ -1,256 +1,210 @@
-import { useState, useEffect, useMemo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useFeaturedHeroPark, type HeroPark } from "@/hooks/use-destinations";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
+
+const WHATSAPP_URL = buildWhatsAppLink(
+  "Hola Frank, quiero planear mi primera aventura"
+);
+
+const SUPABASE_URL =
+  "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/media_gallery";
+
+const ALL_PHOTOS = [
+  `${SUPABASE_URL}/00f4bec5-78fa-4416-91fd-12c8319e9d49.jpeg`,
+  `${SUPABASE_URL}/0971bffa-5cc8-4d0e-8c81-27f6cd4aef7a.jpeg`,
+  `${SUPABASE_URL}/2171f956-08ac-4156-9644-178aa01e241e.jpeg`,
+  `${SUPABASE_URL}/349defac-d3ac-474c-a03a-ab262fb49b8f.jpeg`,
+  `${SUPABASE_URL}/391bde98-0b99-4773-ad0d-f5c7e50107e4.jpeg`,
+  `${SUPABASE_URL}/3a72e5c0-b2a1-485b-b3fb-bf958b815579.jpeg`,
+  `${SUPABASE_URL}/3bd94287-e5c1-46f9-9e5c-1bad3b82068b.jpeg`,
+  `${SUPABASE_URL}/3fdc4c24-45ab-42e8-abae-a45d4bff242a.jpeg`,
+  `${SUPABASE_URL}/59e22d4c-75d0-4ab7-86b4-54774328a333.jpeg`,
+  `${SUPABASE_URL}/78ca25d9-466c-4580-92ad-3d1f56d57ad2.jpeg`,
+  `${SUPABASE_URL}/947b0c74-2096-46f5-b91b-62aa68f8142e.jpeg`,
+  `${SUPABASE_URL}/b4a7fef0-0082-4e60-98cc-37cadf3ad004.jpeg`,
+  `${SUPABASE_URL}/bfa161c7-c696-4d19-a1a9-4c8a8b31acc6.jpeg`,
+  `${SUPABASE_URL}/c29ff6ac-f25b-4011-9ac7-1d31121e9e71.jpeg`,
+  `${SUPABASE_URL}/feeb5de1-333e-48bc-9bbd-caff00902fcc.jpeg`,
+];
+
+function shuffled<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 const KEN_BURNS_CSS = `
 @keyframes hero-ken-burns {
   from { transform: scale(1.0) translateX(0px); }
-  to   { transform: scale(1.06) translateX(-10px); }
+  to   { transform: scale(1.08) translateX(-12px); }
 }
 `;
 
-const ROTATE_INTERVAL_MS = 8000;
+const SLIDE_DURATION = 5000;
 
-const SCRIM = {
-  background:
-    "linear-gradient(to bottom, transparent 38%, rgba(10,25,10,0.65) 70%, rgba(10,25,10,0.92) 100%)",
-};
-
-/** Extracts drive hours from strings like "3 horas en coche". Returns null for
- *  values containing "volar", without "horas en coche", or when hours > 8. */
-function parseDriveHours(val: string | null): number | null {
-  if (!val) return null;
-  if (val.toLowerCase().includes("volar")) return null;
-  if (!val.includes("horas en coche")) return null;
-  const match = val.match(/^(\d+)/);
-  if (!match) return null;
-  const hours = parseInt(match[1], 10);
-  return hours <= 8 ? hours : null;
-}
-
-function stripParkPrefix(title: string): string {
-  return title.replace(/^Parque Nacional\s+/i, "").trim();
-}
-
-function truncateWords(str: string, maxWords: number): string {
-  const words = str.trim().split(/\s+/);
-  return words.length <= maxWords ? str : words.slice(0, maxWords).join(" ");
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-const CHIP =
-  "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium text-white/90 bg-black/35 border border-white/20 backdrop-blur-sm";
-
-/* ─── Loading skeleton ─── */
-const HeroSkeleton = () => (
-  <section className="relative min-h-[70vh] overflow-hidden bg-stone-900">
-    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
-    <div className="absolute inset-0 pointer-events-none" style={SCRIM} />
-    <div className="absolute bottom-0 left-0 px-4 pb-10 sm:px-6 sm:pb-14 md:px-10 md:pb-16 max-w-lg w-full space-y-3">
-      <div className="h-3 w-28 rounded bg-white/10 animate-pulse" />
-      <div className="h-10 w-56 rounded bg-white/15 animate-pulse" />
-      <div className="flex gap-2">
-        <div className="h-6 w-16 rounded-full bg-white/10 animate-pulse" />
-        <div className="h-6 w-28 rounded-full bg-white/10 animate-pulse" />
-        <div className="h-6 w-20 rounded-full bg-white/10 animate-pulse" />
-      </div>
-      <div className="h-11 w-44 rounded-full bg-white/15 animate-pulse" />
-    </div>
-  </section>
-);
-
-/* ─── Fallback (query error or empty result set) ─── */
-const HeroFallback = () => (
-  <section className="relative min-h-[70vh] overflow-hidden">
-    <style>{KEN_BURNS_CSS}</style>
-    <div
-      className="absolute inset-0"
-      style={{
-        background: "linear-gradient(135deg, #166534 0%, #1C1917 55%, #78350F 100%)",
-        animation: "hero-ken-burns 14s ease-in-out infinite alternate",
-      }}
-    />
-    <div className="absolute inset-0 pointer-events-none" style={SCRIM} />
-    <div className="absolute bottom-0 left-0 px-4 pb-10 sm:px-6 sm:pb-14 md:px-10 md:pb-16 max-w-xl">
-      <span className="text-xs tracking-[0.2em] uppercase font-medium text-white/60 mb-2 block">
-        Parque del momento
-      </span>
-      <h1 className="font-serif font-bold text-white text-3xl sm:text-4xl md:text-5xl leading-tight mb-6">
-        Tu primera aventura empieza aquí
-      </h1>
-      <Button
-        asChild
-        className="rounded-full bg-primary text-primary-foreground h-auto px-7 py-3 text-sm font-semibold hover:bg-primary/90 transition-colors"
-      >
-        <Link to="/destinos">Explorar destinos →</Link>
-      </Button>
-    </div>
-  </section>
-);
-
-/* ─── Animated content block for the active park ─── */
-const ParkContent = ({ park }: { park: HeroPark }) => {
-  const displayTitle = stripParkPrefix(park.title);
-  const driveHours = parseDriveHours(park.drive_time_from_san_diego);
-
-  const difficultyChip =
-    park.difficulty_level === "easy" ? "🟢 Fácil" : "🟡 Moderado";
-
-  let distanceOrTypeChip: string | null = null;
-  if (driveHours !== null) {
-    distanceOrTypeChip = `📍 ${driveHours}h desde San Diego`;
-  } else if (park.experience_type) {
-    distanceOrTypeChip = `✨ ${truncateWords(park.experience_type, 4)}`;
-  }
-
-  const permitChip =
-    park.requires_permit === true ? "🔒 Requiere permiso" : "🔓 Sin permiso";
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="absolute bottom-0 left-0 px-4 pb-10 sm:px-6 sm:pb-14 md:px-10 md:pb-16 max-w-xl"
-    >
-      <span className="text-xs tracking-[0.2em] uppercase font-medium text-white/60 mb-2 block">
-        Parque del momento
-      </span>
-
-      <h1 className="font-serif font-bold text-white text-3xl sm:text-4xl md:text-5xl leading-tight mb-4">
-        {displayTitle}
-      </h1>
-
-      <div className="flex flex-wrap gap-2 mb-6">
-        <span className={CHIP}>{difficultyChip}</span>
-        {distanceOrTypeChip !== null && (
-          <span className={CHIP}>{distanceOrTypeChip}</span>
-        )}
-        <span className={CHIP}>{permitChip}</span>
-      </div>
-
-      <Button
-        asChild
-        className="rounded-full bg-primary text-primary-foreground h-auto px-7 py-3 text-sm font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors"
-      >
-        <Link to={`/destinos/${park.slug}`}>Ver guía completa →</Link>
-      </Button>
-    </motion.div>
-  );
-};
-
-/* ─── Main component ─── */
 const HeroSection = () => {
-  const { data: rawParks = [], isLoading, isError } = useFeaturedHeroPark();
+  const [slides] = useState<string[]>(() => shuffled(ALL_PHOTOS).slice(0, 4));
+  const [active, setActive] = useState(0);
 
-  // Shuffle once per unique park set; stable across re-renders with same data.
-  const parkIds = rawParks.map((p) => p.id).sort().join(",");
-  const parks = useMemo(
-    () => (rawParks.length > 0 ? shuffle([...rawParks]) : []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [parkIds]
-  );
-
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  // Reset to first slide when the park set changes.
   useEffect(() => {
-    setActiveIndex(0);
-  }, [parkIds]);
-
-  // Rotate slides every ROTATE_INTERVAL_MS.
-  useEffect(() => {
-    if (parks.length <= 1) return;
-    const id = setInterval(
-      () => setActiveIndex((prev) => (prev + 1) % parks.length),
-      ROTATE_INTERVAL_MS
-    );
+    const id = setInterval(() => {
+      setActive((prev) => (prev + 1) % slides.length);
+    }, SLIDE_DURATION);
     return () => clearInterval(id);
-  }, [parks.length]);
-
-  if (isLoading) return <HeroSkeleton />;
-  if (isError || parks.length === 0) return <HeroFallback />;
+  }, [slides.length]);
 
   return (
-    <section className="relative min-h-[70vh] overflow-hidden">
+    <section className="relative min-h-screen overflow-hidden">
       <style>{KEN_BURNS_CSS}</style>
 
-      {/* Background slides — stacked, crossfade via opacity */}
-      {parks.map((park, i) => (
-        <div
-          key={park.id}
-          aria-hidden={i !== activeIndex}
-          className="absolute inset-0"
-          style={{
-            opacity: i === activeIndex ? 1 : 0,
-            transition: "opacity 1.2s ease",
-          }}
-        >
-          {park.hero_image_url && (
+      {/* Background layer — slides + scrim, clipped to soft mountain silhouette */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          WebkitMaskImage: "url('/hero-mask.svg')",
+          maskImage: "url('/hero-mask.svg')",
+          WebkitMaskSize: "100% 100%",
+          maskSize: "100% 100%",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+        }}
+      >
+        {/* Photo slides — 4 stacked, crossfade via opacity */}
+        {slides.map((photo, i) => (
+          <div
+            key={photo}
+            aria-hidden={i !== active}
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: i === active ? 1 : 0,
+              transition: "opacity 1.2s ease",
+            }}
+          >
             <div
-              className="absolute inset-0 bg-stone-900"
               style={{
-                backgroundImage: `url(${park.hero_image_url})`,
+                position: "absolute",
+                inset: 0,
+                backgroundImage: `url(${photo})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
-                animation: "hero-ken-burns 12s ease-in-out infinite alternate",
-                animationDelay: `${i * -3}s`,
+                animation: "hero-ken-burns 8s ease-in-out infinite alternate",
+                animationDelay: `${i * -2}s`,
               }}
             />
-          )}
-        </div>
-      ))}
+          </div>
+        ))}
 
-      {/* Gradient scrim */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ ...SCRIM, zIndex: 1 }}
-      />
-
-      {/* Content — crossfades with AnimatePresence on activeIndex change */}
-      <div className="relative" style={{ zIndex: 2 }}>
-        <AnimatePresence mode="wait">
-          <ParkContent key={activeIndex} park={parks[activeIndex]} />
-        </AnimatePresence>
+        {/* Gradient scrim — sky stays clean, bottom text zone is readable */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 10,
+            background:
+              "linear-gradient(to bottom, transparent 40%, rgba(10,25,10,0.6) 70%, rgba(10,25,10,0.88) 100%)",
+          }}
+        />
       </div>
 
-      {/* Dot indicators */}
-      {parks.length > 1 && (
-        <div
-          className="absolute right-5 flex items-center gap-2 sm:right-8"
-          style={{ zIndex: 3, bottom: "clamp(40px, 14%, 80px)" }}
+      {/* Content — bottom-left, padded above the clipped curve (~78% safe zone) */}
+      <div
+        className="absolute bottom-0 left-0 max-w-2xl px-8 pb-[25vh] md:px-14 lg:px-20"
+        style={{ zIndex: 3 }}
+      >
+        {/* TAP badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          className="inline-flex items-center gap-2 bg-black/20 border border-white/20 backdrop-blur-sm rounded-full px-5 py-2.5 mb-5 text-xs sm:text-sm text-white/80 font-sans shadow-editorial"
         >
-          {parks.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveIndex(i)}
-              aria-label={`Ir a parque ${i + 1}`}
-              style={{
-                height: 6,
-                width: i === activeIndex ? 20 : 6,
-                borderRadius: 3,
-                background:
-                  i === activeIndex ? "#FAFAFA" : "rgba(255,255,255,0.35)",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                transition: "all 0.3s ease",
-              }}
-            />
-          ))}
-        </div>
-      )}
+          <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+          <span>Agente de Viajes Certificado (TAP) · Respuesta en {"<"} 24h</span>
+        </motion.div>
+
+        {/* H1 */}
+        <motion.h1
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+          className="font-serif font-bold text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-shadow-hero"
+        >
+          Tu Concierge de Aventuras{" "}
+          <em style={{ color: "#FCD34D" }}>en Español</em>
+        </motion.h1>
+
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.6 }}
+          className="mt-4 text-lg md:text-xl text-white/90 max-w-xl font-sans text-shadow-card"
+        >
+          Te armo tu viaje de trekking completo — itinerario, equipo, presupuesto
+          — adaptado a tu nivel y tus sueños.
+        </motion.p>
+
+        {/* CTAs */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.8 }}
+          className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8"
+        >
+          <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }}>
+            <Button
+              asChild
+              className="rounded-full bg-primary text-primary-foreground h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors"
+            >
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                Plática Conmigo
+              </a>
+            </Button>
+          </motion.div>
+
+          <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }}>
+            <Link
+              to="/destinos"
+              className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 backdrop-blur-sm text-white px-8 py-4 text-base font-medium hover:bg-white/20 transition-colors"
+            >
+              Explorar Destinos →
+            </Link>
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Dot indicators — right, kept above the clipped curve */}
+      <div
+        className="absolute right-8 flex items-center gap-2"
+        style={{ zIndex: 4, bottom: "22%" }}
+      >
+        {slides.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setActive(i)}
+            aria-label={`Ir a foto ${i + 1}`}
+            style={{
+              height: 6,
+              width: i === active ? 20 : 6,
+              borderRadius: 3,
+              background: i === active ? "#FAFAFA" : "rgba(255,255,255,0.35)",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              transition: "all 0.3s ease",
+            }}
+          />
+        ))}
+      </div>
     </section>
   );
 };
