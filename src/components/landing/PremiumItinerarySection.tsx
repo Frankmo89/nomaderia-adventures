@@ -79,7 +79,7 @@ const PremiumItinerarySection = () => {
   }, []);
 
   return (
-    <section className="section-editorial relative overflow-hidden bg-wash-clay section-recessed">
+    <section className="section-editorial relative overflow-hidden bg-foreground section-recessed">
       {/* Background texture */}
       <div className="absolute inset-0 bg-secondary/5" />
       <div
@@ -94,20 +94,20 @@ const PremiumItinerarySection = () => {
         <div className="max-w-5xl mx-auto">
           {/* Badge */}
           <Reveal className="text-center mb-6">
-            <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary block">
+            <span className="text-xs tracking-[0.2em] uppercase font-medium block" style={{ color: "#FCD34D" }}>
               ✦ Diseño 100% Personalizado
             </span>
           </Reveal>
 
           {/* Heading */}
           <Reveal className="text-center mb-4">
-            <h2 className="font-serif text-4xl md:text-5xl font-bold text-foreground leading-tight">
+            <h2 className="font-serif text-4xl md:text-5xl font-bold text-background leading-tight">
               Tu Aventura,{" "}
-              <span className="text-secondary">Tu Medida</span>
+              <span style={{ color: "#FCD34D" }}>Tu Medida</span>
             </h2>
           </Reveal>
 
-          <Reveal className="text-center text-foreground/70 text-lg max-w-[42rem] mx-auto mb-16 leading-relaxed">
+          <Reveal className="text-center text-background/70 text-lg max-w-[42rem] mx-auto mb-16 leading-relaxed">
             Diseñamos tu itinerario de trekking desde cero, adaptado a tu nivel, presupuesto y objetivos.
             Sin plantillas genéricas. Sin rutas de turista.
           </Reveal>
@@ -121,7 +121,7 @@ const PremiumItinerarySection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                className="flex flex-row min-h-[160px] rounded-lg overflow-hidden bg-card/60"
+                className="flex flex-row min-h-[160px] rounded-lg overflow-hidden bg-card"
                 style={{ border: "0.5px solid rgba(22, 101, 52, 0.2)" }}
               >
                 {/* Left: icon + text */}

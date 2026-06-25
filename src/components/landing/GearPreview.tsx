@@ -34,7 +34,7 @@ const GearPreview = () => {
   const hoverEnabled = canHover && !prefersReducedMotion;
 
   return (
-    <section className="section-editorial bg-wash-clay relative overflow-hidden section-recessed">
+    <section className="section-editorial bg-background relative overflow-hidden section-recessed">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none noise-bg" />
       <div className="container mx-auto px-5 relative z-10">
         <Reveal className="text-center mb-10 sm:mb-12">

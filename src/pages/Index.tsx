@@ -1,5 +1,6 @@
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
+import PromiseSection from "@/components/landing/PromiseSection";
 import QuizSection from "@/components/landing/QuizSection";
 import DestinationsCatalog from "@/components/landing/DestinationsCatalog";
 import GearPreview from "@/components/landing/GearPreview";
@@ -78,15 +79,16 @@ const Index = () => {
       <JsonLd data={jsonLdData} />
       <JsonLd data={organizationLd} />
       <HeroSection />
+      <PromiseSection />
       <SocialProof />
+      <SectionDivider variant="ridge" fill="#FAFAFA" />
       <DestinationsCatalog limit={3} />
       <QuizSection />
       <TravelInsuranceSection />
       <PremiumItinerarySection />
-      <SectionDivider variant="ridge" />
+      <SectionDivider variant="ridge" fill="#1C1917" />
       <GearPreview />
       <BlogPreview />
-      <SectionDivider variant="ridge" />
       <NewsletterSignup />
       <SectionDivider variant="topo" dark />
       <Footer />

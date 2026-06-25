@@ -148,7 +148,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
   if (isLoading) {
     return (
-      <section id="destinos" className="bg-wash-sand section-editorial">
+      <section id="destinos" className="bg-foreground section-editorial">
         <div className="container mx-auto px-5">
           <DestinationCardGridSkeleton count={6} />
         </div>
@@ -158,23 +158,23 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
   if (error) {
     return (
-      <section id="destinos" className="bg-wash-sand section-editorial">
+      <section id="destinos" className="bg-foreground section-editorial">
         <div className="container mx-auto px-5 text-center">
-          <p className="text-muted-foreground">No se pudieron cargar los destinos. Intenta recargar la página.</p>
+          <p className="text-background/70">No se pudieron cargar los destinos. Intenta recargar la página.</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section id="destinos" className="relative overflow-hidden bg-wash-sand section-editorial section-recessed">
-      <div className="noise-bg pointer-events-none absolute inset-0 opacity-[0.02]" />
+    <section id="destinos" className="relative overflow-hidden bg-foreground section-editorial section-recessed">
+      <div className="noise-bg pointer-events-none absolute inset-0 opacity-[0.04]" />
       <div className="container relative z-10 mx-auto px-5">
         <Reveal className="mb-8 text-center sm:mb-10">
-          <h2 className="mb-3 font-serif text-2xl font-bold text-foreground sm:mb-4 sm:text-3xl md:text-5xl">
+          <h2 className="mb-3 font-serif text-2xl font-bold text-background sm:mb-4 sm:text-3xl md:text-5xl">
             Encuentra Tu Aventura
           </h2>
-          <p className="text-sm text-muted-foreground sm:text-base">Elige tu nivel y descubre lo que es posible</p>
+          <p className="text-sm text-background/70 sm:text-base">Elige tu nivel y descubre lo que es posible</p>
         </Reveal>
 
         <Tabs defaultValue="all" className="w-full">
@@ -216,7 +216,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                       <span
                         key={`${level}-dot-${dotIndex}`}
                         className={`h-1.5 rounded-full transition-all duration-200 ${
-                          dotIndex === activeSlideByLevel[level] ? "w-5 bg-primary/80" : "w-1.5 bg-foreground/20"
+                          dotIndex === activeSlideByLevel[level] ? "w-5 bg-primary/80" : "w-1.5 bg-background/30"
                         }`}
                       />
                     ))}
