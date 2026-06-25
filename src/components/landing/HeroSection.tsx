@@ -157,7 +157,7 @@ const HeroSection = () => {
           transition={{ duration: 0.7, delay: 0.4 }}
           className="font-serif font-bold text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-shadow-hero"
         >
-          Tu Primera Aventura
+          Tu Primera <em style={{ color: "#FCD34D" }}>Aventura</em>
         </motion.h1>
 
         {/* Subtitle */}
