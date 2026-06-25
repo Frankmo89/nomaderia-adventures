@@ -233,7 +233,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
               asChild
               variant="outline"
               size="lg"
-              className="rounded-full border-stone/80 bg-white/72 shadow-editorial transition-all duration-200 hover:-translate-y-0.5 hover:bg-sand hover:shadow-editorial-hover active:translate-y-0 active:scale-[0.98]"
+              className="rounded-full border-background/70 bg-transparent text-background transition-all duration-200 hover:-translate-y-0.5 hover:bg-background hover:text-foreground active:translate-y-0 active:scale-[0.98]"
             >
               <Link to="/destinos">Ver todos los destinos →</Link>
             </Button>

@@ -85,6 +85,7 @@ const Index = () => {
       <DestinationsCatalog limit={3} />
       <QuizSection />
       <TravelInsuranceSection />
+      <SectionDivider variant="ridge" fill="#F4EFE7" />
       <PremiumItinerarySection />
       <SectionDivider variant="ridge" fill="#1C1917" />
       <GearPreview />

@@ -28,13 +28,12 @@ const SectionDivider = ({ variant = "ridge", dark = false, fill }: SectionDivide
     return (
       <div
         aria-hidden="true"
-        className="relative h-0 z-10 pointer-events-none hidden sm:block"
+        className="relative h-0 z-10 pointer-events-none"
       >
         <svg
           viewBox="0 0 1440 100"
           preserveAspectRatio="none"
-          className="absolute left-0 w-full -translate-y-1/2"
-          style={{ height: "100px" }}
+          className="absolute left-0 w-full -translate-y-1/2 h-[72px] sm:h-[100px]"
           xmlns="http://www.w3.org/2000/svg"
           focusable="false"
         >
@@ -71,13 +70,12 @@ const SectionDivider = ({ variant = "ridge", dark = false, fill }: SectionDivide
     return (
       <div
         aria-hidden="true"
-        className="relative h-0 z-10 pointer-events-none hidden sm:block"
+        className="relative h-0 z-10 pointer-events-none"
       >
         <svg
           viewBox="0 0 1440 80"
           preserveAspectRatio="none"
-          className="absolute left-0 w-full -translate-y-1/2"
-          style={{ height: "80px" }}
+          className="absolute left-0 w-full -translate-y-1/2 h-[52px] sm:h-[80px]"
           xmlns="http://www.w3.org/2000/svg"
           focusable="false"
         >
@@ -96,7 +94,7 @@ const SectionDivider = ({ variant = "ridge", dark = false, fill }: SectionDivide
   return (
     <div
       aria-hidden="true"
-      className="relative h-0 z-10 pointer-events-none hidden sm:block"
+      className="relative h-0 z-10 pointer-events-none"
     >
       <svg
         viewBox="0 0 1440 80"
