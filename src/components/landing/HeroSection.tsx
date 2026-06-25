@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
 const WHATSAPP_URL = buildWhatsAppLink(
   "Hola Frank, quiero planear mi primera aventura"
@@ -49,8 +50,26 @@ const KEN_BURNS_CSS = `
 const SLIDE_DURATION = 5000;
 
 const HeroSection = () => {
-  const [slides] = useState<string[]>(() => shuffled(ALL_PHOTOS).slice(0, 4));
+  const { data: heroParkData } = useFeaturedHeroPark();
+
+  const dynamicPhotos = useMemo(() => {
+    const urls = (heroParkData ?? [])
+      .map((p) => p.hero_image_url)
+      .filter((u): u is string => !!u);
+    return urls.length > 0 ? urls : null;
+  }, [heroParkData]);
+
+  const [slides, setSlides] = useState<string[]>(() =>
+    shuffled(ALL_PHOTOS).slice(0, 4)
+  );
   const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    if (dynamicPhotos !== null) {
+      setSlides(shuffled(dynamicPhotos));
+      setActive(0);
+    }
+  }, [dynamicPhotos]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -138,8 +157,7 @@ const HeroSection = () => {
           transition={{ duration: 0.7, delay: 0.4 }}
           className="font-serif font-bold text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-shadow-hero"
         >
-          Tu Concierge de Aventuras{" "}
-          <em style={{ color: "#FCD34D" }}>en Español</em>
+          Tu Primera Aventura
         </motion.h1>
 
         {/* Subtitle */}
@@ -149,8 +167,9 @@ const HeroSection = () => {
           transition={{ duration: 0.7, delay: 0.6 }}
           className="mt-4 text-lg md:text-xl text-white/90 max-w-xl font-sans text-shadow-card"
         >
-          Te armo tu viaje de trekking completo — itinerario, equipo, presupuesto
-          — adaptado a tu nivel y tus sueños.
+          Te armo tu viaje completo —itinerario, equipo y presupuesto— adaptado
+          a tu nivel.{" "}
+          <em style={{ color: "#FCD34D" }}>Todo en español.</em>
         </motion.p>
 
         {/* CTAs */}
