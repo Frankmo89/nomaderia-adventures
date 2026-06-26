@@ -5,8 +5,6 @@ import {
   Search,
   SlidersHorizontal,
   MapPin,
-  Car,
-  Plane,
   Lock,
   LockOpen,
   Route,
@@ -18,8 +16,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import { DistanceFromYou } from "@/components/destinations/DistanceFromYou";
+import { OriginPicker } from "@/components/destinations/OriginPicker";
 import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 import { useDestinationsDirectory, type ParkCard } from "@/hooks/use-destinations";
+import { haversineKm, getDistanceBucket, SAN_DIEGO_ORIGIN } from "@/lib/distance";
 import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -68,34 +69,15 @@ const ACCESS_LABELS: Record<string, string> = {
 
 const ACCESS_VALUES = ["facil", "planificacion", "aventureros", "experto"] as const;
 
-const SAN_DIEGO_LAT = 32.7157;
-const SAN_DIEGO_LNG = -117.1611;
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+// haversineKm / getDistanceBucket / SAN_DIEGO_ORIGIN viven en @/lib/distance
+// (compartidos con el cálculo dinámico por ubicación del usuario).
 
 function normalize(s: string): string {
   return s
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
-}
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.asin(Math.sqrt(a));
-}
-
-function getDistanceBucket(km: number): "cerca" | "media" | "lejos" {
-  if (km < 240) return "cerca";
-  if (km <= 640) return "media";
-  return "lejos";
 }
 
 function getCellLabel(status: string | null): string {
@@ -131,8 +113,14 @@ function regionDisplay(region: string | null): string {
 
 // ─── ParkListCard ─────────────────────────────────────────────────────────────
 
+const DIFFICULTY_BADGE: Record<string, { label: string; className: string }> = {
+  easy: { label: "🟢 Fácil", className: "bg-green-100 text-green-800" },
+  moderate: { label: "🟡 Moderado", className: "bg-amber-100 text-amber-800" },
+  challenging: { label: "🔴 Desafiante", className: "bg-red-100 text-red-800" },
+};
+
 function ParkListCard({ park }: { park: ParkCard }) {
-  const isEasy = park.difficulty_level === "easy";
+  const difficulty = DIFFICULTY_BADGE[park.difficulty_level] ?? DIFFICULTY_BADGE.moderate;
   const tagline = park.experience_type || park.short_description;
 
   return (
@@ -160,12 +148,10 @@ function ParkListCard({ park }: { park: ParkCard }) {
         <span
           className={cn(
             "absolute top-2 left-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full",
-            isEasy
-              ? "bg-green-100 text-green-800"
-              : "bg-amber-100 text-amber-800"
+            difficulty.className
           )}
         >
-          {isEasy ? "🟢 Fácil" : "🟡 Moderado"}
+          {difficulty.label}
         </span>
       </div>
 
@@ -211,17 +197,6 @@ function ParkListCard({ park }: { park: ParkCard }) {
               {regionDisplay(park.region)}
             </span>
           )}
-          {park.drive_time_from_san_diego ? (
-            <span className="flex items-center gap-1">
-              <Car className="h-3 w-3 shrink-0" />
-              {park.drive_time_from_san_diego}
-            </span>
-          ) : park.nearest_airport ? (
-            <span className="flex items-center gap-1">
-              <Plane className="h-3 w-3 shrink-0" />
-              {park.nearest_airport}
-            </span>
-          ) : null}
           <span className="flex items-center gap-1">
             {park.requires_permit ? (
               <>
@@ -236,6 +211,9 @@ function ParkListCard({ park }: { park: ParkCard }) {
             )}
           </span>
         </div>
+
+        {/* Distancia dinámica desde la ubicación del usuario (o fallback SD) */}
+        <DistanceFromYou latitude={park.latitude} longitude={park.longitude} className="mt-2" />
 
         {/* Footer */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100">
@@ -255,7 +233,7 @@ function ParkListCard({ park }: { park: ParkCard }) {
 
 // ─── Types & config ───────────────────────────────────────────────────────────
 
-type ActiveTab = "all" | "easy" | "moderate";
+type ActiveTab = "all" | "easy" | "moderate" | "challenging";
 type DistanceFilter = "any" | "cerca" | "media" | "lejos";
 type SortOrder = "distance" | "name";
 type ParkWithDist = ParkCard & { distanceKm: number };
@@ -264,6 +242,7 @@ const TABS: Array<{ value: ActiveTab; label: string }> = [
   { value: "all", label: "Todos" },
   { value: "easy", label: "🟢 Fácil" },
   { value: "moderate", label: "🟡 Moderado" },
+  { value: "challenging", label: "🔴 Desafiante" },
 ];
 
 const DISTANCE_OPTIONS: Array<{ value: DistanceFilter; label: string }> = [
@@ -303,7 +282,7 @@ const Destinations = () => {
         ...p,
         distanceKm:
           p.latitude != null && p.longitude != null
-            ? haversineKm(SAN_DIEGO_LAT, SAN_DIEGO_LNG, p.latitude, p.longitude)
+            ? haversineKm(SAN_DIEGO_ORIGIN.lat, SAN_DIEGO_ORIGIN.lng, p.latitude, p.longitude)
             : Infinity,
       })),
     [allParks]
@@ -327,11 +306,8 @@ const Destinations = () => {
         if (q && !normalize(p.title).includes(q)) return false;
         // Difficulty tab
         if (activeTab === "easy" && p.difficulty_level !== "easy") return false;
-        if (
-          activeTab === "moderate" &&
-          !["moderate", "challenging"].includes(p.difficulty_level)
-        )
-          return false;
+        if (activeTab === "moderate" && p.difficulty_level !== "moderate") return false;
+        if (activeTab === "challenging" && p.difficulty_level !== "challenging") return false;
         // Access difficulty (OR within multi-select)
         if (filterAccess.size > 0 && !filterAccess.has(p.access_difficulty ?? "")) return false;
         // State (OR within multi-select — park matches if any of its codes is selected)
@@ -488,6 +464,11 @@ const Destinations = () => {
             Más ▾
           </button>
         </div>
+      </div>
+
+      {/* Origin control — distancias dinámicas desde la ubicación del usuario */}
+      <div className="container mx-auto px-5 pt-3">
+        <OriginPicker className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" />
       </div>
 
       {/* Count + sort bar */}
