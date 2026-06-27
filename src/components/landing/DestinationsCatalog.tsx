@@ -55,6 +55,16 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
   const hoverEnabled = canHover && !prefersReducedMotion;
 
+  // Solo mostrar la pestaña "Desafiante" si hay destinos publicados con ese nivel.
+  const hasChallenging = destinations.some((d) => d.difficulty_level === "challenging");
+  const levels = ["all", "easy", "moderate", ...(hasChallenging ? ["challenging"] : [])];
+  const tabLabel: Record<string, string> = {
+    all: "Todos",
+    easy: "Fácil",
+    moderate: "Moderado",
+    challenging: "Desafiante",
+  };
+
   const filterByDifficulty = (level: string) =>
     level === "all" ? destinations : destinations.filter((d) => d.difficulty_level === level);
 
@@ -179,21 +189,14 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="mb-6 flex w-full overflow-x-auto bg-muted sm:mx-auto sm:mb-8 sm:w-fit">
-            <TabsTrigger value="all" className="min-h-[44px] flex-1 text-sm sm:flex-none">
-              Todos
-            </TabsTrigger>
-            <TabsTrigger value="easy" className="min-h-[44px] flex-1 text-sm sm:flex-none">
-              Fácil
-            </TabsTrigger>
-            <TabsTrigger value="moderate" className="min-h-[44px] flex-1 text-sm sm:flex-none">
-              Moderado
-            </TabsTrigger>
-            <TabsTrigger value="challenging" className="min-h-[44px] flex-1 text-sm sm:flex-none">
-              Desafiante
-            </TabsTrigger>
+            {levels.map((level) => (
+              <TabsTrigger key={level} value={level} className="min-h-[44px] flex-1 text-sm sm:flex-none">
+                {tabLabel[level]}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          {["all", "easy", "moderate", "challenging"].map((level) => {
+          {levels.map((level) => {
             const filtered =
               limit !== undefined ? filterByDifficulty(level).slice(0, limit) : filterByDifficulty(level);
 

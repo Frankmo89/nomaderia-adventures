@@ -425,6 +425,8 @@ Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
 
 ### Junio 2026
 
+**Homepage — `DestinationsCatalog`: pestaña "Desafiante" condicional**: la pestaña `challenging` solo se renderiza si hay destinos publicados con `difficulty_level === "challenging"` (`hasChallenging` derivado de la data ya cargada por `useDestinations()`, sin query nueva). `TabsList` y los `TabsContent` ahora se generan desde un array `levels` único para evitar drift. `tsc --noEmit` + `npm run build` pasan.
+
 **Homepage — fixes de contraste y divisores (PR 2 de 3 de pulido del home)**: corregido contraste en sección oscura (botón "Ver todos los destinos" ahora outline claro — borde/texto `text-background` con hover invertido a fondo blanco/texto oscuro; tabs ya eran isla clara legible); divisores ahora visibles en móvil (removido `hidden sm:block` + altura SVG responsiva `h-[52px] sm:h-[80px]` ridge / `h-[72px] sm:h-[100px]` topo); añadido divisor ridge en la transición `TravelInsuranceSection`→`PremiumItinerarySection` con `fill="#F4EFE7"` (color sand real del fondo `bg-wash-forest`). `tsc --noEmit` + `npm run build` pasan.
 
 **Homepage — ritmo de fondos (claro/oscuro/cálido), nueva PromiseSection y reubicación de divisores (PR 1 de 3 de pulido del home)**
