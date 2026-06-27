@@ -12,6 +12,10 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        // Design System §4.1 — dificultad/categoría: pill green-wash calmado,
+        // texto verde. NUNCA colores de semáforo (rojo/amarillo): audiencia
+        // principiante. Se diferencia por el texto del label, no por color.
+        difficulty: "border-transparent bg-green-wash text-green",
       },
     },
     defaultVariants: {

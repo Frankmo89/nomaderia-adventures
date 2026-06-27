@@ -16,6 +16,8 @@ export default {
     },
     extend: {
       fontFamily: {
+        display: ["'Anton'", "sans-serif"],
+        condensed: ["'Oswald'", "sans-serif"],
         serif: ["'Playfair Display'", "serif"],
         sans: ["'Inter'", "sans-serif"],
       },
@@ -72,6 +74,23 @@ export default {
         stone: "hsl(var(--stone))",
         walnut: "hsl(var(--walnut))",
         clay: "hsl(var(--clay))",
+
+        /* ── Design System Fase 1 — tokens base (docs/design-system.md §5) ──
+           Solo se AGREGAN; no se aplican a componentes todavía (Fase 2+).
+           `sky` (#2E6F9E) y `stone` (#E4E2DB) se difieren: ya existen arriba con
+           otros valores y se migran junto a sus componentes (ver pending-tasks). */
+        green: "#1F6F43",
+        "green-dark": "#16512F",
+        "green-wash": "#E8F1EA",
+        terracotta: "#C2562F",
+        amber: "#E08A1E",
+        "forest-dark": "#14201A",
+        spruce: "#1E2C24",
+        cloud: "#FBFAF7",
+        ink: "#13211A",
+        slate: "#384741",
+        sage: "#6E7A74",
+        mist: "#EAF0EC",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

@@ -9,6 +9,7 @@ import {
   LockOpen,
   Route,
   Signal,
+  Bookmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,10 +114,13 @@ function regionDisplay(region: string | null): string {
 
 // ─── ParkListCard ─────────────────────────────────────────────────────────────
 
+// Dificultad: pill calmado green-wash para todos los niveles (Design System
+// §4.1). Sin colores de semáforo (rojo/amarillo) ni emoji: no asustar a una
+// audiencia principiante. Se diferencia por el texto del label.
 const DIFFICULTY_BADGE: Record<string, { label: string; className: string }> = {
-  easy: { label: "🟢 Fácil", className: "bg-green-100 text-green-800" },
-  moderate: { label: "🟡 Moderado", className: "bg-amber-100 text-amber-800" },
-  challenging: { label: "🔴 Desafiante", className: "bg-red-100 text-red-800" },
+  easy: { label: "Fácil", className: "bg-green-wash text-green" },
+  moderate: { label: "Moderado", className: "bg-green-wash text-green" },
+  challenging: { label: "Desafiante", className: "bg-green-wash text-green" },
 };
 
 function ParkListCard({ park }: { park: ParkCard }) {
@@ -126,7 +130,7 @@ function ParkListCard({ park }: { park: ParkCard }) {
   return (
     <Link
       to={`/destinos/${park.slug}`}
-      className="group block rounded-2xl overflow-hidden border border-stone-100 bg-card shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="group block rounded-2xl overflow-hidden border border-stone bg-white shadow-[0_4px_16px_rgba(20,32,26,0.08)] hover:shadow-[0_8px_24px_rgba(20,32,26,0.12)] transition-shadow duration-200"
     >
       {/* Hero image */}
       <div className="relative h-28 overflow-hidden">
@@ -139,12 +143,20 @@ function ParkListCard({ park }: { park: ParkCard }) {
             className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-secondary/20 to-primary/10 flex items-center justify-center">
-            <MapPin className="h-8 w-8 text-primary/30" />
+          <div className="w-full h-full bg-green-wash flex items-center justify-center">
+            <MapPin className="h-8 w-8 text-green/30" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-        {/* Difficulty badge */}
+        {/* Scrim con forest-dark (no negro puro) — Design System §4.3 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-forest-dark/55 via-forest-dark/10 to-transparent" />
+        {/* Chip de guardar (decorativo, estilo AllTrails) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm"
+        >
+          <Bookmark className="h-3.5 w-3.5 text-slate" />
+        </div>
+        {/* Difficulty badge — calmado green-wash */}
         <span
           className={cn(
             "absolute top-2 left-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full",
@@ -157,31 +169,24 @@ function ParkListCard({ park }: { park: ParkCard }) {
 
       {/* Card body */}
       <div className="p-4">
-        <h3 className="font-serif text-lg font-bold text-foreground leading-snug">
+        <h3 className="text-lg font-semibold text-ink leading-snug">
           {park.title}
         </h3>
 
         {tagline && (
-          <p className="text-sm italic text-muted-foreground mt-1 line-clamp-2">{tagline}</p>
+          <p className="text-sm italic text-slate mt-1 line-clamp-2">{tagline}</p>
         )}
 
-        {/* Access difficulty + cell signal */}
+        {/* Access difficulty + cell signal — pills neutros calmados */}
         <div className="flex flex-wrap items-center gap-2 mt-2.5">
           {park.access_difficulty && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border",
-                park.access_difficulty === "facil"
-                  ? "bg-green-50 text-green-800 border-green-200"
-                  : "bg-amber-50 text-amber-800 border-amber-200"
-              )}
-            >
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border border-stone bg-cloud text-slate">
               <Route className="h-3 w-3 shrink-0" />
               {ACCESS_LABELS[park.access_difficulty] ?? park.access_difficulty}
             </span>
           )}
           <span
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+            className="inline-flex items-center gap-1 text-xs text-sage"
             title={park.cell_signal_status ?? undefined}
           >
             <Signal className="h-3 w-3 shrink-0" />
@@ -190,7 +195,7 @@ function ParkListCard({ park }: { park: ParkCard }) {
         </div>
 
         {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-sage">
           {park.region && (
             <span className="flex items-center gap-1">
               <MapPin className="h-3 w-3 shrink-0" />
@@ -216,13 +221,13 @@ function ParkListCard({ park }: { park: ParkCard }) {
         <DistanceFromYou latitude={park.latitude} longitude={park.longitude} className="mt-2" />
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone">
           {park.estimated_budget_usd != null && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-slate">
               ~${park.estimated_budget_usd} USD / persona
             </span>
           )}
-          <span className="text-sm font-medium text-primary ml-auto group-hover:underline">
+          <span className="text-sm font-semibold text-green ml-auto group-hover:underline">
             Ver guía →
           </span>
         </div>

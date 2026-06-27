@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Clock, DollarSign } from "lucide-react";
+import { MapPin, Clock, DollarSign, Star, Bookmark } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,11 +9,8 @@ import { DestinationCardGridSkeleton } from "@/components/LoadingSkeletons";
 import Reveal from "@/components/editorial/Reveal";
 import { useDestinations } from "@/hooks/use-destinations";
 
-const difficultyColor: Record<string, string> = {
-  easy: "bg-secondary text-secondary-foreground",
-  moderate: "bg-primary/80 text-primary-foreground",
-  challenging: "bg-destructive text-destructive-foreground",
-};
+// Dificultad: badge calmado green-wash para todos los niveles (Design System
+// §4.1). Se diferencia por el texto, no por color de semáforo.
 const difficultyLabel: Record<string, string> = {
   easy: "Fácil",
   moderate: "Moderado",
@@ -101,7 +98,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
       <motion.div initial="rest" whileHover={hoverEnabled ? "hover" : undefined} className="h-full">
         <Link
           to={`/destinos/${d.slug}`}
-          className="group block h-full overflow-hidden rounded-2xl border border-stone/70 bg-card card-depth"
+          className="group block h-full overflow-hidden rounded-2xl border border-stone bg-white shadow-[0_4px_16px_rgba(20,32,26,0.08)] transition-shadow duration-200 hover:shadow-[0_8px_24px_rgba(20,32,26,0.12)]"
         >
           <div className="relative h-56 overflow-hidden sm:h-52">
             {d.hero_image_url ? (
@@ -115,30 +112,42 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary/30 to-primary/20">
-                <MapPin className="h-12 w-12 text-primary/40" />
+              <div className="flex h-full w-full items-center justify-center bg-green-wash">
+                <MapPin className="h-12 w-12 text-green/40" />
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
+            {/* Scrim con forest-dark (no negro puro) — Design System §4.3 */}
+            <div className="absolute inset-0 bg-gradient-to-t from-forest-dark/70 via-forest-dark/25 to-transparent" />
             <motion.div
               variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none flex items-end p-3"
+              className="absolute inset-0 bg-gradient-to-t from-forest-dark/70 via-forest-dark/20 to-transparent pointer-events-none flex items-end p-3"
             >
               <span className="text-white text-sm font-semibold tracking-wide">Explorar →</span>
             </motion.div>
+            {/* Chip de guardar (decorativo, estilo AllTrails) */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm"
+            >
+              <Bookmark className="h-4 w-4 text-slate" />
+            </div>
             <div className="absolute left-3 top-3 flex gap-2">
-              <Badge className={difficultyColor[d.difficulty_level]}>{difficultyLabel[d.difficulty_level]}</Badge>
+              <Badge variant="difficulty">{difficultyLabel[d.difficulty_level]}</Badge>
             </div>
           </div>
           <div className="flex h-full flex-col p-4 sm:p-5">
-            <h3 className="mb-1 font-serif text-lg font-bold text-card-foreground">{d.title}</h3>
-            <p className="mb-2 text-sm text-card-foreground/70">
-              {countryFlag[d.country] || ""} {d.country}
+            <h3 className="mb-1 text-lg font-semibold text-ink">{d.title}</h3>
+            {/* Línea meta: estrella verde + dificultad + ubicación, en sage */}
+            <p className="mb-2 flex items-center gap-1.5 text-sm text-sage">
+              <Star className="h-3.5 w-3.5 shrink-0 fill-green text-green" />
+              <span>
+                {difficultyLabel[d.difficulty_level]} · {countryFlag[d.country] || ""} {d.country}
+              </span>
             </p>
-            <p className="mb-4 line-clamp-2 text-sm text-card-foreground/80">{d.short_description}</p>
-            <div className="mt-auto flex flex-col gap-3 border-t border-stone/60 pt-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-card-foreground/60">
+            <p className="mb-4 line-clamp-2 text-sm text-slate">{d.short_description}</p>
+            <div className="mt-auto flex flex-col gap-3 border-t border-stone pt-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-sage">
                 <span className="flex shrink-0 items-center gap-1">
                   <Clock className="h-3.5 w-3.5" /> {d.days_needed}
                 </span>
@@ -146,7 +155,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                   <DollarSign className="h-3.5 w-3.5" /> ~${d.estimated_budget_usd}
                 </span>
               </div>
-              <span className="shrink-0 whitespace-nowrap font-medium text-primary group-hover:underline">
+              <span className="shrink-0 whitespace-nowrap font-semibold text-green group-hover:underline">
                 Ver Guía →
               </span>
             </div>

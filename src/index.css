@@ -60,6 +60,24 @@
     --trail: 143 64% 24%;
     --sky: 195 33% 58%;
     --charcoal: 20 13% 10%;
+
+    /* ── Sistema de Diseño Fase 1 — tokens base (docs/design-system.md §5) ──
+       Disponibles para CSS crudo vía var(--…). Solo se AGREGAN; no se aplican
+       a componentes todavía (Fase 2+). Valores hex (espejo de tailwind.config).
+       `sky` (#2E6F9E) y `stone` (#E4E2DB) se difieren: los nombres ya existen
+       con otros valores y se migran junto a sus componentes (ver pending-tasks). */
+    --green: #1F6F43;
+    --green-dark: #16512F;
+    --green-wash: #E8F1EA;
+    --terracotta: #C2562F;
+    --amber: #E08A1E;
+    --forest-dark: #14201A;
+    --spruce: #1E2C24;
+    --cloud: #FBFAF7;
+    --ink: #13211A;
+    --slate: #384741;
+    --sage: #6E7A74;
+    --mist: #EAF0EC;
   }
 }
 
