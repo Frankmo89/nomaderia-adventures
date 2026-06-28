@@ -21,7 +21,7 @@ const getDidYouKnowText = (slug: string, title: string, country: string) => {
 };
 
 const difficultyLabel: Record<string, string> = { easy: "Fácil", moderate: "Moderado", challenging: "Desafiante" };
-const difficultyColor: Record<string, string> = { easy: "bg-secondary/80", moderate: "bg-primary/80", challenging: "bg-destructive/80" };
+const difficultyColor: Record<string, string> = { easy: "bg-secondary/80", moderate: "bg-green/80", challenging: "bg-destructive/80" };
 
 /** Fisher-Yates shuffle (returns a new array). */
 function shuffle<T>(arr: readonly T[]): T[] {
@@ -49,7 +49,7 @@ const CardContent = ({ dest, isLarge = false }: { dest: DestinationCard; isLarge
         className="absolute inset-0 w-full h-full object-cover object-top img-warm transition-transform [transition-duration:10000ms] ease-linear group-hover:scale-110"
       />
     ) : (
-      <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 to-primary/20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 to-green/10" />
     )}
 
     <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
@@ -92,7 +92,7 @@ const CardContent = ({ dest, isLarge = false }: { dest: DestinationCard; isLarge
         )}
       </div>
 
-      <span className="inline-flex items-center text-sm font-semibold text-primary group-hover:text-primary/80 transition-colors">
+      <span className="inline-flex items-center text-sm font-semibold text-green group-hover:text-green/80 transition-colors">
         Explorar destino
         <svg className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -303,7 +303,7 @@ const DidYouKnowSection = () => {
             <div
               key={i}
               className={`h-2 rounded-full transition-all duration-300 ${
-                i === activeIndex ? "w-8 bg-primary" : "w-2 bg-foreground/20"
+                i === activeIndex ? "w-8 bg-green" : "w-2 bg-foreground/20"
               }`}
             />
           ))}
@@ -343,7 +343,7 @@ const DidYouKnowSection = () => {
           <Reveal>
             <button
               onClick={() => document.getElementById("quiz")?.scrollIntoView({ behavior: "smooth" })}
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-green hover:bg-green-dark text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
               aria-label="Scroll to quiz section to discover your ideal destination"
             >
               🧭 Descubre tu destino ideal

@@ -150,11 +150,11 @@ const BlogPreview = () => {
                           })}
                         </span>
                       </div>
-                      <h3 className="mb-2 line-clamp-2 font-serif text-lg font-bold text-card-foreground transition-colors group-hover:text-primary">
+                      <h3 className="mb-2 line-clamp-2 font-serif text-lg font-bold text-card-foreground transition-colors group-hover:text-green">
                         {post.title}
                       </h3>
                       <p className="mb-3 line-clamp-2 text-sm text-card-foreground/70">{post.short_description}</p>
-                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-all group-hover:gap-2">
+                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-green transition-all group-hover:gap-2">
                         Leer más
                         <ArrowRight className="h-3.5 w-3.5" />
                       </span>
@@ -172,7 +172,7 @@ const BlogPreview = () => {
               <span
                 key={`blog-dot-${dotIndex}`}
                 className={`h-1.5 rounded-full transition-all duration-200 ${
-                  dotIndex === activeSlide ? "w-5 bg-primary/80" : "w-1.5 bg-foreground/20"
+                  dotIndex === activeSlide ? "w-5 bg-green/80" : "w-1.5 bg-foreground/20"
                 }`}
               />
             ))}

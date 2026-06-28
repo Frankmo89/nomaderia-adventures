@@ -228,7 +228,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                       <span
                         key={`${level}-dot-${dotIndex}`}
                         className={`h-1.5 rounded-full transition-all duration-200 ${
-                          dotIndex === activeSlideByLevel[level] ? "w-5 bg-primary/80" : "w-1.5 bg-background/30"
+                          dotIndex === activeSlideByLevel[level] ? "w-5 bg-green/80" : "w-1.5 bg-background/30"
                         }`}
                       />
                     ))}

@@ -88,7 +88,7 @@ const GearPreview = () => {
                     </Badge>
                     <h3 className="font-serif text-lg font-bold text-card-foreground mb-2">{a.title}</h3>
                     <p className="text-sm text-card-foreground/70">{a.short_description}</p>
-                    <span className="text-primary text-sm font-medium mt-3 inline-block">Leer Guía →</span>
+                    <span className="text-green text-sm font-medium mt-3 inline-block">Leer Guía →</span>
                   </div>
                 </Link>
               </motion.div>

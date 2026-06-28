@@ -212,7 +212,7 @@ const BudgetCalculator = () => {
                 {/* Destination */}
                 <div className="space-y-2">
                   <label htmlFor="destination-select" className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-primary" /> Destino
+                    <Compass className="w-4 h-4 text-green" /> Destino
                   </label>
                   <Select value={selectedSlug} onValueChange={(v) => { setSelectedSlug(v); setCalculated(false); }}>
                     <SelectTrigger id="destination-select" aria-label="Seleccionar destino" className="bg-background border-border shadow-sm h-11">
@@ -229,7 +229,7 @@ const BudgetCalculator = () => {
                 {/* Origin */}
                 <div className="space-y-2">
                   <label htmlFor="origin-select" className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <Plane className="w-4 h-4 text-primary" /> Punto de partida
+                    <Plane className="w-4 h-4 text-green" /> Punto de partida
                   </label>
                   <Select value={origin} onValueChange={setOrigin}>
                     <SelectTrigger id="origin-select" aria-label="Seleccionar punto de partida" className="bg-background border-border shadow-sm h-11">
@@ -288,11 +288,11 @@ const BudgetCalculator = () => {
                           onClick={() => { setComfort(opt.value); setCalculated(false); }}
                           className={`flex flex-col items-center justify-center rounded-xl border p-3 transition-all duration-200 ${
                             isSelected
-                              ? "border-primary bg-primary/10 text-primary-foreground dark:text-primary shadow-sm ring-1 ring-primary"
-                              : "border-border bg-background text-foreground/80 hover:border-primary/40 hover:bg-muted hover:text-foreground"
+                              ? "border-green bg-green-wash text-foreground shadow-sm ring-1 ring-green"
+                              : "border-border bg-background text-foreground/80 hover:border-green/40 hover:bg-muted hover:text-foreground"
                           }`}
                         >
-                          <Icon className={`h-5 w-5 mb-1.5 ${isSelected ? "text-primary-foreground dark:text-primary" : "text-foreground/80"}`} />
+                          <Icon className={`h-5 w-5 mb-1.5 ${isSelected ? "text-green-dark" : "text-foreground/80"}`} />
                           <span className="text-xs font-semibold w-full text-center truncate">{opt.label}</span>
                         </button>
                       );
@@ -322,8 +322,8 @@ const BudgetCalculator = () => {
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="h-full min-h-[400px] flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border/60 rounded-2xl bg-card/50"
                   >
-                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                      <Compass className="h-10 w-10 text-primary/60" />
+                    <div className="w-20 h-20 rounded-full bg-green/10 flex items-center justify-center mb-6">
+                      <Compass className="h-10 w-10 text-green/60" />
                     </div>
                     <h3 className="text-2xl font-serif font-medium text-foreground mb-3">Descubre tu presupuesto ideal</h3>
                     <p className="text-muted-foreground max-w-md mx-auto text-sm">
@@ -369,7 +369,7 @@ const BudgetCalculator = () => {
                           {origin && <p className="text-sm text-muted-foreground mt-1">Desde: {origin}</p>}
                         </div>
                         <div className="text-right">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-wash text-green text-xs font-semibold">
                             <Star className="w-3.5 h-3.5" />
                             {comfortOptions.find((c) => c.value === comfort)?.label}
                           </span>
@@ -422,7 +422,7 @@ const BudgetCalculator = () => {
                         {selectedDest?.affiliate_links?.flights_url &&
                           /^https?:\/\//i.test(selectedDest.affiliate_links.flights_url) && (
                             <a href={selectedDest.affiliate_links.flights_url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-primary/5 hover:text-primary transition-colors">
+                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-green-wash hover:text-green transition-colors">
                                 <Plane className="h-4 w-4" /> Buscar Vuelos <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
                               </Button>
                             </a>
@@ -430,7 +430,7 @@ const BudgetCalculator = () => {
                         {selectedDest?.affiliate_links?.hotels_url &&
                           /^https?:\/\//i.test(selectedDest.affiliate_links.hotels_url) && (
                             <a href={selectedDest.affiliate_links.hotels_url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-primary/5 hover:text-primary transition-colors">
+                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-green-wash hover:text-green transition-colors">
                                 <Hotel className="h-4 w-4" /> Buscar Hoteles <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
                               </Button>
                             </a>
@@ -438,7 +438,7 @@ const BudgetCalculator = () => {
                         {selectedDest?.affiliate_links?.tours_url &&
                           /^https?:\/\//i.test(selectedDest.affiliate_links.tours_url) && (
                             <a href={selectedDest.affiliate_links.tours_url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-primary/5 hover:text-primary transition-colors">
+                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-green-wash hover:text-green transition-colors">
                                 <Compass className="h-4 w-4" /> Tours y Actividades <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
                               </Button>
                             </a>
@@ -446,7 +446,7 @@ const BudgetCalculator = () => {
                         {selectedDest?.affiliate_links?.insurance_url &&
                           /^https?:\/\//i.test(selectedDest.affiliate_links.insurance_url) && (
                             <a href={selectedDest.affiliate_links.insurance_url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-primary/5 hover:text-primary transition-colors">
+                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-green-wash hover:text-green transition-colors">
                                 <ShieldCheck className="h-4 w-4" /> Seguro de Viaje <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
                               </Button>
                             </a>
@@ -465,13 +465,13 @@ const BudgetCalculator = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6, duration: 0.4 }}
-                        className="rounded-xl border border-primary/20 bg-primary/5 p-6 text-center relative overflow-hidden"
+                        className="rounded-xl border border-green/20 bg-green-wash p-6 text-center relative overflow-hidden"
                       >
-                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
-                        <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-green/10 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-green/10 rounded-full blur-2xl pointer-events-none" />
                         
                         <div className="relative z-10">
-                          <Mail className="mx-auto h-8 w-8 text-primary mb-3" />
+                          <Mail className="mx-auto h-8 w-8 text-green mb-3" />
                           <h3 className="font-semibold text-lg mb-1 text-foreground">¿Quieres tips para ahorrar en tu viaje?</h3>
                           <p className="text-muted-foreground text-sm mb-5">
                             Recibe consejos de presupuesto, ofertas de vuelos y guías exclusivas.

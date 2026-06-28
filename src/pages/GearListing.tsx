@@ -91,7 +91,7 @@ const GearListing = () => {
                           <p className="text-xs text-muted-foreground mt-2">
                             {new Date(a.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
                           </p>
-                          <span className="text-primary text-sm font-medium mt-3 inline-block group-hover:underline">
+                          <span className="text-green text-sm font-medium mt-3 inline-block group-hover:underline">
                             Leer artículo →
                           </span>
                         </div>

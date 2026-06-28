@@ -22,12 +22,12 @@ const StickyMobileCTA = ({ whatsappMessage, permitAlertUrl, estimatedBudgetUsd }
       <div className="container mx-auto px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         {hasBudget && (
           <p className="mb-2 text-center text-sm">
-            <span className="font-semibold text-primary">~${estimatedBudgetUsd!.toLocaleString("en-US")} USD</span>
+            <span className="font-semibold text-green">~${estimatedBudgetUsd!.toLocaleString("en-US")} USD</span>
             <span className="text-white/70"> · Planear por WhatsApp</span>
           </p>
         )}
         <div className="grid gap-3 grid-cols-1">
-          <Button asChild size="lg" className="h-auto min-h-12 bg-primary px-4 py-3 text-center text-white whitespace-normal hover:bg-primary/90">
+          <Button asChild size="lg" className="h-auto min-h-12 bg-green px-4 py-3 text-center text-white whitespace-normal hover:bg-green-dark">
             <a
               href={whatsappUrl}
               target="_blank"

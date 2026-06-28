@@ -84,7 +84,7 @@ const Navbar = () => {
               <>
                 <Mountain className={cn(
                   "h-6 w-6 transition-colors duration-300",
-                  scrolled ? "text-primary" : "text-white"
+                  scrolled ? "text-green" : "text-white"
                 )} />
                 <span className={cn(
                   "font-serif text-xl font-bold tracking-wide transition-colors duration-300",
@@ -102,7 +102,7 @@ const Navbar = () => {
               const linkClassName = cn(
                 "text-sm font-medium transition-colors duration-300",
                 scrolled
-                  ? "text-foreground/80 hover:text-primary"
+                  ? "text-foreground/80 hover:text-green"
                   : "text-white/90 hover:text-white text-shadow-hero"
               );
               const linkEl = link.href.startsWith("/") ? (
@@ -130,7 +130,7 @@ const Navbar = () => {
             })}
 
             {prefersReducedMotion ? (
-              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
+              <Button asChild className="bg-green hover:bg-green-dark text-white shadow-lg shadow-green/20 h-11">
                 <Link to="/#quiz">Descubre Tu Aventura</Link>
               </Button>
             ) : (
@@ -139,7 +139,7 @@ const Navbar = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + navLinks.length * 0.06, duration: 0.4, ease: NAV_EASE }}
               >
-                <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 h-11">
+                <Button asChild className="bg-green hover:bg-green-dark text-white shadow-lg shadow-green/20 h-11">
                   <Link to="/#quiz">Descubre Tu Aventura</Link>
                 </Button>
               </motion.div>
@@ -180,7 +180,7 @@ const Navbar = () => {
                   <img src={BRAND_ASSETS.logo} alt="Nomaderia" loading="lazy" className="h-8 w-auto" onError={() => setLogoError(true)} />
                 ) : (
                   <>
-                    <Mountain className="h-6 w-6 text-primary" />
+                    <Mountain className="h-6 w-6 text-green" />
                     <span className="font-serif text-xl font-bold tracking-wide text-foreground">
                       NOMADERIA
                     </span>
@@ -202,7 +202,7 @@ const Navbar = () => {
             {/* Nav links */}
             <nav className="flex-1 flex flex-col justify-center items-center gap-6 px-8">
               {navLinks.map((link, i) => {
-                const className = "text-2xl font-serif font-bold text-foreground hover:text-primary transition-colors min-h-[48px] flex items-center";
+                const className = "text-2xl font-serif font-bold text-foreground hover:text-green transition-colors min-h-[48px] flex items-center";
                 return (
                   <motion.div
                     key={link.label}
@@ -230,7 +230,7 @@ const Navbar = () => {
               >
                 <Button
                   asChild
-                  className="bg-primary text-primary-foreground w-full h-14 text-lg shadow-lg shadow-primary/20"
+                  className="bg-green text-white w-full h-14 text-lg shadow-lg shadow-green/20"
                   onClick={() => setOpen(false)}
                 >
                   <Link to="/#quiz">Descubre Tu Aventura</Link>
@@ -251,7 +251,7 @@ const Navbar = () => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.92 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-6 right-6 z-40 bg-primary hover:bg-primary/80 text-primary-foreground rounded-full p-3.5 shadow-lg shadow-primary/30 transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
+            className="fixed bottom-6 right-6 z-40 bg-green hover:bg-green-dark text-white rounded-full p-3.5 shadow-lg shadow-green/30 transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
           >
             <ArrowUp className="h-5 w-5" />
           </motion.button>

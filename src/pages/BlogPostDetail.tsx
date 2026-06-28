@@ -187,11 +187,11 @@ const BlogPostDetail = () => {
 
       {/* CTA interno */}
       <div className="container mx-auto px-4 max-w-3xl pb-8">
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center">
+        <div className="bg-green-wash border border-green/20 rounded-xl p-6 text-center">
           <p className="text-foreground font-serif text-lg mb-2">¿Listo para tu primera aventura?</p>
           <p className="text-muted-foreground text-sm mb-4">Descubre qué destino es perfecto para ti con nuestro quiz de 1 minuto.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/#quiz" className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+            <Link to="/#quiz" className="inline-flex items-center justify-center bg-green hover:bg-green-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
               Hacer el Quiz
             </Link>
             <Link to="/calculadora" className="inline-flex items-center justify-center border border-border hover:bg-muted text-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">

@@ -186,10 +186,10 @@ const GearArticleDetail = () => {
                         <div className="flex-1">
                           <h3 className="font-serif text-lg font-bold text-card-foreground mb-1">{p.name}</h3>
                           <div className="flex items-center gap-3 mb-2">
-                            <span className="text-primary font-bold">{p.price}</span>
+                            <span className="text-green font-bold">{p.price}</span>
                             <span className="flex items-center gap-0.5">
                               {Array.from({ length: 5 }).map((_, si) => (
-                                <Star key={si} className={`h-4 w-4 ${si < p.rating ? "text-primary fill-primary" : "text-muted-foreground"}`} />
+                                <Star key={si} className={`h-4 w-4 ${si < p.rating ? "text-green fill-green" : "text-muted-foreground"}`} />
                               ))}
                             </span>
                           </div>
@@ -203,7 +203,7 @@ const GearArticleDetail = () => {
                               <ul className="list-disc list-inside text-card-foreground/70">{p.cons?.map((con, ci) => <li key={ci}>{con}</li>)}</ul>
                             </div>
                           </div>
-                          <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                          <Button asChild size="sm" className="bg-green hover:bg-green-dark text-white">
                             <a href={p.affiliate_url || "#"} target="_blank" rel="noopener noreferrer sponsored">Ver en Amazon <ExternalLink className="ml-1 h-3 w-3" /></a>
                           </Button>
                         </div>
@@ -226,11 +226,11 @@ const GearArticleDetail = () => {
 
       {/* CTA interno */}
       <div className="container mx-auto px-4 max-w-3xl pb-8">
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center">
+        <div className="bg-green-wash border border-green/20 rounded-xl p-6 text-center">
           <p className="text-foreground font-serif text-lg mb-2">¿Necesitas ayuda eligiendo tu equipo?</p>
           <p className="text-muted-foreground text-sm mb-4">Nuestro quiz de 1 minuto te ayuda a elegir el equipo ideal según tu nivel, estilo y presupuesto.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/#quiz" className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+            <Link to="/#quiz" className="inline-flex items-center justify-center bg-green hover:bg-green-dark text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
               Hacer el Quiz
             </Link>
             <Link to="/calculadora" className="inline-flex items-center justify-center border border-border hover:bg-muted text-foreground px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">

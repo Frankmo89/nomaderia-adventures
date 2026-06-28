@@ -245,9 +245,9 @@ type ParkWithDist = ParkCard & { distanceKm: number };
 
 const TABS: Array<{ value: ActiveTab; label: string }> = [
   { value: "all", label: "Todos" },
-  { value: "easy", label: "🟢 Fácil" },
-  { value: "moderate", label: "🟡 Moderado" },
-  { value: "challenging", label: "🔴 Desafiante" },
+  { value: "easy", label: "Fácil" },
+  { value: "moderate", label: "Moderado" },
+  { value: "challenging", label: "Desafiante" },
 ];
 
 const DISTANCE_OPTIONS: Array<{ value: DistanceFilter; label: string }> = [
@@ -424,7 +424,7 @@ const Destinations = () => {
               className={cn(
                 "flex-none px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2",
                 activeTab === tab.value
-                  ? "border-[#D97706] text-[#1C1917]"
+                  ? "border-green text-[#1C1917]"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
@@ -639,7 +639,7 @@ const Destinations = () => {
             </button>
             <Button
               onClick={() => setSheetOpen(false)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 px-5"
+              className="bg-green text-white hover:bg-green-dark px-5"
             >
               Ver {filteredParks.length} parques
             </Button>

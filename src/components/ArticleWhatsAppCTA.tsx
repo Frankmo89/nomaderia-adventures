@@ -30,7 +30,7 @@ const ArticleWhatsAppCTA = ({ title, whatsappMessage }: ArticleWhatsAppCTAProps)
         <Button
           asChild
           size="lg"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          className="bg-green hover:bg-green-dark text-white"
         >
           <a
             href={url}

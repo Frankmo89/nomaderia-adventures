@@ -31,7 +31,7 @@ const WhatsAppIcon = () => (
 
 const difficultyColor: Record<string, string> = {
   easy: "bg-secondary text-secondary-foreground",
-  moderate: "bg-primary/80 text-primary-foreground",
+  moderate: "bg-green/80 text-white",
   challenging: "bg-destructive text-destructive-foreground",
 };
 const difficultyLabel: Record<string, string> = { easy: "Fácil", moderate: "Moderado", challenging: "Desafiante" };
@@ -159,7 +159,7 @@ const QuizLoading = () => (
       animate={{ rotate: 360 }}
       transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
     >
-      <Loader2 className="h-12 w-12 text-primary" />
+      <Loader2 className="h-12 w-12 text-green" />
     </motion.div>
     <motion.p
       initial={{ opacity: 0 }}
@@ -173,7 +173,7 @@ const QuizLoading = () => (
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
-          className="w-2.5 h-2.5 rounded-full bg-primary"
+          className="w-2.5 h-2.5 rounded-full bg-green"
           animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
         />
@@ -183,7 +183,7 @@ const QuizLoading = () => (
 );
 
 // --- Celebration particles ---
-const celebrationColors = ["bg-primary", "bg-secondary", "bg-sky-500", "bg-yellow-400"];
+const celebrationColors = ["bg-green", "bg-secondary", "bg-sky-500", "bg-yellow-400"];
 
 const CelebrationParticles = () => (
   <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -253,7 +253,7 @@ const EmailCapture = ({
           onChange={(e) => setEmail(e.target.value)}
           className="mt-4"
         />
-        <Button type="submit" disabled={loading} className="w-full rounded-full bg-primary text-white font-semibold py-3 mt-3 h-auto">
+        <Button type="submit" disabled={loading} className="w-full rounded-full bg-green hover:bg-green-dark text-white font-semibold py-3 mt-3 h-auto">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar mis resultados →"}
         </Button>
       </form>
@@ -278,7 +278,7 @@ const HeroResultCard = ({ d }: { d: QuizDestination }) => (
           className="w-full h-full object-cover img-warm"
         />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
+        <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-green/10" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/80 via-transparent to-transparent" />
     </div>
@@ -289,7 +289,7 @@ const HeroResultCard = ({ d }: { d: QuizDestination }) => (
       )}
       <Link
         to={`/destinos/${d.slug}`}
-        className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg text-sm font-semibold shadow-lg shadow-primary/30 transition-colors"
+        className="inline-flex items-center gap-2 bg-green hover:bg-green-dark text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-lg shadow-green/30 transition-colors"
       >
         Ver Guía Completa <ArrowRight className="h-4 w-4" />
       </Link>
@@ -313,7 +313,7 @@ const AlternativeCard = ({ d }: { d: QuizDestination }) => (
           className="w-full h-full object-cover img-warm transition-transform duration-700 group-hover:scale-105"
         />
       ) : (
-        <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
+        <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-green/10" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/50 via-transparent to-transparent" />
     </div>
@@ -323,7 +323,7 @@ const AlternativeCard = ({ d }: { d: QuizDestination }) => (
       {d.short_description && (
         <p className="text-sm text-muted-foreground line-clamp-2">{d.short_description}</p>
       )}
-      <span className="text-sm font-medium text-primary inline-flex items-center gap-1 pt-1">
+      <span className="text-sm font-medium text-green inline-flex items-center gap-1 pt-1">
         Ver Guía <ArrowRight className="h-3.5 w-3.5" />
       </span>
     </div>
@@ -439,7 +439,7 @@ const QuizResults = ({
           transition={{ delay: reduceMotion ? 0 : 0.9 }}
           className="mt-8 sm:mt-10 text-center"
         >
-          <a href="#destinos" className="text-primary hover:underline font-medium text-sm sm:text-base block">
+          <a href="#destinos" className="text-green hover:underline font-medium text-sm sm:text-base block">
             ¿Ninguno te convence? Explora todos los destinos →
           </a>
         </motion.div>
@@ -533,7 +533,7 @@ const QuizSection = () => {
       <div className="container mx-auto px-5 max-w-2xl relative z-10">
         {/* Section header */}
         <Reveal className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 text-sm text-primary mb-4">
+          <div className="inline-flex items-center gap-2 bg-green-wash border border-green/20 rounded-full px-4 py-1.5 text-sm text-green mb-4">
             <Sparkles className="h-3.5 w-3.5" />
             Cuestionario personalizado · 1 minuto
           </div>
@@ -551,7 +551,7 @@ const QuizSection = () => {
           {/* Linear progress bar — pinned to top of card */}
           <div className="h-[3px] rounded-full bg-stone/20 mb-5 overflow-hidden">
             <motion.div
-              className="h-full rounded-full bg-primary"
+              className="h-full rounded-full bg-green"
               initial={false}
               animate={{ width: `${((step + 1) / steps.length) * 100}%` }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -626,7 +626,7 @@ const QuizSection = () => {
                           className={cn(
                             "h-11 rounded-xl border text-sm font-medium transition-colors duration-200",
                             isUsResident === value
-                              ? "bg-primary/8 border-primary/50 text-foreground"
+                              ? "bg-green-wash border-green/50 text-foreground"
                               : cn("bg-white border-stone/20 text-foreground", canHover && "hover:border-stone/40")
                           )}
                         >
@@ -639,7 +639,7 @@ const QuizSection = () => {
                   <Button
                     onClick={onCombinedSubmit}
                     disabled={!combinedSeason || isUsResident === null}
-                    className="w-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 h-11 mt-2"
+                    className="w-full bg-green text-white shadow-lg shadow-green/20 h-11 mt-2"
                   >
                     Ver Mis Resultados <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
@@ -656,14 +656,14 @@ const QuizSection = () => {
                         className={cn(
                           "w-full flex items-center gap-4 px-4 py-5 rounded-2xl border transition-colors duration-200 text-left",
                           isSelected
-                            ? "bg-primary/8 border-primary/50"
+                            ? "bg-green-wash border-green/50"
                             : cn("bg-white border-stone/20", canHover && "hover:border-stone/40")
                         )}
                       >
                         {/* Icon tile */}
                         <div className={cn(
                           "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors duration-200",
-                          isSelected ? "bg-primary/15" : "bg-muted"
+                          isSelected ? "bg-green-wash" : "bg-muted"
                         )}>
                           {opt.icon}
                         </div>
