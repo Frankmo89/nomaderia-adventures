@@ -37,7 +37,7 @@ export function OriginPicker({ className }: { className?: string }) {
           const city = ORIGIN_CITIES.find((c) => c.key === e.target.value);
           if (city) setManualOrigin(city.lat, city.lng, city.label);
         }}
-        className="rounded-md border border-stone-200 bg-background px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 cursor-pointer"
+        className="rounded-md border border-stone-200 bg-background px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-green/50 cursor-pointer"
       >
         {!isFallback && !matchedCity && (
           <option value={GEO_VALUE}>{origin.label ?? "Tu ubicación"}</option>
@@ -53,7 +53,7 @@ export function OriginPicker({ className }: { className?: string }) {
         type="button"
         onClick={requestLocation}
         disabled={isLocating}
-        className="inline-flex items-center gap-1 text-primary hover:underline disabled:opacity-60 shrink-0"
+        className="inline-flex items-center gap-1 text-green hover:underline disabled:opacity-60 shrink-0"
       >
         <LocateFixed className="h-3.5 w-3.5" />
         {isLocating ? "ubicando…" : "usar mi ubicación"}

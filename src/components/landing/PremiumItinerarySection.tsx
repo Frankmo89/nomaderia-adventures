@@ -162,8 +162,8 @@ const PremiumItinerarySection = () => {
           <div className="text-center mb-14">
             <Button
               asChild
-              className="text-white px-8 hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: "#D97706" }}
+              variant="outline"
+              className="border-green text-green hover:bg-green-wash px-8 transition-colors"
             >
               <Link to="/servicios">Ver qué incluye el servicio →</Link>
             </Button>

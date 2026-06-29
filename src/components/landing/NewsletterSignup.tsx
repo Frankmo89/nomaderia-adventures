@@ -57,7 +57,7 @@ const NewsletterSignup = () => {
         </Reveal>
 
         {done ? (
-          <p className="text-primary font-medium text-base sm:text-lg">¡Gracias! Te mantendremos al tanto 🏔️</p>
+          <p className="text-green font-medium text-base sm:text-lg">¡Gracias! Te mantendremos al tanto 🏔️</p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
             <Input
@@ -68,7 +68,7 @@ const NewsletterSignup = () => {
               required
               className="bg-background text-foreground h-12 text-base"
             />
-            <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground whitespace-nowrap h-12 text-base">
+            <Button type="submit" disabled={loading} className="bg-green hover:bg-green-dark text-white whitespace-nowrap h-12 text-base">
               {loading ? "..." : "Suscribirme"}
             </Button>
           </form>
