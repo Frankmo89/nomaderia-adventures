@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
-import Reveal, { RevealGroup } from "@/components/editorial/Reveal";
+import Reveal from "@/components/editorial/Reveal";
 import { useFeaturedGearArticles } from "@/hooks/use-gear-articles";
 
 const categoryLabel: Record<string, string> = {
@@ -52,12 +52,15 @@ const GearPreview = () => {
         {isLoading ? (
           <CardGridSkeleton count={3} />
         ) : (
-          <RevealGroup className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 mb-8 sm:mb-10" stagger>
-            {articles.map((a) => (
+          /* Scroll horizontal con snap — invita a explorar; la siguiente tarjeta
+             asoma en el borde para señalar que hay más. Touch-friendly. */
+          <div className="mb-8 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 sm:mb-10 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+            {articles.map((a, i) => (
               <motion.div
                 key={a.id}
                 initial="rest"
                 whileHover={hoverEnabled ? "hover" : undefined}
+                className="min-w-[80%] snap-center sm:min-w-[320px]"
               >
                 <Link
                   to={`/gear/${a.slug}`}
@@ -93,7 +96,7 @@ const GearPreview = () => {
                 </Link>
               </motion.div>
             ))}
-          </RevealGroup>
+          </div>
         )}
 
         <Reveal className="text-center">

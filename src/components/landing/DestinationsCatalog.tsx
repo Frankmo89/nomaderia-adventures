@@ -35,12 +35,6 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
   const { data: destinations = [], isLoading, error } = useDestinations();
   const prefersReducedMotion = useReducedMotion();
   const [canHover, setCanHover] = useState(false);
-  const [activeSlideByLevel, setActiveSlideByLevel] = useState<Record<string, number>>({
-    all: 0,
-    easy: 0,
-    moderate: 0,
-    challenging: 0,
-  });
 
   useEffect(() => {
     const media = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -64,28 +58,6 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
   const filterByDifficulty = (level: string) =>
     level === "all" ? destinations : destinations.filter((d) => d.difficulty_level === level);
-
-  const handleCarouselScroll = (level: string, element: HTMLDivElement) => {
-    const children = Array.from(element.children) as HTMLElement[];
-    if (children.length === 0) return;
-
-    const viewportCenter = element.scrollLeft + element.clientWidth / 2;
-    let nearestIndex = 0;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-
-    children.forEach((child, index) => {
-      const childCenter = child.offsetLeft + child.offsetWidth / 2;
-      const distance = Math.abs(viewportCenter - childCenter);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = index;
-      }
-    });
-
-    setActiveSlideByLevel((prev) =>
-      prev[level] === nearestIndex ? prev : { ...prev, [level]: nearestIndex },
-    );
-  };
 
   const DestCard = ({ d, index }: { d: (typeof destinations)[0]; index: number }) => (
     <motion.div
@@ -211,29 +183,20 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
             return (
               <TabsContent key={level} value={level}>
-                <div
-                  className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-2 md:gap-6 md:overflow-visible lg:grid-cols-3"
-                  onScroll={(event) => handleCarouselScroll(level, event.currentTarget)}
-                >
+                {/* Grid asimétrico: 1 destino grande (feature) + el resto en
+                    tratamiento chico. Mobile: feature full-width arriba, los dos
+                    chicos 2-up debajo. Desktop: feature 2/3 (cols 1-2, 2 filas),
+                    chicos apilados en la columna 1/3. */}
+                <div className="grid grid-cols-2 gap-5 lg:grid-cols-3 lg:gap-6">
                   {filtered.map((d, i) => (
-                    <div key={d.id} className="min-w-[86%] snap-center md:min-w-0">
+                    <div
+                      key={d.id}
+                      className={i === 0 ? "col-span-2 lg:row-span-2" : "col-span-1"}
+                    >
                       <DestCard d={d} index={i} />
                     </div>
                   ))}
                 </div>
-
-                {filtered.length > 1 && (
-                  <div className="mt-4 flex items-center justify-center gap-2 md:hidden" aria-hidden="true">
-                    {filtered.map((_, dotIndex) => (
-                      <span
-                        key={`${level}-dot-${dotIndex}`}
-                        className={`h-1.5 rounded-full transition-all duration-200 ${
-                          dotIndex === activeSlideByLevel[level] ? "w-5 bg-green/80" : "w-1.5 bg-cloud/30"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
               </TabsContent>
             );
           })}
