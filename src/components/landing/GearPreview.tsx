@@ -34,17 +34,17 @@ const GearPreview = () => {
   const hoverEnabled = canHover && !prefersReducedMotion;
 
   return (
-    <section className="section-editorial bg-background relative overflow-hidden section-recessed">
+    <section className="section-editorial bg-cloud relative overflow-hidden section-recessed">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none noise-bg" />
       <div className="container mx-auto px-5 relative z-10">
         <Reveal className="text-center mb-10 sm:mb-12">
-          <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary mb-3 block">
+          <span className="font-condensed text-xs tracking-[0.08em] uppercase font-semibold text-green mb-3 block">
             Gear esencial
           </span>
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-2">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl font-bold text-ink mb-2">
             Equipo Para Principiantes
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <p className="text-slate text-sm sm:text-base">
             No necesitas gastar miles. Estas son las únicas cosas que realmente necesitas.
           </p>
         </Reveal>
@@ -73,21 +73,21 @@ const GearPreview = () => {
                       variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                       transition={{ duration: 0.7, ease: "easeOut" }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-forest-dark/70 via-forest-dark/25 to-transparent" />
                     <motion.div
                       variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
                       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                      className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none flex items-end p-3"
+                      className="absolute inset-0 bg-gradient-to-t from-forest-dark/70 via-forest-dark/20 to-transparent pointer-events-none flex items-end p-3"
                     >
                       <span className="text-white text-sm font-semibold tracking-wide">Explorar →</span>
                     </motion.div>
                   </div>
                   <div className="p-4 sm:p-5">
-                    <Badge className="bg-secondary text-secondary-foreground mb-3">
+                    <Badge className="bg-green-wash text-green border-0 mb-3">
                       {categoryLabel[a.category] || a.category}
                     </Badge>
-                    <h3 className="font-serif text-lg font-bold text-card-foreground mb-2">{a.title}</h3>
-                    <p className="text-sm text-card-foreground/70">{a.short_description}</p>
+                    <h3 className="font-sans font-semibold text-lg text-ink mb-2">{a.title}</h3>
+                    <p className="text-sm text-slate">{a.short_description}</p>
                     <span className="text-green text-sm font-medium mt-3 inline-block">Leer Guía →</span>
                   </div>
                 </Link>
@@ -97,7 +97,7 @@ const GearPreview = () => {
         )}
 
         <Reveal className="text-center">
-          <Button asChild variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10 h-12 min-w-[200px]">
+          <Button asChild variant="outline" className="border-slate/40 text-slate hover:bg-slate/10 h-12 min-w-[200px]">
             <Link to="/gear">Ver Todo el Equipo →</Link>
           </Button>
         </Reveal>

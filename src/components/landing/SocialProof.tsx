@@ -3,11 +3,6 @@ import { MapPin, BookOpen, Clock, ShieldCheck } from "lucide-react";
 import { usePublicStats } from "@/hooks/use-public-stats";
 import { PRICING } from "@/config/pricing";
 
-const cardStyle: React.CSSProperties = {
-  background: "#F5F5F4",
-  border: "0.5px solid #E5E7EB",
-};
-
 const SocialProof = () => {
   const { data: stats, isLoading } = usePublicStats();
 
@@ -24,30 +19,20 @@ const SocialProof = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden" style={{ minHeight: 560, background: '#FAFAFA' }}>
+    <section className="relative overflow-hidden bg-cloud" style={{ minHeight: 560 }}>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-5 py-20 sm:py-28">
 
         {/* Label */}
-        <p
-          className="text-xs tracking-[0.25em] uppercase font-semibold mb-5 text-center"
-          style={{ color: "#D97706" }}
-        >
+        <p className="font-condensed text-xs tracking-[0.08em] uppercase font-semibold mb-5 text-center text-green">
           RESPALDADO POR DATOS REALES
         </p>
 
         {/* Narrative */}
-        <p
-          className="text-center max-w-2xl mx-auto mb-14 leading-relaxed"
-          style={{
-            fontFamily: "Georgia, 'Playfair Display', serif",
-            fontSize: "20px",
-            color: "#1C1917",
-          }}
-        >
+        <p className="text-center max-w-2xl mx-auto mb-14 leading-relaxed font-serif text-xl text-ink">
           Desde 2024, llevamos a{" "}
-          <em style={{ color: "#166534", fontStyle: "italic" }}>
+          <em className="text-green">
             hispanos residentes en EE.UU.
           </em>{" "}
           a sus primeras aventuras en los parques nacionales — en español, sin suposiciones.
@@ -62,20 +47,13 @@ const SocialProof = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: i * 0.08 }}
-              className="rounded-2xl p-6 text-center"
-              style={cardStyle}
+              className="rounded-2xl p-6 text-center bg-white border border-stone"
             >
-              <Icon
-                className="mx-auto mb-3 h-6 w-6"
-                style={{ color: "#D97706" }}
-              />
-              <p
-                className="font-serif text-3xl sm:text-4xl font-bold mb-1"
-                style={{ color: "#1C1917" }}
-              >
+              <Icon className="mx-auto mb-3 h-6 w-6 text-green" />
+              <p className="font-serif text-3xl sm:text-4xl font-bold mb-1 text-ink">
                 {value}
               </p>
-              <p className="text-xs sm:text-sm leading-snug" style={{ color: "#78716C" }}>
+              <p className="text-xs sm:text-sm leading-snug text-sage">
                 {label}
               </p>
             </motion.div>
@@ -84,25 +62,23 @@ const SocialProof = () => {
 
         {/* TAP badge strip */}
         <div
-          className="max-w-2xl mx-auto pt-8 flex flex-col sm:flex-row items-center gap-4"
-          style={{ borderTop: "0.5px solid #E5E7EB" }}
+          className="max-w-2xl mx-auto pt-8 border-t border-stone/50 flex flex-col sm:flex-row items-center gap-4"
         >
           <div
-            className="flex items-center gap-3 rounded-xl px-5 py-3 shrink-0"
-            style={{ background: "#1C1917" }}
+            className="flex items-center gap-3 rounded-xl px-5 py-3 shrink-0 bg-forest-dark"
           >
-            <ShieldCheck className="h-6 w-6 shrink-0" style={{ color: "#FAFAFA" }} />
+            <ShieldCheck className="h-6 w-6 shrink-0 text-cloud" />
             <div className="text-left">
-              <p className="text-xs font-semibold leading-tight" style={{ color: "#FAFAFA" }}>
+              <p className="text-xs font-semibold leading-tight text-cloud">
                 Certificación TAP
               </p>
-              <p className="text-xs leading-tight" style={{ color: "#FAFAFA" }}>
+              <p className="text-xs leading-tight text-cloud">
                 The Travel Institute, EE.UU.
               </p>
             </div>
           </div>
 
-          <p className="text-sm text-center sm:text-left" style={{ color: "#78716C" }}>
+          <p className="text-sm text-center sm:text-left text-sage">
             Agente de viajes certificado — no somos un blog ni una app genérica.
             Servicio profesional en español.
           </p>

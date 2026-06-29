@@ -82,13 +82,13 @@ const BlogPreview = () => {
       <div className="container mx-auto px-5 relative z-10">
         {/* Header */}
         <Reveal className="text-center mb-10 sm:mb-14">
-          <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary mb-3 block">
+          <span className="font-condensed text-xs tracking-[0.08em] uppercase font-semibold text-green mb-3 block">
             Publicaciones del blog
           </span>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3">
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-ink mb-3">
             Del Blog
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto">
+          <p className="text-slate text-sm sm:text-base max-w-xl mx-auto">
             Tips, errores comunes y todo lo que necesitas saber antes de tu primera aventura.
           </p>
         </Reveal>
@@ -126,11 +126,11 @@ const BlogPreview = () => {
                       ) : (
                         <div className="h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-forest-dark/70 via-forest-dark/25 to-transparent" />
                       <motion.div
                         variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
                         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                        className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none flex items-end p-3"
+                        className="absolute inset-0 bg-gradient-to-t from-forest-dark/70 via-forest-dark/20 to-transparent pointer-events-none flex items-end p-3"
                       >
                         <span className="text-white text-sm font-semibold tracking-wide">Leer →</span>
                       </motion.div>
@@ -139,10 +139,10 @@ const BlogPreview = () => {
                     {/* Content */}
                     <div className="p-5">
                       <div className="mb-3 flex items-center gap-2">
-                        <Badge variant="outline" className="border-card-foreground/20 text-xs text-card-foreground">
+                        <Badge variant="outline" className="border-sage/30 text-xs text-sage">
                           {post.category}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-sage">
                           {new Date(post.created_at).toLocaleDateString("es-MX", {
                             day: "numeric",
                             month: "short",
@@ -150,10 +150,10 @@ const BlogPreview = () => {
                           })}
                         </span>
                       </div>
-                      <h3 className="mb-2 line-clamp-2 font-serif text-lg font-bold text-card-foreground transition-colors group-hover:text-green">
+                      <h3 className="mb-2 line-clamp-2 font-sans font-semibold text-lg text-ink transition-colors group-hover:text-green">
                         {post.title}
                       </h3>
-                      <p className="mb-3 line-clamp-2 text-sm text-card-foreground/70">{post.short_description}</p>
+                      <p className="mb-3 line-clamp-2 text-sm text-slate">{post.short_description}</p>
                       <span className="inline-flex items-center gap-1 text-sm font-semibold text-green transition-all group-hover:gap-2">
                         Leer más
                         <ArrowRight className="h-3.5 w-3.5" />
@@ -172,7 +172,7 @@ const BlogPreview = () => {
               <span
                 key={`blog-dot-${dotIndex}`}
                 className={`h-1.5 rounded-full transition-all duration-200 ${
-                  dotIndex === activeSlide ? "w-5 bg-green/80" : "w-1.5 bg-foreground/20"
+                  dotIndex === activeSlide ? "w-5 bg-green/80" : "w-1.5 bg-ink/20"
                 }`}
               />
             ))}
@@ -183,7 +183,7 @@ const BlogPreview = () => {
         <Reveal className="text-center mt-10 sm:mt-14">
           <Link
             to="/blog"
-            className="inline-flex items-center gap-2 border border-border hover:bg-muted text-foreground px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+            className="inline-flex items-center gap-2 border border-stone text-ink hover:bg-stone/30 px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
           >
             Ver todo el blog
             <ArrowRight className="h-4 w-4" />
