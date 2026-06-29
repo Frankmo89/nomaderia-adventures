@@ -179,7 +179,7 @@ const PremiumItinerarySection = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
               >
-                <Card className="relative flex flex-col h-full bg-white card-depth border-2 border-primary">
+                <Card className="relative flex flex-col h-full bg-white card-depth border-2 border-green">
                   <CardHeader className="text-center pt-7 pb-3">
                     <h3 className="font-serif text-xl text-foreground mb-1">
                       {product.name}
@@ -192,7 +192,7 @@ const PremiumItinerarySection = () => {
                     <ul className="space-y-2">
                       {product.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                          <Check className="h-4 w-4 text-green flex-shrink-0 mt-0.5" />
                           <span className="text-foreground/70 text-sm">
                             {feature}
                           </span>
@@ -203,7 +203,7 @@ const PremiumItinerarySection = () => {
                   <CardFooter>
                     <Button
                       asChild
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                      className="w-full bg-green hover:bg-green-dark text-white"
                     >
                       <a
                         href={product.ctaUrl}

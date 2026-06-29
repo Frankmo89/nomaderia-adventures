@@ -208,7 +208,7 @@ const Servicios = () => {
         >
           {products.map((product) => (
             <motion.div key={product.id} variants={cardItemVariants}>
-              <Card className="relative flex flex-col h-full bg-card shadow-lg border-2 border-primary shadow-primary/10">
+              <Card className="relative flex flex-col h-full bg-card shadow-lg border-2 border-green shadow-green/10">
                 <CardHeader className="text-center pt-8">
                   <h3 className="font-serif text-2xl text-foreground mb-2">
                     {product.name}
@@ -221,7 +221,7 @@ const Servicios = () => {
                   <ul className="space-y-3">
                     {product.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                        <Check className="h-5 w-5 text-green flex-shrink-0 mt-0.5" />
                         <span className="text-foreground/70 text-sm">
                           {feature}
                         </span>
@@ -232,7 +232,7 @@ const Servicios = () => {
                 <CardFooter>
                   <Button
                     asChild
-                    className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-primary-foreground"
+                    className="w-full h-12 text-base bg-green hover:bg-green-dark text-white"
                   >
                     <a
                       href={product.ctaUrl}

@@ -44,7 +44,7 @@ export function DistanceFromYou({ latitude, longitude, className }: DistanceFrom
           type="button"
           onClick={requestLocation}
           disabled={isLocating}
-          className="mt-0.5 text-[11px] text-primary hover:underline disabled:opacity-60"
+          className="mt-0.5 text-[11px] text-green hover:underline disabled:opacity-60"
         >
           · desde San Diego — {isLocating ? "ubicando…" : "usar mi ubicación"}
         </button>
