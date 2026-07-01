@@ -199,6 +199,8 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-07-01] **SectionDivider (Phase 4a) — ajuste post-review de documentación e indentación.** `src/components/landing/SectionDivider.tsx`: se documentó explícitamente el fallback de `fill` (`#14201A` en light, `#EAF0EC` en dark) y se corrigió la indentación en los bloques `layered`, `snow-capped` y `simple` (incluyendo el primer `<path>` de `layered`) para eliminar ruido de formato.
+
 - [2026-07-01] **Fase 4a — divisores de montaña con cresta real (A simple / B cordillera en capas / C nevado), reposicionados en todas las transiciones de color del home.** `src/components/landing/SectionDivider.tsx` ahora expone variantes `simple`, `layered` y `snow-capped` con siluetas serradas reales, manteniendo `topo` intacto. `src/pages/Index.tsx` repuso los divisores en cada transición light↔dark vigente del homepage (sin tocar el divisor propio del hero ni insertar divisores entre secciones del mismo tier). `node node_modules/typescript/bin/tsc --noEmit` + `npm run build` pasan.
 
 - [2026-07-01] **Region formatter tests** — added `src/lib/regions.test.ts` to lock in the shared `formatRegionDisplay()` contract for null/empty input, valid single/multi-state values, trimmed comma spacing, and unknown-code passthrough.

@@ -6,7 +6,8 @@ type SectionDividerProps = {
   /**
    * When set, the mountain variants render as filled silhouettes in
    * this color (use the color of the section ABOVE) that cuts down into the
-   * section below — for visible light↔dark transitions.
+   * section below — for visible light↔dark transitions. When omitted, it falls
+   * back to #14201A in light mode and #EAF0EC in dark mode.
    */
   fill?: string;
 };
@@ -74,18 +75,18 @@ const SectionDivider = ({
   }
 
   if (variant === "layered") {
-   return (
-     <div
-       aria-hidden="true"
-       className="relative h-0 z-10 pointer-events-none"
-     >
-       <svg
+    return (
+      <div
+        aria-hidden="true"
+        className="relative h-0 z-10 pointer-events-none"
+      >
+        <svg
          viewBox="0 0 1440 112"
          preserveAspectRatio="none"
          className="absolute left-0 w-full -translate-y-1/2 h-[76px] sm:h-[112px]"
          xmlns="http://www.w3.org/2000/svg"
          focusable="false"
-       >
+        >
          <defs>
            <filter id={blurId} x="-5%" y="-5%" width="110%" height="110%">
              <feGaussianBlur stdDeviation="6" />
