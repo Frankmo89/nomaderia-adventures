@@ -36,6 +36,7 @@ import TrailsSection from "@/components/destinations/TrailsSection";
 import ParkAlertsBanner from "@/components/destinations/ParkAlertsBanner";
 import ParkWeatherCard from "@/components/destinations/ParkWeatherCard";
 import { buildChipItems } from "@/lib/chip-labels";
+import { formatRegionDisplay } from "@/lib/regions";
 import { useParkLiveData } from "@/hooks/use-park-live-data";
 
 type Destination = Tables<"destinations">;
@@ -278,6 +279,7 @@ const DestinationDetail = () => {
     const ext = dest as Destination & DestExt;
     return buildChipItems(ext.good_for, dest.tags as string[] | null);
   }, [dest]);
+  const regionDisplay = formatRegionDisplay(dest?.region ?? null);
 
   const handleShare = useCallback(() => {
     if (navigator.share) {
@@ -440,7 +442,7 @@ const DestinationDetail = () => {
           {/* Location */}
           <p className="font-sans text-[#6B7280]" style={{ fontSize: 13 }}>
             {countryFlag[dest.country] || "🏔"} {dest.country}
-            {dest.region ? ` · ${dest.region}` : ""}
+            {regionDisplay ? ` · ${regionDisplay}` : ""}
           </p>
 
           <div style={{ height: 12 }} />
