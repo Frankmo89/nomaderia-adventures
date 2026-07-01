@@ -22,44 +22,10 @@ import { OriginPicker } from "@/components/destinations/OriginPicker";
 import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 import { useDestinationsDirectory, type ParkCard } from "@/hooks/use-destinations";
 import { haversineKm, getDistanceBucket, SAN_DIEGO_ORIGIN } from "@/lib/distance";
+import { formatRegionDisplay, getRegionCodes, STATE_NAMES } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const STATE_NAMES: Record<string, string> = {
-  AK: "Alaska",
-  AR: "Arkansas",
-  AS: "Samoa Americana",
-  AZ: "Arizona",
-  CA: "California",
-  CO: "Colorado",
-  FL: "Florida",
-  HI: "Hawái",
-  ID: "Idaho",
-  IN: "Indiana",
-  KY: "Kentucky",
-  ME: "Maine",
-  MI: "Míchigan",
-  MN: "Minnesota",
-  MO: "Misuri",
-  MT: "Montana",
-  NC: "Carolina del Norte",
-  ND: "Dakota del Norte",
-  NM: "Nuevo México",
-  NV: "Nevada",
-  OH: "Ohio",
-  OR: "Oregón",
-  SC: "Carolina del Sur",
-  SD: "Dakota del Sur",
-  TN: "Tennessee",
-  TX: "Texas",
-  UT: "Utah",
-  VA: "Virginia",
-  VI: "Islas Vírgenes",
-  WA: "Washington",
-  WV: "Virginia Occidental",
-  WY: "Wyoming",
-};
 
 const ACCESS_LABELS: Record<string, string> = {
   facil: "En auto, fácil",
@@ -96,20 +62,6 @@ function getCellLabel(status: string | null): string {
   )
     return "Señal limitada";
   return "Con señal";
-}
-
-function getRegionCodes(region: string | null): string[] {
-  if (!region) return [];
-  return region
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-function regionDisplay(region: string | null): string {
-  const codes = getRegionCodes(region);
-  if (codes.length === 0) return "";
-  return codes.map((c) => STATE_NAMES[c] ?? c).join(" & ");
 }
 
 // ─── ParkListCard ─────────────────────────────────────────────────────────────
@@ -199,7 +151,7 @@ function ParkListCard({ park }: { park: ParkCard }) {
           {park.region && (
             <span className="flex items-center gap-1">
               <MapPin className="h-3 w-3 shrink-0" />
-              {regionDisplay(park.region)}
+              {formatRegionDisplay(park.region)}
             </span>
           )}
           <span className="flex items-center gap-1">
