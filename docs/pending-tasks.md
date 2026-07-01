@@ -545,6 +545,10 @@ Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
   (`useCanonical`/`useJsonLd`/`usePageMeta`), LoadingSkeletons, ErrorBoundary,
   auditoría Radix (12 paquetes no usados eliminados).
 
+## Changelog 2026-07-01 — SocialProof: restaurado grid 2×2 con tarjetas en caja
+
+- `SocialProof.tsx`: grid editorial sin cajas reemplazado por grid 2×2 de tarjetas blancas (radio 16px, borde stone, sombra suave) con íconos verdes (MapPin/BookOpen/Clock/Tag) restaurados; números y labels mantenidos de Phase 3b; eyebrow y narrativa centrados.
+
 ## Changelog 2026-06-10/11 — Base de contenido completa (63 parques)
 
 Sesión Claude Projects: auditoría + generación masiva de contenido SOUL.
