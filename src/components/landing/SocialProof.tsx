@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ShieldCheck } from "lucide-react";
+import { BookOpen, Clock, MapPin, ShieldCheck, Tag, type LucideIcon } from "lucide-react";
 import { usePublicStats } from "@/hooks/use-public-stats";
 import { PRICING } from "@/config/pricing";
 
@@ -11,11 +11,11 @@ const SocialProof = () => {
   const destCount = stats?.destinations ?? 0;
   const guideCount = stats?.blogPosts ?? 0;
 
-  const STAT_CARDS = [
-    { value: String(destCount),             label: "Destinos cubiertos con guía completa" },
-    { value: String(guideCount),            label: "Guías escritas en español de verdad" },
-    { value: "24h",                         label: "Tiempo máximo de entrega del itinerario" },
-    { value: `$${PRICING.solucionCompleta}`, label: "Precio único, todo incluido, sin sorpresas" },
+  const STAT_CARDS: { icon: LucideIcon; value: string; label: string }[] = [
+    { icon: MapPin,   value: String(destCount),              label: "Destinos cubiertos con guía completa" },
+    { icon: BookOpen, value: String(guideCount),             label: "Guías escritas en español de verdad" },
+    { icon: Clock,    value: "24h",                          label: "Tiempo máximo de entrega del itinerario" },
+    { icon: Tag,      value: `$${PRICING.solucionCompleta}`, label: "Precio único, todo incluido, sin sorpresas" },
   ];
 
   return (
@@ -25,12 +25,12 @@ const SocialProof = () => {
       <div className="relative z-10 container mx-auto px-5 py-20 sm:py-28">
 
         {/* Label */}
-        <p className="font-condensed text-xs tracking-[0.08em] uppercase font-semibold mb-5 text-left text-green">
+        <p className="font-condensed text-xs tracking-[0.08em] uppercase font-semibold mb-5 text-center text-green">
           RESPALDADO POR DATOS REALES
         </p>
 
         {/* Narrative */}
-        <p className="text-left max-w-2xl mb-14 leading-relaxed font-serif text-xl text-ink">
+        <p className="text-center max-w-2xl mx-auto mb-14 leading-relaxed font-serif text-xl text-ink">
           Desde 2024, llevamos a{" "}
           <em className="text-green">
             hispanos residentes en EE.UU.
@@ -38,18 +38,19 @@ const SocialProof = () => {
           a sus primeras aventuras en los parques nacionales — en español, sin suposiciones.
         </p>
 
-        {/* Stats — editorial, left-aligned, sin cajas */}
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-y-12 sm:gap-x-16 max-w-3xl mb-10">
-          {STAT_CARDS.map(({ value, label }, i) => (
+        {/* Stats — boxed 2×2 grid */}
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto mb-10">
+          {STAT_CARDS.map(({ icon: Icon, value, label }, i) => (
             <motion.div
               key={label}
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: i * 0.08 }}
-              className="text-left"
+              className="flex flex-col items-center text-center bg-white rounded-2xl border border-stone px-4 py-6 sm:px-6 sm:py-8 shadow-[0_4px_16px_rgba(20,32,26,0.08)]"
             >
-              <p className="font-serif text-5xl sm:text-6xl font-bold leading-none text-ink">
+              <Icon className="h-5 w-5 mb-3 text-green" strokeWidth={1.75} aria-hidden="true" />
+              <p className="font-serif text-4xl sm:text-5xl font-bold leading-none text-ink">
                 {value}
               </p>
               <p className="mt-3 font-condensed text-xs sm:text-sm tracking-[0.08em] uppercase leading-snug text-sage">
@@ -61,7 +62,7 @@ const SocialProof = () => {
 
         {/* TAP badge strip */}
         <div
-          className="max-w-3xl pt-8 border-t border-stone/50 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+          className="max-w-2xl mx-auto pt-8 border-t border-stone/50 flex flex-col sm:flex-row items-center gap-4"
         >
           <div
             className="flex items-center gap-3 rounded-xl px-5 py-3 shrink-0 bg-forest-dark"
@@ -77,7 +78,7 @@ const SocialProof = () => {
             </div>
           </div>
 
-          <p className="text-sm text-left text-sage">
+          <p className="text-sm text-center sm:text-left text-sage">
             Agente de viajes certificado — no somos un blog ni una app genérica.
             Servicio profesional en español.
           </p>
