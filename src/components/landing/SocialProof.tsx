@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
-import { BookOpen, Clock, MapPin, ShieldCheck, Tag } from "lucide-react";
+import { BookOpen, Clock, MapPin, ShieldCheck, Tag, type LucideIcon } from "lucide-react";
 import { usePublicStats } from "@/hooks/use-public-stats";
 import { PRICING } from "@/config/pricing";
-import type { LucideIcon } from "lucide-react";
 
 const SocialProof = () => {
   const { data: stats, isLoading } = usePublicStats();
@@ -48,10 +47,9 @@ const SocialProof = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.45, delay: i * 0.08 }}
-              className="flex flex-col items-center text-center bg-white rounded-2xl border border-stone px-4 py-6 sm:px-6 sm:py-8"
-              style={{ boxShadow: "0 4px 16px rgba(20,32,26,0.08)" }}
+              className="flex flex-col items-center text-center bg-white rounded-2xl border border-stone px-4 py-6 sm:px-6 sm:py-8 shadow-[0_4px_16px_rgba(20,32,26,0.08)]"
             >
-              <Icon className="h-5 w-5 mb-3 text-green" strokeWidth={1.75} />
+              <Icon className="h-5 w-5 mb-3 text-green" strokeWidth={1.75} aria-hidden="true" />
               <p className="font-serif text-4xl sm:text-5xl font-bold leading-none text-ink">
                 {value}
               </p>
