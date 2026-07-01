@@ -1,11 +1,12 @@
+import { useId } from "react";
+
 type SectionDividerProps = {
-  variant?: "ridge" | "topo";
+  variant?: "simple" | "layered" | "snow-capped" | "topo";
   dark?: boolean;
   /**
-   * When set, the ridge variant renders as a filled mountain silhouette in
+   * When set, the mountain variants render as filled silhouettes in
    * this color (use the color of the section ABOVE) that cuts down into the
-   * section below — for visible light↔dark transitions. Omit for the original
-   * decorative stroke line.
+   * section below — for visible light↔dark transitions.
    */
   fill?: string;
 };
@@ -15,13 +16,21 @@ type SectionDividerProps = {
  * evoking topographic ridgelines. h-0 container keeps layout unaffected;
  * the SVG overflows to straddle the boundary.
  *
- * variant="ridge"  — single gentle stroke, warm walnut tint, for light→light transitions
- *                    (or a filled silhouette when `fill` is provided)
+ * variant="simple"      — one jagged crest silhouette
+ * variant="layered"     — overlapping ridgelines with depth
+ * variant="snow-capped" — taller peaks with light alpine cap accents
  * variant="topo"   — three parallel contour strokes, stronger presence
  * dark             — switches stroke to stone/sand for rendering over dark backgrounds
  */
-const SectionDivider = ({ variant = "ridge", dark = false, fill }: SectionDividerProps) => {
+const SectionDivider = ({
+  variant = "simple",
+  dark = false,
+  fill,
+}: SectionDividerProps) => {
   const base = dark ? "rgba(229,221,210," : "rgba(61,47,35,";
+  const fallbackFill = dark ? "#EAF0EC" : "#14201A";
+  const crestFill = fill ?? fallbackFill;
+  const blurId = useId().replace(/:/g, "");
 
   if (variant === "topo") {
     const opacities = dark ? ["0.18", "0.11", "0.06"] : ["0.11", "0.07", "0.04"];
@@ -64,56 +73,109 @@ const SectionDivider = ({ variant = "ridge", dark = false, fill }: SectionDivide
     );
   }
 
-  // variant="ridge" — filled silhouette when `fill` is set (cuts into the
-  // section below), otherwise the original decorative stroke line.
-  if (fill) {
-    return (
-      <div
-        aria-hidden="true"
-        className="relative h-0 z-10 pointer-events-none"
-      >
-        <svg
-          viewBox="0 0 1440 80"
-          preserveAspectRatio="none"
-          className="absolute left-0 w-full -translate-y-1/2 h-[52px] sm:h-[80px]"
-          xmlns="http://www.w3.org/2000/svg"
-          focusable="false"
-        >
-          {/* Solid ridge silhouette: fills the top (matching the section above)
-              with a wavy ridgeline as its bottom edge that bites into the
-              section below. */}
+  if (variant === "layered") {
+   return (
+     <div
+       aria-hidden="true"
+       className="relative h-0 z-10 pointer-events-none"
+     >
+       <svg
+         viewBox="0 0 1440 112"
+         preserveAspectRatio="none"
+         className="absolute left-0 w-full -translate-y-1/2 h-[76px] sm:h-[112px]"
+         xmlns="http://www.w3.org/2000/svg"
+         focusable="false"
+       >
+         <defs>
+           <filter id={blurId} x="-5%" y="-5%" width="110%" height="110%">
+             <feGaussianBlur stdDeviation="6" />
+           </filter>
+         </defs>
           <path
-            d="M0,0 L1440,0 L1440,58 C1320,42 1200,66 1080,44 C900,68 720,38 540,64 C360,40 180,70 0,46 Z"
-            fill={fill}
-          />
-        </svg>
-      </div>
-    );
+           d="M0,0 H1440 V68 L1332,58 L1236,86 L1114,36 L1008,92 L884,44 L772,84 L650,28 L528,88 L410,40 L286,82 L176,32 L88,74 L0,48 Z"
+           fill={crestFill}
+           fillOpacity="0.42"
+           filter={`url(#${blurId})`}
+         />
+         <path
+           d="M0,0 H1440 V84 L1336,62 L1222,102 L1104,22 L986,108 L864,52 L748,94 L628,16 L502,106 L390,44 L276,96 L158,30 L76,86 L0,54 Z"
+           fill={crestFill}
+           fillOpacity="0.72"
+         />
+         <path
+           d="M0,0 H1440 V92 L1310,70 L1196,110 L1084,30 L964,112 L846,58 L726,100 L612,18 L486,108 L366,48 L252,98 L140,34 L58,88 L0,60 Z"
+           fill={crestFill}
+         />
+       </svg>
+     </div>
+   );
+  }
+
+  if (variant === "snow-capped") {
+   return (
+     <div
+       aria-hidden="true"
+       className="relative h-0 z-10 pointer-events-none"
+     >
+       <svg
+         viewBox="0 0 1440 124"
+         preserveAspectRatio="none"
+         className="absolute left-0 w-full -translate-y-1/2 h-[84px] sm:h-[124px]"
+         xmlns="http://www.w3.org/2000/svg"
+         focusable="false"
+       >
+         <path
+           d="M0,0 H1440 V100 L1320,84 L1202,120 L1086,20 L970,122 L850,60 L738,108 L614,10 L494,116 L378,44 L258,112 L144,28 L64,94 L0,66 Z"
+           fill={crestFill}
+         />
+         <path
+           d="M1110,34 L1086,20 L1062,38 L1086,48 Z"
+           fill="#FFFFFF"
+           fillOpacity="0.72"
+         />
+         <path
+           d="M638,28 L614,10 L590,34 L614,46 Z"
+           fill="#FFFFFF"
+           fillOpacity="0.72"
+         />
+         <path
+           d="M170,42 L144,28 L120,50 L144,60 Z"
+           fill="#FFFFFF"
+           fillOpacity="0.68"
+         />
+         <path
+           d="M995,78 L970,62 L946,82 L970,92 Z"
+           fill="#FFFFFF"
+           fillOpacity="0.52"
+         />
+         <path
+           d="M520,70 L494,54 L470,76 L494,88 Z"
+           fill="#FFFFFF"
+           fillOpacity="0.52"
+         />
+       </svg>
+     </div>
+   );
   }
 
   return (
-    <div
-      aria-hidden="true"
-      className="relative h-0 z-10 pointer-events-none"
-    >
-      <svg
-        viewBox="0 0 1440 80"
-        preserveAspectRatio="none"
-        className="absolute left-0 w-full -translate-y-1/2"
-        style={{ height: "80px" }}
-        xmlns="http://www.w3.org/2000/svg"
-        focusable="false"
-      >
-        {/* Asymmetric ridge — peaks vary so it reads as natural terrain */}
-        <path
-          d="M0,52 C180,24 360,68 540,32 C720,4 900,56 1080,26 C1200,8 1320,50 1440,34"
-          fill="none"
-          stroke={`${base}0.09)`}
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
+   <div
+     aria-hidden="true"
+     className="relative h-0 z-10 pointer-events-none"
+   >
+     <svg
+       viewBox="0 0 1440 92"
+       preserveAspectRatio="none"
+       className="absolute left-0 w-full -translate-y-1/2 h-[68px] sm:h-[92px]"
+       xmlns="http://www.w3.org/2000/svg"
+       focusable="false"
+     >
+       <path
+         d="M0,0 H1440 V74 L1326,62 L1208,88 L1098,30 L982,86 L860,50 L748,84 L630,24 L514,90 L398,42 L276,86 L162,34 L72,76 L0,54 Z"
+         fill={crestFill}
+       />
+     </svg>
+   </div>
   );
 };
 

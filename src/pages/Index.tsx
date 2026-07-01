@@ -80,18 +80,20 @@ const Index = () => {
       <JsonLd data={organizationLd} />
       <HeroSection />
       <PromiseSection />
+      <SectionDivider variant="simple" fill="#1C1917" />
       <SocialProof />
-      <SectionDivider variant="ridge" fill="#FAFAFA" />
+      <SectionDivider variant="layered" fill="#FBFAF7" />
       <DestinationsCatalog limit={3} />
+      <SectionDivider variant="snow-capped" fill="#14201A" />
       <QuizSection />
       <TravelInsuranceSection />
-      <SectionDivider variant="ridge" fill="#F4EFE7" />
+      <SectionDivider variant="layered" fill="#F4EFE7" />
       <PremiumItinerarySection />
-      <SectionDivider variant="ridge" fill="#1C1917" />
+      <SectionDivider variant="simple" fill="#1C1917" />
       <GearPreview />
       <BlogPreview />
       <NewsletterSignup />
-      <SectionDivider variant="topo" dark />
+      <SectionDivider variant="simple" fill="#F4EFE7" />
       <Footer />
     </main>
   );
