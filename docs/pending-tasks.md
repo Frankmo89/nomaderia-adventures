@@ -594,3 +594,4 @@ Sesión Claude Projects: auditoría + generación masiva de contenido SOUL.
 - [ ] Priorizar publicación por relevancia SoCal (los 11 con recargo 2026 primero)
 - [ ] Identificar la fila 63 nueva y decidir si cierra el pendiente seki/sequ/kica
 - [ ] Re-ingestión RAG con la base completa (después de validar el ingest con Gran Cañón)
+- [2026-07-02] Añadido `public/_headers` con Cache-Control headers para Cloudflare Pages: no-store en `/` e `/index.html`, immutable en `/assets/*`.
