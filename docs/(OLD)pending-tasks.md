@@ -112,8 +112,8 @@ https://nomaderia.com/
 - [x] Panel **"Atención hoy"** (border-left primario, fondo primary/5) insertado sobre el grid de stats — muestra leads de `sentinel_leads` y respuestas de `quiz_responses` de las últimas 48h, cada fila con botón verde WhatsApp que abre mensaje pre-llenado contextual
 - [x] Importados `MessageCircle` (lucide-react) y `buildWhatsAppLink` (`@/lib/whatsapp`) en AdminDashboard
 
-### ✅ Email drip itinerary_cta — modelo de 2 productos (Mayo 2026)
-- [x] `supabase/functions/send-drip-emails/index.ts` `buildItineraryCtaEmail()`: eliminada la sección de 3 paquetes legacy (Weekend/Aventura/Expedición) y reemplazada por el modelo actual de 2 productos: **Itinerario Personalizado ($29 USD)** y **Solución Completa ($49 USD, badge "Más popular")**
+### ✅ Email drip itinerary_cta — modelo comercial ya superseded (Mayo 2026)
+- [x] `supabase/functions/send-drip-emails/index.ts` `buildItineraryCtaEmail()`: eliminada la sección de tiers legacy y reemplazada en esa etapa por un modelo comercial simplificado, posteriormente superseded por el producto único vigente de $49 USD vía WhatsApp
 - [x] CTA principal cambiado de `E86C3A` (naranja legacy) a verde WhatsApp `#25D366` con enlace directo `wa.me/18588996802?text=...` y mensaje pre-llenado
 - [x] CTA secundario actualizado de `/destinos` a `/servicios`
 - [x] Ruta rota `/#itinerario` eliminada; el botón principal apunta a WhatsApp directamente
@@ -174,7 +174,7 @@ https://nomaderia.com/
 - [x] Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
 
 ### ✅ Auditoría de precios en email post-quiz (Mayo 2026)
-- [x] Revisión completa de `supabase/functions/send-quiz-email/index.ts` para detectar precios MXN, nombres legacy (Escapada/Aventura/Expedición) y referencias al modelo anterior de 3 tiers
+- [x] Revisión completa de `supabase/functions/send-quiz-email/index.ts` para detectar precios MXN, nombres legacy de tiers por duración y referencias al modelo anterior de 3 tiers
 - [x] Resultado: **sin hallazgos**; el contenido actual no usa precios MXN ni estructura legacy, por lo que no se aplicaron cambios en la Edge Function
 - [x] Confirmado que se mantiene `from: "Nomaderia <hola@nomaderia.com>"` sin modificaciones
 - [x] Verificación ejecutada: `node node_modules/typescript/bin/tsc --noEmit` ✅
@@ -225,15 +225,14 @@ https://nomaderia.com/
 ### ✅ Cuatro Fixes Dirigidos — Pricing, Permit Alert, SEO, Admin Form (Mayo 2026)
 
 **FIX 1 — Pricing Restructure:**
-- [x] Reemplazada estructura de 3 paquetes (Weekend/Aventura/Expedición) por 2 productos + 1 bundle
-- [x] Product A: "Alerta de Permisos" — $29 USD (Stripe)
-- [x] Product B: "Itinerario Personalizado" — $29 USD (WhatsApp)
-- [x] Bundle: "Solución Completa" — $49 USD (Ahorra $9)
+- [x] Reemplazada la estructura legacy por un modelo intermedio de catálogo simplificado
+- [x] Ese modelo intermedio quedó posteriormente superseded por el producto único vigente
+- [x] Referencia actual correcta: **Itinerario Completo Nomaderia** — **$49 USD** — WhatsApp
 - [x] Eliminados precios MXN de `src/config/pricing.ts`, `Servicios.tsx`, `PremiumItinerarySection.tsx`
 - [x] Actualizado test `src/pages/Servicios.test.ts`
 
 **FIX 2 — Permit Alert CTA en Destination Sidebar:**
-- [x] Botón "Alerta de permisos — $29 USD" en sidebar "Reserva Tu Viaje" (`DestinationDetail.tsx`)
+- [x] Botón legacy de permisos en sidebar "Reserva Tu Viaje" (`DestinationDetail.tsx`)
 - [x] Condición: solo aparece si `affiliate_links.permit_alert_url` está configurado
 - [x] Estilo: bg-[#D97706] text-white, Bell icon, full width
 
@@ -241,15 +240,14 @@ https://nomaderia.com/
 - [x] `usePageMeta()` en Index.tsx, Destinations.tsx, BudgetCalculator.tsx, Servicios.tsx
 
 **FIX 4 — Admin Form: Campo permit_alert_url:**
-- [x] Nuevo campo "URL Alerta de Permisos (Stripe)" en `AdminDestinationForm.tsx`
+- [x] Nuevo campo legacy de Stripe por destino en `AdminDestinationForm.tsx`
 - [x] Primera posición en sección Affiliate Links, antes de flights_url
 - [x] Help text: "Solo para parques con permisos difíciles (Yosemite, Grand Canyon)"
 
 **REPORT-ONLY (NO implementados, requieren acción humana):**
 - [ ] `public/diploma.jpg` falta — foto de certificación TAP de Frank
 - [ ] Facebook Pixel `TU_PIXEL_ID_AQUI` aún es placeholder en `index.html`
-- [ ] Precios MXN aún presentes en `supabase/functions/send-drip-emails/index.ts`
-- [ ] Precios MXN aún presentes en `supabase/functions/send-quiz-results/index.ts`
+- [ ] Verificar que cualquier copy legacy restante siga marcado como histórico y no como pricing vigente
 - [ ] Schema drift: tablas `sentinel_leads` y `media_slider` faltan en `src/integrations/supabase/types.ts` (regenerar con CLI)
 
 ### ✅ Fase 4 — Armadura de Titanio: Monitoreo y Auditoría Avanzada (Marzo 2026)
@@ -282,7 +280,7 @@ https://nomaderia.com/
 
 ### ✅ Tarea 1.3 — Página /servicios rediseñada con nuevos precios y estructura (Marzo 2026)
 - [x] Hero actualizado: headline "Tu aventura, armada paso a paso" con subtítulo motivador para principiantes
-- [x] 3 tarjetas de precios con shadcn/ui Card: Weekend $19/$299 (1-3 días), Aventura $35/$549 (4-7 días, badge "Más popular"), Expedición $59/$899 (8+ días, highlight "Soporte por WhatsApp durante el viaje")
+- [x] 3 tarjetas de precios legacy con shadcn/ui Card (snapshot histórico previo al catálogo vigente)
 - [x] CTAs con ícono WhatsApp (MessageCircle de lucide-react) y mensajes prellenados dinámicos por paquete
 - [x] Sección "Cómo Funciona" con 3 pasos: Cuéntanos tu plan, Diseñamos tu ruta, Viaja sin estrés — íconos Lucide (ClipboardList, Route, Palmtree)
 - [x] FAQ con Accordion de shadcn/ui — 4 preguntas frecuentes sobre qué incluye un itinerario
@@ -321,10 +319,10 @@ https://nomaderia.com/
 - `src/components/landing/SocialProof.tsx` — Usa hooks dedicados + Skeleton loading
 
 ### ✅ Botones de Pricing en PremiumItinerarySection conectados a WhatsApp (Marzo 2026)
-- [x] Botones "Pedir Escapada/Aventura/Nómada" en la sección de precios del homepage ahora abren WhatsApp en nueva pestaña
+- [x] Botones de tiers legacy en la sección de precios del homepage ahora abrían WhatsApp en nueva pestaña
 - [x] Número hardcodeado: `18588996802` (consistente con el resto del sitio)
 - [x] Mensajes prellenados específicos por paquete con precio incluido
-- [x] Tercer paquete renombrado de "Expedición $49" a "Nómada $75" según requerimiento
+- [x] Ajuste histórico de naming en el tercer tier legacy según requerimiento
 - `src/components/landing/PremiumItinerarySection.tsx` — Botones de pricing funcionales con WhatsApp
 
 ### ✅ Configuración Comercial — Link de pago oficial (Marzo 2026)
@@ -380,7 +378,7 @@ https://nomaderia.com/
 - `src/pages/BlogPostDetail.tsx` — Usa ArticleWhatsAppCTA
 
 ### ✅ Botones de Pricing conectados a WhatsApp (Marzo 2026)
-- [x] Botones "Pedir mi Escapada/Aventura/Expedición" en `/servicios` ahora abren WhatsApp en nueva pestaña
+- [x] Botones de tiers legacy en `/servicios` ahora abrían WhatsApp en nueva pestaña
 - [x] Número final hardcodeado: `18588996802` (ya no depende de `VITE_WHATSAPP_NUMBER`)
 - [x] Mensajes prellenados específicos por paquete con precio incluido
 - [x] `Servicios.tsx` sigue usando `buildWhatsAppUrl()`, ahora con número hardcodeado y override por paquete (no se construye la URL inline con `encodeURIComponent`)
@@ -406,7 +404,7 @@ https://nomaderia.com/
 
 ### ✅ PremiumItinerarySection: Tarjetas de precio en lugar de formulario (Marzo 2026)
 - [x] Eliminado formulario modal (Dialog, Form, inputs, Zod schema, Supabase insert)
-- [x] Reemplazado con 3 tarjetas compactas de precio: Escapada $9, Aventura $25, Expedición $49
+- [x] Reemplazado con 3 tarjetas compactas de precio legacy (snapshot histórico)
 - [x] Cada tarjeta con 3 viñetas principales y botón WhatsApp con mensaje prellenado
 - [x] Aventura destacada con `border-primary` y badge "Más Popular"
 - [x] Enlace "Ver todos los detalles →" a `/servicios` debajo de las tarjetas
@@ -427,7 +425,7 @@ https://nomaderia.com/
 - [x] **Fix darkMode config** — Restaurado `darkMode: ["class"]` en `tailwind.config.ts` para evitar que el OS del usuario active dark mode via media query en componentes de shadcn/ui.
 - [x] **Hero Inmersivo** — Nuevo HeroSection con headline "Tu Concierge de Aventuras en Español", CTA primario WhatsApp ("Plática Conmigo"), CTA secundario al quiz, badge de confianza TAP, fondo temporal `bg-neutral-800` listo para video/foto real.
 - [x] **Fix botón secundario Hero** — Corregido botón outline que se renderizaba como bloque blanco sólido. Forzadas clases `bg-transparent border border-white text-white hover:bg-white/10` para que sea ghost real sobre fondo oscuro.
-- [x] **Página de Servicios editorial** — Página `/servicios` con diseño luminoso: hero minimalista con badge TAP en secondary (#166534), sección "Cómo Funciona" con 3 pasos, tarjetas de precio (Escapada $9 / Aventura $25 / Expedición $49) con bg-white shadow-lg, Aventura destacada con border-primary y badge "Más Popular", FAQ con Accordion, links WhatsApp prellenados.
+- [x] **Página de Servicios editorial** — snapshot histórico de `/servicios` previo al modelo vigente de producto único; layout luminoso, FAQ con Accordion y links de WhatsApp prellenados.
 
 ### ✅ Tarea 1.2 — Botón flotante WhatsApp con mensaje contextual (Marzo 2026)
 - [x] **Botón flotante WhatsApp** — Componente `WhatsAppButton.tsx` con icono SVG inline, color verde WhatsApp (#25D366), posición fixed inferior derecha (z-50), animación de entrada con Framer Motion (scale desde 0, delay 1s), tooltip "Plática conmigo" en desktop, oculto en rutas /admin/*. Renderizado en App.tsx fuera de `<Routes>`.
@@ -540,8 +538,8 @@ https://nomaderia.com/
 ### ✅ Verificación de CTAs de servicios (Mayo 2026)
 - Auditados `src/config/pricing.ts`, `src/pages/Servicios.tsx` y `src/components/landing/PremiumItinerarySection.tsx`
 - `Servicios` y `PremiumItinerarySection` ya consumían `products[].ctaUrl` en enlaces externos con `target="_blank"` + `rel="noopener noreferrer"`; sin cambios en los componentes
-- `Itinerario Personalizado` y `Solución Completa` ya abrían WhatsApp vía `buildWhatsAppUrl()`
-- **Corregido:** `Alerta de Permisos` usaba `VITE_STRIPE_SENTINEL_URL || "#"`; ahora cae al Stripe real `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`
+- El modelo simplificado previo ya abría WhatsApp vía `buildWhatsAppUrl()`
+- **Corregido:** el flujo legacy `/sentinel` usaba `VITE_STRIPE_SENTINEL_URL || "#"`; luego cayó a un Payment Link real mientras seguía activo
 - Verificaciones ejecutadas: `node node_modules/typescript/bin/tsc --noEmit` ✅ y `npm run build` ✅
 - Hallazgos preexistentes no relacionados: `npm run lint` falla por errores en `src/components/ui/command.tsx`, `src/components/ui/textarea.tsx` y `src/pages/SentinelLanding.tsx`; `npm run test` falla en `src/lib/lazy-with-retry.test.ts`
 - Recomendación siguiente: resolver esos errores preexistentes de lint/test en una tarea separada
@@ -552,8 +550,7 @@ https://nomaderia.com/
 - `DestinationDetail` (vía `ArticleWhatsAppCTA`) ahora precarga mensaje contextual:  
   `Hola Nomaderia 👋 Me interesa el itinerario personalizado de {destino}. ¿Me ayudas a planearlo?`
 - `Servicios` usa mensajes contextuales para:
-  - `Itinerario Personalizado` ($29 USD)
-  - `Solución Completa` ($49 USD: alerta + itinerario)
+  - producto único vigente: `Itinerario Completo Nomaderia` ($49 USD, WhatsApp)
 - Botón global flotante de WhatsApp (`WhatsAppButton`) usa mensaje contextual:
   `Hola Nomaderia 👋 Tengo una pregunta sobre mis próximas aventuras.`
 - Tracking agregado en CTAs de itinerario:  
@@ -580,7 +577,7 @@ https://nomaderia.com/
 - ✅ **Auditoría Radix** — 12 paquetes no usados eliminados
 - ✅ **LoadingSkeletons** — Skeleton loaders para destination, gear, card grid
 - ✅ **ErrorBoundary** — Wrapper genérico para rutas
-- ✅ **Precios USD-only en Edge Functions** — Eliminadas referencias MXN ($299/$549/$899 MXN) en `send-drip-emails` y `send-quiz-results`; precios actualizados a $29 USD (itinerario básico) y $49 USD (bundle/expedición)
+- ✅ **Precios USD-only en Edge Functions** — Eliminadas referencias MXN en `send-drip-emails` y `send-quiz-results`; la referencia vigente de servicio es el producto único de $49 USD vía WhatsApp
 
 ## Instrucciones para Copilot Agent
 
@@ -604,4 +601,4 @@ Siempre que hagas cambios al código:
 - Performance: lazy loading imágenes, hero images WebP/srcset, más skeleton loaders
 - Dashboard avanzado: top destinos recomendados, conversión quiz→email, trends con Recharts
 - PWA/offline: service worker, manifest.json, cache de guías para trail sin señal
-- Chatbot WhatsApp: integración con WhatsApp Business API para paquete Expedición
+- Chatbot WhatsApp: integración con WhatsApp Business API para el servicio principal

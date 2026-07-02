@@ -279,8 +279,8 @@ Source: `src/App.tsx`
 | `/blog/:slug` | `src/pages/BlogPostDetail.tsx` | Blog post detail with markdown, related posts, sharing, and WhatsApp CTA. | Direct Supabase calls (`useEffect`): `blog_posts` read by slug + related by category. | Yes | Quiz/calculator internal CTAs, `ArticleWhatsAppCTA`, related post links |
 | `/privacidad` | `src/pages/PrivacyPolicy.tsx` | Legal privacy policy page. | None | No | Contact mailto link |
 | `/terminos` | `src/pages/TermsAndConditions.tsx` | Legal terms page. | None | No | Contact mailto link |
-| `/sentinel` | `src/pages/SentinelLanding.tsx` | Landing page to capture Yosemite alert leads. | Writes `sentinel_leads` directly (`insert`). | Yes | Lead capture submit button (“Quiero mi cupo en Yosemite”), back-to-home brand link |
-| `/servicios` | `src/pages/Servicios.tsx` | Sales page for premium itinerary packages and WhatsApp conversion. | `media_slider` via `useMediaSlider()` (React Query custom hook). | No | Hero WhatsApp CTA, package WhatsApp CTAs, FAQ context CTA |
+| `/sentinel` | `src/pages/SentinelLanding.tsx` | Legacy route currently redirected away from the retired alert-product flow. | None in the current flow (legacy page retired). | No | Redirect only |
+| `/servicios` | `src/pages/Servicios.tsx` | Sales page for the single premium itinerary product and WhatsApp conversion. | `media_slider` via `useMediaSlider()` (React Query custom hook). | No | Hero WhatsApp CTA, primary product CTA, FAQ context CTA |
 | `/sobre-nosotros` | `src/pages/SobreNosotros.tsx` | About/credentials page with mission and contact. | None | No | Mailto CTA, link to `/calculadora` |
 | `/admin/login` | `src/pages/admin/AdminLogin.tsx` | Admin authentication screen. | Supabase Auth `signInWithPassword`. | No | “Iniciar Sesión” submit |
 | `/admin` (layout) | `src/pages/admin/AdminLayout.tsx` | Protected admin shell with sidebar nav and auth guard. | Auth session check + RPC `has_role`; sign-out. | No | Sidebar nav links to all admin modules, logout |
@@ -354,7 +354,7 @@ Source: `src/App.tsx`
 - `DidYouKnowSection.tsx` — carousel-style destination storytelling cards
 - `SocialProof.tsx` — trust metrics + quiz CTA
 - `TravelInsuranceSection.tsx` — travel insurance affiliate promotion
-- `PremiumItinerarySection.tsx` — package cards + WhatsApp/package CTAs
+- `PremiumItinerarySection.tsx` — single-product section + WhatsApp CTA
 - `NewsletterSignup.tsx` — newsletter opt-in form + welcome-email trigger
 - `Footer.tsx` — footer nav, social links, legal links, affiliate disclosure
 - `MediaSlider.tsx` — wrapper that feeds media items into shared background slideshow
@@ -526,20 +526,18 @@ Source: `src/pages/Servicios.tsx`
    - `1. Cuéntanos tu plan`
    - `2. Diseñamos tu ruta`
    - `3. Viaja sin estrés`
-3. **Paquetes** (cards from shared config `packages`)
+3. **Producto único** (single pricing card from shared config)
 4. **Preguntas Frecuentes** (accordion with 4 FAQs)
 5. Standard `Navbar` + `Footer`
 
 ### 7.2 Products and prices shown
-> ⚠️ DESACTUALIZADO en este snapshot. El modelo legacy (Weekend/Aventura/
-> Expedición, USD+MXN) fue ELIMINADO (ADR-003). Modelo vigente, USD only:
-- `Alerta de Permisos` — `$29 USD` — Stripe Payment Link
-- `Itinerario Personalizado` — `$29 USD` — WhatsApp
-- `Solución Completa` (bundle) — `$49 USD` — WhatsApp
+- `Itinerario Completo Nomaderia` — `$49 USD` — WhatsApp
+- On-site CTA label: `Diseña mi aventura por WhatsApp`
+- No retired lower-price tier or multi-product framing in current pricing
 
 ### 7.3 CTAs and destinations
-- Hero CTA → WhatsApp URL built with `buildWhatsAppUrl(..., WHATSAPP_NUMBER)`
-- Each package card CTA (`pkg.cta`) → package-specific WhatsApp prefilled message
+- Hero CTA → WhatsApp
+- Primary product card CTA → WhatsApp prefilled message for the single product
 - Footer/nav links inherited from shared components
 
 ### 7.4 Supabase data fetch
@@ -616,18 +614,11 @@ Via `useDestinationBySlug()` and `useRelatedDestinations()`:
   - `src/pages/DestinationDetail.tsx` tab markdown fallbacks: `Contenido próximamente.`
   - `src/pages/DestinationDetail.tsx` booking fallback: `Enlaces de reserva próximamente.`
 
-### 9.3 Hardcoded prices/currencies found
+### 9.3 Pricing status
 
-> Estado actual: `pricing.ts` YA no tiene MXN (FIX 1, mayo 2026). Las referencias
-> MXN en `send-drip-emails` y `send-quiz-results` SÍ siguen pendientes (ver
-> `pending-tasks.md` → Pendientes de Código).
-
-- `src/config/pricing.ts`:
-  - `$299 MXN`, `$549 MXN`, `$899 MXN`
-- `supabase/functions/send-drip-emails/index.ts`:
-  - `$299 MXN`, `$549 MXN`, `$899 MXN` in HTML template
-- `supabase/functions/send-quiz-results/index.ts`:
-  - `Desde $299 MXN / $19 USD`
+- Current commercial model: `Itinerario Completo Nomaderia` at `$49 USD`
+- Primary purchase flow: WhatsApp CTA (`Diseña mi aventura por WhatsApp`)
+- Legacy multi-tier/MXN documentation should not be treated as current anywhere in this repo
 
 ### 9.4 `console.error` and related runtime error logs
 - `src/main.tsx` — fatal bootstrap error log
