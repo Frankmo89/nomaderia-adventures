@@ -22,13 +22,13 @@ const benefits = [
 
 const TravelInsuranceSection = () => {
   return (
-    <section className="py-16 sm:py-24 bg-wash-forest relative overflow-hidden">
+    <section className="relative overflow-hidden bg-green-wash py-16 sm:py-24">
       {/* Accent gradient */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 70% 30%, hsl(var(--accent) / 0.08) 0%, transparent 55%), radial-gradient(circle at 20% 80%, hsl(var(--primary) / 0.06) 0%, transparent 50%)",
+            "radial-gradient(circle at 70% 30%, rgb(255 255 255 / 0.28) 0%, transparent 55%), radial-gradient(circle at 20% 80%, rgb(31 111 67 / 0.06) 0%, transparent 50%)",
         }}
       />
 
@@ -40,7 +40,7 @@ const TravelInsuranceSection = () => {
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
             Protege Tu{" "}
-            <span className="text-[#D97706]">Aventura</span>
+            <span className="text-green">Aventura</span>
           </h2>
           <p className="text-foreground/75 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
             Antes de salir, considera un seguro de viaje: protege tu salud, tu equipo y tu tranquilidad en cualquier aventura.
@@ -58,8 +58,8 @@ const TravelInsuranceSection = () => {
               transition={{ delay: i * 0.1, duration: 0.5 }}
               className="bg-card/80 border border-stone/70 hover:border-stone rounded-2xl p-6 text-center transition-colors"
             >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#D97706]/15 mb-4">
-                <b.icon className="h-6 w-6 text-[#D97706]" />
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-wash">
+                <b.icon className="h-6 w-6 text-green" />
               </div>
               <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">
                 {b.title}

@@ -79,7 +79,7 @@ const PremiumItinerarySection = () => {
   }, []);
 
   return (
-    <section className="section-editorial relative overflow-hidden bg-foreground section-recessed">
+    <section className="section-editorial relative overflow-hidden bg-forest-dark section-recessed">
       {/* Background texture */}
       <div className="absolute inset-0 bg-secondary/5" />
       <div
@@ -94,20 +94,20 @@ const PremiumItinerarySection = () => {
         <div className="max-w-5xl mx-auto">
           {/* Badge */}
           <Reveal className="text-center mb-6">
-            <span className="text-xs tracking-[0.2em] uppercase font-medium block" style={{ color: "#FCD34D" }}>
+            <span className="block text-xs font-medium uppercase tracking-[0.2em] text-green">
               ✦ Diseño 100% Personalizado
             </span>
           </Reveal>
 
           {/* Heading */}
           <Reveal className="text-center mb-4">
-            <h2 className="font-serif text-4xl md:text-5xl font-bold text-background leading-tight">
+            <h2 className="font-serif text-4xl font-bold leading-tight text-cloud md:text-5xl">
               Tu Aventura,{" "}
-              <span style={{ color: "#FCD34D" }}>Tu Medida</span>
+              <span className="text-green">Tu Medida</span>
             </h2>
           </Reveal>
 
-          <Reveal className="text-center text-background/70 text-lg max-w-[42rem] mx-auto mb-16 leading-relaxed">
+          <Reveal className="mx-auto mb-16 max-w-[42rem] text-center text-lg leading-relaxed text-mist/70">
             Diseñamos tu itinerario de trekking desde cero, adaptado a tu nivel, presupuesto y objetivos.
             Sin plantillas genéricas. Sin rutas de turista.
           </Reveal>
@@ -122,15 +122,14 @@ const PremiumItinerarySection = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
                 className="flex flex-row min-h-[160px] rounded-lg overflow-hidden bg-card"
-                style={{ border: "0.5px solid rgba(22, 101, 52, 0.2)" }}
+                style={{ border: "0.5px solid rgba(31, 111, 67, 0.2)" }}
               >
                 {/* Left: icon + text */}
                 <div className="flex-1 p-5 flex flex-col justify-center gap-2">
                   <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: "#FEF3C7" }}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-wash"
                   >
-                    <b.icon className="h-5 w-5" style={{ color: "#D97706" }} />
+                    <b.icon className="h-5 w-5 text-green" />
                   </div>
                   <p className="font-serif font-semibold text-foreground text-base leading-snug">
                     {b.title}

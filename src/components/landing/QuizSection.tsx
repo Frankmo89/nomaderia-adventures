@@ -361,7 +361,7 @@ const QuizResults = ({
     : undefined;
 
   return (
-    <section id="quiz" className="py-16 sm:py-24 bg-wash-clay relative overflow-hidden">
+    <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
       <CelebrationParticles />
       <div className="absolute inset-0 opacity-[0.04] bg-cover bg-center pointer-events-none"
         style={{ backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=60)` }} />
@@ -498,7 +498,7 @@ const QuizSection = () => {
   };
 
   if (loading && !showResults) return (
-    <section id="quiz" className="py-16 sm:py-24 bg-wash-clay relative overflow-hidden">
+    <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/6 blur-3xl" />
         <div className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-secondary/6 blur-3xl" />
@@ -522,7 +522,7 @@ const QuizSection = () => {
   );
 
   return (
-    <section id="quiz" className="py-16 sm:py-24 bg-wash-clay relative overflow-hidden">
+    <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
       {/* Atmospheric glow blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/6 blur-3xl" />
