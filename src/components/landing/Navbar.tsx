@@ -8,6 +8,11 @@ import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScro
 const NAV_EASE = [0.22, 1, 0.36, 1] as const;
 import { BRAND_ASSETS } from "@/config/assets";
 
+// Scroll thresholds: homepage goes solid early (before hero CTAs enter the navbar zone);
+// inner pages go solid sooner since they have no full-height hero.
+const HOMEPAGE_SCROLL_THRESHOLD_PX = 100;
+const INNER_PAGE_SCROLL_THRESHOLD_PX = 40;
+
 const navLinks = [
   { label: "Destinos", href: "/destinos" },
   { label: "Guía de Equipo", href: "/gear" },
@@ -34,14 +39,14 @@ const Navbar = () => {
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    const threshold = isHomepageRef.current ? window.innerHeight * 0.9 : 40;
+    const threshold = isHomepageRef.current ? HOMEPAGE_SCROLL_THRESHOLD_PX : INNER_PAGE_SCROLL_THRESHOLD_PX;
     setScrolled(latest > threshold);
     setShowScrollTop(latest > window.innerHeight);
   });
 
   // Re-evaluate immediately on SPA route navigation
   useEffect(() => {
-    const threshold = isHomepage ? window.innerHeight * 0.9 : 40;
+    const threshold = isHomepage ? HOMEPAGE_SCROLL_THRESHOLD_PX : INNER_PAGE_SCROLL_THRESHOLD_PX;
     setScrolled(scrollY.get() > threshold);
   }, [pathname, isHomepage, scrollY]);
 
@@ -61,7 +66,7 @@ const Navbar = () => {
         className="fixed top-0 left-0 right-0 z-50"
         initial={false}
       >
-        {/* Warm frosted glass background — fades in past the hero fold */}
+        {/* Warm frosted glass background — fades in at 100px scroll on homepage, 40px on inner pages */}
         <motion.div
           aria-hidden="true"
           className="absolute inset-0 bg-sand/85 backdrop-blur-md border-b border-stone/30"
