@@ -564,7 +564,7 @@ Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
 
 ## Changelog 2026-07-02 — Homepage: cleanup final de paleta a forest-dark / green / cloud
 
-- `PromiseSection.tsx`, `PremiumItinerarySection.tsx`, `TravelInsuranceSection.tsx`, `QuizSection.tsx`, `NewsletterSignup.tsx`, `Footer.tsx`, `src/index.css`: migrados los últimos fondos/accentos legacy del home a tokens del sistema (`forest-dark`, `green`, `green-wash`, `cloud`) sin tocar layout/copy/lógica. Auditoría: `bg-wash-forest` seguía apuntando al gradiente legacy `sand + forest`, así que `TravelInsuranceSection` se movió a `bg-green-wash` sin alterar la utility compartida; `bg-wash-to-footer` sí se conservó como utility, pero su gradiente se actualizó a `cloud → green-wash → forest-dark`.
+- `PromiseSection.tsx`, `PremiumItinerarySection.tsx`, `TravelInsuranceSection.tsx`, `QuizSection.tsx`, `NewsletterSignup.tsx`, `Footer.tsx`, `src/index.css`: migrados los últimos fondos/accentos legacy del home a tokens del sistema (`forest-dark`, `green`, `green-wash`, `cloud`) sin tocar layout/copy/lógica. Auditoría: `bg-wash-forest` seguía apuntando al gradiente legacy `sand + forest`, así que `TravelInsuranceSection` se movió a `bg-green-wash` sin alterar la utility compartida; `bg-wash-to-footer` sí se conservó como utility, pero sus stops del gradiente quedaron expresados como equivalentes `rgb(...)` de `cloud → green-wash → forest-dark` para poder aplicar alpha, en lugar de referencias directas a tokens.
 
 ## Changelog 2026-07-01 — SocialProof: restaurado grid 2×2 con tarjetas en caja
 
