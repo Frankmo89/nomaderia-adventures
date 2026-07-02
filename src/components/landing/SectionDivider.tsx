@@ -114,68 +114,47 @@ const SectionDivider = ({
 
   if (variant === "snow-capped") {
    return (
-     <div
-       aria-hidden="true"
-       className="relative h-0 z-10 pointer-events-none"
-     >
-       <svg
-         viewBox="0 0 1440 124"
-         preserveAspectRatio="none"
-         className="absolute left-0 w-full -translate-y-1/2 h-[84px] sm:h-[124px]"
-         xmlns="http://www.w3.org/2000/svg"
-         focusable="false"
-       >
-         <path
-           d="M0,0 H1440 V100 L1320,84 L1202,120 L1086,20 L970,122 L850,60 L738,108 L614,10 L494,116 L378,44 L258,112 L144,28 L64,94 L0,66 Z"
-           fill={crestFill}
-         />
-         <path
-           d="M1110,34 L1086,20 L1062,38 L1086,48 Z"
-           fill="#FFFFFF"
-           fillOpacity="0.72"
-         />
-         <path
-           d="M638,28 L614,10 L590,34 L614,46 Z"
-           fill="#FFFFFF"
-           fillOpacity="0.72"
-         />
-         <path
-           d="M170,42 L144,28 L120,50 L144,60 Z"
-           fill="#FFFFFF"
-           fillOpacity="0.68"
-         />
-         <path
-           d="M995,78 L970,62 L946,82 L970,92 Z"
-           fill="#FFFFFF"
-           fillOpacity="0.52"
-         />
-         <path
-           d="M520,70 L494,54 L470,76 L494,88 Z"
-           fill="#FFFFFF"
-           fillOpacity="0.52"
-         />
-       </svg>
-     </div>
+    <div
+      aria-hidden="true"
+      className="relative h-0 z-10 pointer-events-none"
+    >
+      <svg
+        viewBox="0 0 1440 124"
+        preserveAspectRatio="none"
+        className="absolute left-0 w-full -translate-y-1/2 h-[60px] sm:h-[124px]"
+        xmlns="http://www.w3.org/2000/svg"
+        focusable="false"
+      >
+        <path
+          d="M0,0 H1440 V100 L1336,86 L1248,44 L1162,94 L1078,18 L990,102 L904,64 L816,98 L726,14 L634,106 L544,46 L454,104 L364,20 L274,96 L186,62 L108,92 L52,40 L0,74 Z"
+          fill={crestFill}
+        />
+        <path d="M1101,39 L1078,18 L1055,40 Z" fill="#FFFFFF" fillOpacity="0.78" />
+        <path d="M753,39 L726,14 L700,40 Z" fill="#FFFFFF" fillOpacity="0.78" />
+        <path d="M388,43 L364,20 L337,43 Z" fill="#FFFFFF" fillOpacity="0.74" />
+        <path d="M72,59 L52,40 L34,52 Z" fill="#FFFFFF" fillOpacity="0.68" />
+      </svg>
+    </div>
    );
   }
 
   return (
    <div
-     aria-hidden="true"
-     className="relative h-0 z-10 pointer-events-none"
+    aria-hidden="true"
+    className="relative h-0 z-10 pointer-events-none"
    >
-     <svg
-       viewBox="0 0 1440 92"
-       preserveAspectRatio="none"
-       className="absolute left-0 w-full -translate-y-1/2 h-[68px] sm:h-[92px]"
-       xmlns="http://www.w3.org/2000/svg"
-       focusable="false"
-     >
-       <path
-         d="M0,0 H1440 V74 L1326,62 L1208,88 L1098,30 L982,86 L860,50 L748,84 L630,24 L514,90 L398,42 L276,86 L162,34 L72,76 L0,54 Z"
-         fill={crestFill}
-       />
-     </svg>
+    <svg
+      viewBox="0 0 1440 92"
+      preserveAspectRatio="none"
+      className="absolute left-0 w-full -translate-y-1/2 h-[50px] sm:h-[92px]"
+      xmlns="http://www.w3.org/2000/svg"
+      focusable="false"
+    >
+      <path
+        d="M0,0 H1440 V74 L1360,70 L1296,24 L1218,68 L1138,44 L1052,72 L972,56 L890,74 L804,20 L716,70 L636,42 L548,74 L470,58 L382,72 L294,26 L208,70 L128,46 L58,72 L0,64 Z"
+        fill={crestFill}
+      />
+    </svg>
    </div>
   );
 };
