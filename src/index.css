@@ -169,14 +169,14 @@
   }
 
   .bg-wash-to-footer {
-    background-color: hsl(var(--sand));
+    background-color: var(--cloud);
     background-image:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23grain)' opacity='0.035'/%3E%3C/svg%3E"),
       linear-gradient(
         180deg,
-        hsl(var(--sand) / 0.96) 0%,
-        hsl(var(--clay) / 0.12) 52%,
-        hsl(var(--walnut) / 0.16) 100%
+        rgb(251 250 247 / 0.96) 0%,
+        rgb(232 241 234 / 0.22) 52%,
+        rgb(20 32 26 / 0.18) 100%
       );
   }
 

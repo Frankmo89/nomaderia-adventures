@@ -562,6 +562,10 @@ Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
 
 - `DestinationsCatalog.tsx`, `DestinationDetail.tsx` (header + related cards): reemplazado `flag + country · regionDisplay` por `flag + (regionDisplay || country)` — muestra "🇺🇸 California" en lugar de "🇺🇸 Estados Unidos · California".
 
+## Changelog 2026-07-02 — Homepage: cleanup final de paleta a forest-dark / green / cloud
+
+- `PromiseSection.tsx`, `PremiumItinerarySection.tsx`, `TravelInsuranceSection.tsx`, `QuizSection.tsx`, `NewsletterSignup.tsx`, `Footer.tsx`, `src/index.css`: migrados los últimos fondos/accentos legacy del home a tokens del sistema (`forest-dark`, `green`, `green-wash`, `cloud`) sin tocar layout/copy/lógica. Auditoría: `bg-wash-forest` seguía apuntando al gradiente legacy `sand + forest`, así que `TravelInsuranceSection` se movió a `bg-green-wash` sin alterar la utility compartida; `bg-wash-to-footer` sí se conservó como utility, pero su gradiente se actualizó a `cloud → green-wash → forest-dark`.
+
 ## Changelog 2026-07-01 — SocialProof: restaurado grid 2×2 con tarjetas en caja
 
 - `SocialProof.tsx`: grid editorial sin cajas reemplazado por grid 2×2 de tarjetas blancas (radio 16px, borde stone, sombra suave) con íconos verdes (MapPin/BookOpen/Clock/Tag) restaurados; números y labels mantenidos de Phase 3b; eyebrow y narrativa centrados.
