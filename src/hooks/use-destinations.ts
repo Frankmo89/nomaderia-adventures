@@ -10,6 +10,7 @@ export interface DestinationCard {
   title: string;
   slug: string;
   country: string;
+  region: string | null;
   short_description: string;
   difficulty_level: string;
   days_needed: string;
@@ -27,7 +28,7 @@ export function useDestinations() {
       const { data, error } = await supabase
         .from("destinations")
         .select(
-          "id, title, slug, country, short_description, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, tags, affiliate_links"
+          "id, title, slug, country, region, short_description, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, tags, affiliate_links"
         )
         .eq("is_published", true);
       if (error) throw error;
