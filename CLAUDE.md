@@ -39,12 +39,13 @@ opcionales.
 ## 📍 Estado Actual (Mayo 2026)
 
 - **Sitio en producción:** https://nomaderia.com — Hosting: **Cloudflare Pages**.
-- **Stripe live activo:** Payment Link para "Alerta de Permisos" funcionando.
+- **Producto activo en sitio:** **Itinerario Completo Nomaderia** — **$49 USD**.
+- **Canal de cierre vigente:** CTA por **WhatsApp** ("Diseña mi aventura por WhatsApp").
 - **Primer lead real capturado** vía `/sentinel` (SentinelLanding). El funnel de
   conversión ya produjo señal real → priorizar lo que reduce fricción a la venta.
-- **Modelo de negocio congelado** en 2 productos + 1 bundle, **USD únicamente**
-  (ver `docs/decisions.md` ADR-003). El sistema viejo
-  Escapada/Aventura/Expedición y todos los precios MXN están **ELIMINADOS**.
+- **Modelo de negocio congelado** en **un solo producto**, **USD únicamente**
+  (ver `docs/decisions.md` ADR-012). Los tiers legacy y los precios MXN están
+  **retirados**.
 
 ---
 
@@ -63,15 +64,13 @@ Affiliate links / Servicio de pago. Canal de cierre: **WhatsApp**, no el sitio.
 
 | Producto | Precio | Canal de cobro |
 |----------|--------|----------------|
-| Alerta de Permisos | $29 USD | Stripe Payment Link |
-| Itinerario Personalizado | $29 USD | WhatsApp |
-| Solución Completa (bundle: alerta + itinerario) | $49 USD | WhatsApp |
+| Itinerario Completo Nomaderia | $49 USD | WhatsApp |
 
 Fuente de verdad en código: `src/config/pricing.ts`.
 
 ## Monetización (4 vías)
 
-1. **Stripe directo** — $29 / $49 USD.
+1. **Servicio directo por WhatsApp** — Itinerario Completo Nomaderia — $49 USD.
 2. **Viator 8%** — habilitado por certificación TAP (The Travel Institute).
 3. **Amazon Associates** — tag `nomaderia-20` (en product cards de gear).
 4. **Travelpayouts** — Klook, Tiqets, Localrent, Welcome Pickups.
@@ -108,18 +107,18 @@ src/
 │   ├── BlogListing.tsx       # /blog
 │   ├── BlogPostDetail.tsx    # /blog/:slug
 │   ├── BudgetCalculator.tsx  # /calculadora
-│   ├── SentinelLanding.tsx   # /sentinel (alerta permisos Yosemite, DARK variant)
+│   ├── SentinelLanding.tsx   # /sentinel (ruta legacy/redirección, DARK variant)
 │   ├── Servicios.tsx         # /servicios (productos y precios)
 │   ├── SobreNosotros.tsx     # /sobre-nosotros (about + credencial TAP)
 │   ├── PrivacyPolicy.tsx     # /privacidad
 │   ├── TermsAndConditions.tsx # /terminos
-│   ├── Gracias.tsx           # /gracias (post-pago Stripe redirect)
+│   ├── Gracias.tsx           # /gracias (ruta legacy/redirección)
 │   └── admin/                # Panel protegido (Supabase Auth + rol admin, DARK)
 ├── components/
 │   ├── landing/              # Secciones de homepage (Navbar, Hero, Quiz, Footer, etc.)
 │   └── ui/                   # shadcn/ui — NO editar manualmente
 ├── config/
-│   ├── pricing.ts            # Productos y precios (2 products + bundle, USD only)
+│   ├── pricing.ts            # Producto único ($49 USD, CTA por WhatsApp)
 │   └── assets.ts             # Brand assets URLs
 ├── hooks/                    # Custom hooks con TanStack Query
 │   ├── use-destinations.ts   # useDestinations(), useDestinationBySlug(), useRelatedDestinations()
@@ -152,7 +151,7 @@ src/
 /calculadora         → BudgetCalculator    /servicios       → Servicios.tsx
 /sobre-nosotros      → SobreNosotros.tsx   /privacidad      → PrivacyPolicy.tsx
 /terminos            → TermsAndConditions  /gracias         → Gracias.tsx
-/sentinel            → SentinelLanding.tsx (alerta permisos Yosemite, dark)
+/sentinel            → SentinelLanding.tsx (ruta legacy/redirección, dark)
 /admin/*             → AdminLayout (protegido, dark)
 ```
 
@@ -202,7 +201,7 @@ Tipografías: `font-serif` → **Playfair Display** (headings) · `font-sans` �
 - NO hacer fetch directo en componentes públicos — usar hooks de `src/hooks/`.
 - NO cambiar lógica de auth (`supabase.auth.*`, RPC `has_role`) ni queries de
   Supabase sin instrucción explícita.
-- NO reintroducir precios MXN ni el sistema Escapada/Aventura/Expedición. (ADR-003)
+- NO reintroducir precios MXN ni el esquema legacy de tiers por duración. (ADR-012)
 
 ## Comandos
 

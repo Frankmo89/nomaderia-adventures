@@ -228,7 +228,7 @@ The following must remain completely unchanged during any admin implementation w
 - **`src/integrations/supabase/types.ts`:** Auto-generated. Do not edit manually — regenerate via CLI.
 - **Pricing and products:** `src/config/pricing.ts`, `Servicios.tsx`, `PremiumItinerarySection.tsx`. Model is frozen.
 - **Supabase queries on public pages:** `use-destinations.ts`, `use-blog-posts.ts`, `use-gear-articles.ts`, `use-quiz.ts`. Admin patterns use direct Supabase calls; hooks are for public pages only (ADR-007).
-- **MXN prices and legacy product names:** Do not reintroduce Escapada/Aventura/Expedición or any MXN amounts.
+- **MXN prices and legacy product names:** Do not reintroduce the retired duration-tier naming or any MXN amounts.
 - **`supabase.auth.*` and `has_role` RPC:** No changes to the admin auth flow under any circumstance.
 - **Dark theme:** Admin stays dark. Do not propose or introduce a light-mode toggle, light variant, or `bg-white` backgrounds inside admin pages beyond what already exists in the white card sub-surfaces inside the dashboard.
 - **Edge Functions:** `send-quiz-email`, `send-drip-emails`, `send-quiz-results`, `check-permit-alerts` — do not modify these unless explicitly tasked. They handle real user email delivery.

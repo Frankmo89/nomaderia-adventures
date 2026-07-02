@@ -157,7 +157,7 @@ Cuando se construya, usar los patrones establecidos en `CLAUDE.md`:
 ## Nota sobre el Chatbot WhatsApp (pending-tasks backlog)
 
 El backlog en `docs/pending-tasks.md` menciona "Chatbot WhatsApp: integración con
-WhatsApp Business API para paquete Expedición". Eso es una pieza de este puzzle pero
+WhatsApp Business API para automatizar mensajes del servicio principal". Eso es una pieza de este puzzle pero
 es independiente del RAG — se puede hacer un bot simple de WhatsApp que solo enrute y
 prellenee mensajes sin necesitar embeddings. Separar las dos iniciativas.
 

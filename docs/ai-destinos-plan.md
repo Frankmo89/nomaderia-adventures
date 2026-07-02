@@ -500,7 +500,7 @@ se detenga: demuestra criterio, no solo que llamaste a una API.
 Para tu claridad (y por si te preguntan): lo de Destinos es un **workflow** —tú defines el camino
 (research → estructura). Eso es lo correcto aquí: para anti-alucinación quieres control, no autonomía.
 Un **agente** de verdad (decide sus pasos, hace loop) encaja mejor en el futuro **Concierge** conversacional
-o en un **monitor de permisos** que alimente tu producto "Alerta de Permisos". El SOUL aplica a todos por igual.
+o en un **monitor de permisos** que alimente captación o seguimiento alrededor del servicio principal. El SOUL aplica a todos por igual.
 
 ---
 

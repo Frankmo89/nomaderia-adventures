@@ -50,19 +50,17 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   copy, precios o segmentación orientados a TJ cross-border o CDMX como mercado
   primario (pueden existir como secundarios sin reescribir la propuesta de valor).
 
-### ADR-003 — Pivote de precios: 2 productos + bundle, sin MXN
+### ADR-003 — Pivote de precios intermedio, sin MXN
 - **Fecha:** 2026-05
 - **Estado:** Reemplazada (→ ADR-012)
-- **Contexto:** El sistema de 3 tiers por duración (Escapada/Aventura/Expedición)
-  con precios duales USD/MXN era difícil de comunicar y de cobrar manualmente.
-- **Decisión:** Tres SKUs claros, **USD únicamente**:
-  - Alerta de Permisos — **$29 USD** (Stripe Payment Link).
-  - Itinerario Personalizado — **$29 USD** (WhatsApp).
-  - Solución Completa (bundle) — **$49 USD** (WhatsApp).
-- **Consecuencias:** Fuente de verdad en `src/config/pricing.ts`. NO reintroducir
-  precios MXN ni los nombres legacy en ningún componente, Edge Function o email.
-  *Deuda conocida:* aún quedan referencias MXN/legacy en
-  `send-drip-emails/index.ts` y `send-quiz-results/index.ts` (ver pending-tasks).
+- **Contexto:** El sistema de tiers por duración y precios duales USD/MXN era
+  difícil de comunicar y de cobrar manualmente.
+- **Decisión:** Se simplificó temporalmente el catálogo a un modelo USD-only más
+  claro que el esquema legacy por duración. Esa simplificación intermedia quedó
+  posteriormente reemplazada por ADR-012.
+- **Consecuencias:** La fuente de verdad vigente para pricing es ADR-012. NO usar
+  ADR-003 como referencia operativa ni reintroducir precios MXN o nombres legacy
+  en componentes, Edge Functions o emails.
 
 ### ADR-004 — Modelo concierge antes que modelo de contenido
 - **Fecha:** 2026-02
@@ -80,8 +78,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Estado:** Vigente
 - **Contexto:** Intentar cerrar la venta dentro del sitio (carritos, checkout
   complejo) añade fricción que esta audiencia (principiantes) no tolera.
-- **Decisión:** El sitio califica y educa; la venta se cierra por WhatsApp (o por
-  el Payment Link de Stripe en el caso de Alerta de Permisos).
+- **Decisión:** El sitio califica y educa; la venta se cierra por WhatsApp.
 - **Consecuencias:** Todo CTA de servicio pasa por `buildWhatsAppLink(message)`
   con mensaje contextual pre-llenado. No construir checkout propio mientras el
   volumen no lo justifique.
@@ -164,9 +161,9 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 ### ADR-012 — Catálogo simplificado: Producto único a $49 USD
 - **Fecha:** 2026-06
 - **Estado:** Vigente (reemplaza ADR-003)
-- **Contexto:** Se detectó que ofrecer múltiples SKUs (Alerta a $29, Itinerario a $29, Bundle a $49) generaba fricción. En `src/config/pricing.ts` se colapsó el catálogo a una sola oferta.
+- **Contexto:** Se detectó que ofrecer múltiples SKUs y precios de entrada generaba fricción. En `src/config/pricing.ts` se colapsó el catálogo a una sola oferta.
 - **Decisión:** Un solo producto: **Itinerario Completo Nomaderia a $49 USD**. Todo CTA de venta, componente visual y Edge Function (emails) debe referenciar exclusivamente este producto.
-- **Consecuencias:** No reintroducir SKUs de $29 USD ni modelos separados. Refactorizar las Edge Functions `send-drip-emails` y `send-quiz-results` para eliminar paquetes antiguos y usar solo el producto de $49 USD.
+- **Consecuencias:** No reintroducir precios de entrada retirados ni modelos separados. Refactorizar las Edge Functions `send-drip-emails` y `send-quiz-results` para usar solo el producto vigente de $49 USD.
 
 ### ADR-013 — `ingest-knowledge`: section-based chunking + regla de exclusión de datos volátiles
 - **Fecha:** 2026-06
@@ -217,6 +214,6 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   `src/index.css` arregla *todos* los usos de `text-muted-foreground` de una sola
   vez sobre `#FAFAFA` (~4.1:1 → ~5.0:1). Lección: preferir el fix en la variable
   CSS antes que tocar componentes uno por uno.
-- **Stripe fallback:** "Alerta de Permisos" caía a `"#"` cuando
-  `VITE_STRIPE_SENTINEL_URL` no estaba seteada. Hardcodear el Payment Link real
-  como fallback evita CTAs muertos en producción.
+- **Legacy `/sentinel` fallback:** el flujo legacy de checkout caía a `"#"`
+  cuando faltaba su link de pago. Mantener un fallback explícito evitó CTAs
+  muertos mientras esa ruta siguió activa.
