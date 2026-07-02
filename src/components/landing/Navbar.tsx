@@ -34,14 +34,14 @@ const Navbar = () => {
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    const threshold = isHomepageRef.current ? window.innerHeight * 0.9 : 40;
+    const threshold = isHomepageRef.current ? 100 : 40;
     setScrolled(latest > threshold);
     setShowScrollTop(latest > window.innerHeight);
   });
 
   // Re-evaluate immediately on SPA route navigation
   useEffect(() => {
-    const threshold = isHomepage ? window.innerHeight * 0.9 : 40;
+    const threshold = isHomepage ? 100 : 40;
     setScrolled(scrollY.get() > threshold);
   }, [pathname, isHomepage, scrollY]);
 
