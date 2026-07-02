@@ -199,6 +199,10 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-07-01] **SectionDivider (Phase 4a) — ajuste post-review de documentación e indentación.** `src/components/landing/SectionDivider.tsx`: se documentó explícitamente el fallback de `fill` (`#14201A` en light, `#EAF0EC` en dark) y se corrigió la indentación en los bloques `layered`, `snow-capped` y `simple` (incluyendo el primer `<path>` de `layered`) para eliminar ruido de formato.
+
+- [2026-07-01] **Fase 4a — divisores de montaña con cresta real (A simple / B cordillera en capas / C nevado), reposicionados en todas las transiciones de color del home.** `src/components/landing/SectionDivider.tsx` ahora expone variantes `simple`, `layered` y `snow-capped` con siluetas serradas reales, manteniendo `topo` intacto. `src/pages/Index.tsx` repuso los divisores en cada transición light↔dark vigente del homepage (sin tocar el divisor propio del hero ni insertar divisores entre secciones del mismo tier). `node node_modules/typescript/bin/tsc --noEmit` + `npm run build` pasan.
+
 - [2026-07-01] **Region formatter tests** — added `src/lib/regions.test.ts` to lock in the shared `formatRegionDisplay()` contract for null/empty input, valid single/multi-state values, trimmed comma spacing, and unknown-code passthrough.
 - [2026-07-01] **Region display consistency across destination surfaces** — extracted the existing state-name map and region formatter from `src/pages/Destinations.tsx` into new shared helper `src/lib/regions.ts` (`STATE_NAMES`, comma-splitting of codes, and `join(" & ")` after mapping to full state names). `src/pages/Destinations.tsx` now imports that helper instead of keeping a local copy, and both `src/components/landing/DestinationsCatalog.tsx` and `src/pages/DestinationDetail.tsx` now render `dest.region` through the same formatter. Result: single-state values like `CA` render as `California`, and multi-state values like `CA,NV` render as `California & Nevada` consistently on all three surfaces. `node node_modules/typescript/bin/tsc --noEmit` + `npm run build` pass.
 
