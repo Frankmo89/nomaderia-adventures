@@ -441,8 +441,7 @@ const DestinationDetail = () => {
 
           {/* Location */}
           <p className="font-sans text-[#6B7280]" style={{ fontSize: 13 }}>
-            {countryFlag[dest.country] || "🏔"} {dest.country}
-            {regionDisplay ? ` · ${regionDisplay}` : ""}
+            {countryFlag[dest.country] || "🏔"} {regionDisplay || dest.country}
           </p>
 
           <div style={{ height: 12 }} />
@@ -1094,7 +1093,7 @@ const DestinationDetail = () => {
                   <div className="p-4">
                     <Badge className={difficultyColor[r.difficulty_level] + " mb-2"}>{difficultyLabel[r.difficulty_level]}</Badge>
                     <h3 className="font-serif text-lg font-bold text-card-foreground">{r.title}</h3>
-                    <p className="text-sm text-card-foreground/70">{countryFlag[r.country] || ""} {r.country}</p>
+                    <p className="text-sm text-card-foreground/70">{countryFlag[r.country] || "🏔"} {formatRegionDisplay(r.region) || r.country}</p>
                   </div>
                 </Link>
               ))}

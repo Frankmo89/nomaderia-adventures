@@ -118,8 +118,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
               <p className="mb-2 flex items-center gap-1.5 text-sm text-sage">
                 <Star className="h-3.5 w-3.5 shrink-0 fill-green text-green" />
                 <span>
-                  {difficultyLabel[d.difficulty_level]} · {countryFlag[d.country] || ""} {d.country}
-                  {regionDisplay ? ` · ${regionDisplay}` : ""}
+                  {difficultyLabel[d.difficulty_level]} · {countryFlag[d.country] || "🏔"} {regionDisplay || d.country}
                 </span>
               </p>
               <p className="mb-4 line-clamp-2 text-sm text-slate">{d.short_description}</p>
