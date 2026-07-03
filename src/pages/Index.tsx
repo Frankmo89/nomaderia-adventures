@@ -93,7 +93,7 @@ const Index = () => {
       <GearPreview />
       <BlogPreview />
       <NewsletterSignup />
-      <SectionDivider variant="simple" fill="#F4EFE7" />
+      <SectionDivider variant="simple" fill="#14201A" />
       <Footer />
     </main>
   );

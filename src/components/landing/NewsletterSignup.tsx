@@ -144,19 +144,19 @@ const NewsletterSignup = () => {
               </div>
             );
           })}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#14201A]/45 via-[#14201A]/58 to-[#14201A]/72" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(20,32,26,0.18)_10%,rgba(20,32,26,0.68)_48%,rgba(20,32,26,0.94)_100%)]" />
         </div>
       ) : null}
 
       <div className="container relative z-10 mx-auto px-5 max-w-xl text-center">
         <Reveal className="mb-6 sm:mb-8">
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
             Cada Semana Una Aventura Nueva En Tu Inbox
           </h2>
-          <p className="text-muted-foreground mb-2 text-sm sm:text-base">
+          <p className="text-cloud mb-2 text-sm sm:text-base">
             Únete a nuestra comunidad de aventureros 🌎
           </p>
-          <p className="text-muted-foreground text-xs sm:text-sm opacity-70">
+          <p className="text-cloud text-xs sm:text-sm opacity-80">
             Tips, destinos secretos, y ofertas de equipo. Sin spam, lo prometemos.
           </p>
         </Reveal>
