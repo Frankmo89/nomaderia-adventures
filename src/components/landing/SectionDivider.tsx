@@ -1,5 +1,3 @@
-import { useId } from "react";
-
 type SectionDividerProps = {
   variant?: "simple" | "layered" | "snow-capped" | "topo";
   dark?: boolean;
@@ -31,7 +29,6 @@ const SectionDivider = ({
   const base = dark ? "rgba(229,221,210," : "rgba(61,47,35,";
   const fallbackFill = dark ? "#EAF0EC" : "#14201A";
   const crestFill = fill ?? fallbackFill;
-  const blurId = useId().replace(/:/g, "");
 
   if (variant === "topo") {
     const opacities = dark ? ["0.18", "0.11", "0.06"] : ["0.11", "0.07", "0.04"];
@@ -87,24 +84,18 @@ const SectionDivider = ({
          xmlns="http://www.w3.org/2000/svg"
          focusable="false"
         >
-         <defs>
-           <filter id={blurId} x="-5%" y="-5%" width="110%" height="110%">
-             <feGaussianBlur stdDeviation="6" />
-           </filter>
-         </defs>
           <path
-           d="M0,0 H1440 V68 L1332,58 L1236,86 L1114,36 L1008,92 L884,44 L772,84 L650,28 L528,88 L410,40 L286,82 L176,32 L88,74 L0,48 Z"
+           d="M0,0 H1440 V80 L1380,64 L1300,58 L1250,72 L1170,60 L1120,74 L1030,58 L970,68 L900,60 L830,72 L760,58 L700,66 L630,74 L560,60 L500,70 L430,58 L360,68 L290,60 L220,74 L140,58 L60,68 L0,64 Z"
            fill={crestFill}
-           fillOpacity="0.42"
-           filter={`url(#${blurId})`}
+           fillOpacity="0.34"
          />
          <path
-           d="M0,0 H1440 V84 L1336,62 L1222,102 L1104,22 L986,108 L864,52 L748,94 L628,16 L502,106 L390,44 L276,96 L158,30 L76,86 L0,54 Z"
+           d="M0,0 H1440 V86 L1400,52 L1330,84 L1260,48 L1194,80 L1128,44 L1064,82 L1000,52 L932,78 L864,46 L800,80 L734,50 L668,84 L602,46 L536,78 L470,52 L404,84 L338,48 L272,80 L206,50 L140,82 L74,46 L0,74 Z"
            fill={crestFill}
-           fillOpacity="0.72"
+           fillOpacity="0.66"
          />
          <path
-           d="M0,0 H1440 V92 L1310,70 L1196,110 L1084,30 L964,112 L846,58 L726,100 L612,18 L486,108 L366,48 L252,98 L140,34 L58,88 L0,60 Z"
+           d="M0,0 H1440 V90 L1372,58 L1316,94 L1246,22 L1182,66 L1122,44 L1058,96 L992,16 L932,54 L868,32 L806,92 L742,48 L678,68 L612,22 L548,64 L482,38 L416,92 L354,50 L292,72 L228,20 L164,58 L100,90 L40,36 L0,66 Z"
            fill={crestFill}
          />
        </svg>
@@ -126,13 +117,13 @@ const SectionDivider = ({
         focusable="false"
       >
         <path
-          d="M0,0 H1440 V100 L1336,86 L1248,44 L1162,94 L1078,18 L990,102 L904,64 L816,98 L726,14 L634,106 L544,46 L454,104 L364,20 L274,96 L186,62 L108,92 L52,40 L0,74 Z"
+          d="M0,0 H1440 V102 L1370,60 L1318,110 L1256,24 L1192,72 L1128,46 L1060,114 L996,14 L930,58 L876,34 L814,108 L752,50 L686,70 L626,18 L566,64 L500,40 L436,112 L374,52 L316,76 L254,20 L196,60 L132,96 L70,36 L0,68 Z"
           fill={crestFill}
         />
-        <path d="M1101,39 L1078,18 L1055,40 Z" fill="#FFFFFF" fillOpacity="0.78" />
-        <path d="M753,39 L726,14 L700,40 Z" fill="#FFFFFF" fillOpacity="0.78" />
-        <path d="M388,43 L364,20 L337,43 Z" fill="#FFFFFF" fillOpacity="0.74" />
-        <path d="M72,59 L52,40 L34,52 Z" fill="#FFFFFF" fillOpacity="0.68" />
+        <path d="M1020,52 L996,14 L972,30 Z" fill="#FFFFFF" fillOpacity="0.95" />
+        <path d="M648,37 L626,18 L604,35 Z" fill="#FFFFFF" fillOpacity="0.9" />
+        <path d="M276,40 L254,20 L232,35 Z" fill="#FFFFFF" fillOpacity="0.88" />
+        <path d="M90,55 L70,36 L50,45 Z" fill="#FFFFFF" fillOpacity="0.85" />
       </svg>
     </div>
    );
@@ -151,7 +142,7 @@ const SectionDivider = ({
       focusable="false"
     >
       <path
-        d="M0,0 H1440 V74 L1360,70 L1296,24 L1218,68 L1138,44 L1052,72 L972,56 L890,74 L804,20 L716,70 L636,42 L548,74 L470,58 L382,72 L294,26 L208,70 L128,46 L58,72 L0,64 Z"
+        d="M0,0 H1440 V68 L1382,52 L1338,74 L1268,18 L1204,58 L1150,40 L1088,76 L1020,14 L966,50 L902,30 L840,72 L768,46 L706,64 L642,22 L580,58 L516,36 L452,74 L388,48 L330,66 L270,20 L206,52 L150,70 L86,34 L28,60 L0,50 Z"
         fill={crestFill}
       />
     </svg>
