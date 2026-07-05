@@ -84,7 +84,7 @@ const Index = () => {
       <SocialProof />
       <SectionDivider variant="layered" fill="#FBFAF7" />
       <DestinationsCatalog limit={3} />
-      <SectionDivider variant="snow-capped" fill="#14201A" />
+      <SectionDivider variant="layered" fill="#14201A" />
       <QuizSection />
       <TravelInsuranceSection />
       <SectionDivider variant="layered" fill="#F4EFE7" />
