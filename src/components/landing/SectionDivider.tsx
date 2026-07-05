@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 type SectionDividerProps = {
   variant?: "simple" | "layered" | "topo";
   dark?: boolean;
@@ -25,9 +27,29 @@ const SectionDivider = ({
   dark = false,
   fill,
 }: SectionDividerProps) => {
+  const grainId = useId();
   const base = dark ? "rgba(229,221,210," : "rgba(61,47,35,";
   const fallbackFill = dark ? "#EAF0EC" : "#14201A";
   const crestFill = fill ?? fallbackFill;
+
+  // Fine-grain texture: fractal noise reduced to a low-alpha black speckle,
+  // then clipped to the host element's own shape via feComposite "in" so it
+  // can never bleed past the crest (the earlier feGaussianBlur approach did).
+  const grainFilter = (
+    <filter id={grainId} x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="noise" />
+      <feColorMatrix
+        in="noise"
+        type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.2126 0.7152 0.0722 0 0"
+        result="noiseAlpha"
+      />
+      <feComponentTransfer in="noiseAlpha" result="grain">
+        <feFuncA type="linear" slope="0.045" intercept="0" />
+      </feComponentTransfer>
+      <feComposite in="grain" in2="SourceGraphic" operator="in" />
+    </filter>
+  );
 
   if (variant === "topo") {
     const opacities = dark ? ["0.18", "0.11", "0.06"] : ["0.11", "0.07", "0.04"];
@@ -43,6 +65,8 @@ const SectionDivider = ({
           xmlns="http://www.w3.org/2000/svg"
           focusable="false"
         >
+          <defs>{grainFilter}</defs>
+          <rect x="0" y="0" width="1440" height="100" fill="#000000" filter={`url(#${grainId})`} />
           {/* Three contour lines spaced ~20px apart in the viewBox */}
           <path
             d="M0,22 C200,6 400,40 600,16 C800,0 1000,34 1200,12 L1440,22"
@@ -83,10 +107,17 @@ const SectionDivider = ({
          xmlns="http://www.w3.org/2000/svg"
          focusable="false"
         >
+          <defs>{grainFilter}</defs>
           <path
            d="M0,0 H1440 V78 C1300,70 1150,72 1000,66 C850,60 700,68 550,64 C400,60 250,70 100,64 C60,62 20,66 0,64 Z"
            fill={crestFill}
            fillOpacity="0.34"
+         />
+         <path
+           d="M0,0 H1440 V78 C1300,70 1150,72 1000,66 C850,60 700,68 550,64 C400,60 250,70 100,64 C60,62 20,66 0,64 Z"
+           fill="#000000"
+           fillOpacity="0.34"
+           filter={`url(#${grainId})`}
          />
          <path
            d="M0,0 H1440 V86 C1300,60 1150,80 1000,58 C850,72 700,50 550,74 C400,52 250,78 100,56 C60,60 20,70 0,66 Z"
@@ -94,8 +125,19 @@ const SectionDivider = ({
            fillOpacity="0.66"
          />
          <path
+           d="M0,0 H1440 V86 C1300,60 1150,80 1000,58 C850,72 700,50 550,74 C400,52 250,78 100,56 C60,60 20,70 0,66 Z"
+           fill="#000000"
+           fillOpacity="0.66"
+           filter={`url(#${grainId})`}
+         />
+         <path
            d="M0,0 H1440 V90 C1300,40 1150,96 1000,46 C850,88 700,30 550,84 C400,36 250,92 100,42 C60,50 20,62 0,58 Z"
            fill={crestFill}
+         />
+         <path
+           d="M0,0 H1440 V90 C1300,40 1150,96 1000,46 C850,88 700,30 550,84 C400,36 250,92 100,42 C60,50 20,62 0,58 Z"
+           fill="#000000"
+           filter={`url(#${grainId})`}
          />
        </svg>
      </div>
@@ -114,9 +156,15 @@ const SectionDivider = ({
       xmlns="http://www.w3.org/2000/svg"
       focusable="false"
     >
+      <defs>{grainFilter}</defs>
       <path
         d="M0,0 H1440 V46 C1300,70 1150,18 980,34 C810,50 660,68 500,36 C340,10 170,54 0,40 Z"
         fill={crestFill}
+      />
+      <path
+        d="M0,0 H1440 V46 C1300,70 1150,18 980,34 C810,50 660,68 500,36 C340,10 170,54 0,40 Z"
+        fill="#000000"
+        filter={`url(#${grainId})`}
       />
     </svg>
    </div>
