@@ -5,11 +5,15 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Reveal from "@/components/editorial/Reveal";
-import { useNewsletterSliderImages } from "@/hooks/use-newsletter-slider-images";
+import {
+  useNewsletterSliderImages,
+  type NewsletterSliderImage,
+} from "@/hooks/use-newsletter-slider-images";
 
 const UNIQUE_VIOLATION = "23505";
 const SLIDE_DURATION = 5000;
 const CROSSFADE_DURATION_MS = 1200;
+const EMPTY_IMAGES: NewsletterSliderImage[] = [];
 
 const KEN_BURNS_CSS = `
 @keyframes newsletter-ken-burns {
@@ -27,7 +31,7 @@ const NewsletterSignup = () => {
   const [loadedUrls, setLoadedUrls] = useState<Record<string, true>>({});
   const { toast } = useToast();
   const {
-    data: newsletterImages = [],
+    data: newsletterImages = EMPTY_IMAGES,
     isLoading: imagesLoading,
     isError: imagesError,
   } = useNewsletterSliderImages();
