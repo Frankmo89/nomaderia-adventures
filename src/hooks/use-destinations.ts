@@ -129,6 +129,49 @@ export function useFeaturedHeroPark() {
   });
 }
 
+export interface DestinationMapPoint {
+  id: string;
+  title: string;
+  slug: string;
+  region: string | null;
+  difficulty_level: string;
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Read-only prep for a future US-map feature (Destinos hero — design pending
+ * Mobbin research). Uses destinations.latitude/longitude directly rather than
+ * parsing park_live_data.lat_long: both are populated for all 63 published
+ * parks, but destinations' columns are stable editorial data, not a
+ * sync-job-owned table that gets overwritten on every run.
+ */
+export function useDestinationsMapData() {
+  return useQuery<DestinationMapPoint[]>({
+    queryKey: ["destinations", "map-data"],
+    staleTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("destinations")
+        .select("id, title, slug, region, difficulty_level, latitude, longitude")
+        .eq("is_published", true);
+      if (error) throw error;
+
+      return (data ?? [])
+        .filter((d) => d.latitude != null && d.longitude != null)
+        .map((d) => ({
+          id: d.id,
+          title: d.title,
+          slug: d.slug,
+          region: d.region,
+          difficulty_level: d.difficulty_level,
+          latitude: d.latitude as number,
+          longitude: d.longitude as number,
+        }));
+    },
+  });
+}
+
 export function useRelatedDestinations(
   difficultyLevel: string | undefined,
   excludeId: string | undefined
