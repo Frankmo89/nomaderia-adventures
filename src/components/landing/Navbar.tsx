@@ -9,9 +9,23 @@ const NAV_EASE = [0.22, 1, 0.36, 1] as const;
 import { BRAND_ASSETS } from "@/config/assets";
 
 // Scroll thresholds: homepage goes solid early (before hero CTAs enter the navbar zone);
-// inner pages go solid sooner since they have no full-height hero.
+// other hero routes go solid sooner since their hero sections are shorter.
 const HOMEPAGE_SCROLL_THRESHOLD_PX = 100;
 const INNER_PAGE_SCROLL_THRESHOLD_PX = 40;
+
+// Individual destination detail pages (e.g. /destinos/yosemite) have a photo
+// carousel hero — but the /destinos listing page itself does not.
+const DESTINATION_DETAIL_PATTERN = /^\/destinos\/[^/]+$/;
+
+// Routes that render an actual hero image/photo section behind the navbar.
+// Every other route (including /destinos, /blog*, /gear*, /sobre-nosotros)
+// has no hero, so the navbar must render solid there regardless of scroll
+// position — otherwise it starts transparent over a light background.
+const hasHeroForPath = (pathname: string): boolean =>
+  pathname === "/" ||
+  pathname === "/calculadora" ||
+  pathname === "/servicios" ||
+  DESTINATION_DETAIL_PATTERN.test(pathname);
 
 const navLinks = [
   { label: "Destinos", href: "/destinos" },
@@ -25,13 +39,16 @@ const navLinks = [
 const Navbar = () => {
   const { pathname } = useLocation();
   const isHomepage = pathname === "/";
+  const hasHero = hasHeroForPath(pathname);
 
-  // Ref keeps the closure in useMotionValueEvent always current on route changes
+  // Refs keep the closures in useMotionValueEvent always current on route changes
   const isHomepageRef = useRef(isHomepage);
   isHomepageRef.current = isHomepage;
+  const hasHeroRef = useRef(hasHero);
+  hasHeroRef.current = hasHero;
 
-  // Inner pages start solid; homepage starts transparent (over the hero)
-  const [scrolled, setScrolled] = useState(!isHomepage);
+  // Hero-less pages always render solid; hero pages start transparent (over the hero)
+  const [scrolled, setScrolled] = useState(!hasHero);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [open, setOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -39,16 +56,24 @@ const Navbar = () => {
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    const threshold = isHomepageRef.current ? HOMEPAGE_SCROLL_THRESHOLD_PX : INNER_PAGE_SCROLL_THRESHOLD_PX;
-    setScrolled(latest > threshold);
+    if (!hasHeroRef.current) {
+      setScrolled(true);
+    } else {
+      const threshold = isHomepageRef.current ? HOMEPAGE_SCROLL_THRESHOLD_PX : INNER_PAGE_SCROLL_THRESHOLD_PX;
+      setScrolled(latest > threshold);
+    }
     setShowScrollTop(latest > window.innerHeight);
   });
 
   // Re-evaluate immediately on SPA route navigation
   useEffect(() => {
+    if (!hasHero) {
+      setScrolled(true);
+      return;
+    }
     const threshold = isHomepage ? HOMEPAGE_SCROLL_THRESHOLD_PX : INNER_PAGE_SCROLL_THRESHOLD_PX;
     setScrolled(scrollY.get() > threshold);
-  }, [pathname, isHomepage, scrollY]);
+  }, [pathname, hasHero, isHomepage, scrollY]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
