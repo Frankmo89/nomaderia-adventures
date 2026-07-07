@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { BadgeCheck, Mail, Mountain, ShieldCheck } from "lucide-react";
+import { BadgeCheck, Mail, ShieldCheck } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageHeader from "@/components/shared/PageHeader";
 import { usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 import JsonLd from "@/components/JsonLd";
@@ -35,15 +36,10 @@ const SobreNosotros = () => {
       <Navbar />
       <JsonLd data={profileLd} />
 
-      {/* Hero */}
-      <section className="container mx-auto px-4 pt-28 pb-12 max-w-[42rem]">
-        <div className="flex items-center gap-2 mb-4">
-          <Mountain className="h-6 w-6 text-secondary" />
-          <span className="text-xs tracking-[0.2em] uppercase font-medium text-secondary">Nomaderia Adventures</span>
-        </div>
-        <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-6">
-          Sobre Nosotros
-        </h1>
+      <PageHeader title="Sobre Nosotros" />
+
+      {/* Intro */}
+      <section className="container mx-auto px-4 pt-10 pb-12 max-w-[42rem]">
         <p className="text-lg text-foreground/70 leading-relaxed">
           Somos Nomaderia: una plataforma creada por un agente de viajes certificado para ayudarte a planear tu primera aventura de trekking o mochilero, sin perderte en la información y sin gastar de más.
         </p>

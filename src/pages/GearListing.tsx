@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageHeader from "@/components/shared/PageHeader";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useGearArticles } from "@/hooks/use-gear-articles";
@@ -38,18 +38,12 @@ const GearListing = () => {
     <main className="bg-background min-h-screen">
       <Navbar />
       <JsonLd data={collectionLd} />
-      <section className="pt-32 pb-20">
+      <PageHeader
+        title="Guía de Equipo"
+        subtitle="Todo lo que necesitas para tu aventura, revisado por expertos para principiantes."
+      />
+      <section className="pb-20 pt-10">
         <div className="container mx-auto px-4">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="font-serif text-4xl md:text-5xl font-bold text-foreground text-center mb-4"
-          >
-            Guía de Equipo
-          </motion.h1>
-          <p className="text-center text-muted-foreground mb-10 max-w-xl mx-auto">
-            Todo lo que necesitas para tu aventura, revisado por expertos para principiantes.
-          </p>
-
           {isLoading && <CardGridSkeleton count={3} />}
 
           {error && (

@@ -17,14 +17,20 @@ const INNER_PAGE_SCROLL_THRESHOLD_PX = 40;
 // carousel hero — but the /destinos listing page itself does not.
 const DESTINATION_DETAIL_PATTERN = /^\/destinos\/[^/]+$/;
 
-// Routes that render an actual hero image/photo section behind the navbar.
-// Every other route (including /destinos, /blog*, /gear*, /sobre-nosotros)
-// has no hero, so the navbar must render solid there regardless of scroll
-// position — otherwise it starts transparent over a light background.
+// Routes that render an actual hero/header band behind the navbar (photo or
+// forest-dark PageHeader color-block — see src/components/shared/PageHeader.tsx).
+// /destinos, /blog, /gear and /sobre-nosotros now use PageHeader; their detail/
+// article sub-routes (/blog/:slug, /gear/:slug) do NOT and are excluded on purpose.
+// Every other route has no hero, so the navbar must render solid there regardless
+// of scroll position — otherwise it starts transparent over a light background.
 const hasHeroForPath = (pathname: string): boolean =>
   pathname === "/" ||
   pathname === "/calculadora" ||
   pathname === "/servicios" ||
+  pathname === "/destinos" ||
+  pathname === "/blog" ||
+  pathname === "/gear" ||
+  pathname === "/sobre-nosotros" ||
   DESTINATION_DETAIL_PATTERN.test(pathname);
 
 const navLinks = [

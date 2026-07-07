@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   Search,
   SlidersHorizontal,
@@ -17,6 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageHeader from "@/components/shared/PageHeader";
+import USStateTintMap from "@/components/destinations/USStateTintMap";
 import { DistanceFromYou } from "@/components/destinations/DistanceFromYou";
 import { OriginPicker } from "@/components/destinations/OriginPicker";
 import { useCanonical, usePageMeta } from "@/hooks/use-seo";
@@ -325,22 +326,9 @@ const Destinations = () => {
     <main className="bg-background min-h-screen">
       <Navbar />
 
-      {/* Page header */}
-      <section className="pt-28 pb-4 sm:pt-32">
-        <div className="container mx-auto px-5 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground"
-          >
-            Destinos
-          </motion.h1>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-            63 parques nacionales · guías en español
-          </p>
-        </div>
-      </section>
+      <PageHeader title="Destinos" subtitle="63 parques nacionales · guías en español">
+        <USStateTintMap />
+      </PageHeader>
 
       {/* Sticky container: search bar + difficulty tabs */}
       <div className="sticky top-16 z-30 bg-background shadow-[0_1px_0_0_rgb(0_0_0/0.06)]">
