@@ -36,7 +36,7 @@ const SobreNosotros = () => {
       <Navbar />
       <JsonLd data={profileLd} />
 
-      <PageHeader title="Sobre Nosotros" />
+      <PageHeader title="Sobre Nosotros" eyebrow="NOMADERIA ADVENTURES" />
 
       {/* Intro */}
       <section className="container mx-auto px-4 pt-10 pb-12 max-w-[42rem]">

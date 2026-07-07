@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { Mountain } from "lucide-react";
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
+  eyebrow?: string;
   children?: ReactNode;
 }
 
@@ -15,11 +17,27 @@ interface PageHeaderProps {
 // `children` renders as an absolutely-positioned background layer behind the
 // headline (see USStateTintMap on Destinos) — pages that don't pass children
 // render exactly as before.
-const PageHeader = ({ title, subtitle, children }: PageHeaderProps) => {
+// `eyebrow` reuses the site's established Oswald label treatment (see
+// SocialProof/BlogPreview/GearPreview: font-condensed text-xs tracking-[0.08em]
+// uppercase) but in `text-mist` instead of `text-green` — green measures
+// ~2.7:1 against forest-dark (fails WCAG), mist measures ~14.5:1, matching
+// this component's own subtitle color on the same dark surface.
+const PageHeader = ({ title, subtitle, eyebrow, children }: PageHeaderProps) => {
   return (
     <section className="relative overflow-hidden bg-forest-dark pt-28 pb-14 sm:pt-36 sm:pb-20">
       {children}
       <div className="container relative z-10 mx-auto px-4 text-center">
+        {eyebrow && (
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-center justify-center gap-1.5 font-condensed text-xs tracking-[0.08em] uppercase font-semibold text-mist mb-3"
+          >
+            <Mountain className="h-3.5 w-3.5" />
+            {eyebrow}
+          </motion.p>
+        )}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
