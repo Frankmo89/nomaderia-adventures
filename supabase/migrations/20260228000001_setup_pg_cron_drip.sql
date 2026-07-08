@@ -15,7 +15,7 @@
 --     'https://<TU_PROJECT_REF>.supabase.co/functions/v1/send-drip-emails';
 -- y luego ejecuta esta migración.
 
-DO $$
+DO $outer$
 DECLARE
   has_pg_cron boolean;
   has_pg_net  boolean;
@@ -58,4 +58,4 @@ BEGIN
       RAISE NOTICE 'Funciones cron.schedule o net.http_post no están definidas; se omite la configuración del cron job daily-drip-emails.';
   END;
 END;
-$$;
+$outer$;

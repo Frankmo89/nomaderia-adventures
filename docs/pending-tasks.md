@@ -145,7 +145,13 @@ referenciar esta lista primero.
   - `supabase secrets set CRON_SECRET=<valor_largo_y_unico>`
   - Programar ejecución diaria de `check-permit-alerts` con header `x-cron-secret: <CRON_SECRET>` (pg_cron o cron-job.org).
 - [ ] **Habilitar `pg_cron`** (Database → Extensions) para el drip diario, o usar
-      cron-job.org con POST diario a la Edge Function.
+      cron-job.org con POST diario a la Edge Function. **Re-pegar y re-ejecutar
+      `supabase/migrations/20260228000001_setup_pg_cron_drip.sql` en el editor
+      SQL** si se intentó aplicar antes de julio 2026 — tenía un bug de
+      dollar-quoting anidado (`DO $$ ... $$` con el mismo tag `$$` que el
+      comando interno de `cron.schedule`) que causaba `ERROR 42601: syntax
+      error at or near "SELECT"` y probablemente impidió que el cron job se
+      creara. Ya corregido (ver changelog de julio 2026).
 - [ ] **Verificar sitio en Google Search Console.**
 - [ ] **Re-aplicar a Travelpayouts** rechazados cuando el tráfico supere
       ~1,000/mes: GetYourGuide, Booking, Expedia, Trip.com, DiscoverCars.
@@ -477,6 +483,8 @@ Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
 > vive en el historial de git. Entradas recientes primero.
 
 ### Julio 2026
+
+**Fix — `20260228000001_setup_pg_cron_drip.sql`: mismo bug de dollar-quoting anidado que `setup_pg_cron_park_trails`.** El bloque externo `DO $$ ... $$` y el string del comando interno de `PERFORM cron.schedule(..., $$ SELECT net.http_post(...) $$)` usaban el mismo tag `$$` — Postgres cierra el bloque externo en la primera `$$` que encuentra (justo antes del `SELECT net.http_post(`), dejando el resto como SQL suelto inválido (`ERROR 42601: syntax error at or near "SELECT"`). Este archivo es más antiguo que `20260707000001_setup_pg_cron_park_trails.sql` (de donde se copió el patrón) y probablemente nunca se aplicó con éxito vía el editor SQL — coincide con que sus propios comentarios ya sugerían cron-job.org como alternativa. Fix: el bloque externo ahora usa el tag `$outer$` (apertura y cierre), el `$$ ... $$` interno del comando de `cron.schedule` queda intacto. Sin cambios de lógica — mismo patrón de fix que la entrada anterior de `setup_pg_cron_park_trails`. Pendiente humano actualizado arriba para re-aplicar la migración.
 
 **Investigado y descartado — NPS `weatherInfo` NO se agrega al upsert de `sync-park-live-data`.** Se pidió sumar el campo `weatherInfo` (ya presente en la respuesta de NPS `/parks` que `sync-park-live-data` obtiene en modo `full`, sin llamada nueva) a la columna `park_live_data.weather`. Investigado antes de tocar código: esa columna ya tiene un único productor (`sync-park-weather`, forma `{synced_at, source, periods}`) consumido tal cual por `ParkWeatherCard.tsx`. `weatherInfo` es un string editorial distinto (clima general, no pronóstico), ya usado por `generate-park-content` para generar `destinations.weather_markdown`. Escribirlo en `park_live_data.weather` rompería el contrato: un sync `full` sobreescribiría el forecast estructurado, `weather.periods` quedaría `undefined` y la tarjeta de clima dejaría de renderizar en silencio. Se le presentó la opción al usuario (nueva columna vs. merge en el jsonb existente vs. no hacerlo) y se decidió **no implementarlo**. `sync-park-live-data` queda sin cambios. Lección registrada en `docs/decisions.md` para que no se vuelva a proponer sin este contexto.
 
