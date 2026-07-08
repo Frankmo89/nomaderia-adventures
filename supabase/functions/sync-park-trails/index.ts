@@ -220,18 +220,21 @@ serve(async (req) => {
     const candidates = (rows ?? []) as DestRow[];
 
     // ── Prioritize least-recently-synced parks first ───────────────────────────
-    // Never-synced parks (no park_trails rows yet) are treated as highest
-    // priority so a fresh table backfills before the rotation settles into a
-    // steady weekly cadence.
+    // Never-synced parks (no park_trails_sync_state row yet) are treated as
+    // highest priority so a fresh table backfills before the rotation settles
+    // into a steady weekly cadence. This reads park_trails_sync_state — a
+    // dedicated per-park bookkeeping table — instead of aggregating
+    // MAX(park_trails.synced_at), because parks with zero Hiking results
+    // (e.g. chis, sagu) never get a park_trails row and would otherwise look
+    // "never synced" forever, starving the rotation on every single run.
     const { data: syncedRows, error: syncedErr } = await db
-      .from("park_trails")
+      .from("park_trails_sync_state")
       .select("park_code, synced_at");
-    if (syncedErr) throw new Error(`Error consultando park_trails: ${syncedErr.message}`);
+    if (syncedErr) throw new Error(`Error consultando park_trails_sync_state: ${syncedErr.message}`);
 
     const lastSyncByCode = new Map<string, string>();
     for (const row of (syncedRows ?? []) as { park_code: string; synced_at: string }[]) {
-      const prev = lastSyncByCode.get(row.park_code);
-      if (!prev || row.synced_at > prev) lastSyncByCode.set(row.park_code, row.synced_at);
+      lastSyncByCode.set(row.park_code, row.synced_at);
     }
 
     const prioritized = candidates
@@ -265,9 +268,34 @@ serve(async (req) => {
 
       const { trails, error } = await collectParkTrails(park, NPS_API_KEY, hikingActivityId);
 
+      // Record the sync attempt for every park in the batch — regardless of
+      // outcome — so the priority query above always advances the rotation.
+      // Without this, a park that legitimately has zero Hiking results (or
+      // that errors on every attempt) never gets a synced_at anywhere and
+      // gets re-selected forever instead of rotating past.
+      const recordAttempt = async (trailCount: number, lastError: string | null) => {
+        const { error: stateErr } = await db.from("park_trails_sync_state").upsert(
+          {
+            park_code: park.park_code,
+            destination_id: park.id,
+            synced_at: new Date().toISOString(),
+            trail_count: trailCount,
+            last_error: lastError,
+          },
+          { onConflict: "park_code" },
+        );
+        if (stateErr) {
+          console.error(
+            `[sync-park-trails] error registrando sync_state ${park.park_code}:`,
+            stateErr.message,
+          );
+        }
+      };
+
       if (error) {
         console.error(`[sync-park-trails] error ${park.park_code}:`, error);
         detalle.push({ park_code: park.park_code, status: "error", error });
+        await recordAttempt(0, error);
         failed++;
         continue;
       }
@@ -275,6 +303,7 @@ serve(async (req) => {
       if (trails.length === 0) {
         console.log(`[sync-park-trails] ✓ ${park.park_code} — 0 trails de hiking`);
         detalle.push({ park_code: park.park_code, status: "synced", trails: 0 });
+        await recordAttempt(0, null);
         synced++;
         continue;
       }
@@ -286,10 +315,12 @@ serve(async (req) => {
       if (upsertErr) {
         console.error(`[sync-park-trails] upsert error ${park.park_code}:`, upsertErr.message);
         detalle.push({ park_code: park.park_code, status: "error", error: upsertErr.message });
+        await recordAttempt(0, upsertErr.message);
         failed++;
       } else {
         console.log(`[sync-park-trails] ✓ ${park.park_code} — ${trails.length} trails`);
         detalle.push({ park_code: park.park_code, status: "synced", trails: trails.length });
+        await recordAttempt(trails.length, null);
         synced++;
       }
     }
