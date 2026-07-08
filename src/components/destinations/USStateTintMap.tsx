@@ -12,11 +12,12 @@ const STROKE_COLOR = "#FBFAF7"; // cloud
 
 // Fades the map to fully transparent behind the fixed navbar so state shapes
 // never sit directly behind the logo/hamburger — clean forest-dark there
-// instead. The fixed navbar measures 76px against this header's ~240px
-// mobile height (~32%), so the plateau holds full transparency to 34% (a
-// hair past the navbar edge) before ramping to full map opacity by 48%.
-// Pure visual mask on this layer; Navbar itself is untouched.
-const TOP_FADE_MASK = "linear-gradient(to bottom, transparent 0%, transparent 34%, black 48%)";
+// instead. Fixed pixel stops (not percentages of this section's height) so
+// the fade zone always matches the ~64px fixed navbar + a small buffer,
+// regardless of how tall the header section is — a percentage-based fade
+// left a large empty gap on tall headers. Pure visual mask on this layer;
+// Navbar itself is untouched.
+const TOP_FADE_MASK = "linear-gradient(to bottom, transparent 0px, transparent 64px, black 96px)";
 
 const STATE_ENTRIES = Object.entries(US_STATE_PATHS);
 

@@ -217,3 +217,17 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Legacy `/sentinel` fallback:** el flujo legacy de checkout caía a `"#"`
   cuando faltaba su link de pago. Mantener un fallback explícito evitó CTAs
   muertos mientras esa ruta siguió activa.
+- **`park_live_data.weather` es contrato de un solo productor:** la columna
+  `weather` (jsonb) la escribe únicamente `sync-park-weather` con la forma
+  `{synced_at, source: "weather.gov", periods: [...]}`, consumida tal cual por
+  `ParkWeatherCard.tsx` vía `use-park-live-data.ts`. El campo `weatherInfo` de
+  NPS `/parks` es un string editorial distinto (clima general del parque, no
+  pronóstico por día) — ya se usa en `generate-park-content` como insumo para
+  generar `destinations.weather_markdown`. Se evaluó y **descartó** escribir
+  `weatherInfo` en `park_live_data.weather` desde `sync-park-live-data`: un
+  sync `full` posterior a `sync-park-weather` sobreescribiría el forecast
+  estructurado con un string suelto, `weather.periods` quedaría `undefined` y
+  `ParkWeatherCard` dejaría de renderizar en silencio (retorna `null` sin
+  `periods`). Lección: antes de añadir un segundo productor a una columna
+  jsonb existente, verificar su consumidor — un nombre de columna genérico
+  (`weather`) no garantiza que dos fuentes compartan forma.
