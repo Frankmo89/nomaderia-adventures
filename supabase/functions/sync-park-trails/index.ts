@@ -247,7 +247,15 @@ serve(async (req) => {
       });
 
     const batch = prioritized.slice(0, MAX_BATCH).map((p) => p.park);
-    const restantes = Math.max(0, candidates.length - batch.length);
+
+    // Real count of parks that will still be never-synced once this batch
+    // finishes — NOT `candidates.length - batch.length` (that's a fixed
+    // constant regardless of progress, which is why the operator saw
+    // "restantes": 58 on every single invocation during the initial
+    // backfill). `prioritized` is sorted never-synced-first, so everything
+    // past `batch.length` that still has `lastSynced === null` is genuinely
+    // outstanding.
+    const restantes = prioritized.slice(batch.length).filter((p) => p.lastSynced === null).length;
 
     console.log(
       `[sync-park-trails] iniciado — candidatos=${candidates.length} batch=${batch.length} restantes=${restantes}`,
