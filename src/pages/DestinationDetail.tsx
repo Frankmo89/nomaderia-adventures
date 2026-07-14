@@ -21,7 +21,6 @@ import JsonLd from "@/components/JsonLd";
 import { PRICING } from "@/config/pricing";
 import ShareButtons from "@/components/ShareButtons";
 import PermitScarcity from "@/components/PermitScarcity";
-import { ConciergeChat } from "@/components/ConciergeChat";
 import { SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
@@ -1102,11 +1101,10 @@ const DestinationDetail = () => {
         </section>
       )}
 
+      {/* El concierge ahora vive en el launcher flotante global (ConciergeLauncher,
+          montado en App.tsx) — un solo punto de entrada por página (patrón Klook).
+          Se auto-detecta esta ruta y escopea la conversación a este parque. */}
       <div className="my-12 container mx-auto px-4 max-w-3xl">
-        <ConciergeChat
-          destinationSlug={dest.slug}
-          destinationTitle={dest.title}
-        />
         <CredibilityBar
           lastVerifiedAt={(dest as Destination & DestExt).last_verified_at}
         />

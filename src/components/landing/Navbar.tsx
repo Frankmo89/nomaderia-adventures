@@ -277,7 +277,15 @@ const Navbar = () => {
         )}
       </AnimatePresence>
 
-      {/* Scroll to top button */}
+      {/* Scroll to top button — esquina inferior IZQUIERDA a propósito: el
+          ConciergeLauncher global vive en bottom-right (ConciergeLauncher.tsx),
+          y en mobile la StickyMobileCTA cubre toda la franja inferior, así que
+          reclama la esquina vacía en vez de competir por la misma (hallazgo
+          Mobbin: Navan/Pipedrive). Mismo offset elevado en mobile que el
+          launcher para no quedar tapado por StickyMobileCTA. z-[1200]: el mapa
+          de senderos (TrailsSection) usa Leaflet, cuyo control de zoom pinta a
+          z-index 1000 fuera de su propio stacking context — verificado con
+          elementFromPoint, no alcanza con z-50 para quedar siempre encima. */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
@@ -287,7 +295,7 @@ const Navbar = () => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.92 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-6 right-6 z-40 bg-green hover:bg-green-dark text-white rounded-full p-3.5 shadow-lg shadow-green/30 transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
+            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 left-6 z-[1200] bg-green hover:bg-green-dark text-white rounded-full p-3.5 shadow-lg shadow-green/30 transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
           >
             <ArrowUp className="h-5 w-5" />
           </motion.button>
