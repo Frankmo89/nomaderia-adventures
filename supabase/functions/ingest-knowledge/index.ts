@@ -296,11 +296,57 @@ serve(async (req) => {
     if (destinations.length === 0) {
       return new Response(JSON.stringify({ ok: true, total_parks: 0, total_chunks: 0, skipped: 0, errors: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    let totalChunks = 0; let skipped = 0;
+
+    // ── Batch-fetch curated campgrounds for all candidate parks (one query, not N+1) ──
+    const destIds = destinations.map((d) => d.id);
+    const campgroundsByDest = new Map<string, CampgroundRow[]>();
+    const { data: campRows, error: campErr } = await supabase
+      .from("campgrounds")
+      .select("destination_id, nombre, nota_soul, precio_usd, precio_nota, rv_max_pies, tiene_agua, senal_celular, es_recomendado")
+      .in("destination_id", destIds);
+    if (campErr) {
+      console.warn("ingest-knowledge: no se pudo cargar campgrounds, se ingesta sin ellas:", campErr.message);
+    } else {
+      for (const row of (campRows ?? []) as Array<CampgroundRow & { destination_id: string }>) {
+        const list = campgroundsByDest.get(row.destination_id) ?? [];
+        list.push(row);
+        campgroundsByDest.set(row.destination_id, list);
+      }
+    }
+    for (const dest of destinations) {
+      dest.campgrounds_list = campgroundsByDest.get(dest.id);
+    }
+
+    let totalChunks = 0; let skipped = 0; let locked = 0;
     const errors: Array<{ park_code: string; error: string }> = [];
     for (const dest of destinations) {
       const parkCode = dest.park_code ?? dest.slug;
+      let lockClaimed = false;
       try {
+        // ── Per-park ingest lock ─────────────────────────────────────────────
+        // Guards against the pefo/gumo duplication bug: two overlapping
+        // invocations for the same park would each run their own
+        // DELETE-then-INSERT and race past each other, leaving N full copies
+        // of every section (observed: 23x for pefo, 8x for gumo — see
+        // docs/pending-tasks.md). A plain advisory lock doesn't work here
+        // because Supabase's PostgREST/pgbouncer pooling gives each
+        // supabase-js call its own short-lived connection/transaction, so a
+        // lock acquired in one RPC call wouldn't still be held by the time
+        // the DELETE/INSERT calls that follow (separate HTTP round-trips) run.
+        // Using a real row in knowledge_chunks_ingest_lock instead — claimed
+        // via an atomic INSERT ... ON CONFLICT ... WHERE stale RPC — persists
+        // correctly across the multiple separate calls this loop makes.
+        const { data: claimed, error: lockErr } = await supabase.rpc("claim_knowledge_ingest_lock", {
+          p_source_table: "destinations",
+          p_source_id: dest.id,
+        });
+        if (lockErr) throw lockErr;
+        if (!claimed) {
+          locked++;
+          continue;
+        }
+        lockClaimed = true;
+
         if (!force && hasContentVersion && dest.content_version) {
           const { data: existing } = await supabase.from("knowledge_chunks").select("metadata").eq("source_table", "destinations").eq("source_id", dest.id).limit(1);
           if (existing?.length) {
@@ -321,10 +367,20 @@ serve(async (req) => {
           if (error) throw error;
         }
         totalChunks += chunks.length;
-      } catch (err) { errors.push({ park_code: parkCode, error: String(err) }); }
+      } catch (err) {
+        errors.push({ park_code: parkCode, error: String(err) });
+      } finally {
+        if (lockClaimed) {
+          const { error: releaseErr } = await supabase.rpc("release_knowledge_ingest_lock", {
+            p_source_table: "destinations",
+            p_source_id: dest.id,
+          });
+          if (releaseErr) console.error(`ingest-knowledge: no se pudo liberar el lock de ${parkCode}:`, releaseErr.message);
+        }
+      }
     }
-    console.log(`✅ ingest-knowledge: ${destinations.length} parques encontrados, ${skipped} omitidos, ${totalChunks} chunks insertados, ${errors.length} errores`);
-    return new Response(JSON.stringify({ ok: errors.length === 0, total_parks: destinations.length, total_chunks: totalChunks, skipped, errors }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    console.log(`✅ ingest-knowledge: ${destinations.length} parques encontrados, ${skipped} omitidos, ${locked} bloqueados (ingest concurrente en curso), ${totalChunks} chunks insertados, ${errors.length} errores`);
+    return new Response(JSON.stringify({ ok: errors.length === 0, total_parks: destinations.length, total_chunks: totalChunks, skipped, locked_skipped: locked, errors }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     console.error("ingest-knowledge error:", err);
     return new Response(JSON.stringify({ ok: false, error: String(err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
