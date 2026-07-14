@@ -40,11 +40,53 @@ const steps = [
   },
 ];
 
+const whatYouGet = [
+  {
+    title: "Tu itinerario día a día en PDF",
+    description:
+      "Horarios sugeridos, qué ver, cuánto caminas y qué tan difícil es de verdad. Si un sendero es duro para principiantes, te lo decimos sin adornos.",
+  },
+  {
+    title: "Rutas listas en Google Maps",
+    description:
+      'Un enlace por cada día. Lo abres, presionas "Iniciar" y listo. No necesitas apps raras ni saber leer mapas.',
+  },
+  {
+    title: "Plan B para cada día",
+    description:
+      "¿Amaneciste cansado? ¿Cambió el clima? Cada día incluye una alternativa más corta o más fácil.",
+  },
+  {
+    title: "Permisos y reservas resueltos",
+    description:
+      "Qué permiso necesitas, cuándo abre la lotería y el enlace directo para aplicar. Nada de descubrirlo en la entrada del parque.",
+  },
+  {
+    title: "Logística del camino",
+    description:
+      "Dónde cargar gasolina, dónde comer y dónde parar en el trayecto desde tu ciudad hasta el parque.",
+  },
+  {
+    title: "Checklist de equipo para tu nivel",
+    description:
+      "Solo lo que sí vas a usar, con enlaces de compra. Nada de listas de 50 cosas.",
+  },
+  {
+    title: "Presupuesto desglosado",
+    description:
+      "Entradas, gasolina, comida, hospedaje. Sabes cuánto vas a gastar antes de salir.",
+  },
+  {
+    title: "Soporte por WhatsApp durante tu viaje",
+    description: "Si algo cambia en el camino, nos escribes y lo resolvemos juntos.",
+  },
+];
+
 const faqs = [
   {
     question: "¿Qué incluye exactamente un itinerario?",
     answer:
-      "Cada itinerario incluye una ruta día a día con horarios sugeridos, lista de equipo con enlaces de compra, presupuesto desglosado, mapa interactivo y tips de preparación física adaptados a tu nivel.",
+      "Recibes tu itinerario día a día en PDF, enlaces listos en Google Maps para cada ruta, un plan B diario por si cambia el clima o te cansas, los permisos y reservas que necesitas, la logística del trayecto (gasolina, comida, paradas), un checklist de equipo para tu nivel, tu presupuesto desglosado y soporte por WhatsApp durante todo tu viaje.",
   },
   {
     question: "¿Qué tan personalizado es?",
@@ -196,6 +238,39 @@ const Servicios = () => {
             </motion.div>
           ))}
         </div>
+      </section>
+
+      {/* Esto es exactamente lo que recibes */}
+      <section className="container mx-auto px-4 pb-20 max-w-5xl">
+        <motion.h2
+          className="font-serif text-3xl md:text-4xl text-foreground text-center mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          Esto es exactamente lo que recibes
+        </motion.h2>
+        <motion.div
+          className="grid gap-8 md:grid-cols-2"
+          variants={cardContainerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
+          {whatYouGet.map((item) => (
+            <motion.div
+              key={item.title}
+              variants={cardItemVariants}
+              className="flex items-start gap-4"
+            >
+              <Check className="h-6 w-6 text-green flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
+                <p className="text-foreground/70 leading-relaxed">{item.description}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
       </section>
 
       {/* Producto */}

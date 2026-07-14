@@ -26,11 +26,13 @@ export const products: Product[] = [
     currency: "USD",
     ctaType: "whatsapp",
     features: [
-      "Itinerario día por día (ruta, tiempos y dificultad honesta para principiantes)",
-      "Permisos: qué necesitas, cuándo abre la lotería y cómo aplicar",
-      "Lista de equipo con enlaces recomendados",
-      "Dónde dormir y acampar",
-      "Tours y experiencias seleccionadas",
+      "Itinerario día a día en PDF",
+      "Rutas listas en Google Maps",
+      "Plan B para cada día",
+      "Permisos y reservas resueltos",
+      "Logística del camino",
+      "Checklist de equipo para tu nivel",
+      "Presupuesto desglosado",
       "Soporte por WhatsApp durante tu viaje",
     ],
     ctaUrl: buildWhatsAppLink(
