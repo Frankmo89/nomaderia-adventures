@@ -70,8 +70,7 @@ nomaderia-adventures/
 │   │   │   ├── NewsletterSignup.tsx
 │   │   │   └── Footer.tsx
 │   │   ├── ui/                         # shadcn/ui components
-│   │   ├── LoadingSkeletons.tsx
-│   │   └── NavLink.tsx
+│   │   └── LoadingSkeletons.tsx
 │   ├── hooks/
 │   │   ├── use-seo.ts                  # Canonical links + JSON-LD
 │   │   ├── use-mobile.tsx

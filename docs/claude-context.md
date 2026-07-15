@@ -323,8 +323,7 @@ Source: `src/App.tsx`
 | `useFeaturedGearArticles()` | same | Fetch up to 3 featured gear cards. | `gear_articles` | `UseQueryResult<GearArticleCard[]>` |
 | `useBlogPosts()` | `src/hooks/use-blog-posts.ts` | List published blog posts ordered by featured/date. | `blog_posts` | `UseQueryResult<BlogPost[]>` |
 | `useQuiz(totalSteps)` | `src/hooks/use-quiz.ts` | Quiz state machine, scoring, result retrieval, lead capture, email trigger. | reads `destinations`; writes `newsletter_subscribers`, `quiz_responses`; invokes `send-quiz-email` | step/actions/state object (`results`, `loading`, handlers, etc.) |
-| `useQuizCount()` | `src/hooks/use-stats.ts` | Count quiz responses. | `quiz_responses` | `UseQueryResult<number>` |
-| `useDestinationsCount()` | same | Count published destinations. | `destinations` | `UseQueryResult<number>` |
+| `usePublicStats()` | `src/hooks/use-public-stats.ts` | Real public counts (destinations, blog posts). | `destinations`, `blog_posts` | `UseQueryResult` con conteos |
 | `useMediaSlider()` | `src/hooks/use-media.ts` | Fetch active media slider entries. | `media_slider` | `UseQueryResult<MediaItem[]>` |
 | `uploadMediaItem(file)` | same | Upload to storage + insert slider row. | bucket `media_gallery`, table `media_slider` | `Promise<MediaItem>` |
 | `toggleMediaActive(id,current)` | same | Toggle `is_active`. | `media_slider` | `Promise<void>` |

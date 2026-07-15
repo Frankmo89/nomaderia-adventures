@@ -11,7 +11,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
-import SEOHead from "@/components/SEOHead";
+import SEO from "@/components/SEO";
 import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
 import type { Tables } from "@/integrations/supabase/types";
@@ -125,10 +125,11 @@ const GearArticleDetail = () => {
   return (
     <main className="bg-background min-h-screen">
       <Navbar />
-      <SEOHead
+      <SEO
         title={article.title}
         description={article.short_description || `${article.title} — Guía de Equipo de Nomaderia`}
         image={article.hero_image_url || undefined}
+        slug={`gear/${article.slug}`}
       />
       {jsonLd && <JsonLd data={jsonLd} />}
       {breadcrumbLd && <JsonLd data={breadcrumbLd} />}

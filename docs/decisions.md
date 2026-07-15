@@ -112,8 +112,8 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Contexto:** La ventaja competitiva es la confianza con principiantes. Un
   testimonio o estadística inventada destruye esa ventaja de raíz.
 - **Decisión:** `SocialProof` y los contadores usan estadísticas reales de
-  Supabase (`use-stats.ts`). Datos de permisos (`PermitScarcity`) provienen de
-  fuentes oficiales (NPS / Recreation.gov).
+  Supabase (`use-public-stats.ts`). Datos de permisos (`PermitScarcity`)
+  provienen de fuentes oficiales (NPS / Recreation.gov).
 - **Consecuencias:** Prohibido generar testimonios, reseñas o números ficticios.
   Si no hay dato real, no se muestra el componente.
 
