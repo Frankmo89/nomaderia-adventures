@@ -83,6 +83,7 @@ serve(async (req) => {
       : "Un destino increíble que encaja perfectamente con tu perfil.";
     const safeDifficulty = escapeHtml(difficultyLabel[topDest.difficulty_level] || topDest.difficulty_level);
 
+    // Discount honored manually via WhatsApp billing — do not remove without checking with Frank.
     const whatsappMessage = `Hola equipo de Nomaderia, tengo mi código NOMADA10 y quiero que planifiquen mi itinerario para ${topDest.title}.`;
     const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
 
@@ -166,16 +167,16 @@ serve(async (req) => {
     <!-- CTA: Descuento + Servicios + WhatsApp -->
     <div style="background-color:#292524;border-radius:12px;padding:24px;margin:20px 0;text-align:center;">
       <h3 style="font-family:'Georgia',serif;font-size:18px;color:#F5F0EB;margin:0 0 8px;">
-        🎁 Tu descuento exclusivo
+        🎁 Regalo por completar tu quiz
       </h3>
       <p style="color:#D6D3D1;font-size:14px;line-height:1.5;margin:0 0 16px;">
-        Como lo prometimos en la web, aquí tienes tu código con un <strong style="color:#F5F0EB;">10% de DESCUENTO</strong> para el diseño de tu itinerario personalizado:
+        Usa este código al escribirnos por WhatsApp y obtén un <strong style="color:#F5F0EB;">10% de descuento</strong> en tu Itinerario Completo Nomaderia ($44 en vez de $49 USD):
       </p>
       <div style="background-color:#44403C;border-radius:8px;padding:16px;margin:0 0 20px;">
         <span style="font-family:'Georgia',serif;font-size:28px;font-weight:700;color:#E86C3A;letter-spacing:4px;">NOMADA10</span>
       </div>
       <p style="color:#D6D3D1;font-size:14px;line-height:1.5;margin:0 0 4px;text-align:left;">
-        Con tu itinerario personalizado recibirás:
+        Con tu Itinerario Completo recibirás:
       </p>
       <ul style="color:#D6D3D1;font-size:14px;line-height:1.8;margin:0 0 20px;padding-left:20px;text-align:left;">
         <li>✅ Ruta día a día optimizada.</li>

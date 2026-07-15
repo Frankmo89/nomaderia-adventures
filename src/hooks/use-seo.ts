@@ -70,7 +70,7 @@ export const usePageMeta = ({
   robots = "index, follow",
 }: PageMeta) => {
   useEffect(() => {
-    const fullTitle = `${title} — Nomadería`;
+    const fullTitle = `${title} — Nomaderia`;
     document.title = fullTitle;
 
     const setMeta = (
@@ -99,7 +99,7 @@ export const usePageMeta = ({
     }
 
     return () => {
-      document.title = "Nomadería - Aventuras y Senderismo";
+      document.title = "Nomaderia - Aventuras y Senderismo";
     };
   }, [title, description, image, type, robots]);
 };

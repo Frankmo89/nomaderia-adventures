@@ -122,8 +122,8 @@ const cardItemVariants = {
 const Servicios = () => {
   useCanonical();
   usePageMeta({
-    title: `Servicios — Itinerario Completo $${PRICING.solucionCompleta} USD | Nomaderia`,
-    description: `Itinerario completo personalizado a $${PRICING.solucionCompleta} USD: ruta día a día, permisos, equipo, alojamiento y soporte por WhatsApp. Para hispanos en EE. UU.`,
+    title: `Servicios — Itinerario Completo $${PRICING.itinerarioCompleto} USD | Nomaderia`,
+    description: `Itinerario completo personalizado a $${PRICING.itinerarioCompleto} USD: ruta día a día, permisos, equipo, alojamiento y soporte por WhatsApp. Para hispanos en EE. UU.`,
   });
   const { data: mediaItems } = useMediaSlider();
 

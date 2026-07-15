@@ -12,7 +12,7 @@ export interface Product {
 }
 
 export const PRICING = {
-  solucionCompleta: 49,
+  itinerarioCompleto: 49,
 } as const;
 
 // TODO: Frank — pega aquí el nuevo Payment Link desde Stripe Dashboard
@@ -22,7 +22,7 @@ export const products: Product[] = [
   {
     id: "itinerario-completo",
     name: "Itinerario Completo Nomaderia",
-    priceUSD: PRICING.solucionCompleta,
+    priceUSD: PRICING.itinerarioCompleto,
     currency: "USD",
     ctaType: "whatsapp",
     features: [
@@ -36,7 +36,7 @@ export const products: Product[] = [
       "Soporte por WhatsApp durante tu viaje",
     ],
     ctaUrl: buildWhatsAppLink(
-      `Hola Nomaderia 👋 Quiero contratar el Itinerario Completo ($${PRICING.solucionCompleta} USD).`
+      `Hola Nomaderia 👋 Quiero contratar el Itinerario Completo ($${PRICING.itinerarioCompleto} USD).`
     ),
   },
 ];

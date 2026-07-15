@@ -57,7 +57,7 @@ Google (SEO) → Blog / Destino → Quiz → Email capture → Recomendación de
 1. Quiz → resultados en pantalla + email inmediato con destino recomendado
 2. Email educativo (3 días) — valor + mención gear [pendiente]
 3. Email de conversión (7 días) — oferta itinerario personalizado [pendiente]
-4. Itinerario personalizado → pago via Stripe/PayPal/MercadoPago [pendiente]
+4. Itinerario Completo Nomaderia ($49 USD) → cierre y cobro manual por WhatsApp; Stripe Payment Link como canal alterno [link pendiente de crear] (USD únicamente, ver ADR-012)
 
 6 preguntas que capturan:
 1. Nivel de fitness

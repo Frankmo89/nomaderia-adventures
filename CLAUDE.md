@@ -101,13 +101,15 @@ Hosting:     Cloudflare Pages
 src/
 ├── pages/                    # Una página por ruta
 │   ├── Index.tsx             # Homepage (hero, quiz, destinos, gear, newsletter)
+│   ├── Destinations.tsx      # /destinos (directorio de parques con filtros)
 │   ├── DestinationDetail.tsx # /destinos/:slug (tabs: ¿Puedo?, Prep, Itinerario, Gear, Reserva)
+│   ├── ClientItineraryView.tsx # /i/:token (itinerario de cliente por token, noindex)
 │   ├── GearListing.tsx       # /gear (filtro por categoría)
 │   ├── GearArticleDetail.tsx # /gear/:slug (markdown + product cards con affiliate)
 │   ├── BlogListing.tsx       # /blog
 │   ├── BlogPostDetail.tsx    # /blog/:slug
 │   ├── BudgetCalculator.tsx  # /calculadora
-│   ├── SentinelLanding.tsx   # /sentinel (ruta legacy/redirección, DARK variant)
+│   ├── SentinelLanding.tsx   # /sentinel (redirect de 3 líneas → /servicios)
 │   ├── Servicios.tsx         # /servicios (productos y precios)
 │   ├── SobreNosotros.tsx     # /sobre-nosotros (about + credencial TAP)
 │   ├── PrivacyPolicy.tsx     # /privacidad
@@ -116,6 +118,8 @@ src/
 │   └── admin/                # Panel protegido (Supabase Auth + rol admin, DARK)
 ├── components/
 │   ├── landing/              # Secciones de homepage (Navbar, Hero, Quiz, Footer, etc.)
+│   ├── destinations/         # Secciones de /destinos/:slug (TrailsSection, ParkAlertsBanner, ParkWeatherCard, HowToGetThere, etc.)
+│   ├── ConciergeLauncher.tsx # Launcher global del Concierge IA (montado en App.tsx, persiste entre rutas)
 │   └── ui/                   # shadcn/ui — NO editar manualmente
 ├── config/
 │   ├── pricing.ts            # Producto único ($49 USD, CTA por WhatsApp)
@@ -126,7 +130,7 @@ src/
 │   ├── use-blog-posts.ts     # useBlogPosts()
 │   ├── use-quiz.ts           # useQuiz() — estado + submit del quiz
 │   ├── use-seo.ts            # useCanonical() + useJsonLd() + usePageMeta()
-│   ├── use-stats.ts          # useQuizCount(), useDestinationsCount() — conteos reales
+│   ├── use-public-stats.ts   # usePublicStats() — conteos reales (destinos, posts)
 │   └── use-media.ts          # useMediaSlider() + upload/toggle/delete helpers
 ├── integrations/supabase/
 │   ├── client.ts             # Cliente Supabase (instancia única)
@@ -135,23 +139,27 @@ src/
 │   ├── utils.ts              # cn() = clsx + tailwind-merge
 │   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
-└── supabase/functions/       # Edge Functions
-    ├── send-quiz-email/
-    ├── send-welcome-email/
-    ├── send-drip-emails/
-    └── send-quiz-results/
+└── supabase/functions/       # Edge Functions — 21 en total
+    ├── send-*                # 4: quiz-email, welcome-email, drip-emails, quiz-results
+    ├── concierge-agent/      # Concierge IA (RAG sobre knowledge_chunks) — EN PRODUCCIÓN
+    ├── ingest-*              # 4: knowledge, national-parks, park-permits, campgrounds
+    ├── sync-park-*           # 3: live-data, trails, weather
+    ├── generate-*            # 4: park-content, destination-draft, gear-draft, blog-draft
+    ├── discover-*            # 4: trending-destinations, trending-gear, trending-blog, permit-windows
+    └── check-permit-alerts/
 ```
 
 ## Rutas
 
 ```
-/                    → Index.tsx           /destinos/:slug  → DestinationDetail.tsx
+/                    → Index.tsx           /destinos        → Destinations.tsx
+/destinos/:slug      → DestinationDetail   /i/:token        → ClientItineraryView.tsx
 /gear                → GearListing.tsx     /gear/:slug      → GearArticleDetail.tsx
 /blog                → BlogListing.tsx     /blog/:slug      → BlogPostDetail.tsx
 /calculadora         → BudgetCalculator    /servicios       → Servicios.tsx
 /sobre-nosotros      → SobreNosotros.tsx   /privacidad      → PrivacyPolicy.tsx
-/terminos            → TermsAndConditions  /gracias         → Gracias.tsx
-/sentinel            → SentinelLanding.tsx (ruta legacy/redirección, dark)
+/terminos            → TermsAndConditions  /gracias         → Gracias.tsx (redirect → /servicios)
+/sentinel            → SentinelLanding.tsx (redirect → /servicios)
 /admin/*             → AdminLayout (protegido, dark)
 ```
 
@@ -167,27 +175,32 @@ src/
 - **Formularios:** React Hook Form + Zod siempre.
 - **Clases condicionales:** `cn()` de `@/lib/utils` siempre.
 - **WhatsApp:** todo enlace pasa por `buildWhatsAppLink(message)` de
-  `@/lib/whatsapp` (número `18588996802` hardcodeado como fallback).
+  `@/lib/whatsapp` (número `18588996802` hardcodeado en ese archivo — no se lee
+  de ninguna variable de entorno).
 - **SEO:** toda página pública llama `usePageMeta()` de `@/hooks/use-seo`.
 
 ## Design System
 
+> **Fuente de verdad visual: `docs/design-system.md`.** Léelo antes de tocar
+> cualquier UI; la tabla de abajo es solo el resumen.
+
 Tema **CLARO** editorial (sin toggle). Mobile-first. Luminoso, limpio, enfocado
 en fotografía.
 
-| Token | Hex | Tailwind |
-|-------|-----|----------|
-| Primary (Sunset Amber) | #D97706 | `bg-primary`, `text-primary` |
-| Secondary (Forest Green) | #166534 | `bg-secondary`, `text-secondary` |
-| Accent (Light Warm Gray) | #E5E7EB | `bg-accent`, `text-accent` |
-| Background (Off-White) | #FAFAFA | `bg-background` |
-| Foreground (Charcoal) | #1C1917 | `text-foreground` |
+| Token | Hex | Tailwind / Uso |
+|-------|-----|----------------|
+| Trail Green (primario) | #1F6F43 | `bg-green` — botones de acción, nav activo, precios |
+| Pine (hover primario) | #16512F | `bg-green-dark` — hover/pressed de botones verdes |
+| Cloud (fondo) | #FBFAF7 | `bg-cloud` — fondo de página por defecto |
+| Ink (títulos) | #13211A | `text-ink` — títulos sobre claro |
+| Forest Charcoal | #14201A | `bg-forest-dark` — secciones oscuras, footer, scrims |
+| Sunset Amber | #D97706 | ⚠️ **SOLO en el Hero** (vía token legacy `--primary`, pendiente de retiro — ver pending-tasks §Fase 2+). NO usarlo en ningún otro componente. |
 
-Tipografías: `font-serif` → **Playfair Display** (headings) · `font-sans` →
-**Inter** (body/UI).
+Tipografías: `font-serif` → **Playfair Display** (headings editoriales) ·
+`font-sans` → **Inter** (body/UI) · `font-condensed` → **Oswald**
+(eyebrows/labels/unidades de stats).
 
-> **Excepciones dark:** `SentinelLanding` (`/sentinel`) y el **admin sidebar**
-> usan variante oscura (`#1C1917`) por ser superficies de conversión / panel
+> **Excepción dark:** el **admin sidebar** usa variante oscura por ser panel
 > interno. Todo lo demás es light theme. (ADR-006)
 
 ## Reglas Críticas (NO violar)
@@ -218,12 +231,13 @@ node node_modules/typescript/bin/tsc --noEmit  # Type check — debe pasar antes
 ```env
 VITE_SUPABASE_URL=               # https://vrixiuvnhvqafmxlcyex.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=   # Publishable key (sb_publishable_*)
-VITE_SUPABASE_PROJECT_ID=        # vrixiuvnhvqafmxlcyex
 VITE_SITE_URL=                   # https://nomaderia.com
-VITE_WHATSAPP_NUMBER=            # 18588996802 (fallback hardcodeado en whatsapp.ts)
 VITE_GA_MEASUREMENT_ID=          # GA4 — G-CK9STWJDFM
 VITE_SENTRY_DSN=                 # Sentry error tracking (opcional)
 ```
+
+> El número de WhatsApp (`18588996802`) NO es variable de entorno: está
+> hardcodeado en `src/lib/whatsapp.ts`.
 
 ## Contacto y Redes
 
@@ -236,7 +250,7 @@ Facebook: Nomaderia · WhatsApp: 18588996802
 |---------|-----------|
 | `docs/claude-context.md` | Auditoría completa de arquitectura (10 secciones, snapshot) |
 | `docs/decisions.md` | **Registro de decisiones y lecciones de IA (ADRs)** |
-| `docs/seccion-9-concierge-ia.md` | **Concierge IA con RAG — PARQUEADO** (leer antes de tocar IA/embeddings) |
+| `docs/seccion-9-concierge-ia.md` | Concierge IA con RAG — **EN PRODUCCIÓN** (`ConciergeLauncher` global en `App.tsx` + Edge Function `concierge-agent`). Leer antes de tocar IA/embeddings; partes del doc son históricas de la fase parqueada |
 | `docs/pending-tasks.md` | Pendientes (humanos + código) y changelog |
 | `docs/supabase-schema.md` | Tablas, columnas, tipos, RLS, auth |
 | `docs/content-strategy.md` | Monetización, affiliate, SEO, blog, quiz |

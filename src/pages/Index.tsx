@@ -68,7 +68,7 @@ const Index = () => {
         name: "United States",
       },
       knowsLanguage: "es",
-      priceRange: `$${PRICING.solucionCompleta} USD`,
+      priceRange: `$${PRICING.itinerarioCompleto} USD`,
     }),
     []
   );

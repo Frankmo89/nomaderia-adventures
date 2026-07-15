@@ -81,7 +81,7 @@ describe("usePageMeta", () => {
       { wrapper },
     );
 
-    expect(document.title).toBe("Destinos — Nomadería");
+    expect(document.title).toBe("Destinos — Nomaderia");
   });
 
   it("should restore the default title on unmount", () => {
@@ -90,10 +90,10 @@ describe("usePageMeta", () => {
       { wrapper },
     );
 
-    expect(document.title).toBe("Blog — Nomadería");
+    expect(document.title).toBe("Blog — Nomaderia");
 
     unmount();
 
-    expect(document.title).toBe("Nomadería - Aventuras y Senderismo");
+    expect(document.title).toBe("Nomaderia - Aventuras y Senderismo");
   });
 });

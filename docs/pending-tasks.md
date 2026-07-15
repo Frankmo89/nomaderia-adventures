@@ -391,7 +391,7 @@ Siempre que hagas cambios al código:
 
 - [2026-06-07] **TerrainDivider — nuevo componente SVG entre Hero y SocialProof**: Creado `src/components/landing/TerrainDivider.tsx` con tres capas de terreno SVG (forest green `rgba(22,101,52,0.25/0.5)` + `#166534` sólido) y 15 triángulos de árboles distribuidos en 5 grupos. Reemplazado `<SectionDivider variant="ridge" />` entre `HeroSection` y `SocialProof` en `Index.tsx` por `<TerrainDivider />`. `tsc --noEmit` + `npm run build` pasan.
 
-- [2026-06-07] **SocialProof — rediseño visual con parallax, glass cards y SVG mountain**: Reemplazado el componente `SocialProof.tsx` íntegramente. Nuevo diseño: (1) fondo full-bleed con foto de parque + animación CSS `@keyframes trust-pan` 20s infinite alternate (center 40% → 60%); (2) overlay degradado dark-green `rgba(10,40,20,0.78)→rgba(5,30,15,0.88)`; (3) texto narrativo en Georgia/Playfair 20px con "hispanos residentes en EE.UU." en italic amarillo `#FCD34D`; (4) grid 2×2 de stat cards con `backdrop-filter: blur(10px)`, borde `rgba(110,231,183,0.25)`, números dinámicos (`destinations` y `blogPosts` via `usePublicStats`) + "24h" + `$${PRICING.solucionCompleta}` hardcodeados; (5) TAP badge strip con glass card + texto; (6) SVG mountain draw-on con `motion.path` y `strokeDashoffset 1200→0` en 2.8s triggerado por `useInView` de Framer Motion, fill que aparece al completarse el trazo. `tsc --noEmit` + `npm run build` pasan.
+- [2026-06-07] **SocialProof — rediseño visual con parallax, glass cards y SVG mountain**: Reemplazado el componente `SocialProof.tsx` íntegramente. Nuevo diseño: (1) fondo full-bleed con foto de parque + animación CSS `@keyframes trust-pan` 20s infinite alternate (center 40% → 60%); (2) overlay degradado dark-green `rgba(10,40,20,0.78)→rgba(5,30,15,0.88)`; (3) texto narrativo en Georgia/Playfair 20px con "hispanos residentes en EE.UU." en italic amarillo `#FCD34D`; (4) grid 2×2 de stat cards con `backdrop-filter: blur(10px)`, borde `rgba(110,231,183,0.25)`, números dinámicos (`destinations` y `blogPosts` via `usePublicStats`) + "24h" + `$${PRICING.itinerarioCompleto}` hardcodeados (clave de `PRICING` renombrada el 2026-07-14, ver changelog julio); (5) TAP badge strip con glass card + texto; (6) SVG mountain draw-on con `motion.path` y `strokeDashoffset 1200→0` en 2.8s triggerado por `useInView` de Framer Motion, fill que aparece al completarse el trazo. `tsc --noEmit` + `npm run build` pasan.
 
 - [2026-06-07] **Precios centralizados en `PRICING` constant**: se consolidó el pricing en `src/config/pricing.ts` durante una etapa intermedia del catálogo. Ese trabajo quedó posteriormente simplificado por ADR-012 al modelo vigente de **un solo producto de $49 USD vía WhatsApp**. Ningún cambio en auth, Supabase queries ni Stripe URL. `tsc --noEmit` + `npm run build` pasan.
 
@@ -521,12 +521,74 @@ Fix aplicado: fuentes de Step A capeadas a 8 antes de pasar a Step B.
 
 ---
 
+## 🔎 Auditoría full read-only — 2026-07-14
+
+Auditoría completa del repo (stale copy, código muerto, design system, perf,
+calidad, seguridad). `tsc --noEmit` y `npm run build` pasan. Sin secretos en
+archivos tracked. Secuencia sugerida: PR1 copy/docs → PR2 dead code/deps →
+PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 emails.
+
+- [x] **P0 — `send-quiz-email` afirmaba que el 10% de descuento "se había
+      prometido en la web"** sin que ninguna página del sitio ofreciera
+      descuento alguno.
+      **Resuelto 2026-07-14 (PR 1):** se conservó el código NOMADA10 pero
+      reformulado como regalo sorpresa por completar el quiz ($44 en vez de
+      $49 USD). ⚠️ **Frank debe redesplegar la función** (`supabase functions
+      deploy send-quiz-email`).
+- [ ] **P1 — Naranja #D97706 hardcodeado fuera del Hero** en el cluster de
+      `/destinos/:slug`: `DestinationDetail` (tabs/timeline), `TrailsSection`,
+      `TrailCards`, `QuickFactsRow`, `HowToGetThere`, `ParkAlertsBanner`,
+      `ParkWeatherCard`, `Destinations.tsx:563`. NO cubierto por el cleanup
+      Fase 2 — migrar a tokens `green`/`amber` del design system. (PR 3)
+- [ ] **P1 — `--primary` sigue en ámbar** y colorea ~35 usos públicos fuera del
+      Hero (incl. el CTA de compra en `/servicios` y el focus ring global).
+      Remapear a #1F6F43 migrando el Hero a token propio en el mismo PR. (PR 4)
+- [ ] **P1 — Bundle:** chunk principal 706 kB (215 kB gzip); agregar
+      `manualChunks` en `vite.config.ts` y lazy-load de `TrailsSection`
+      (leaflet). (PR 5)
+- [ ] **P1 — Código muerto:** borrar `OptimizedImage.tsx`, `NavLink.tsx`,
+      `hooks/use-stats.ts`, `hooks/use-permit-alert.ts`,
+      `components/blog/ShareButtons.tsx`; consolidar `SEOHead.tsx` → `SEO.tsx`.
+      (PR 2)
+- [ ] **P1 — Deps sin uso:** desinstalar `recharts`, `react-day-picker`,
+      `date-fns`, `react-resizable-panels`, `vaul`, `cmdk`, `input-otp`. (PR 2)
+- [x] **P1 — Docs drift:** CLAUDE.md documentaba la paleta vieja (#D97706
+      primary), listaba 4 de 21 edge functions, llamaba "PARQUEADO" al concierge
+      (vivo en `App.tsx`) y referenciaba `use-stats`; archivos legacy
+      `nomaderia-context.OLD.md` y `docs/(OLD)pending-tasks.md` tracked (regla
+      #7); `content-strategy.md` mencionaba MercadoPago. **Resuelto 2026-07-14
+      (PR 1).**
+- [x] **P1 — Sitemap:** `/sentinel` (redirect) en
+      `scripts/generate-sitemap.ts`. **Resuelto 2026-07-14 (PR 1).**
+- [x] **P2 — Metadata/branding:** `theme-color` #D97706 en `index.html`;
+      nombre de marca escrito con tilde (en vez de "Nomaderia") en
+      `index.html`, `use-seo.ts` y `ClientItineraryView.tsx`; clave `PRICING`
+      legacy renombrada a
+      `itinerarioCompleto`; `.env.example` sin `VITE_GA_MEASUREMENT_ID` y con
+      vars huérfanas (`VITE_STRIPE_SENTINEL_URL`, `VITE_WHATSAPP_NUMBER` — el
+      número está hardcodeado en `whatsapp.ts`, nunca se leyó del env).
+      **Resuelto 2026-07-14 (PR 1).**
+- [ ] **P2 restantes:** `.text-eyebrow` usa Inter (debe ser Oswald); Anton se
+      descarga y tiene 0 usos; `select("*")` en listado de gear;
+      `loading="lazy"` y `width/height` faltantes en varias imágenes; alertas
+      NPS en inglés sin aviso; 15 URLs de storage hardcodeadas en
+      `HeroSection`; el generador de sitemap hace exit 0 silencioso sin env
+      vars (puede publicar sitemap stale). (PR 3–5)
+- [ ] **P3:** emails con paleta pre-rebrand (#E86C3A/#292524); guard para el
+      Meta Pixel placeholder; `_headers` sin regla para favicon/manifest;
+      entrada de lint stale que cita `SentinelLanding.tsx` (hoy redirect).
+      (PR 6 / oportunista)
+
+---
+
 ## 📜 Changelog reciente
 
 > Histórico condensado por temas. El detalle commit-a-commit anterior a Mayo 2026
 > vive en el historial de git. Entradas recientes primero.
 
 ### Julio 2026
+
+**[2026-07-14] PR 1 de remediación de auditoría — "Stale copy & docs sync" (solo copy/docs/config/metadata; cero cambios visuales o de lógica).** (1) **P0 `send-quiz-email`**: eliminada la afirmación falsa de que el descuento se había prometido en la página web — el bloque del código NOMADA10 ahora se presenta como regalo sorpresa por completar el quiz ("10% de descuento en tu Itinerario Completo Nomaderia, $44 en vez de $49 USD"); se conservó estructura HTML/estilos inline y el código; comentario agregado en el fuente: el descuento se honra manualmente vía cobro por WhatsApp. ⚠️ **Frank debe redesplegar**: `supabase functions deploy send-quiz-email`. (2) **CLAUDE.md sincronizado**: tabla de diseño actualizada a la paleta vigente de `docs/design-system.md` (Trail Green #1F6F43 primario, hover #16512F, cloud #FBFAF7, ink #13211A, forest-dark #14201A; #D97706 SOLO Hero vía token legacy) + tipografías Playfair/Inter/Oswald; concierge marcado EN PRODUCCIÓN (antes "PARQUEADO"); estructura ahora incluye `Destinations.tsx`, `ClientItineraryView.tsx`, `components/destinations/`, `ConciergeLauncher.tsx` y las 21 edge functions reales (antes listaba 4); ruta `/destinos` y `/i/:token` agregadas; `/sentinel` y `/gracias` documentados como redirects; eliminada la "excepción dark" de SentinelLanding; referencia al hook muerto `use-stats` reemplazada por `use-public-stats` (el archivo muerto se borra en PR 2); aclarado que el número de WhatsApp NO es env var (hardcodeado en `whatsapp.ts`). (3) **Archivos legacy eliminados** (`git rm`): `nomaderia-context.OLD.md` (raíz) y `docs/(OLD)pending-tasks.md` — violaban la regla #7 de CLAUDE.md; referencia histórica en `docs/audit-itinerarios.md` anotada. (4) **`docs/content-strategy.md`**: paso 4 del embudo post-quiz actualizado al flujo real (cierre/cobro manual por WhatsApp, $49 USD únicamente, Stripe Payment Link como canal alterno pendiente) — eliminada la mención a PayPal/MercadoPago. (5) **Sitemap**: `/sentinel` removido de `scripts/generate-sitemap.ts` (es redirect a `/servicios`). (6) **`index.html`**: `theme-color` #D97706 → #1F6F43; nombre de marca normalizado a "Nomaderia" (se retiró la variante con tilde) en title/description/author/OG/Twitter (7 ocurrencias). Mismo fix de marca en `src/hooks/use-seo.ts` (sufijo de título global + título default), `src/hooks/use-seo.test.tsx` y `src/pages/ClientItineraryView.tsx` — solo strings, cero JSX/lógica. (7) **`pricing.ts`**: clave `PRICING` renombrada al nombre del producto vigente `itinerarioCompleto` (consumidores actualizados: `Servicios.tsx`, `Index.tsx`, `SocialProof.tsx`); repo-wide grep confirma cero ocurrencias del nombre viejo. (8) **`.env.example`**: agregada `VITE_GA_MEASUREMENT_ID` (usada en `AnalyticsRouteTracker`); removidas `VITE_STRIPE_SENTINEL_URL` y `VITE_WHATSAPP_NUMBER` (cero referencias en código, verificado por grep); `docs/claude-context.md` §4.5/§6.3 corregido en el mismo sentido (WhatsAppButton→ConciergeLauncher, sin env var de WhatsApp). No se tocó: `src/lib/whatsapp.ts`, auth, queries de Supabase, routing, `vite.config.ts`, `tailwind.config.ts`, ni JSX/layout de componentes. `tsc --noEmit` + `npm run build` pasan.
 
 **Nuevo — Funnel de dos capas activado: `ConciergeLauncher` global reemplaza el `WhatsAppButton` flotante; el concierge IA pasa de barra colapsada por parque a launcher site-wide.** Implementa la recomendación del research de Mobbin registrado en conversación previa (launcher flotante + escalación IA→humano + coexistencia con CTAs de página): **Klook** = un solo punto de entrada por página (no launcher global duplicado si ya hay un prompt embebido en la página), **Deel** = saludo de dos capas que declara el modelo IA-primero/WhatsApp-como-escalación desde el primer mensaje, **Zendesk** = escalación secundaria persistente (link visible siempre, no solo tras fallo del bot), **Navan/Pipedrive** = el launcher reclama la esquina vacía en vez de competir visualmente con los CTAs de página existentes. Cambios: (1) **`src/components/ConciergeLauncher.tsx`** (nuevo) — círculo verde Trail Green `#1F6F43` de 48px (56px desktop) con el logomark de montaña (`Mountain` de `lucide-react`, mismo ícono que ya usa `Navbar.tsx` como marca) en crema, montado una sola vez en `App.tsx` fuera de `<Routes>` para persistir entre navegaciones SPA; detecta `/destinos/:slug` vía regex y llama `useDestinationBySlug` (mismo query-key que `DestinationDetail.tsx`, sin fetch adicional) para escopar el panel al parque; oculto en `/admin*` y `/i/*` (mismas exclusiones que tenía `WhatsAppButton`). Teaser proactivo una sola vez por sesión (`sessionStorage`, 9s de delay, nunca auto-abre el panel — solo se asoma, patrón GoDaddy/Chatbase) con copy "¿Planeando tu aventura? Pregúntame lo que sea 🏔️". (2) **`src/components/ConciergeChat.tsx`** — refactorizado de expansión inline con estado propio a panel controlado (`open`/`onClose` como props, ya no gestiona su propio trigger); mobile: sheet de altura completa (`fixed inset-0`); desktop: tarjeta flotante `sm:bottom-24 sm:right-5 sm:w-[400px]`. Saludo de dos capas nuevo (variante global y variante por parque) reemplaza el placeholder anterior. Nuevo link secundario persistente "Hablar por WhatsApp →" en el footer del panel, siempre visible (no solo cuando el bot escala). Escalación contextual nueva: regex frontend-only (`$49|itinerario completo|precio|cuánto cuesta|contratar|comprar`) sobre el mensaje del usuario — si detecta intención de compra y el backend no escaló, fuerza el CTA de WhatsApp en el turno de respuesta igual; **no se tocó `concierge-agent` ni su contrato** (`escalate`/`whatsapp_url` del backend se respetan sin cambios cuando existen). De paso se recoloreó el ámbar legacy de este componente (burbujas, botón de envío, pills de fuente) a los tokens verdes de `docs/design-system.md` — no era parte literal del pedido, pero el componente había quedado fuera de la migración de Fase 2 (ver changelog de Fase 2 más abajo, que sí cubrió Button/Badge/DestinationCard) y lanzar un launcher verde que abre un panel ámbar habría sido una costura visual obvia. (3) **`DestinationDetail.tsx`** — eliminada la barra de concierge embebida (antes casi invisible, colapsada, en medio de la página); el concierge ahora vive exclusivamente en el launcher global, que se autoescopea a la ruta. (4) **`WhatsAppButton.tsx` retirado (borrado)** — el launcher toma su posición fija (mismo offset elevado en mobile para no chocar con `StickyMobileCTA`). Los CTAs de WhatsApp en contenido de página (`HeroSection` "Plática Conmigo", `Servicios`, `ArticleWhatsAppCTA`, `StickyMobileCTA`) **no se tocaron** — siguen sirviendo a usuarios con intención de compra ya decidida. (5) **`Navbar.tsx`** — el botón de scroll-to-top se movió de `bottom-right` a `bottom-left` (antes competía por la misma esquina que el launcher nuevo) y ganó el mismo offset elevado en mobile que el launcher para no quedar tapado por `StickyMobileCTA`. **Bug real encontrado durante la verificación (no un artefacto de captura) y corregido de paso:** el control de zoom de Leaflet en el mapa de senderos (`TrailsSection`) pinta a `z-index: 1000` fuera de su propio stacking context (`.leaflet-container` es `position: relative` sin `z-index` propio, así que sus panes hijos comparan contra el z-index de la página raíz) — verificado con `elementFromPoint` + screenshot a nivel de elemento (no solo bounding box) que esto tapaba visualmente el launcher/scroll-to-top cuando el mapa entraba en esa zona de la pantalla en mobile. Subidos a `z-[1200]` el wrapper fijo de `ConciergeLauncher`, el panel de `ConciergeChat` y el botón de scroll-to-top de `Navbar`. **`StickyMobileCTA.tsx` tiene el mismo `z-50` y por lo tanto la misma vulnerabilidad potencial frente a Leaflet — no se tocó porque cae bajo "no tocar CTAs de WhatsApp en contenido de página" de esta tarea; queda como hallazgo para una pasada futura si Frank lo confirma en producción.** `tsc --noEmit` + `npm run build` pasan. Verificado con Playwright a 390×844 (14 checks): launcher visible en `/`, `/destinos`, `/blog`, `/calculadora`; teaser aparece una vez y es descartable (con flag de `sessionStorage` que sobrevive a un reload); en una página de destino real (`/destinos/joshua-tree-national-park`) el panel saluda con el nombre del parque y la llamada de red a `concierge-agent` lleva `destination_slug` en el body; en home la llamada no lleva `destination_slug`; sin colisión visual entre launcher/scroll-to-top/`StickyMobileCTA` (confirmado con `elementFromPoint`, no solo geometría). También verificado a 1440×900 (desktop): panel flotante sobre el launcher, sin chocar con los CTAs del Hero.
 

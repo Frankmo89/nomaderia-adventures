@@ -71,7 +71,7 @@ Búsqueda exhaustiva de `.insert(` en `src/`:
 
 `itinerary_requests` no aparece en ninguna. La búsqueda también cubrió `supabase/functions/` — sin resultados.
 
-**Contexto histórico:** `PremiumItinerarySection.tsx` tenía originalmente un Dialog con formulario React Hook Form que escribía a `itinerary_requests` (confirmado en `nomaderia-context.OLD.md` y en el changelog de `pending-tasks.md` entrada de Marzo 2026). Ese formulario fue eliminado; el componente hoy solo contiene CTAs de WhatsApp sin lógica de inserción.
+**Contexto histórico:** `PremiumItinerarySection.tsx` tenía originalmente un Dialog con formulario React Hook Form que escribía a `itinerary_requests` (confirmado en `nomaderia-context.OLD.md` —archivo legacy eliminado del repo el 2026-07-14— y en el changelog de `pending-tasks.md` entrada de Marzo 2026). Ese formulario fue eliminado; el componente hoy solo contiene CTAs de WhatsApp sin lógica de inserción.
 
 **Implicación:** La política RLS de INSERT (`FOR INSERT TO anon, authenticated WITH CHECK (true)`) sigue activa en la base de datos aunque ningún frontend la use actualmente. El endpoint público está abierto.
 

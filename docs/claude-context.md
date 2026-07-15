@@ -408,14 +408,13 @@ Source: `src/App.tsx`
   - `#destinos`, `/gear`, `/blog`, `/servicios`, `/calculadora`, `/sobre-nosotros`
 - Admin nav defined separately in `src/pages/admin/AdminLayout.tsx` (`links` array)
 
-### 4.5 WhatsAppButton
-- File: `src/components/WhatsAppButton.tsx`
+### 4.5 ConciergeLauncher (reemplazó a WhatsAppButton, julio 2026)
+- File: `src/components/ConciergeLauncher.tsx`
 - Phone config:
-  - Uses `WHATSAPP_NUMBER` from `src/lib/whatsapp.ts`
-  - `WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || "18588996802"`
+  - WhatsApp links use `buildWhatsAppLink()` from `src/lib/whatsapp.ts`
+  - `WHATSAPP_NUMBER = "18588996802"` — hardcoded, no env var involved
 - Render location:
   - Mounted globally in `src/App.tsx` below `<AnalyticsRouteTracker />`
-  - Hidden on `/admin` and `/admin/*`
 
 ### 4.6 React context providers
 - App-level wrappers in `src/App.tsx`:
@@ -499,7 +498,6 @@ Source: `src/App.tsx`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SENTRY_DSN`
 - `VITE_GA_MEASUREMENT_ID`
-- `VITE_WHATSAPP_NUMBER`
 - `VITE_SITE_URL`
 
 ### 6.4 `Deno.env.get()` secret names in Edge Functions

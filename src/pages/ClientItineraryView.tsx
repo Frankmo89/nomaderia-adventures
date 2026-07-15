@@ -467,8 +467,8 @@ export default function ClientItineraryView() {
         : null;
 
   usePageMeta({
-    title: itinerary ? (parque ? `Tu ${parque} — Nomadería` : "Tu itinerario — Nomadería") : "Itinerario — Nomadería",
-    description: "Tu itinerario personalizado de Nomadería.",
+    title: itinerary ? (parque ? `Tu ${parque} — Nomaderia` : "Tu itinerario — Nomaderia") : "Itinerario — Nomaderia",
+    description: "Tu itinerario personalizado de Nomaderia.",
     robots: "noindex, nofollow",
   });
 

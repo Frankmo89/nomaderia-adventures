@@ -15,7 +15,7 @@ const SocialProof = () => {
     { icon: MapPin,   value: String(destCount),              label: "Destinos cubiertos con guía completa" },
     { icon: BookOpen, value: String(guideCount),             label: "Guías escritas en español de verdad" },
     { icon: Clock,    value: "24h",                          label: "Tiempo máximo de entrega del itinerario" },
-    { icon: Tag,      value: `$${PRICING.solucionCompleta}`, label: "Precio único, todo incluido, sin sorpresas" },
+    { icon: Tag,      value: `$${PRICING.itinerarioCompleto}`, label: "Precio único, todo incluido, sin sorpresas" },
   ];
 
   return (
