@@ -32,6 +32,7 @@
 | `terracotta` | Canyon Terracotta | `#C2562F` | **Único acento de energía.** CTA secundario, subrayado de eyebrows, highlights. Máximo 1 por viewport. |
 | `sky` | Sky Blue | `#2E6F9E` | Acentos informativos, links dentro de texto, UI de elegibilidad ("¿Puedo ir?"). NUNCA un botón. |
 | `amber` | Sun Amber | `#E08A1E` | Decorativo: estrellas de rating en gear, tags "nuevo". Ya NO es color de marca ni botón. |
+| `warning` | Warning Amber | `#E08A1E` | Estados de advertencia y acentos cálidos semánticos (alertas, callouts de precaución); nunca para elementos interactivos de marca. Alias semántico de `amber` — mismo hex, intención distinta. |
 | `forest-dark` | Forest Charcoal | `#14201A` | **Secciones oscuras**, footer, scrims de foto. Verde-carbón. **Reemplaza al `#1C1917`.** |
 | `spruce` | Spruce | `#1E2C24` | Tarjetas/inputs sobre superficie oscura. |
 | `cloud` | Cloud | `#FBFAF7` | **Fondo de página por defecto.** Off-white cálido pero fresco (sin beige). |
@@ -81,7 +82,13 @@ Cuatro fuentes, cada una con un trabajo claro. **Nunca mezcles Anton y Playfair 
 | `body-sm` | 0.875rem / 1.5 | Inter 400 | Meta, secundario |
 | `caption` | 0.75rem / 1.4 | Inter 500 | Labels, badges |
 
-**Fuentes a cargar (Google Fonts):** Anton, Oswald (400–700), Playfair Display (ya está), Inter (ya está).
+**Fuentes a cargar (Google Fonts):** Oswald (400–700), Playfair Display (ya está), Inter (ya está).
+
+> **Anton retirado (2026-07-14, PR 4):** tenía 0 usos en el repo y se removió del
+> request de Google Fonts y del token `font-display` de `tailwind.config.ts`.
+> Los roles que este doc le asigna (titulares de foto full-bleed, `display-hero`)
+> quedan vacantes: si un diseño futuro los necesita, re-agregar el request y el
+> token en el mismo PR que los use.
 
 ---
 
@@ -140,6 +147,7 @@ colors:
   terracotta:   #C2562F   // acento — energía, 1 por pantalla
   sky:          #2E6F9E   // info / links
   amber:        #E08A1E   // acento decorativo solamente
+  warning:      #E08A1E   // advertencias semánticas (alias de amber) — nunca interactivo de marca
   forest-dark:  #14201A   // secciones oscuras — reemplaza #1C1917
   spruce:       #1E2C24   // oscuro elevado
   cloud:        #FBFAF7   // fondo

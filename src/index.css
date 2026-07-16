@@ -14,8 +14,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 20 13% 10%;
 
-    --primary: 32 95% 44%; /* #D97706 sunset amber */
+    --primary: 147 56% 28%; /* #1F6F43 Trail Green (remapeado PR 4; antes #D97706) */
     --primary-foreground: 0 0% 100%;
+
+    /* Acento exclusivo del Hero de home — conserva el sunset amber legacy.
+       NO usar fuera de HeroSection.tsx. */
+    --hero-accent: 32 95% 44%; /* #D97706 */
 
     --secondary: 143 64% 24%; /* #166534 forest green */
     --secondary-foreground: 0 0% 100%;
@@ -31,7 +35,7 @@
 
     --border: 20 6% 90%;
     --input: 20 6% 90%;
-    --ring: 32 95% 44%;
+    --ring: 147 56% 28%; /* #1F6F43 — focus ring de marca (remapeado PR 4) */
 
     --radius: 0.75rem;
 
@@ -71,6 +75,7 @@
     --green-wash: #E8F1EA;
     --terracotta: #C2562F;
     --amber: #E08A1E;
+    --warning: #E08A1E; /* alias semántico de amber — advertencias, nunca interactivo de marca */
     --forest-dark: #14201A;
     --spruce: #1E2C24;
     --cloud: #FBFAF7;

@@ -146,7 +146,7 @@ const HeroSection = () => {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="inline-flex items-center gap-2 bg-black/20 border border-white/20 backdrop-blur-sm rounded-full px-5 py-2.5 mb-5 text-xs sm:text-sm text-white/80 font-sans shadow-editorial"
         >
-          <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+          <ShieldCheck className="h-4 w-4 text-hero-accent shrink-0" />
           <span>Agente de Viajes Certificado (TAP) · Respuesta en {"<"} 24h</span>
         </motion.div>
 
@@ -182,7 +182,7 @@ const HeroSection = () => {
           <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }}>
             <Button
               asChild
-              className="rounded-full bg-primary text-primary-foreground h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors"
+              className="rounded-full bg-hero-accent text-white h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
             >
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 Plática Conmigo

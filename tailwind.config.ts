@@ -16,7 +16,6 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["'Anton'", "sans-serif"],
         condensed: ["'Oswald'", "sans-serif"],
         serif: ["'Playfair Display'", "serif"],
         sans: ["'Inter'", "sans-serif"],
@@ -41,6 +40,8 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
+        /* Acento exclusivo del Hero de home (sunset amber legacy). NO usar fuera de HeroSection. */
+        "hero-accent": "hsl(var(--hero-accent))",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
@@ -84,6 +85,8 @@ export default {
         "green-wash": "#E8F1EA",
         terracotta: "#C2562F",
         amber: "#E08A1E",
+        warning: "#E08A1E", // alias semántico de amber — advertencias, nunca interactivo de marca
+
         "forest-dark": "#14201A",
         spruce: "#1E2C24",
         cloud: "#FBFAF7",
