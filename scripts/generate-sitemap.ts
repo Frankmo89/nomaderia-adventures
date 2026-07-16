@@ -14,8 +14,22 @@ const SITE_URL =
   "https://nomaderia.com";
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
+  const missingMsg =
+    "VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY) are not set.";
+
+  // En CI (Cloudflare Pages exporta CI=true) esto DEBE romper el build:
+  // salir 0 en silencio publicaría el sitemap.xml committeado, que va quedando stale.
+  if (process.env.CI) {
+    console.error(
+      `❌ Sitemap generation FAILED (CI build): ${missingMsg}\n` +
+        "Configure the env vars in the CI/Pages build environment — refusing to deploy a stale sitemap.xml."
+    );
+    process.exit(1);
+  }
+
   console.warn(
-    "Skipping sitemap generation: VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY) are not set."
+    `⚠️  SKIPPING sitemap generation (local build): ${missingMsg}\n` +
+      "⚠️  public/sitemap.xml was NOT regenerated — the committed copy will be served as-is."
   );
   process.exit(0);
 }

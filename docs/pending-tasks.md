@@ -550,9 +550,14 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
       **Resuelto 2026-07-14 (PR 4)** — `--primary`/`--ring` → Trail Green, Hero
       en `--hero-accent` propio (pixel-idéntico). `--sidebar-primary`/`--sidebar-ring`
       del admin quedan en ámbar a propósito (excepción dark ADR-006).
-- [ ] **P1 — Bundle:** chunk principal 706 kB (215 kB gzip); agregar
+- [x] **P1 — Bundle:** chunk principal 706 kB (215 kB gzip); agregar
       `manualChunks` en `vite.config.ts` y lazy-load de `TrailsSection`
       (leaflet). (PR 5)
+      **Resuelto 2026-07-16 (PR 5)** — entry 706.73→377.52 kB (gzip
+      215.05→117.25 kB); `DestinationDetail` 228.37→70.57 kB (gzip
+      69.85→23.04 kB); leaflet ahora en chunk lazy `TrailsSection`
+      (159 kB / 47 kB gzip) que solo se descarga en `/destinos/:slug`
+      con senderos.
 - [x] **P1 — Código muerto:** borrados `OptimizedImage.tsx`, `NavLink.tsx`,
       `hooks/use-stats.ts`, `hooks/use-permit-alert.ts`,
       `components/blog/ShareButtons.tsx`; `SEOHead.tsx` consolidado en
@@ -578,17 +583,21 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
       vars huérfanas (`VITE_STRIPE_SENTINEL_URL`, `VITE_WHATSAPP_NUMBER` — el
       número está hardcodeado en `whatsapp.ts`, nunca se leyó del env).
       **Resuelto 2026-07-14 (PR 1).**
-- [ ] **P2 restantes:** `select("*")` en listado de gear;
-      `loading="lazy"` y `width/height` faltantes en varias imágenes; alertas
-      NPS en inglés sin aviso; 15 URLs de storage hardcodeadas en
-      `HeroSection`; el generador de sitemap hace exit 0 silencioso sin env
-      vars (puede publicar sitemap stale). (PR 4–5)
+- [ ] **P2 restantes:** alertas NPS en inglés sin aviso; 15 URLs de storage
+      hardcodeadas en `HeroSection`. (PR 6 / oportunista)
       — `.text-eyebrow` (Inter→Oswald + tracking 0.08em) **resuelto 2026-07-14
-      (PR 3)**; "Anton 0 usos" movido a P3 como decisión keep-or-drop.
+      (PR 3)**; "Anton 0 usos" movido a P3 como decisión keep-or-drop;
+      `select("*")` en listado de gear, `loading="lazy"`/`width-height` en
+      imágenes de cards, y el exit 0 silencioso del generador de sitemap
+      **resueltos 2026-07-16 (PR 5)** — ver changelog (imágenes above-fold
+      omitidas a propósito: featured de /blog y slideshows por CSS
+      background, con nota en el changelog).
 - [ ] **P3:** emails con paleta pre-rebrand (#E86C3A/#292524); guard para el
-      Meta Pixel placeholder; `_headers` sin regla para favicon/manifest;
-      entrada de lint stale que cita `SentinelLanding.tsx` (hoy redirect).
-      (PR 6 / oportunista)
+      Meta Pixel placeholder; entrada de lint stale que cita
+      `SentinelLanding.tsx` (hoy redirect). (PR 6 / oportunista)
+      — `_headers` sin regla para favicon/manifest **resuelto 2026-07-16
+      (PR 5)**: regla `max-age=86400` para `favicon.ico`,
+      `manifest.webmanifest` y `hero-mask.svg`.
 - [ ] **P3 (nuevos, detectados en PR 3):**
       (a) ~~Falta token formal de "warning"~~ **Resuelto 2026-07-14 (PR 4):**
       token `warning` (#E08A1E, alias semántico de `amber`) agregado a
@@ -606,6 +615,11 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
       (d) **`DifficultyBadge.tsx`** usa pill ámbar raw (#FEF3C7/#92400E) para
       "Moderado" — design system §4.1 pide texto o pill `green-wash`, no
       semáforo; revisar junto con la restructura de tarjeta de destino.
+      **Nota 2026-07-16 (PR 5):** los otros 2 mapas de dificultad del repo
+      (`DestinationDetail.tsx` y `DidYouKnowSection.tsx`) se alinearon a los
+      estilos exactos de `BADGE_STYLES` de este componente (cierra el
+      hallazgo "verde vs verde" del PR 4); si esta decisión cambia los
+      colores del badge, actualizar los 3 mapas juntos.
 
 ---
 
@@ -615,6 +629,8 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
 > vive en el historial de git. Entradas recientes primero.
 
 ### Julio 2026
+
+**[2026-07-16] PR 5 de remediación de auditoría — "Performance" (bundle splitting, lazy-load del mapa, query slimming, atributos de imagen, hardening del sitemap en CI) + carry-over del badge de dificultad del PR 4.** (0) **Carry-over (aprobado por Frank) — colisión de badges de dificultad:** `DestinationDetail.tsx` `difficultyColor` y `DidYouKnowSection.tsx` `difficultyColor` (tras el remap del PR 4, easy y moderate eran verdes casi indistinguibles) se alinearon al espejo exacto de `BADGE_STYLES` de `DifficultyBadge.tsx`: easy `#DCFCE7/#166534`, moderate `#FEF3C7/#92400E`, challenging `#FEE2E2/#991B1B`, fallback `#F3F4F6/#4B5563` — los 3 mapas de dificultad del repo rinden idéntico; en `DestinationDetail` los `hover:` fijan el mismo bg porque el variant default de `ui/badge` trae `hover:bg-primary/80`. (1) **`manualChunks` (P1-3):** `vite.config.ts` con 3 chunks de vendor exactos (más chunks = más overhead HTTP mobile): `react-vendor` (react/react-dom/react-router-dom, 163.09 kB / 53.20 gzip), `motion` (framer-motion, 134.58 / 45.09) y `supabase` (@supabase/supabase-js, 173.68 / 45.84). (2) **Lazy-load de leaflet (P1-3):** `TrailsSection` convertido a `lazyWithRetry()` (mismo helper de las rutas) dentro de `DestinationDetail` con `Suspense` y skeleton que replica la geometría exacta (section py-14 + heading + caja de 280px — la misma altura fija `height: 280` del contenedor del mapa) → cero layout shift y Leaflet monta con dimensiones reales; leaflet+react-leaflet salen del chunk de la página a un chunk propio (159.23 kB / 47.13 gzip) que solo se descarga cuando hay senderos. **Resultado medido (build before/after):** entry `App` 706.73→377.52 kB (**gzip 215.05→117.25 kB, −45%**); `DestinationDetail` 228.37→70.57 kB (gzip 69.85→23.04); total JS gzip ~igual (578.6→580.6 kB, +2 kB por límites de chunk extra — la ganancia es lo que viaja por ruta, no el total); desapareció el warning de Vite de chunks >500 kB. (3) **Query slimming (P2-4):** `useGearArticles()` (listado /gear) pasa de `select("*")` a lista explícita `id, title, slug, category, short_description, hero_image_url, created_at` (verificado contra cada campo que `GearListing` renderiza) con tipo `GearArticleListItem` (Pick); `useFeaturedGearArticles` ya era slim; el hook de detalle (single row) NO se tocó. (4) **Imágenes (P2-5):** `width`/`height` explícitos agregados a las cards de grids: `Destinations.tsx` ParkListCard (400×112), `BlogListing.tsx` (400×176), `GearListing.tsx` (400×176), y los 3 grids de relacionados (`DestinationDetail` 400×160, `BlogPostDetail`/`GearArticleDetail` 400×128) — todos ya tenían `loading="lazy"`. **Omitidos a propósito:** featured de /blog (`FeaturedBlogPost`) se queda `eager` — arranca ~370px del top y con `h-[50vh]` es el candidato LCP de /blog en mobile y desktop (lazy ahí empeora LCP; su contenedor ya reserva altura → sin CLS); slideshows (`HeroSection` home y `NewsletterSignup`) usan `background-image` CSS (no aplica `loading`) y el hero es above-fold; `BackgroundSlideshow.tsx` ya implementa exactamente el patrón deseado (primer slide eager+fetchPriority=high vía `prioritizeFirstImage`, resto lazy) — sin cambios. Hallazgo colateral: `MediaSlider.tsx` no tiene importadores (candidato a dead-code para pasada tipo PR 2 — no se borró aquí por scope). (5) **Sitemap CI hardening (P2-10):** `scripts/generate-sitemap.ts` — con `process.env.CI` (Cloudflare Pages exporta CI=true) y env vars faltantes ahora hace `process.exit(1)` con error claro (antes exit 0 silencioso que dejaba desplegar el sitemap.xml committeado stale); local sin CI conserva el soft-skip pero con warning ruidoso de que NO se regeneró. (6) **Cloudflare `_headers` (P3):** regla `Cache-Control: public, max-age=86400` para `favicon.ico`, `manifest.webmanifest` y `hero-mask.svg`; reglas de assets hasheados intactas. No se tocó: auth, `has_role`, routing, `ui/*`, Hero (`hero-accent` intacto), tokens de `index.css`, otros queries de Supabase, formatos/srcset de imagen (tracked aparte). Verificación: `tsc --noEmit` ✅, `npm run build` ✅, vitest 96/96 ✅; **QA funcional en navegador real (headless Chrome + dev server):** `/destinos/joshua-tree-national-park` — mapa Leaflet renderiza tras el lazy (contenedor 734×278, 8 tiles cargados, 6 pines verdes = 6 senderos con coords; el skeleton reserva los 280px así que Leaflet monta con dimensiones); `/gear` — las cards renderizan todos sus campos tras el slimming (imagen, badge de categoría, título, descripción, fecha). Los dos 400 en consola de `/destinos/:slug` son preexistentes y ajenos a este PR: `use-park-live-data` pide columna `id` que no existe en `park_live_data` (el drift de esquema ya documentado arriba en "Drift de esquema sin reconciliar").**
 
 **[2026-07-14] PR 4 de remediación de auditoría — "Remap `--primary` a Trail Green + token dedicado del Hero" (pocas líneas, superficie visual máxima: ~35 consumidores públicos + admin cambian de ámbar a verde vía token).** (1) **Token nuevo `--hero-accent`** (`32 95% 44%` = #D97706) en `index.css` + `"hero-accent": "hsl(var(--hero-accent))"` en `tailwind.config.ts` (mismo patrón shadcn que `primary` para que los modificadores de opacidad `/90`, `/25` se comporten idéntico); `HeroSection.tsx` migrado — sus 2 únicos consumidores de primary: ícono TAP `text-primary`→`text-hero-accent` y CTA "Plática Conmigo" `bg-primary`→`bg-hero-accent`, `shadow-primary/25`→`shadow-hero-accent/25`, `hover:bg-primary/90`→`hover:bg-hero-accent/90`, `text-primary-foreground`→`text-white` (mismo blanco, desacopla del token global). Hero pixel-idéntico; grep confirma que `hero-accent` no se consume fuera de `HeroSection.tsx`. (2) **Remap global**: `--primary` `32 95% 44%`→`147 56% 28%` (#1F6F43 Trail Green) y `--ring` igual (el focus ring global de accesibilidad `a:focus-visible` en index.css usa `var(--primary)` y ahora es verde); `--primary-foreground` se queda en blanco — contraste blanco sobre #1F6F43 ≈ 6.1:1, pasa WCAG AA. Sin tokens derivados hardcodeados en naranja que remapear: los tintes (`primary/10`, `/90` etc.) derivan del var automáticamente. Quedan en ámbar a propósito: `--sidebar-primary`/`--sidebar-ring` (admin dark, ADR-006) y `--sunset` legacy (1 uso decorativo en el chart de `BudgetCalculator.tsx:117` — anotado en Fase 2+ (c)). (3) **Sweep de consumidores** (sin cambiar clases — ahora rinden verde correctamente): `Servicios.tsx` (el CTA de compra del product card ya era `bg-green hover:bg-green-dark` desde antes; el CTA del hero de la página consume el token y pasa a verde — su hover es `primary/90`, no `green-dark`, aceptable pero off-spec §4.4, anotado), `SobreNosotros` (×5), `PrivacyPolicy` (×4), `TermsAndConditions:83`, `FeaturedBlogPost`, `PermitScarcity:53`, `NotFound:27`, `ErrorBoundary:52,77`, `DidYouKnowSection`, `Destinations:432`, `QuizSection` (blobs `/6` sobre cloud, ok), `Eyebrow.tsx`, y componentes admin de contenido (botones/badges del panel pasan a verde; el sidebar conserva su ámbar propio). **Hallazgo semántico flagged (no tocado, /destinos es PR 3):** `DestinationDetail.tsx:43` y `DidYouKnowSection.tsx` mapean dificultad `easy`→`bg-secondary` (#166534) y `moderate`→`bg-primary/80` — tras el remap ambos son verdes casi indistinguibles; decidir tratamiento de "Moderado" (candidato: token `warning` nuevo o el patrón texto/`green-wash` de design-system §4.1). (4) **Anton dropped (aprobado por Frank):** 0 usos confirmados por grep (`font-display` sin ocurrencias); removido del request de Google Fonts en `index.html` y el token `fontFamily.display` de `tailwind.config.ts`; nota de retiro en design-system §3 (Oswald/Playfair/Inter intactos). (5) **Token `warning` formalizado (aprobado por Frank):** `--warning: #E08A1E` en `index.css` + `warning` en `tailwind.config.ts`, documentado en design-system §2/§5 con la regla "estados de advertencia y acentos cálidos semánticos; nunca para elementos interactivos de marca" — alias de `amber`, sin refactor de usos existentes. No se tocó: auth, queries, routing, `vite.config.ts`, lógica de `ui/*` (consumen `--primary` por diseño y pasan a verde solos), cluster /destinos. Verificación: `tsc --noEmit` ✅, `npm run build` ✅, vitest 96/96 ✅. **QA visual por ruta (consumidores visibles de `--primary`):** `/` (quiz blobs; Hero debe seguir ámbar), `/servicios` (CTAs + íconos de pasos), `/sobre-nosotros` (badges/CTA), `/blog` (featured post badge/link), `/destinos` (pills de filtro de senderos, focus ring del select), `/destinos/:slug` (badge "Moderado", FAQ hover, CTAs de reserva), `/privacidad` y `/terminos` (links de correo), 404 (ícono montaña), ErrorBoundary (botón reintentar), y focus rings de teclado site-wide.
 

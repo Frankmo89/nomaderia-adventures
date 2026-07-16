@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -31,7 +31,24 @@ import HowToGetThere, { type LodgingOption } from "@/components/destinations/How
 import CredibilityBar from "@/components/destinations/CredibilityBar";
 import ItineraryDayCards from "@/components/destinations/ItineraryDayCards";
 import TrailCards, { type SignatureHike } from "@/components/destinations/TrailCards";
-import TrailsSection from "@/components/destinations/TrailsSection";
+import { lazyWithRetry } from "@/lib/lazy-with-retry";
+
+// Lazy: TrailsSection arrastra leaflet + react-leaflet (~150 kB min) y el mapa
+// va below-the-fold en mobile — no debe viajar en el chunk de la página.
+const TrailsSection = lazyWithRetry(
+  () => import("@/components/destinations/TrailsSection"),
+);
+
+// Fallback que replica la geometría de TrailsSection (sección py-14 + heading
+// + caja del mapa de 280px) para que el swap de Suspense no cause layout shift.
+const TrailsSectionSkeleton = () => (
+  <section className="py-14 border-b border-border">
+    <div className="container mx-auto px-4 max-w-3xl">
+      <div className="h-9 w-44 rounded-lg bg-muted-foreground/10 animate-pulse mb-6" />
+      <div className="h-[280px] rounded-xl bg-muted-foreground/10 animate-pulse" />
+    </div>
+  </section>
+);
 import ParkAlertsBanner from "@/components/destinations/ParkAlertsBanner";
 import ParkWeatherCard from "@/components/destinations/ParkWeatherCard";
 import { buildChipItems } from "@/lib/chip-labels";
@@ -40,10 +57,13 @@ import { useParkLiveData } from "@/hooks/use-park-live-data";
 
 type Destination = Tables<"destinations">;
 
+// Espejo exacto de BADGE_STYLES en components/destinations/DifficultyBadge.tsx
+// para que los 3 mapas de dificultad del repo rindan idéntico. Los hover: fijan
+// el mismo bg porque el variant default de ui/badge trae hover:bg-primary/80.
 const difficultyColor: Record<string, string> = {
-  easy: "bg-secondary text-secondary-foreground",
-  moderate: "bg-primary/80 text-primary-foreground",
-  challenging: "bg-destructive text-destructive-foreground",
+  easy: "bg-[#DCFCE7] text-[#166534] hover:bg-[#DCFCE7]",
+  moderate: "bg-[#FEF3C7] text-[#92400E] hover:bg-[#FEF3C7]",
+  challenging: "bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2]",
 };
 const difficultyLabel: Record<string, string> = { easy: "Fácil", moderate: "Moderado", challenging: "Desafiante" };
 const countryFlag: Record<string, string> = {
@@ -535,7 +555,11 @@ const DestinationDetail = () => {
         const hikes = ((dest as Destination & DestExt).signature_hikes ?? []).filter(
           (h) => h?.nombre?.trim(),
         );
-        return hikes.length > 0 ? <TrailsSection hikes={hikes} /> : null;
+        return hikes.length > 0 ? (
+          <Suspense fallback={<TrailsSectionSkeleton />}>
+            <TrailsSection hikes={hikes} />
+          </Suspense>
+        ) : null;
       })()}
 
       {/* Recargo no-residentes — solo si has_nonresident_surcharge = true */}
@@ -1083,7 +1107,7 @@ const DestinationDetail = () => {
                 <Link key={r.id} to={`/destinos/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-40 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <img src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <img src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" decoding="async" width={400} height={160} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
                     )}

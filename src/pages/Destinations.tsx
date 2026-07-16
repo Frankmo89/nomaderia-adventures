@@ -93,6 +93,8 @@ function ParkListCard({ park }: { park: ParkCard }) {
             alt={park.title}
             loading="lazy"
             decoding="async"
+            width={400}
+            height={112}
             className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
           />
         ) : (

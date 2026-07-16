@@ -21,7 +21,13 @@ const getDidYouKnowText = (slug: string, title: string, country: string) => {
 };
 
 const difficultyLabel: Record<string, string> = { easy: "Fácil", moderate: "Moderado", challenging: "Desafiante" };
-const difficultyColor: Record<string, string> = { easy: "bg-secondary/80", moderate: "bg-green/80", challenging: "bg-destructive/80" };
+// Espejo exacto de BADGE_STYLES en components/destinations/DifficultyBadge.tsx
+// para que los 3 mapas de dificultad del repo rindan idéntico.
+const difficultyColor: Record<string, string> = {
+  easy: "bg-[#DCFCE7] text-[#166534]",
+  moderate: "bg-[#FEF3C7] text-[#92400E]",
+  challenging: "bg-[#FEE2E2] text-[#991B1B]",
+};
 
 /** Fisher-Yates shuffle (returns a new array). */
 function shuffle<T>(arr: readonly T[]): T[] {
@@ -55,7 +61,7 @@ const CardContent = ({ dest, isLarge = false }: { dest: DestinationCard; isLarge
     <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
 
     <div className="absolute top-4 left-4 z-10">
-      <span className={`text-xs font-semibold text-white px-2.5 py-1 rounded-full ${difficultyColor[dest.difficulty_level] || "bg-primary/80"}`}>
+      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${difficultyColor[dest.difficulty_level] || "bg-[#F3F4F6] text-[#4B5563]"}`}>
         {difficultyLabel[dest.difficulty_level] || dest.difficulty_level}
       </span>
     </div>
