@@ -18,10 +18,10 @@ const FILTER_LABELS: Record<FilterKey, string> = {
   ninos: "Aptas para niños",
 };
 
-// Amber pin — avoids Leaflet's default marker which breaks under Vite's asset pipeline
-const amberIcon = L.divIcon({
+// Trail Green pin — avoids Leaflet's default marker which breaks under Vite's asset pipeline
+const greenIcon = L.divIcon({
   className: "",
-  html: `<div style="width:22px;height:22px;background:#D97706;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35)"></div>`,
+  html: `<div class="bg-green" style="width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35)"></div>`,
   iconSize: [22, 22],
   iconAnchor: [11, 11],
   popupAnchor: [0, -14],
@@ -104,7 +104,7 @@ export default function TrailsSection({ hikes }: TrailsSectionProps) {
                 <Marker
                   key={i}
                   position={[h.trailhead_lat!, h.trailhead_lng!]}
-                  icon={amberIcon}
+                  icon={greenIcon}
                 >
                   <Popup>
                     <span style={{ fontWeight: 600 }}>{h.nombre}</span>

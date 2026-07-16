@@ -61,7 +61,7 @@ export default function QuickFactsRow({
               style={{ minHeight: 56 }}
             >
               <Icon
-                className="text-[#D97706]"
+                className="text-green"
                 style={{ width: 18, height: 18 }}
               />
               <span

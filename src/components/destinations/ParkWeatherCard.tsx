@@ -146,7 +146,7 @@ export default function ParkWeatherCard({ weather }: ParkWeatherCardProps) {
         style={{ padding: 20, marginBottom: 12 }}
       >
         <div className="flex items-start gap-4">
-          <FeaturedIcon className="h-10 w-10 text-[#D97706] shrink-0 mt-1" />
+          <FeaturedIcon className="h-10 w-10 text-amber shrink-0 mt-1" />
           <div className="flex-1 min-w-0">
             <p
               className="font-sans text-[#6B7280] uppercase tracking-[0.06em]"
@@ -179,15 +179,15 @@ export default function ParkWeatherCard({ weather }: ParkWeatherCardProps) {
         {/* SOUL safety tip — highlighted amber block */}
         {soulTip && (
           <div
-            className="flex items-start gap-3 rounded-xl mt-4"
-            style={{ background: "#FEF3C7", padding: "12px 14px" }}
+            className="flex items-start gap-3 rounded-xl mt-4 bg-amber/10"
+            style={{ padding: "12px 14px" }}
           >
             <div
-              className="shrink-0 rounded-full"
-              style={{ width: 3, background: "#D97706", alignSelf: "stretch" }}
+              className="shrink-0 rounded-full bg-amber"
+              style={{ width: 3, alignSelf: "stretch" }}
             />
             <p
-              className="font-sans text-[#92400E] leading-relaxed"
+              className="font-sans text-slate leading-relaxed"
               style={{ fontSize: 14 }}
             >
               {soulTip}
@@ -216,7 +216,7 @@ export default function ParkWeatherCard({ weather }: ParkWeatherCardProps) {
                 >
                   {localizePeriodName(period.name)}
                 </p>
-                <Icon className="h-6 w-6 text-[#D97706]" />
+                <Icon className="h-6 w-6 text-amber" />
                 <p
                   className="font-sans font-semibold text-[#1C1917]"
                   style={{ fontSize: 15 }}

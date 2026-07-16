@@ -132,7 +132,7 @@ export default function TrailCards({ hikes, showHeading = true }: TrailCardsProp
                     href={hike.enlace_ruta.trim()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block font-sans text-[#D97706] hover:underline mt-2"
+                    className="inline-block font-sans text-green hover:text-green-dark hover:underline mt-2"
                     style={{ fontSize: 13 }}
                   >
                     Ver ruta en AllTrails →

@@ -219,7 +219,7 @@ referenciar esta lista primero.
 - [ ] **Lint preexistente:** errores en `src/components/ui/command.tsx`,
       `src/components/ui/textarea.tsx` y `SentinelLanding.tsx`. *No tocar
       `components/ui` salvo decisión explícita.*
-- [ ] **Test preexistente:** falla en `src/lib/lazy-with-retry.test.ts`.
+- [x] **Test preexistente:** falla en `src/lib/lazy-with-retry.test.ts`. **Entrada stale — cerrada 2026-07-14 (PR 3):** vitest pasa 96/96 (ese archivo incluido); la falla ya no se reproduce.
 - [ ] **Imágenes responsive:** convertir heros de detalle (blog/gear) a
       `srcset`/WebP.
 - [ ] **`StickyMobileCTA.tsx` — posible colisión visual con el control de zoom de Leaflet:** hallazgo del trabajo de `ConciergeLauncher` (julio 2026, ver changelog): el mapa de `TrailsSection` (Leaflet) pinta su control de zoom a `z-index: 1000`, fuera del stacking context del `.leaflet-container` (que es `position: relative` sin `z-index` propio) — verificado con `elementFromPoint` + screenshot a nivel de elemento que esto puede tapar visualmente elementos fijos de página con `z-50` o menos cuando el mapa scrollea a esa zona de la pantalla. `ConciergeLauncher`, el panel de `ConciergeChat` y el scroll-to-top de `Navbar` ya se subieron a `z-[1200]` para evitarlo. `StickyMobileCTA.tsx` (el CTA "Planear con un experto" fijo en la franja inferior de `/destinos/:slug` en mobile) sigue en `z-50` y **no se tocó** en esa tarea por caer bajo la instrucción explícita de no modificar CTAs de WhatsApp en contenido de página — confirmar en producción si el mapa de senderos llega a solaparse con esta barra (depende del alto de cada página) y, si aplica, subirla también a `z-[1200]`.
@@ -535,11 +535,15 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
       reformulado como regalo sorpresa por completar el quiz ($44 en vez de
       $49 USD). ⚠️ **Frank debe redesplegar la función** (`supabase functions
       deploy send-quiz-email`).
-- [ ] **P1 — Naranja #D97706 hardcodeado fuera del Hero** en el cluster de
+- [x] **P1 — Naranja #D97706 hardcodeado fuera del Hero** en el cluster de
       `/destinos/:slug`: `DestinationDetail` (tabs/timeline), `TrailsSection`,
       `TrailCards`, `QuickFactsRow`, `HowToGetThere`, `ParkAlertsBanner`,
       `ParkWeatherCard`, `Destinations.tsx:563`. NO cubierto por el cleanup
       Fase 2 — migrar a tokens `green`/`amber` del design system. (PR 3)
+      **Resuelto 2026-07-14 (PR 3)** — cluster completo migrado a tokens;
+      quedan raw `#D97706` fuera del cluster en `ClientItineraryView.tsx` y
+      componentes de `/admin` (ver P3 nuevos abajo), además del `--primary`
+      de `index.css` que es PR 4.
 - [ ] **P1 — `--primary` sigue en ámbar** y colorea ~35 usos públicos fuera del
       Hero (incl. el CTA de compra en `/servicios` y el focus ring global).
       Remapear a #1F6F43 migrando el Hero a token propio en el mismo PR. (PR 4)
@@ -571,16 +575,32 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
       vars huérfanas (`VITE_STRIPE_SENTINEL_URL`, `VITE_WHATSAPP_NUMBER` — el
       número está hardcodeado en `whatsapp.ts`, nunca se leyó del env).
       **Resuelto 2026-07-14 (PR 1).**
-- [ ] **P2 restantes:** `.text-eyebrow` usa Inter (debe ser Oswald); Anton se
-      descarga y tiene 0 usos; `select("*")` en listado de gear;
+- [ ] **P2 restantes:** `select("*")` en listado de gear;
       `loading="lazy"` y `width/height` faltantes en varias imágenes; alertas
       NPS en inglés sin aviso; 15 URLs de storage hardcodeadas en
       `HeroSection`; el generador de sitemap hace exit 0 silencioso sin env
-      vars (puede publicar sitemap stale). (PR 3–5)
+      vars (puede publicar sitemap stale). (PR 4–5)
+      — `.text-eyebrow` (Inter→Oswald + tracking 0.08em) **resuelto 2026-07-14
+      (PR 3)**; "Anton 0 usos" movido a P3 como decisión keep-or-drop.
 - [ ] **P3:** emails con paleta pre-rebrand (#E86C3A/#292524); guard para el
       Meta Pixel placeholder; `_headers` sin regla para favicon/manifest;
       entrada de lint stale que cita `SentinelLanding.tsx` (hoy redirect).
       (PR 6 / oportunista)
+- [ ] **P3 (nuevos, detectados en PR 3):**
+      (a) **Falta token formal de "warning"** — el design system no define
+      color de advertencia; `ParkAlertsBanner` usa `amber` para severidad por
+      falta de token semántico. Decidir si formalizar `warning` (candidato:
+      alias de `amber`).
+      (b) **Anton keep-or-drop** — la fuente se descarga en `index.html` y
+      tiene 0 usos (`font-display` sin ocurrencias); decidir si retirarla o
+      usarla en los roles que design-system §3 le asigna.
+      (c) **Raw `#D97706` fuera del cluster /destinos** (no cubierto por PR 3):
+      `ClientItineraryView.tsx` (pública por token, noindex) y
+      componentes de `/admin` (`MiniBar`, `ItineraryBlockEditor`,
+      `AdminDashboard`, `AdminQuizResponses`) — migrar en pasada propia.
+      (d) **`DifficultyBadge.tsx`** usa pill ámbar raw (#FEF3C7/#92400E) para
+      "Moderado" — design system §4.1 pide texto o pill `green-wash`, no
+      semáforo; revisar junto con la restructura de tarjeta de destino.
 
 ---
 
@@ -590,6 +610,8 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
 > vive en el historial de git. Entradas recientes primero.
 
 ### Julio 2026
+
+**[2026-07-14] PR 3 de remediación de auditoría — "Design tokens — cluster /destinos" (naranja #D97706 → tokens del design system; cambios visuales esperados, cero cambios de layout/lógica).** Migración completa del cluster de `/destinos/:slug` a tokens de `tailwind.config.ts` (`green` #1F6F43 para interactivo/marca, `amber` #E08A1E solo para tono cálido decorativo/warning, `ink`/`slate`/`sage` para texto): (1) **`DestinationDetail.tsx`** — tabs activos `bg-[#D97706]` → `bg-green` (×5); overline del hero y label "LO MÁS DURO" + su barra vertical → `text-green`/`bg-green`; las ✗ de "No ideal si..." → `text-ink/60` (el design system NO define color destructive/negativo — se usó ink a opacidad reducida, no rojo improvisado); callout de recargo no-residentes (`amber-50/200/600/700/800/900` de Tailwind default) → `bg-amber/10` + `border-amber/30` + ícono `text-amber` + título `text-ink` + cuerpo `text-slate` + small print `text-sage`; banner de mal de altura (raw #FEF3C7/#92400E, misma familia ámbar) → `bg-amber/10` + ícono `text-amber` + texto `text-slate`. (2) **`TrailsSection.tsx`** — pin del mapa Leaflet (divIcon) → `class="bg-green"` (variable renombrada `amberIcon`→`greenIcon`). (3) **`TrailCards.tsx`** — link "Ver ruta en AllTrails" → `text-green hover:text-green-dark`. (4) **`QuickFactsRow.tsx`** — íconos de stats → `text-green`. (5) **`HowToGetThere.tsx`** — link "Ver opciones" → `text-green hover:text-green-dark`. (6) **`ParkAlertsBanner.tsx`** — el naranja aquí ES semántico (severidad); sin token warning en el design system, se mantuvo el tono via `amber`: badges Closure (`bg-orange-600`) y Caution (`bg-[#D97706]`) → `bg-amber` (quedan iguales entre sí; el label textual los distingue), badge Information raw `#166534` → `bg-green` (raw hex adyacente en el mismo mapa, verde de marca), fondo del banner no-danger `bg-amber-50` → `bg-amber/10`, ícono/chevrons → `text-amber`, título → `text-ink`, link "Ver alerta oficial" (interactivo) → `text-green hover:text-green-dark`; los rojos de Danger NO se tocaron (semánticos, fuera del alcance naranja). (7) **`ParkWeatherCard.tsx`** — íconos de clima (decorativo-semántico sol/nubes) → `text-amber`; bloque SOUL tip (#FEF3C7/#D97706/#92400E) → `bg-amber/10` + barra `bg-amber` + texto `text-slate`. (8) **`Destinations.tsx`** — radios del filtro de distancia `accent-[#D97706]` → `accent-green`. (9) **`src/index.css` `.text-eyebrow` (P2-1)** — `font-family` Inter → Oswald y `tracking-[0.2em]` → `tracking-[0.08em]` per design system §3; el request de Anton NO se retiró (queda como decisión P3). Los grises raw preexistentes (#F3F4F6/#6B7280/#E5E7EB etc.) del cluster NO se migraron — no son naranja, pasada aparte. No se tocó: `HeroSection.tsx`, `--primary` en `index.css` (PR 4), `ClientItineraryView.tsx` ni `/admin` (raw #D97706 restante documentado como P3 nuevo), auth/queries/routing/`vite.config.ts`/`ui/*`. Verificación: grep repo-wide de #D97706 limpio en el cluster (restantes solo `index.css --primary`+`--sidebar-primary`, `ClientItineraryView`, admin y un comentario en `ui/button.tsx` — nota: `HeroSection.tsx` no contiene el hex raw, consume `--primary`); `tsc --noEmit` ✅, `npm run build` ✅, vitest 96/96 ✅ (de paso se cerró la entrada stale del test de `lazy-with-retry`).
 
 **[2026-07-14] PR 2 de remediación de auditoría — "Dead code & deps" (borrado de código muerto, deps sin uso y consolidación SEO; cero cambios visuales salvo mejora de meta tags en `/gear/:slug`).** (1) **Archivos muertos borrados** (`git rm`, cada uno verificado con grep repo-wide = cero imports antes de borrar): `src/components/OptimizedImage.tsx`, `src/components/NavLink.tsx`, `src/hooks/use-stats.ts`, `src/hooks/use-permit-alert.ts` (nota: la auditoría lo listó como `use-permit-alerts.ts` en plural; el archivo real era singular), `src/components/blog/ShareButtons.tsx` (duplicado — los 3 consumidores reales importan el `ShareButtons` raíz). `useDestinationsMapData()` en `use-destinations.ts` NO se tocó (sin uso pero intencional/documentado). (2) **SEO consolidado**: `GearArticleDetail.tsx` migrado de `SEOHead` a `SEO` pasando `slug={`gear/${article.slug}`}` — `og:url` ahora se construye canónicamente desde `SITE_URL` en vez de `window.location.href` (que incluía query params); con cero consumidores restantes, `src/components/SEOHead.tsx` borrado. `SEO.tsx` y `usePageMeta` sin cambios. (3) **Deps desinstaladas** (verificado: sus únicos importadores eran `ui/*.tsx` huérfanos con cero consumidores; `date-fns` no tenía import directo alguno — era peer de `react-day-picker`): `recharts`, `react-day-picker`, `date-fns`, `react-resizable-panels`, `vaul`, `cmdk`, `input-otp`. Los 6 `ui/*.tsx` huérfanos que las importaban se borraron en vez de editarlos (regla "no editar ui/"): `chart`, `calendar`, `resizable`, `drawer`, `command`, `input-otp`. `next-themes` (usado vía `ui/sonner` → App) y `embla-carousel-react` (usado por `DestinationDetail`) se conservaron. (4) **Docs**: referencias stale a los archivos borrados corregidas en `README.md` (árbol), `docs/claude-context.md` (tabla de hooks → `usePublicStats()`) y `docs/decisions.md` ADR-008 (`use-public-stats.ts`); CLAUDE.md ya estaba limpio desde PR 1. Verificación: `tsc --noEmit` ✅, `npm run build` ✅, greps = cero referencias a lo borrado. Bundle del entry sin cambio material (706.73 kB vs 706.72 kB) — esperado: nada de lo borrado entraba al bundle (no tenía imports); la ganancia es en `node_modules`/install y claridad. La reducción real de bundle llega en PR 5 (`manualChunks`).
 

@@ -23,9 +23,9 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const CATEGORY_STYLE: Record<string, string> = {
   Danger:      "bg-red-600 text-white",
-  Closure:     "bg-orange-600 text-white",
-  Caution:     "bg-[#D97706] text-white",
-  Information: "bg-[#166534] text-white",
+  Closure:     "bg-amber text-white",
+  Caution:     "bg-amber text-white",
+  Information: "bg-green text-white",
 };
 
 function sortAlerts(alerts: ParkAlert[]): ParkAlert[] {
@@ -48,7 +48,7 @@ export default function ParkAlertsBanner({ alerts }: ParkAlertsBannerProps) {
     <div
       className={cn(
         "border-b border-border",
-        hasDanger ? "bg-red-50" : "bg-amber-50",
+        hasDanger ? "bg-red-50" : "bg-amber/10",
       )}
     >
       <div className="container mx-auto px-4 max-w-3xl">
@@ -61,13 +61,13 @@ export default function ParkAlertsBanner({ alerts }: ParkAlertsBannerProps) {
           <AlertTriangle
             className={cn(
               "h-5 w-5 shrink-0",
-              hasDanger ? "text-red-600" : "text-[#D97706]",
+              hasDanger ? "text-red-600" : "text-amber",
             )}
           />
           <span
             className={cn(
               "font-sans font-semibold flex-1",
-              hasDanger ? "text-red-900" : "text-amber-900",
+              hasDanger ? "text-red-900" : "text-ink",
             )}
             style={{ fontSize: 15 }}
           >
@@ -76,9 +76,9 @@ export default function ParkAlertsBanner({ alerts }: ParkAlertsBannerProps) {
               : `${alerts.length} alertas en este parque`}
           </span>
           {open ? (
-            <ChevronUp className="h-4 w-4 text-[#D97706] shrink-0" />
+            <ChevronUp className="h-4 w-4 text-amber shrink-0" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-[#D97706] shrink-0" />
+            <ChevronDown className="h-4 w-4 text-amber shrink-0" />
           )}
         </button>
 
@@ -123,7 +123,7 @@ export default function ParkAlertsBanner({ alerts }: ParkAlertsBannerProps) {
                       href={alert.url.trim()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-sans text-[#D97706] hover:underline"
+                      className="inline-flex items-center gap-1 font-sans text-green hover:text-green-dark hover:underline"
                       style={{ fontSize: 13 }}
                     >
                       Ver alerta oficial

@@ -117,8 +117,8 @@
   }
 
   .text-eyebrow {
-    @apply text-xs tracking-[0.2em] uppercase font-medium text-secondary;
-    font-family: 'Inter', sans-serif;
+    @apply text-xs tracking-[0.08em] uppercase font-medium text-secondary;
+    font-family: 'Oswald', sans-serif;
   }
 
   .section-editorial {

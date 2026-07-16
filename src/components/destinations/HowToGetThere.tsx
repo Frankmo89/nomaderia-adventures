@@ -129,7 +129,7 @@ function LodgingCard({
             href={l.reserva_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-sans text-[#D97706] hover:underline shrink-0 ml-auto"
+            className="font-sans text-green hover:text-green-dark hover:underline shrink-0 ml-auto"
             style={{ fontSize: 13 }}
           >
             Ver opciones →

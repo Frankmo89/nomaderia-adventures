@@ -418,7 +418,7 @@ const DestinationDetail = () => {
         <div className="px-5 pt-5">
           {/* Overline */}
           <p
-            className="font-sans uppercase text-[#D97706]"
+            className="font-sans uppercase text-green"
             style={{ fontSize: 11, letterSpacing: "0.08em", fontWeight: 500 }}
           >
             {dest.experience_type ?? "Parque Nacional"}
@@ -547,13 +547,13 @@ const DestinationDetail = () => {
           className="border-b border-border"
         >
           <div className="container mx-auto px-4 max-w-3xl py-6">
-            <div className="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-3 rounded-xl bg-amber/10 border border-amber/30 p-4">
+              <AlertTriangle className="h-5 w-5 text-amber mt-0.5 shrink-0" />
               <div className="space-y-2 text-sm">
-                <p className="font-semibold text-amber-900">
+                <p className="font-semibold text-ink">
                   Tarifa de entrada según residencia (2026)
                 </p>
-                <ul className="text-amber-800 space-y-1 leading-relaxed list-none">
+                <ul className="text-slate space-y-1 leading-relaxed list-none">
                   <li>
                     <span className="font-medium">Residentes y ciudadanos de EE. UU.:</span>{" "}
                     tarifa estándar de entrada, sin recargo adicional.
@@ -571,7 +571,7 @@ const DestinationDetail = () => {
                     exentos del recargo adicional.
                   </li>
                 </ul>
-                <p className="text-amber-800 leading-relaxed">
+                <p className="text-slate leading-relaxed">
                   Si planeas visitar 2 o más parques con este recargo, el{" "}
                   <strong>pase America the Beautiful para no-residentes ($250 USD)</strong>{" "}
                   puede ser más conveniente. Consulta las opciones en{" "}
@@ -579,13 +579,13 @@ const DestinationDetail = () => {
                     href={(dest as Destination & DestExt).nps_url ?? "https://www.nps.gov"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline hover:text-amber-900 transition-colors"
+                    className="underline hover:text-ink transition-colors"
                   >
                     nps.gov
                   </a>
                   .
                 </p>
-                <p className="text-xs text-amber-700">
+                <p className="text-xs text-sage">
                   Verifica las tarifas exactas en nps.gov antes de tu visita — pueden actualizarse.
                 </p>
               </div>
@@ -602,31 +602,31 @@ const DestinationDetail = () => {
               <TabsList className="bg-background sticky top-20 z-30 mb-8 h-auto py-2 flex-wrap gap-1.5 shadow-sm border-b border-border rounded-none px-0 w-full justify-start overflow-x-auto scrollbar-hide">
                 <TabsTrigger
                   value="can-i"
-                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-green data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
                 >
                   ¿Puedo Hacerlo?
                 </TabsTrigger>
                 <TabsTrigger
                   value="prep"
-                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-green data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
                 >
                   Preparación
                 </TabsTrigger>
                 <TabsTrigger
                   value="itinerary"
-                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-green data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
                 >
                   Itinerario
                 </TabsTrigger>
                 <TabsTrigger
                   value="gear"
-                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-green data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
                 >
                   Qué Llevar
                 </TabsTrigger>
                 <TabsTrigger
                   value="how-to-get"
-                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-[#D97706] data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
+                  className="rounded-full font-sans text-sm h-9 data-[state=active]:bg-green data-[state=active]:text-white data-[state=inactive]:bg-[#F3F4F6] data-[state=inactive]:text-[#6B7280]"
                 >
                   Cómo Llegar
                 </TabsTrigger>
@@ -716,12 +716,12 @@ const DestinationDetail = () => {
                           style={{ marginTop: 16 }}
                         >
                           <div
-                            className="shrink-0 rounded-full"
-                            style={{ width: 3, background: "#D97706", alignSelf: "stretch" }}
+                            className="shrink-0 rounded-full bg-green"
+                            style={{ width: 3, alignSelf: "stretch" }}
                           />
                           <div style={{ paddingLeft: 0 }}>
                             <p
-                              className="font-sans uppercase text-[#D97706]"
+                              className="font-sans uppercase text-green"
                               style={{ fontSize: 11, letterSpacing: "0.06em", fontWeight: 500 }}
                             >
                               LO MÁS DURO
@@ -740,11 +740,11 @@ const DestinationDetail = () => {
                       {/* altitude warning banner */}
                       {(dest as Destination & DestExt).altitude_warning && (
                         <div
-                          className="flex items-center gap-2 rounded-lg"
-                          style={{ marginTop: 12, background: "#FEF3C7", padding: "8px 12px" }}
+                          className="flex items-center gap-2 rounded-lg bg-amber/10"
+                          style={{ marginTop: 12, padding: "8px 12px" }}
                         >
-                          <AlertTriangle className="h-4 w-4 shrink-0" style={{ color: "#92400E" }} />
-                          <span className="font-sans" style={{ fontSize: 13, color: "#92400E" }}>
+                          <AlertTriangle className="h-4 w-4 shrink-0 text-amber" />
+                          <span className="font-sans text-slate" style={{ fontSize: 13 }}>
                             Posible mal de altura en este destino
                           </span>
                         </div>
@@ -766,7 +766,7 @@ const DestinationDetail = () => {
                               className="font-sans text-[#4B5563] flex gap-2"
                               style={{ fontSize: 14, marginBottom: 4 }}
                             >
-                              <span style={{ color: "#D97706" }}>✗</span>
+                              <span className="text-ink/60">✗</span>
                               {item}
                             </p>
                           ))}

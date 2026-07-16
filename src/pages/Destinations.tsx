@@ -560,7 +560,7 @@ const Destinations = () => {
                       value={opt.value}
                       checked={filterDistance === opt.value}
                       onChange={() => setFilterDistance(opt.value)}
-                      className="h-4 w-4 cursor-pointer accent-[#D97706]"
+                      className="h-4 w-4 cursor-pointer accent-green"
                     />
                     <span className="text-sm">{opt.label}</span>
                   </label>
