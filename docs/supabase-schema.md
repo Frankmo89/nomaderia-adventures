@@ -190,25 +190,37 @@ Indexes: `share_token`, `status`
 
 Datos live de APIs oficiales, sincronizados por `sync-park-live-data`. Nunca editados manualmente; se sobrescriben en cada sync run.
 
+> ⚠️ **La tabla NO tiene columna `id`** — la PK es `park_code`. Seleccionar
+> `id` devuelve 400 (bug real en producción hasta 2026-07-16, ver changelog
+> de pending-tasks).
+
 ```
-id              uuid PK
-park_code       text NOT NULL UNIQUE           → FK lógica a destinations.park_code
-destination_id  uuid NOT NULL → destinations(id) ON DELETE CASCADE
+park_code        text PK                        → FK lógica a destinations.park_code
+destination_id   uuid NULL → destinations(id) FK
 -- NPS /parks (full mode)
-entrance_fees   jsonb                          → [{cost, description, title}]
-operating_hours jsonb                          → [{name, description, standardHours, exceptions}]
-images          jsonb                          → [{url, altText, title, caption, credit}]
-lat_long        text                           → "lat:X, long:Y" (raw NPS string)
+entrance_fees    jsonb                          → [{cost, description, title}]
+entrance_fee_usd numeric                        → fee de entrada normalizado (USD)
+operating_hours  jsonb                          → [{name, description, standardHours, exceptions}]
+images           jsonb                          → [{url, altText, title, caption, credit}]
+nps_images       jsonb                          → imágenes crudas del API NPS
+coordinates      jsonb                          → coordenadas normalizadas
+lat_long         text                           → "lat:X, long:Y" (raw NPS string)
+permits          jsonb                          → datos de permisos (ingest-park-permits)
 -- NPS /alerts (ambos modos)
-alerts          jsonb                          → [{id, title, description, category, url, lastIndexedDate}]
+alerts           jsonb                          → [{id, title, description, category, url, lastIndexedDate}]
+-- NWS forecast (sync-park-weather)
+weather          jsonb                          → {synced_at, source, periods: [{name, is_daytime, temp_f, short, detailed, precip_pct, wind}]}
 -- RIDB campgrounds (full mode)
-campgrounds     jsonb                          → [{facilityId, nombre, reservation_url}]
+campgrounds      jsonb                          → [{facilityId, nombre, reservation_url}]
 -- Sync metadata
-sync_errors     jsonb NOT NULL DEFAULT '[]'   → [{step, error}] del último sync run
-synced_at       timestamptz NOT NULL
-created_at      timestamptz NOT NULL
-updated_at      timestamptz NOT NULL
+sync_errors      jsonb DEFAULT '[]'             → [{step, error}] del último sync run
+synced_at        timestamptz
+created_at       timestamptz
+updated_at       timestamptz
 ```
+
+*(Sección verificada contra `information_schema` de la DB viva el 2026-07-16 —
+todas las columnas salvo `park_code` son nullables.)*
 
 **Modos de sync (`sync-park-live-data`):**
 - `mode: "full"` (default): refresca todos los campos. Usar al ingestar por primera vez o semanalmente.

@@ -20,7 +20,7 @@ const db = supabase as unknown as ReturnType<typeof createClient>;
 
 /**
  * Fetches active media_slider items ordered by display_order.
- * Used by the public MediaSlider component on the landing page.
+ * Used by Servicios.tsx, which feeds the items to BackgroundSlideshow.
  */
 export function useMediaSlider() {
   return useQuery<MediaItem[]>({

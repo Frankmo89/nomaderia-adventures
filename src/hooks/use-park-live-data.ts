@@ -24,14 +24,12 @@ export interface WeatherPayload {
   periods: WeatherPeriod[];
 }
 
-// park_live_data not in generated types — local interface per ADR-009
+// Solo los campos que consumen ParkAlertsBanner (alerts) y ParkWeatherCard
+// (weather). La tabla NO tiene columna `id` — su clave es `park_code`
+// (seleccionar `id` devolvía 400 y los componentes quedaban vacíos en prod).
 interface ParkLiveDataRow {
-  id: string;
-  destination_id: string | null;
-  park_code: string | null;
   alerts: ParkAlert[] | null;
   weather: WeatherPayload | null;
-  synced_at: string | null;
 }
 
 export function useParkLiveData(destinationId: string | undefined) {
@@ -40,7 +38,8 @@ export function useParkLiveData(destinationId: string | undefined) {
     enabled: !!destinationId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      // Cast required: park_live_data is not in generated supabase types (ADR-009)
+      // Cast required: los tipos generados están stale para park_live_data
+      // (les falta la columna `weather`) — quitar al regenerar tipos (ADR-009)
       const client = supabase as unknown as {
         from: (table: string) => {
           select: (cols: string) => {
@@ -52,7 +51,7 @@ export function useParkLiveData(destinationId: string | undefined) {
       };
       const { data, error } = await client
         .from("park_live_data")
-        .select("id, destination_id, park_code, alerts, weather, synced_at")
+        .select("alerts, weather")
         .eq("destination_id", destinationId as string)
         .maybeSingle();
       if (error) throw new Error(error.message);
