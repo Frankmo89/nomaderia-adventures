@@ -28,9 +28,15 @@ interface DestRow {
   longitude: number | null;
 }
 
+interface SyncErrorEntry {
+  step: string;
+  error: string;
+}
+
 interface ParkLiveRow {
   destination_id: string;
   lat_long: string | null;
+  sync_errors: SyncErrorEntry[] | null;
 }
 
 interface NwsPointsProperties {
@@ -142,14 +148,14 @@ serve(async (req) => {
 
     console.log(`[sync-park-weather] parques a procesar: ${parks.length}`);
 
-    // ── Load park_live_data lat_long for coordinate fallback ──────────────────
+    // ── Load park_live_data lat_long (coordinate fallback) + sync_errors ──────
     const destIds = parks.map((p) => p.id);
-    const liveByDestId = new Map<string, string | null>();
+    const liveByDestId = new Map<string, ParkLiveRow>();
 
     if (destIds.length > 0) {
       const { data: liveRows, error: liveErr } = await db
         .from("park_live_data")
-        .select("destination_id, lat_long")
+        .select("destination_id, lat_long, sync_errors")
         .in("destination_id", destIds);
 
       if (liveErr) {
@@ -159,10 +165,18 @@ serve(async (req) => {
         );
       } else {
         for (const row of (liveRows ?? []) as ParkLiveRow[]) {
-          liveByDestId.set(row.destination_id, row.lat_long);
+          liveByDestId.set(row.destination_id, row);
         }
       }
     }
+
+    // sync_errors sin las entradas de weather de corridas previas — para
+    // reemplazarlas (no acumularlas) al registrar un fallo nuevo, y limpiarlas
+    // en un run exitoso, sin tocar las entradas de otros pasos.
+    const nonWeatherErrors = (destId: string): SyncErrorEntry[] => {
+      const prev = liveByDestId.get(destId)?.sync_errors;
+      return Array.isArray(prev) ? prev.filter((e) => e?.step !== "weather") : [];
+    };
 
     let synced = 0;
     let failed = 0;
@@ -180,7 +194,7 @@ serve(async (req) => {
         let lng: number | null = park.longitude;
 
         if (lat == null || lng == null) {
-          const latLong = liveByDestId.get(park.id) ?? null;
+          const latLong = liveByDestId.get(park.id)?.lat_long ?? null;
           if (latLong) {
             const parsed = parseLatLong(latLong);
             if (parsed) {
@@ -191,11 +205,11 @@ serve(async (req) => {
         }
 
         if (lat == null || lng == null) {
-          console.log(
-            `[sync-park-weather] sin coordenadas — ${park.park_code} (${park.title}), omitiendo`,
+          // Vía el catch para que quede registrado en sync_errors (antes era un
+          // continue silencioso que dejaba la fila sin rastro del problema).
+          throw new Error(
+            "sin coordenadas (destinations.latitude/longitude y park_live_data.lat_long vacíos)",
           );
-          failed++;
-          continue;
         }
 
         const latR = round4(lat);
@@ -248,10 +262,20 @@ serve(async (req) => {
           })),
         };
 
-        // ── Update ONLY the weather column ────────────────────────────────────
+        // ── Update weather + weather_synced_at (NOT synced_at: ese timestamp
+        // es de sync-park-live-data/alerts). Si había un error de weather de
+        // una corrida previa en sync_errors, se limpia aquí.
+        const cleanedErrors = nonWeatherErrors(park.id);
+        const hadWeatherError =
+          cleanedErrors.length !== (liveByDestId.get(park.id)?.sync_errors?.length ?? 0);
+
         const { error: updateErr } = await db
           .from("park_live_data")
-          .update({ weather })
+          .update({
+            weather,
+            weather_synced_at: weather.synced_at,
+            ...(hadWeatherError ? { sync_errors: cleanedErrors } : {}),
+          })
           .eq("destination_id", park.id);
 
         if (updateErr) {
@@ -267,6 +291,31 @@ serve(async (req) => {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[sync-park-weather] ✗ ${park.park_code}: ${msg}`);
         failed++;
+
+        // Registrar el fallo en sync_errors de la fila (antes se tragaba en
+        // silencio y la fila parecía sana). Best-effort: si este update también
+        // falla, se loguea y el batch continúa.
+        try {
+          const { error: recordErr } = await db
+            .from("park_live_data")
+            .update({
+              sync_errors: [
+                ...nonWeatherErrors(park.id),
+                { step: "weather", error: msg.slice(0, 300) },
+              ],
+            })
+            .eq("destination_id", park.id);
+          if (recordErr) {
+            console.error(
+              `[sync-park-weather] no se pudo registrar sync_error de ${park.park_code}: ${recordErr.message}`,
+            );
+          }
+        } catch (recordErr) {
+          console.error(
+            `[sync-park-weather] no se pudo registrar sync_error de ${park.park_code}:`,
+            recordErr,
+          );
+        }
       }
     }
 

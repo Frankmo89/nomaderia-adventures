@@ -214,11 +214,17 @@ weather          jsonb                          → {synced_at, source, periods:
 -- RIDB campgrounds (full mode)
 campgrounds      jsonb                          → [{facilityId, nombre, reservation_url}]
 -- Sync metadata
-sync_errors      jsonb DEFAULT '[]'             → [{step, error}] del último sync run
-synced_at        timestamptz
+sync_errors      jsonb DEFAULT '[]'             → [{step, error}] — sync-park-live-data lo reescribe completo en cada run; sync-park-weather agrega/reemplaza su propia entrada step:"weather" por fila (y la limpia en un run exitoso)
+synced_at        timestamptz                    → SOLO lo escribe sync-park-live-data (alerts/full); NO refleja el clima
+weather_synced_at timestamptz                   → SOLO lo escribe sync-park-weather (cron diario 12:30 UTC); NULL o stale = el sync de clima está fallando
 created_at       timestamptz
 updated_at       timestamptz
 ```
+
+> **Staleness por fuente:** `synced_at` y `weather_synced_at` son independientes
+> a propósito. Antes solo existía `synced_at` y el clima estuvo roto por meses
+> sin señal (el timestamp siempre se veía fresco porque lo actualizaba el sync
+> de alerts). Migración: `20260719120000_add_park_live_data_weather_synced_at.sql`.
 
 *(Sección verificada contra `information_schema` de la DB viva el 2026-07-16 —
 todas las columnas salvo `park_code` son nullables.)*
