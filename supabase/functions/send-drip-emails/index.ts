@@ -1,10 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { buildUnsubscribeUrl, unsubscribeHeaders } from "../_shared/unsubscribe.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "https://nomaderia.com";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const CRON_SECRET = Deno.env.get("CRON_SECRET");
 
 if (!SUPABASE_URL) {
   throw new Error("SUPABASE_URL environment variable is not set");
@@ -15,12 +17,18 @@ if (!SUPABASE_SERVICE_ROLE_KEY) {
 }
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  unsubscribeUrl: string,
+): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -32,6 +40,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
       to: [to],
       subject,
       html,
+      headers: unsubscribeHeaders(unsubscribeUrl),
     }),
   });
   if (!res.ok) {
@@ -40,7 +49,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
   }
 }
 
-function buildGearGuideEmail(): string {
+function buildGearGuideEmail(unsubscribeUrl: string): string {
   return `
 <!DOCTYPE html>
 <html lang="es">
@@ -130,13 +139,17 @@ function buildGearGuideEmail(): string {
       <p style="color:#78716C;font-size:11px;margin-top:8px;">
         Recibiste este email porque te suscribiste en nomaderia.com
       </p>
+      <p style="color:#78716C;font-size:11px;margin-top:8px;">
+        ¿No quieres recibir más correos?
+        <a href="${unsubscribeUrl}" style="color:#78716C;text-decoration:underline;">Darse de baja</a>
+      </p>
     </div>
   </div>
 </body>
 </html>`;
 }
 
-function buildItineraryCtaEmail(): string {
+function buildItineraryCtaEmail(unsubscribeUrl: string): string {
   return `
 <!DOCTYPE html>
 <html lang="es">
@@ -200,6 +213,10 @@ function buildItineraryCtaEmail(): string {
       <p style="color:#78716C;font-size:11px;margin-top:8px;">
         Recibiste este email porque te suscribiste en nomaderia.com
       </p>
+      <p style="color:#78716C;font-size:11px;margin-top:8px;">
+        ¿No quieres recibir más correos?
+        <a href="${unsubscribeUrl}" style="color:#78716C;text-decoration:underline;">Darse de baja</a>
+      </p>
     </div>
   </div>
 </body>
@@ -215,18 +232,34 @@ serve(async (req) => {
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY not configured");
     }
+    if (!CRON_SECRET) {
+      throw new Error("CRON_SECRET no configurada");
+    }
+
+    const providedSecret = req.headers.get("x-cron-secret");
+    if (!providedSecret || providedSecret !== CRON_SECRET) {
+      return new Response(
+        JSON.stringify({ error: "No autorizado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const now = new Date();
     const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    // Cutoff anti-stale: leads con más de 30 días nunca entran a la secuencia
+    // (un "kit esencial para empezar" meses tarde lee como spam y quema la
+    // reputación del dominio en Resend).
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Obtener suscriptores registrados hace 3+ días
+    // Suscriptores activos (sin baja) registrados hace 3-30 días
     const { data: subscribers, error: subError } = await supabase
       .from("newsletter_subscribers")
       .select("email, created_at")
       .lte("created_at", threeDaysAgo)
-      .lte("created_at", threeDaysAgo);
+      .gte("created_at", thirtyDaysAgo)
+      .is("unsubscribed_at", null);
 
     if (subError) throw subError;
     if (!subscribers?.length) {
@@ -252,6 +285,7 @@ serve(async (req) => {
 
     for (const sub of subscribers) {
       const subDate = new Date(sub.created_at);
+      const unsubscribeUrl = await buildUnsubscribeUrl(SUPABASE_URL, sub.email, CRON_SECRET);
 
       // Email 2: gear_guide (3+ días)
       if (!sentSet.has(`${sub.email}:gear_guide`)) {
@@ -261,7 +295,8 @@ serve(async (req) => {
           await sendEmail(
             sub.email,
             "🎒 Tu kit esencial para empezar a explorar",
-            buildGearGuideEmail()
+            buildGearGuideEmail(unsubscribeUrl),
+            unsubscribeUrl
           );
           processed++;
         } catch (err) {
@@ -269,12 +304,26 @@ serve(async (req) => {
           errorMessage = err instanceof Error ? err.message : String(err);
           console.error(`Error sending gear_guide to ${sub.email}:`, errorMessage);
         }
-        await supabase.from("email_drip_log").insert({
+        const { error: gearLogError } = await supabase.from("email_drip_log").insert({
           email: sub.email,
           email_type: "gear_guide",
           status,
           error_message: errorMessage,
         });
+        if (gearLogError) {
+          // Sin log persistido, el siguiente run reenviaría este email —
+          // abortar igual que hace itinerary_cta.
+          console.error("Error inserting email_drip_log for gear_guide", {
+            email: sub.email,
+            status,
+            errorMessage,
+            gearLogError,
+          });
+          return new Response(
+            JSON.stringify({ error: "Failed to persist email drip log for gear_guide" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
         await delay(200);
       }
 
@@ -286,7 +335,8 @@ serve(async (req) => {
           await sendEmail(
             sub.email,
             "📋 ¿Listo para planear tu aventura? Te ayudamos",
-            buildItineraryCtaEmail()
+            buildItineraryCtaEmail(unsubscribeUrl),
+            unsubscribeUrl
           );
           processed++;
         } catch (err) {

@@ -1,7 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { buildUnsubscribeUrl, unsubscribeHeaders } from "../_shared/unsubscribe.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const CRON_SECRET = Deno.env.get("CRON_SECRET");
 const SITE_URL =
   Deno.env.get("VITE_SITE_URL") ||
   Deno.env.get("SITE_URL") ||
@@ -33,6 +35,11 @@ serve(async (req) => {
   try {
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY not configured");
+    }
+    if (!CRON_SECRET) {
+      // Firma el token del link de baja (ver _shared/unsubscribe.ts) — sin él
+      // no se puede enviar un correo con mecanismo de baja (CAN-SPAM).
+      throw new Error("CRON_SECRET no configurada");
     }
 
     let body: { email?: string };
@@ -101,6 +108,8 @@ serve(async (req) => {
         }
       );
     }
+
+    const unsubscribeUrl = await buildUnsubscribeUrl(SUPABASE_URL, email, CRON_SECRET);
 
     const htmlEmail = `
 <!DOCTYPE html>
@@ -196,6 +205,10 @@ serve(async (req) => {
       <p style="color:#9CA3AF;font-size:12px;margin-top:6px;">
         Recibiste este email porque te suscribiste en nomaderia.com
       </p>
+      <p style="color:#9CA3AF;font-size:12px;margin-top:6px;">
+        ¿No quieres recibir más correos?
+        <a href="${unsubscribeUrl}" style="color:#9CA3AF;text-decoration:underline;">Darse de baja</a>
+      </p>
     </div>
 
   </div>
@@ -214,6 +227,7 @@ serve(async (req) => {
         to: [email],
         subject: "🏔️ ¡Bienvenido/a a la comunidad Nomaderia!",
         html: htmlEmail,
+        headers: unsubscribeHeaders(unsubscribeUrl),
       }),
     });
 

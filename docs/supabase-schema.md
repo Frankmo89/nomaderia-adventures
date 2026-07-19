@@ -84,10 +84,11 @@ created_at              timestamptz
 
 ### `newsletter_subscribers`
 ```
-id         uuid PK
-email      text UNIQUE
-source     text                                  → "newsletter" | "quiz" | etc.
-created_at timestamptz
+id              uuid PK
+email           text UNIQUE
+source          text                             → "newsletter" | "quiz" | etc.
+created_at      timestamptz
+unsubscribed_at timestamptz NULL                 → NULL = activo; timestamp = baja (edge function `unsubscribe`, token HMAC firmado con CRON_SECRET)
 ```
 
 ### `itinerary_requests`

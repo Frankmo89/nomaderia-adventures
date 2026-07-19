@@ -1,1 +1,6 @@
 project_id = "vrixiuvnhvqafmxlcyex"
+
+# La función de baja se abre desde el navegador (click en el footer del email,
+# sin apikey) — el acceso se protege con el token HMAC del link, no con JWT.
+[functions.unsubscribe]
+verify_jwt = false
