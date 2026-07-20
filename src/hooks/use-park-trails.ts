@@ -7,6 +7,24 @@ export type ParkTrailOption = Pick<
   "id" | "name" | "distance" | "difficulty" | "description_es" | "nps_url"
 >;
 
+// STOPGAP heuristic — see docs/pending-tasks.md ("park_trails data source
+// likely wrong at la raíz"). park_trails is synced from NPS's /thingstodo
+// endpoint (activity=Hiking), which mixes real named trails ("Hike Ryan
+// Mountain") with non-hiking activities ("Attend a Ranger Stroll", "Rock
+// Climbing at Echo T") under the exact same URL pattern — the two can't be
+// told apart by source/URL, only by guessing from the title. This filter is
+// NOT a real classification: it both hides some real trails (e.g. "Minong
+// Section 4: Hike from North Desor to Windigo" — doesn't start with "Hike"
+// or contain "Trail") and keeps some non-hiking items (e.g. ski/bike trails).
+// Remove once park_trails is re-synced from a real trails data source.
+const TRAIL_NAME_ALLOW = /(^hike\b|\btrail(s)?\b|^walk the\b)/i;
+const NON_TRAIL_KEYWORDS =
+  /\b(attend|become|junior ranger|biking|birding|stargazing|rock climbing|bouldering|drive|paddle|portage|horseback|photographing|visit the|backpacking)\b/i;
+
+function looksLikeTrail(name: string): boolean {
+  return TRAIL_NAME_ALLOW.test(name) && !NON_TRAIL_KEYWORDS.test(name);
+}
+
 /**
  * Senderos oficiales (NPS) de un parque, para el autocomplete de bloques
  * `ruta` en el itinerary builder. Solo lectura.
@@ -22,7 +40,7 @@ export function useParkTrails(destinationId?: string | null) {
         .eq("destination_id", destinationId!)
         .order("name", { ascending: true });
       if (error) throw error;
-      return (data as ParkTrailOption[]) ?? [];
+      return ((data as ParkTrailOption[]) ?? []).filter((t) => looksLikeTrail(t.name));
     },
   });
 }

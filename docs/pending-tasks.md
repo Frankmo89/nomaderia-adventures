@@ -201,6 +201,38 @@ Pendiente real:
 - [ ] **Cliente:** render de los extras nuevos en `/i/:token` — badge "Reservado", origen→destino y modo "vuelo" en traslados (hoy el modo se muestra como chip de texto crudo, funcional pero sin ícono propio).
 
 ### Prioridad alta
+- [ ] **⚠ ALTA PRIORIDAD — `park_trails` tiene la fuente de datos mal en la raíz —
+      el filtro heurístico en `use-park-trails.ts` es un parche de UI, no una
+      solución (2026-07-20):** `sync-park-trails` sincroniza desde el endpoint
+      `/thingstodo` de NPS (activity=Hiking), que devuelve una mezcla de
+      senderos reales ("Hike Ryan Mountain") y actividades no relacionadas con
+      senderismo ("Attend a Ranger Stroll", "Rock Climbing at Echo T", "Paddle
+      Tobin Harbor") bajo el mismo patrón de URL (`nps.gov/thingstodo/*`) —
+      confirmado por auditoría: 1,190/1,191 filas de `park_trails` tienen
+      `nps_url` en `/thingstodo/`, incluidas las que sí son senderos reales.
+      Como el URL no distingue, se agregó un filtro por palabras clave del
+      título en `useParkTrails()` (permite `Hike`/`Trail(s)`/`Walk the`,
+      excluye verbos conocidos de actividades no-senderismo) — es un STOPGAP
+      solo de lectura: no toca las filas en la tabla, y su precisión varía
+      mucho por parque (medido: Yellowstone 46/50 filas retenidas = 92%,
+      Joshua Tree 25/48 = 52%, Isle Royale 10/41 = 24%; ver PR de mitigación
+      para detalle). **Investigación de fuente alternativa (2026-07-20):** RIDB
+      (`ridb.recreation.gov`, ya usado por `ingest-park-permits`) **NO** expone
+      un tipo de recurso "Trails" distinto — sus 14 recursos primarios son
+      Activities, Attributes, Campsites, Events, Facilities, FacilityAddresses,
+      Links, Media, Organizations, PermitEntrances, RecreationAreaAddresses,
+      RecreationAreas, Tours, Zones. El modelo `Facility` tiene un campo libre
+      `facility_type_description` sin enum documentado — en el mejor caso
+      algunas facilities individuales podrían estar etiquetadas "Trail"/
+      "Trailhead" por la agencia dueña, pero ni así expone mileage/dificultad
+      estructurados (mismo límite que NPS `/thingstodo`). **Decisión pendiente
+      antes de confiar en este feature para itinerarios de cliente:** (a)
+      filtrar por keyword en `sync-park-trails` en vez de en el hook, para que
+      las filas malas nunca entren a la tabla y luego re-sincronizar los 63
+      parques (sigue siendo heurística sobre NPS `/thingstodo`, no una fuente
+      mejor); o (b) evaluar un proveedor externo con datos reales de
+      senderos (mileage/dificultad) — ej. OpenStreetMap/Overpass — como
+      iniciativa aparte, más grande que un fix rápido.
 - [x] ~~⚠ BLOQUEANTE — `ingest-knowledge` desplegado en producción NO coincide con el código del repo~~ **RESUELTO (julio 2026):** Frank recuperó el código desplegado real desde el dashboard de Supabase; commiteado verbatim (`recover deployed ingest-knowledge v19 from Supabase dashboard — never committed`) antes de cualquier cambio adicional, así que el drift queda cerrado y trazable en git. Sobre esa base se completó el wire de campgrounds y el guard de duplicados (ver changelog + pendiente Frank abajo).
 - [x] ~~Limpiar duplicados de `knowledge_chunks` en `pefo`/`gumo`~~ **Guard de código agregado (julio 2026)** — ver changelog. El DELETE de limpieza de los duplicados existentes y la migración del constraint siguen **pendientes de ejecución manual por Frank** (ver checklist ordenado abajo) — no se ejecutó SQL contra la DB en esta pasada, solo se escribió.
 - [ ] **Frank — pasos manuales para cerrar el batch de ingesta de 63 parques (en este orden exacto; el orden importa):**
