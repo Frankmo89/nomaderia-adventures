@@ -199,6 +199,13 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   - **Escalación que respeta datos en vivo:** los datos en vivo se cargan ANTES del guardrail; se siembra el parque en contexto en el mapa aunque ningún chunk lo aporte; se escala **solo si no hay NI chunks NI datos en vivo**. El bloque DATOS EN VIVO ahora también expone la tarifa de no residentes ($100) además de la de vehículo.
 - **Consecuencias:** NO subir `MIN_SIMILARITY` (el problema era *pocos* resultados, no ruido). NO tocar `shouldEscalate` — solo añade el botón "Hablar con Frank" junto a una respuesta real; no oculta la respuesta. Si se re-codifican parques o NPS fusiona otros, extender `LIVE_DATA_PARK_ALIAS`. La migración se aplica pegando el SQL en el editor de Supabase (db push bloqueado).
 
+### ADR-017 — Flujo IA de descubrimiento/borrador de destinos: retirado (catálogo cerrado)
+- **Fecha:** 2026-07
+- **Estado:** Vigente
+- **Contexto:** El catálogo de 63 parques nacionales está completo y congelado — no se agregarán destinos nuevos. El flujo "Destino Inteligente" (`docs/ai-destinos-plan.md`: botón "✦ Descubrir Trending", `discover-trending-destinations`, `generate-destination-draft`, autofill `?candidate=`, tabla `destination_ai_meta`) era peso muerto que un agente podía re-cablear por error.
+- **Decisión:** Eliminado del código: panel de descubrimiento en `AdminDestinations`, path de draft en `AdminDestinationForm`, hooks/tipos/card asociados y las 2 edge functions. El breakdown IA del dashboard cuenta solo `ai_content_meta` (gear/blog).
+- **Consecuencias:** NO re-implementar descubrimiento/borrador IA para destinos; `docs/ai-destinos-plan.md` es solo histórico. La misma arquitectura **sigue viva y en uso para Gear y Blog** — no tocar `discover-trending-gear/blog`, `generate-gear/blog-draft` ni `_shared/`. `destination_ai_meta` ya no tiene lectores ni escritores: si existe en producción puede droppearse cuando Frank quiera; su migración (`20260601000000`) queda como histórico. Los componentes compartidos `AIDraftProgressOverlay`/`AIDraftSourcesPanel`/`VerifyFieldBadge` se conservan (los usan gear/blog/permit-windows).
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)

@@ -139,14 +139,16 @@ src/
 │   ├── utils.ts              # cn() = clsx + tailwind-merge
 │   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
-└── supabase/functions/       # Edge Functions — 21 en total
+└── supabase/functions/       # Edge Functions — 20 en total
     ├── send-*                # 4: quiz-email, welcome-email, drip-emails, quiz-results
     ├── concierge-agent/      # Concierge IA (RAG sobre knowledge_chunks) — EN PRODUCCIÓN
     ├── ingest-*              # 4: knowledge, national-parks, park-permits, campgrounds
     ├── sync-park-*           # 3: live-data, trails, weather
-    ├── generate-*            # 4: park-content, destination-draft, gear-draft, blog-draft
-    ├── discover-*            # 4: trending-destinations, trending-gear, trending-blog, permit-windows
-    └── check-permit-alerts/
+    ├── generate-*            # 3: park-content, gear-draft, blog-draft
+    ├── discover-*            # 3: trending-gear, trending-blog, permit-windows
+    ├── unsubscribe/          # Baja de newsletter/drip (token HMAC, pública)
+    └── check-permit-alerts/  # (El flujo IA de destinos —discover-trending-destinations +
+                              #  generate-destination-draft— se retiró: catálogo 63 parques cerrado)
 ```
 
 ## Rutas

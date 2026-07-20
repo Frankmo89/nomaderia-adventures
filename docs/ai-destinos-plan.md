@@ -1,4 +1,12 @@
 # 🏔️ PLAN MAESTRO — "Destino Inteligente"
+
+> ⛔ **RETIRADO (2026-07-19).** El flujo de descubrimiento/borrador IA de
+> **destinos** descrito aquí se eliminó del código: el catálogo de 63 parques
+> está completo y cerrado (ver ADR-017 en `docs/decisions.md`). NO
+> re-implementar nada de este documento para destinos. Se conserva solo como
+> referencia histórica de la arquitectura, que **sigue viva en Gear y Blog**
+> (`discover-trending-gear/blog`, `generate-gear/blog-draft`, `ai_content_meta`).
+
 ### IA para descubrir y desarrollar destinos en Nomaderia, sin alucinaciones, con voz propia
 **Versión final · Listo para ejecutar**
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Pencil, Trash2, Sparkles, Search, MapPin } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -11,11 +11,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { TrendingDestinationCard } from "@/components/admin/TrendingDestinationCard";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
 import AdminEmptyState from "@/components/admin/EmptyState";
-import { useTrendingDestinations } from "@/hooks/use-trending-destinations";
 import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,24 +43,9 @@ const AdminDestinations = () => {
   const [items, setItems] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [showDiscoveryPanel, setShowDiscoveryPanel] = useState(false);
-  const [statusIndex, setStatusIndex] = useState(0);
   const [page, setPage] = useState(1);
   const { toast } = useToast();
   const { sortState, handleSort } = useSortable<DestSortKey>();
-  const {
-    mutate: discoverTrending,
-    data: discoveryData,
-    error: discoveryError,
-    isPending: discoveryPending,
-    reset: resetDiscovery,
-  } = useTrendingDestinations();
-
-  const discoveryStatuses = [
-    "Buscando hikes en tendencia…",
-    "Filtrando para principiantes…",
-    "Reuniendo fuentes…",
-  ];
 
   const q = search.trim().toLowerCase();
   const filtered = q
@@ -80,15 +63,6 @@ const AdminDestinations = () => {
 
   useEffect(() => { load(); }, []);
 
-  useEffect(() => {
-    if (!discoveryPending) { setStatusIndex(0); return; }
-    // Progreso por etapas en cliente (no es streaming real del backend).
-    const intervalId = window.setInterval(() => {
-      setStatusIndex((prev) => (prev + 1) % discoveryStatuses.length);
-    }, 2200);
-    return () => { window.clearInterval(intervalId); };
-  }, [discoveryPending, discoveryStatuses.length]);
-
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("destinations").delete().eq("id", id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -101,50 +75,14 @@ const AdminDestinations = () => {
     else setItems((prev) => prev.map((d) => d.id === id ? { ...d, is_published: !current } : d));
   };
 
-  const handleDiscoverTrending = () => {
-    setShowDiscoveryPanel(true);
-    resetDiscovery();
-    discoverTrending();
-  };
-
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="font-serif text-3xl text-foreground">Destinos</h1>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10" onClick={handleDiscoverTrending} disabled={discoveryPending}>
-            <Sparkles className="h-4 w-4 mr-2" /> ✦ Descubrir Trending
-          </Button>
-          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Link to="/admin/destinations/new"><Plus className="h-4 w-4 mr-2" /> Nuevo Destino</Link>
-          </Button>
-        </div>
+        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Link to="/admin/destinations/new"><Plus className="h-4 w-4 mr-2" /> Nuevo Destino</Link>
+        </Button>
       </div>
-
-      {showDiscoveryPanel && (
-        <section className="mb-8 rounded-xl border border-border bg-card/40 p-4 md:p-6">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <h2 className="font-serif text-2xl text-foreground">Sugerencias IA en Tendencia</h2>
-            {discoveryPending && <Badge variant="outline" className="text-primary border-primary/30">{discoveryStatuses[statusIndex]}</Badge>}
-          </div>
-          {discoveryError && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-              <p className="text-sm text-destructive font-medium mb-3">No pudimos descubrir destinos en este momento. Intenta de nuevo.</p>
-              <Button type="button" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/20" onClick={handleDiscoverTrending} disabled={discoveryPending}>Reintentar</Button>
-            </div>
-          )}
-          {!discoveryPending && !discoveryError && discoveryData?.candidates?.length === 0 && (
-            <p className="text-sm text-muted-foreground">No encontramos candidatos nuevos por ahora. Prueba de nuevo en unos minutos.</p>
-          )}
-          {discoveryData?.candidates && discoveryData.candidates.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {discoveryData.candidates.map((candidate) => (
-                <TrendingDestinationCard key={`${candidate.suggested_slug}-${candidate.title}`} candidate={candidate} />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
 
       {!loading && items.length > 0 && (
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">

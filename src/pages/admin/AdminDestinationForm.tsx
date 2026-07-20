@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,12 +11,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Sparkles, Tent, Trash2 } from "lucide-react";
 import { VerifyFieldBadge } from "@/components/admin/VerifyFieldBadge";
-import { AIDraftProgressOverlay } from "@/components/admin/AIDraftProgressOverlay";
-import { AIDraftSourcesPanel } from "@/components/admin/AIDraftSourcesPanel";
 import { supabase } from "@/integrations/supabase/client";
-import { useDestinationDraft } from "@/hooks/use-destination-draft";
 import { useToast } from "@/hooks/use-toast";
-import type { GenerateDraftResponse } from "@/types/ai-destinations";
 import ImageUpload from "@/components/dashboard/ImageUpload";
 import MultiMediaUpload from "@/components/dashboard/MultiMediaUpload";
 
@@ -55,12 +50,6 @@ interface GenerateParkResult {
   }>;
 }
 
-interface CandidateParams {
-  title: string;
-  country: string;
-  suggested_slug?: string;
-}
-
 const emptyForm = {
   title: "", slug: "", country: "", region: "", short_description: "",
   base_city: "", access_type: "", cell_signal_status: "",
@@ -88,30 +77,10 @@ const emptyForm = {
 
 type FormState = typeof emptyForm;
 
-const trackedConfidenceFields = [
-  "region",
-  "base_city",
-  "access_type",
-  "cell_signal_status",
-  "short_description",
-  "difficulty_level",
-  "difficulty_description",
-  "days_needed",
-  "best_season",
-  "estimated_budget_usd",
-  "preparation_plan",
-  "gear_list_markdown",
-  "itinerary_markdown",
-  "full_guide_markdown",
-  "experience_type",
-  "tags",
-] as const;
-
-const stagedDraftStatuses = [
-  "Buscando fuentes oficiales…",
-  "Redactando con la voz de Nomaderia…",
-  "Verificando datos…",
-];
+// El flujo de borrador IA de destinos se retiró (catálogo de 63 parques cerrado);
+// sin él no hay flags automáticos, pero los sub-componentes conservan el soporte
+// de VerifyFieldBadge para edición manual.
+const NO_VERIFY_FLAGS: string[] = [];
 
 const fieldLabel = (label: string, shouldVerify: boolean) => (
   <div className="flex items-center gap-2 mb-2">
@@ -395,7 +364,6 @@ const AdminDestinationForm = () => {
   const { id } = useParams();
   const isEdit = !!id;
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [form, setForm] = useState(emptyForm);
   const [fears, setFears] = useState<Fear[]>([]);
@@ -410,57 +378,6 @@ const AdminDestinationForm = () => {
   const [ridbForce, setRidbForce] = useState(false);
   const [ridbPullResult, setRidbPullResult] = useState<{ procesados: number; sin_match: number } | null>(null);
   const [ridbPullError, setRidbPullError] = useState<string | null>(null);
-  const [aiDraftResponse, setAiDraftResponse] = useState<GenerateDraftResponse | null>(null);
-  const [draftProgressIndex, setDraftProgressIndex] = useState(0);
-  const [draftErrorMessage, setDraftErrorMessage] = useState<string | null>(null);
-  const draftAutofillStartedRef = useRef(false);
-  const draftAutofillCanceledRef = useRef(false);
-  const {
-    mutate: generateDraft,
-    isPending: draftPending,
-    reset: resetDraft,
-  } = useDestinationDraft();
-
-  const candidateParams = useMemo<CandidateParams | null>(() => {
-    const candidate = searchParams.get("candidate");
-
-    if (candidate) {
-      try {
-        const parsed = JSON.parse(candidate) as CandidateParams;
-        if (parsed.title && parsed.country) return parsed;
-      } catch {
-        try {
-          const parsed = JSON.parse(decodeURIComponent(candidate)) as CandidateParams;
-          if (parsed.title && parsed.country) return parsed;
-        } catch {
-          return null;
-        }
-      }
-    }
-
-    const title = searchParams.get("title");
-    const country = searchParams.get("country");
-    const suggested_slug = searchParams.get("suggested_slug") || undefined;
-
-    if (title && country) {
-      return { title, country, suggested_slug };
-    }
-
-    return null;
-  }, [searchParams]);
-
-  const verifyFlags = aiDraftResponse?.verify_flags || [];
-  const confidenceCount = useMemo(() => {
-    return trackedConfidenceFields.filter((fieldName) => {
-      if (verifyFlags.includes(fieldName)) return false;
-
-      const value = form[fieldName];
-      if (typeof value === "boolean") return value;
-      if (typeof value === "string") return value.trim().length > 0;
-      return false;
-    }).length;
-  }, [form, verifyFlags]);
-  const confidenceHigh = confidenceCount / trackedConfidenceFields.length >= 0.75;
 
   const loadDestination = useCallback(async () => {
     if (!isEdit || !id) return;
@@ -527,69 +444,6 @@ const AdminDestinationForm = () => {
   useEffect(() => {
     loadDestination();
   }, [loadDestination]);
-
-  useEffect(() => {
-    if (!draftPending) {
-      setDraftProgressIndex(0);
-      return;
-    }
-
-    // Progreso por etapas en cliente; no representa streaming real del backend.
-    const intervalId = window.setInterval(() => {
-      setDraftProgressIndex((prev) => (prev + 1) % stagedDraftStatuses.length);
-    }, 2200);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [draftPending]);
-
-  useEffect(() => {
-    if (isEdit || !candidateParams || draftAutofillStartedRef.current) return;
-
-    draftAutofillStartedRef.current = true;
-    draftAutofillCanceledRef.current = false;
-    setDraftErrorMessage(null);
-    resetDraft();
-
-    generateDraft(candidateParams, {
-      onSuccess: (response) => {
-        if (draftAutofillCanceledRef.current) return;
-
-        setAiDraftResponse(response);
-        setForm((prev) => ({
-          ...prev,
-          title: response.draft.title,
-          slug: response.draft.slug,
-          country: response.draft.country,
-          region: response.draft.region || "",
-          base_city: response.draft.base_city || "",
-          access_type: response.draft.access_type || "",
-          cell_signal_status: response.draft.cell_signal_status || "",
-          short_description: response.draft.short_description,
-          difficulty_level: response.draft.difficulty_level,
-          difficulty_description: response.draft.difficulty_description || "",
-          days_needed: response.draft.days_needed || "",
-          best_season: response.draft.best_season || "",
-          estimated_budget_usd: response.draft.estimated_budget_usd != null ? String(response.draft.estimated_budget_usd) : "",
-          preparation_plan: response.draft.preparation_plan,
-          gear_list_markdown: response.draft.gear_list_markdown,
-          itinerary_markdown: response.draft.itinerary_markdown,
-          full_guide_markdown: response.draft.full_guide_markdown,
-          experience_type: response.draft.experience_type || "",
-          tags: response.draft.tags.join(", "),
-        }));
-        setFears(response.draft.common_fears.map((fear) => ({
-          miedo: fear.miedo,
-          respuesta: fear.respuesta,
-        })));
-      },
-      onError: (error) => {
-        if (draftAutofillCanceledRef.current) return;
-        setDraftErrorMessage(error.message || "No pudimos generar el borrador IA.");
-      },
-    });
-  }, [candidateParams, generateDraft, isEdit, resetDraft]);
 
   const set = (key: string, val: string | boolean) => setForm((p) => ({ ...p, [key]: val }));
 
@@ -670,19 +524,9 @@ const AdminDestinationForm = () => {
     }
   };
 
-  const handleCancelAutoFill = () => {
-    draftAutofillCanceledRef.current = true;
-    resetDraft();
-    toast({
-      title: "Autocompletado detenido",
-      description: "Puedes seguir editando el destino manualmente.",
-    });
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setDraftErrorMessage(null);
 
     let resolvedSlug = form.slug;
 
@@ -775,47 +619,13 @@ const AdminDestinationForm = () => {
       return;
     }
 
-    if (!isEdit && aiDraftResponse && result.data?.id) {
-      const aiMetaClient = supabase as unknown as SupabaseClient;
-      const { error: aiMetaError } = await aiMetaClient
-        .from("destination_ai_meta")
-        .upsert(
-          {
-            destination_id: result.data.id,
-            sources: aiDraftResponse.sources,
-            verify_flags: aiDraftResponse.verify_flags,
-            model: aiDraftResponse.model,
-          },
-          { onConflict: "destination_id" }
-        );
-
-      if (aiMetaError) {
-        console.error("[AdminDestinationForm] destination_ai_meta save failed:", aiMetaError);
-        toast({
-          title: "Destino guardado con advertencia",
-          description: "Se guardó el destino, pero no pudimos guardar las fuentes privadas de IA.",
-        });
-      }
-    }
-
     navigate("/admin/destinations");
   };
 
   return (
     <div className="max-w-3xl">
-      <AIDraftProgressOverlay
-        open={draftPending}
-        message={stagedDraftStatuses[draftProgressIndex]}
-        onCancel={handleCancelAutoFill}
-      />
-
       <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between">
         <h1 className="font-serif text-3xl text-foreground">{isEdit ? "Editar Destino" : "Nuevo Destino"}</h1>
-        {aiDraftResponse && !isEdit && (
-          <Badge className={confidenceHigh ? "bg-secondary text-secondary-foreground" : "bg-primary/15 text-primary border border-primary/20"}>
-            Confianza: {confidenceCount} de {trackedConfidenceFields.length} campos verificados con fuente
-          </Badge>
-        )}
       </div>
 
       {isEdit && (
@@ -900,32 +710,22 @@ const AdminDestinationForm = () => {
         </Card>
       )}
 
-      {draftErrorMessage && !draftPending && (
-        <Card className="bg-card border-border mb-6">
-          <CardContent className="pt-6">
-            <p className="text-sm text-destructive font-medium">{draftErrorMessage}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {aiDraftResponse && !isEdit && <AIDraftSourcesPanel sources={aiDraftResponse.sources} />}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <GeneralFields
           form={form}
           set={set}
           galleryImages={galleryImages}
           onGalleryChange={setGalleryImages}
-          verifyFlags={verifyFlags}
+          verifyFlags={NO_VERIFY_FLAGS}
         />
         <FaqFields
           fears={fears}
           onAdd={() => setFears([...fears, { miedo: "", respuesta: "" }])}
           onRemove={(i) => setFears(fears.filter((_, idx) => idx !== i))}
           onUpdate={(i, key, val) => setFears(fears.map((f, idx) => (idx === i ? { ...f, [key]: val } : f)))}
-          verifyFlags={verifyFlags}
+          verifyFlags={NO_VERIFY_FLAGS}
         />
-        <MarkdownFields form={form} set={set} verifyFlags={verifyFlags} />
+        <MarkdownFields form={form} set={set} verifyFlags={NO_VERIFY_FLAGS} />
         <SignatureHikesFields
           hikes={hikes}
           onAdd={() => setHikes([...hikes, { nombre: "", distancia_km: "", duracion_horas: "", desnivel_m: "", apto_principiante: false, nota: "" }])}

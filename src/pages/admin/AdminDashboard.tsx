@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 interface Stats {
   destinations: number;
   destinationDrafts: number;
-  aiGeneratedDestinations: number;
   aiGeneratedGear: number;
   aiGeneratedBlog: number;
   gear: number;
@@ -121,7 +120,6 @@ const AdminDashboard = () => {
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
   const [stats, setStats] = useState<Stats>({
     destinations: 0, destinationDrafts: 0,
-    aiGeneratedDestinations: 0,
     aiGeneratedGear: 0,
     aiGeneratedBlog: 0,
     gear: 0, gearDrafts: 0,
@@ -141,10 +139,9 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [dPub, dDraft, aiGenerated, aiContentMeta, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
+      const [dPub, dDraft, aiContentMeta, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", false),
-        db.from("destination_ai_meta").select("id", { count: "exact", head: true }),
         db.from("ai_content_meta").select("content_type").in("content_type", ["gear", "blog"]),
         supabase.from("gear_articles").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("gear_articles").select("id", { count: "exact", head: true }).eq("is_published", false),
@@ -163,7 +160,7 @@ const AdminDashboard = () => {
       let aiGeneratedGear = 0;
       let aiGeneratedBlog = 0;
 
-      // Si ai_content_meta falla o viene vacío, mantenemos destino y dejamos gear/blog en 0 sin romper UI.
+      // Si ai_content_meta falla o viene vacío, dejamos gear/blog en 0 sin romper UI.
       if (!aiContentMeta.error && aiContentMeta.data) {
         for (const row of aiContentMeta.data as Array<{ content_type: string | null }>) {
           if (row.content_type === "gear") aiGeneratedGear += 1;
@@ -174,7 +171,6 @@ const AdminDashboard = () => {
       setStats({
         destinations: dPub.count || 0,
         destinationDrafts: dDraft.count || 0,
-        aiGeneratedDestinations: aiGenerated.count || 0,
         aiGeneratedGear,
         aiGeneratedBlog,
         gear: gPub.count || 0,
@@ -324,7 +320,7 @@ const AdminDashboard = () => {
 
   const typeLabel: Record<RecentItem["type"], string> = { destination: "Destino", gear: "Gear", blog: "Blog" };
   const typeHref: Record<RecentItem["type"], string> = { destination: "/admin/destinations", gear: "/admin/gear-articles", blog: "/admin/blog-posts" };
-  const aiGeneratedTotal = stats.aiGeneratedDestinations + stats.aiGeneratedGear + stats.aiGeneratedBlog;
+  const aiGeneratedTotal = stats.aiGeneratedGear + stats.aiGeneratedBlog;
 
   return (
     <div>
@@ -547,7 +543,7 @@ const AdminDashboard = () => {
           <CardContent>
             <p className="text-3xl font-bold text-card-foreground">{aiGeneratedTotal}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Destinos: {stats.aiGeneratedDestinations} · Gear: {stats.aiGeneratedGear} · Blog: {stats.aiGeneratedBlog}
+              Gear: {stats.aiGeneratedGear} · Blog: {stats.aiGeneratedBlog}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {aiGeneratedTotal} generados con IA · ≈ {(aiGeneratedTotal * 2.5).toLocaleString("es-MX", { maximumFractionDigits: 1 })} h ahorradas (estimado)
