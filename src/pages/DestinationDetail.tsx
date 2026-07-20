@@ -516,7 +516,11 @@ const DestinationDetail = () => {
       </section>
 
       {/* Park alerts — prominently before content, after hero */}
-      <ParkAlertsBanner alerts={parkLiveData?.alerts ?? []} />
+      <ParkAlertsBanner alerts={parkLiveData?.alerts ?? []} parkName={dest.title} />
+
+      {/* Current weather — decision info, compact, under the alerts bar.
+          Renders nothing when weather is NULL (chis/bisc/npsa). */}
+      <ParkWeatherCard weather={parkLiveData?.weather} variant="current" />
 
       {/* Por qué ir */}
       {(whyText || highlights.length > 0) && (
@@ -824,7 +828,7 @@ const DestinationDetail = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <ParkWeatherCard weather={parkLiveData?.weather} />
+                    <ParkWeatherCard weather={parkLiveData?.weather} variant="forecast" />
                     {dest.preparation_plan
                       ? <div className="prose prose-stone max-w-none text-foreground/90 leading-relaxed prose-headings:font-serif prose-headings:text-foreground">
                           <ReactMarkdown components={markdownComponents}>{dest.preparation_plan}</ReactMarkdown>

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import type { ParkAlert } from "@/hooks/use-park-live-data";
 
 interface ParkAlertsBannerProps {
   alerts: ParkAlert[];
+  parkName: string;
 }
 
 const CATEGORY_ORDER: Record<string, number> = {
@@ -36,7 +38,7 @@ function sortAlerts(alerts: ParkAlert[]): ParkAlert[] {
   });
 }
 
-export default function ParkAlertsBanner({ alerts }: ParkAlertsBannerProps) {
+export default function ParkAlertsBanner({ alerts, parkName }: ParkAlertsBannerProps) {
   const [open, setOpen] = useState(false);
 
   if (!alerts.length) return null;
@@ -85,6 +87,20 @@ export default function ParkAlertsBanner({ alerts }: ParkAlertsBannerProps) {
         {/* Expanded list */}
         {open && (
           <div className="pb-4 space-y-4">
+            {/* Marco en español — los cuerpos de alerta vienen de NPS en inglés */}
+            <p className="font-sans text-slate" style={{ fontSize: 13 }}>
+              Alertas oficiales del parque — NPS las publica en inglés. ¿Dudas
+              sobre alguna?{" "}
+              <a
+                href={buildWhatsAppLink(`Hola! Tengo una duda sobre una alerta de ${parkName}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green hover:text-green-dark hover:underline"
+              >
+                Pregúntame por WhatsApp
+              </a>
+              .
+            </p>
             {sorted.map((alert, i) => {
               const badgeStyle = CATEGORY_STYLE[alert.category] ?? CATEGORY_STYLE.Information;
               const label = CATEGORY_LABEL[alert.category] ?? alert.category;
