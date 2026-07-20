@@ -8,7 +8,20 @@ import { cn } from "@/lib/utils";
 
 interface TrailsSectionProps {
   hikes: SignatureHike[];
+  /** Coordenadas del parque (destinations.latitude/longitude) — encuadran el
+   * mapa a escala de parque antes de ajustar a los pines de senderos. */
+  parkLat?: number | null;
+  parkLng?: number | null;
 }
+
+// Medio-lado del cuadro "escala de parque" alrededor del centro del parque,
+// en grados (~0.15° ≈ escala regional/parque típica). No varía por tamaño de
+// parque real (no tenemos polígono de límites, solo un punto) — es un
+// mínimo razonable, no una medida exacta.
+const PARK_FRAME_DEGREES = 0.15;
+// Tope duro de zoom para fitBounds: nunca se acerca más que esto aunque los
+// pines sincronizados (o el cuadro de parque) sean diminutos.
+const MAX_MAP_ZOOM = 11;
 
 type FilterKey = "all" | "principiante" | "ninos";
 
@@ -27,7 +40,7 @@ const greenIcon = L.divIcon({
   popupAnchor: [0, -14],
 });
 
-export default function TrailsSection({ hikes }: TrailsSectionProps) {
+export default function TrailsSection({ hikes, parkLat, parkLng }: TrailsSectionProps) {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
 
   const hikesWithCoords = useMemo(
@@ -43,12 +56,31 @@ export default function TrailsSection({ hikes }: TrailsSectionProps) {
     return hikes;
   }, [hikes, activeFilter]);
 
+  // Fallback pre-2026-07-20: promedio de los pines sincronizados a zoom fijo.
+  // Con pocos senderos sincronizados (rotación por batch) esto centraba el
+  // mapa en la esquina donde cayeron esos pines, no en el parque — se lee
+  // como un zoom absurdo aunque el número de zoom nunca cambiara. Se
+  // mantiene solo para parques sin destinations.latitude/longitude.
   const mapCenter = useMemo(() => {
     if (!hikesWithCoords.length) return null;
     const lat = hikesWithCoords.reduce((s, h) => s + h.trailhead_lat!, 0) / hikesWithCoords.length;
     const lng = hikesWithCoords.reduce((s, h) => s + h.trailhead_lng!, 0) / hikesWithCoords.length;
     return [lat, lng] as [number, number];
   }, [hikesWithCoords]);
+
+  // Encuadre a escala de parque: arranca de un cuadro fijo alrededor del
+  // centro del parque y lo extiende (nunca lo encoge) con cada pin de
+  // sendero — así 1-2 pines sincronizados nunca fuerzan un acercamiento
+  // mayor que "el parque completo" (maxZoom lo garantiza como tope duro).
+  const mapBounds = useMemo(() => {
+    if (parkLat == null || parkLng == null || !hikesWithCoords.length) return null;
+    const bounds = L.latLngBounds(
+      [parkLat - PARK_FRAME_DEGREES, parkLng - PARK_FRAME_DEGREES],
+      [parkLat + PARK_FRAME_DEGREES, parkLng + PARK_FRAME_DEGREES],
+    );
+    hikesWithCoords.forEach((h) => bounds.extend([h.trailhead_lat!, h.trailhead_lng!]));
+    return bounds;
+  }, [parkLat, parkLng, hikesWithCoords]);
 
   if (!hikes.length) return null;
 
@@ -84,34 +116,54 @@ export default function TrailsSection({ hikes }: TrailsSectionProps) {
           ))}
         </div>
 
-        {/* Map — only rendered when at least one hike has coordinates */}
+        {/* Map — only rendered when at least one hike has coordinates. Framed
+            at park scale (mapBounds) when destinations.latitude/longitude is
+            available; falls back to the pin-average/fixed-zoom behavior
+            otherwise (parks with no coordinates on file). */}
         {mapCenter && (
           <div
             className="rounded-xl overflow-hidden mb-8 border border-border"
             style={{ height: 280 }}
           >
-            <MapContainer
-              center={mapCenter}
-              zoom={12}
-              style={{ height: "100%", width: "100%" }}
-              scrollWheelZoom={false}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-              {hikesWithCoords.map((h, i) => (
-                <Marker
-                  key={i}
-                  position={[h.trailhead_lat!, h.trailhead_lng!]}
-                  icon={greenIcon}
-                >
-                  <Popup>
-                    <span style={{ fontWeight: 600 }}>{h.nombre}</span>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+            {mapBounds ? (
+              <MapContainer
+                bounds={mapBounds}
+                boundsOptions={{ padding: [24, 24], maxZoom: MAX_MAP_ZOOM }}
+                style={{ height: "100%", width: "100%" }}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                {hikesWithCoords.map((h, i) => (
+                  <Marker key={i} position={[h.trailhead_lat!, h.trailhead_lng!]} icon={greenIcon}>
+                    <Popup>
+                      <span style={{ fontWeight: 600 }}>{h.nombre}</span>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            ) : (
+              <MapContainer
+                center={mapCenter}
+                zoom={12}
+                style={{ height: "100%", width: "100%" }}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                {hikesWithCoords.map((h, i) => (
+                  <Marker key={i} position={[h.trailhead_lat!, h.trailhead_lng!]} icon={greenIcon}>
+                    <Popup>
+                      <span style={{ fontWeight: 600 }}>{h.nombre}</span>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            )}
           </div>
         )}
 
