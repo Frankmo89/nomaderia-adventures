@@ -96,6 +96,11 @@ interface DestExt {
   top_activities?: string[] | null;
   signature_hikes?: SignatureHike[] | null;
   max_elevation_ft?: number | null;
+  // Etiqueta corta de temporada (ej. "Oct–Abr") para QuickFactsRow — migración
+  // 20260720000000, pendiente de aplicar a producción hasta revisión de Frank
+  // de la tabla de valores IA (ver docs/pending-tasks.md). undefined hasta
+  // entonces: QuickFactsRow ya tolera season_short null/undefined.
+  season_short?: string | null;
   altitude_warning?: boolean | null;
   beginner_friendly?: boolean | null;
   not_ideal_if?: string[] | null;
@@ -510,7 +515,8 @@ const DestinationDetail = () => {
             daysNeeded={dest.days_needed}
             budgetUsd={dest.estimated_budget_usd}
             maxElevationFt={(dest as Destination & DestExt).max_elevation_ft}
-            bestSeason={dest.best_season}
+            seasonShort={(dest as Destination & DestExt).season_short}
+            entranceFeeUsd={parkLiveData?.entrance_fee_usd}
           />
         </div>
       </section>
@@ -554,6 +560,25 @@ const DestinationDetail = () => {
         </motion.section>
       )}
 
+      {/* Cuándo ir — relocación del párrafo largo de best_season (antes vivía
+          apretado en la celda TEMPORADA de QuickFactsRow, ver 2026-07-20).
+          Texto verbatim de la DB, sin reescribir. */}
+      {dest.best_season?.trim() && (
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="py-14 border-b border-border"
+        >
+          <div className="container mx-auto px-4 max-w-3xl">
+            <h2 className="font-serif text-3xl font-bold text-foreground mb-6">Cuándo ir</h2>
+            <div className="prose prose-stone max-w-none text-foreground/80 leading-relaxed">
+              <p>{dest.best_season}</p>
+            </div>
+          </div>
+        </motion.section>
+      )}
+
       {/* Senderos */}
       {(() => {
         const hikes = ((dest as Destination & DestExt).signature_hikes ?? []).filter(
@@ -561,7 +586,7 @@ const DestinationDetail = () => {
         );
         return hikes.length > 0 ? (
           <Suspense fallback={<TrailsSectionSkeleton />}>
-            <TrailsSection hikes={hikes} />
+            <TrailsSection hikes={hikes} parkLat={dest.latitude} parkLng={dest.longitude} />
           </Suspense>
         ) : null;
       })()}
@@ -700,7 +725,7 @@ const DestinationDetail = () => {
                         const cells = [
                           { label: "DURACIÓN",  value: dest.days_needed },
                           { label: "ELEVACIÓN", value: ext.max_elevation_ft != null ? `${ext.max_elevation_ft.toLocaleString("en-US")} ft` : null },
-                          { label: "TEMPORADA", value: dest.best_season },
+                          { label: "TEMPORADA", value: ext.season_short },
                           { label: "PRINCIPIANTE", value: ext.beginner_friendly === true ? "Sí ✓" : ext.beginner_friendly === false ? "No recomendado" : null },
                         ].filter((c) => c.value);
                         if (!cells.length) return null;
