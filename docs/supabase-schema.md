@@ -16,7 +16,10 @@ short_description     text
 difficulty_level      text DEFAULT 'easy'        → "easy" | "moderate" | "challenging"
 difficulty_description text
 days_needed           text
-best_season           text
+best_season           text                       → párrafo editorial largo (sección "Cuándo ir")
+season_short          text                       → etiqueta corta p/ stat cell (ej. "Oct–Abr") — migración 20260720000000,
+                                                     ⚠️ escrita pero NO aplicada a producción (pendiente review de Frank,
+                                                     ver docs/pending-tasks.md changelog 2026-07-20). NULL hasta entonces.
 estimated_budget_usd  integer                    → USD entero
 hero_image_url        text
 gallery_images        text[]
@@ -227,12 +230,17 @@ park_code        text PK                        → FK lógica a destinations.pa
 destination_id   uuid NULL → destinations(id) FK
 -- NPS /parks (full mode)
 entrance_fees    jsonb                          → [{cost, description, title}]
-entrance_fee_usd numeric                        → fee de entrada normalizado (USD)
+entrance_fee_usd numeric                        → fee de entrada normalizado (USD) — consumido por use-park-live-data.ts
+                                                    desde 2026-07-20 (celda "Entrada" de QuickFactsRow en /destinos/:slug)
 operating_hours  jsonb                          → [{name, description, standardHours, exceptions}]
 images           jsonb                          → [{url, altText, title, caption, credit}]
 nps_images       jsonb                          → imágenes crudas del API NPS
-coordinates      jsonb                          → coordenadas normalizadas
-lat_long         text                           → "lat:X, long:Y" (raw NPS string)
+coordinates      jsonb                          → ⚠️ SIN WRITER — ningún Edge Function la escribe (verificado por grep +
+                                                    consulta a producción 2026-07-20, NULL en las 63 filas). NO usar como
+                                                    fuente de coordenadas: usar `destinations.latitude`/`longitude`
+                                                    (pobladas, estables, ya en el `dest` de useDestinationBySlug — ver
+                                                    TrailsSection.tsx) o, si hace falta el string crudo de NPS, `lat_long`.
+lat_long         text                           → "lat:X, long:Y" (raw NPS string, sí poblado por sync-park-live-data)
 permits          jsonb                          → datos de permisos (ingest-park-permits)
 -- NPS /alerts (ambos modos)
 alerts           jsonb                          → [{id, title, description, category, url, lastIndexedDate}]

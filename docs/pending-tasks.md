@@ -14,6 +14,22 @@
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
 
+- [ ] **Revisar y aplicar `season_short` (2026-07-20) — bloquea que la celda "Temporada" de `QuickFactsRow` se active en producción.**
+      La migración `supabase/migrations/20260720000000_add_destinations_season_short.sql`
+      agrega la columna `destinations.season_short` y hace backfill de los 63
+      parques, pero **queda sin aplicar a propósito** — son valores generados
+      por IA (extracción de meses desde `best_season`) y ~22 de 63 quedaron
+      marcados ⚠️ VERIFICAR por requerir alguna inferencia. Revisar la tabla
+      completa en el changelog de abajo (entrada "Redesign de stats de parque
+      y mapa de senderos — 2026-07-20"); corregir directamente el `WHEN` de
+      cualquier slug en el SQL antes de aplicar si un valor no convence. Pasos:
+      (1) pegar el SQL en el editor de Supabase (mismo patrón que ADR-018/
+      ADR-016 — `db push` con drift conocido); (2) regenerar tipos:
+      `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`;
+      (3) opcional, quitar el cast `DestExt.season_short` en `DestinationDetail.tsx`
+      una vez el tipo generado lo cubra (ver comentario ADR-009 junto al campo).
+      Hasta entonces la celda "Temporada" simplemente no aparece (el código ya
+      tolera `season_short` NULL/undefined — no rompe nada, solo no se ve).
 - [ ] **Re-habilitar el cron del drip — pasos de deploy (2026-07-19, en orden):**
       (1) `supabase db push` — aplica DOS migraciones pendientes: la de
       `email_drip_log` (20260228, committeada pero nunca aplicada — sin ella
@@ -705,6 +721,85 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
 > vive en el historial de git. Entradas recientes primero.
 
 ### Julio 2026
+
+**[2026-07-20] Redesign de stats de parque y mapa de senderos en `/destinos/:slug` (QA de producción de Frank) — `season_short` nuevo (columna sin aplicar, pendiente de revisión), celda "Entrada", sección "Cuándo ir" y encuadre de mapa a escala de parque (ADR-020).** Research previo en Mobbin (secciones de stat rows compactos y "best time to visit" — PayPal "Company Facts" grid uniforme icon+número+label, Front "at a glance" 2×2, Wise/KOBU bloques editoriales heading+párrafo) confirmó el patrón ya usado en este repo (`design-system.md` §4.1, grid 2×2) y que un párrafo largo pertenece a su propia sección editorial, no a una stat cell — sin diseño nuevo importado 1:1, solo validación del rumbo.
+1. **`QuickFactsRow.tsx` reescrito — grid uniforme, tokens del design system.** Reemplaza el `flex` de una sola fila (causa del bug: la celda TEMPORADA se estiraba con el párrafo largo de `best_season`, arrastrando toda la fila a 2 pantallas en mobile) por un grid: 2 columnas en mobile (la última celda de un conteo impar ocupa el ancho completo — matemática de bordes genérica para cualquier cantidad de facts, no solo 4-5), una sola fila en desktop (`sm:grid-cols-N` literal por conteo). Altura uniforme por celda (`minHeight: 76`) sin importar el largo del valor. Colores migrados de hexes sueltos (`#1C1917`, `#6B7280`, `#E5E7EB` — no eran del design system) a tokens (`text-ink`, `text-sage`, `border-stone`); label en `font-condensed` (Oswald) por el rol "unidad de stat" que le asigna el design system, antes usaba Inter. Prop `bestSeason` renombrada a `seasonShort` (recibe la etiqueta corta, no el párrafo).
+2. **Sección "Cuándo ir" nueva en `DestinationDetail.tsx`**, inmediatamente después de "Por qué ir", mismo estilo (heading Playfair, `py-14 border-b`). Muestra `dest.best_season` verbatim — es una relocación, no una reescritura; el texto no cambió. De paso se corrigió una segunda instancia del mismo bug en el grid 2×2 del panel "¿Puedo Hacerlo?" (línea ~703, celda TEMPORADA con el mismo párrafo largo) para usar `season_short` también — mismo root cause, mismo fix, sin tocar el resto de ese bloque (fuera del alcance de esta tarea).
+3. **Celda "Entrada" — `use-park-live-data.ts` amplía su `select` a `alerts, weather, entrance_fee_usd`** (autorización explícita de la tarea; el campo tiene writer real en `sync-park-live-data` y está poblado en las 63 filas — verificado). Formato `$XX` o "Gratis" si 0; si `entrance_fee_usd` es NULL la celda no aparece y el grid se adapta (mismo patrón condicional que ya tenían días/elevación/presupuesto).
+4. **Encuadre del mapa (`TrailsSection.tsx`) — desviación de la tarea original, documentada en ADR-020: las coordenadas del parque NO vienen de `park_live_data.coordinates`.** La tarea asumía ese campo poblado; verificación contra producción (grep de todos los Edge Functions + `execute_sql`) confirmó que **ningún writer existe para esa columna — NULL en las 63 filas**. Se usó `destinations.latitude`/`longitude` en su lugar (pobladas, estables, ya presentes en el `dest` de `useDestinationBySlug` sin query adicional — mismo trade-off ya documentado en el comentario de `useDestinationsMapData` en `use-destinations.ts`). `DestinationDetail.tsx` pasa `parkLat`/`parkLng` nuevos a `TrailsSection`. El `MapContainer` ahora usa `bounds` (cuadro de ±0.15° alrededor del centro del parque, extendido con cada pin de sendero vía `L.latLngBounds.extend`) con `boundsOptions={{ maxZoom: 11 }}` como tope duro — nunca se acerca más que "escala de parque" con 1-2 pines. Sin coordenadas de parque, cae al comportamiento anterior (promedio de pines + zoom fijo 12) como fallback, sin cambios.
+5. **`season_short` — columna nueva, migración escrita pero NO aplicada a producción a propósito.** `supabase/migrations/20260720000000_add_destinations_season_short.sql` agrega `destinations.season_short TEXT` + backfill de los 63 parques, valores extraídos por IA de los meses mencionados en `best_season`. **Zero invented data** en el sentido de la tarea: cuando el texto daba dos ventanas separadas se listaron ambas (`"Mar–May, Sep–Oct"`), nunca se fusionó en un rango continuo falso salvo que los meses fueran literalmente contiguos. 22 de 63 quedaron marcados ⚠️ VERIFICAR (IA) por requerir inferencia real (meses no explícitos, dos ventanas con propósitos distintos, o un evento puntual vs. la temporada general). Tabla completa para revisión de Frank:
+
+   | Parque | `season_short` | ⚠️ |
+   |---|---|---|
+   | Acadia | Sep–Oct | ⚠️ dos ventanas: sep-oct destacada vs jun-ago "clásica" |
+   | Arches | Mar–May, Sep–Oct | |
+   | Badlands | May–Jun, Sep–Oct | |
+   | Big Bend | Nov–Abr | |
+   | Biscayne | Dic–May | |
+   | Black Canyon of the Gunnison | May–Oct | |
+   | Bryce Canyon | May–Sep | ⚠️ shoulder abr-may/sep-oct mencionado como alternativa con menos gente |
+   | Canyonlands | Mar–May, Sep–Oct | |
+   | Capitol Reef | Abr–May, Sep–Oct | |
+   | Carlsbad Caverns | May–Oct | ⚠️ solo aplica al vuelo de murciélagos; la cueva es visitable todo el año |
+   | Channel Islands | Todo el año | ⚠️ primavera/otoño son "el mejor equilibrio" pero no hay mala época |
+   | Congaree | Oct–Abr | ⚠️ dos ventanas muy distintas: luciérnagas may-jun (con lotería) vs oct-abr clima fresco — se priorizó la general |
+   | Crater Lake | Jun–Sep | ⚠️ texto no da meses explícitos ("verano y principios de otoño") |
+   | Cuyahoga Valley | Mar–May, Oct | ⚠️ primavera sin meses explícitos — inferido |
+   | Samoa Americana | Jun–Sep | |
+   | Death Valley | Nov–Mar | |
+   | Gran Cañón | Mar–May, Sep–Nov | |
+   | Dry Tortugas | Dic–May | |
+   | Everglades | Dic–Abr | |
+   | Gateway Arch | Todo el año | ⚠️ primavera/otoño "más agradables" pero funciona cualquier época (bajo techo) |
+   | Glacier | Jul–Sep | |
+   | Grand Teton | Jun–Sep | |
+   | Great Basin | Jun–Sep | |
+   | Great Smoky Mountains | May–Jun, Oct | ⚠️ dos momentos sin continuidad: oct colores vs may-jun cascadas |
+   | Guadalupe Mountains | Mar–Abr, Oct–Nov | |
+   | Haleakalā | Todo el año | ⚠️ abr-sep da "algo más de probabilidad" de cielo despejado, no ventana estricta |
+   | Hot Springs | Mar–May, Oct–Nov | ⚠️ primavera sin meses explícitos; el baño termal en sí es bueno todo el año |
+   | Indiana Dunes | Jun–Sep, Oct | ⚠️ jun-sep playa vs oct colores, propósitos distintos |
+   | Islas Vírgenes | Dic–Jun | ⚠️ dic-abr = mejor clima (caro) vs may-jun = "punto dulce" precio/clima — ambiguo cuál priorizar |
+   | Isle Royale | Jul–Ago | |
+   | Joshua Tree | Oct–Abr | |
+   | Kenai Fjords | Jun–Ago | |
+   | Kings Canyon | Jun–Oct | |
+   | Kobuk Valley | Jun–Jul, Ago–Sep | ⚠️ dos momentos distintos: dunas jun-jul vs migración de caribús fines-ago/sep |
+   | Lassen Volcanic | May–Jun, Sep | ⚠️ texto no da meses explícitos ("finales de primavera y principios de otoño") |
+   | Mammoth Cave | Todo el año | |
+   | Mesa Verde | May–Oct | |
+   | Montañas Rocosas | Jun–Sep | ⚠️ texto no da meses explícitos ("verano y principios de otoño") |
+   | Mount Rainier | Jul–Sep | |
+   | North Cascades | Jul–Sep | |
+   | Olympic | Jul–Sep | |
+   | Petrified Forest | Mar–May, Sep–Oct | |
+   | Pinnacles | Mar–May | |
+   | Redwood | Jun–Sep | ⚠️ texto también valora el invierno lluvioso como alternativa atmosférica |
+   | Saguaro | Nov–Abr | |
+   | Sequoia | Jun–Oct | |
+   | Shenandoah | Mar–May, Oct | ⚠️ primavera sin meses explícitos — inferido |
+   | Theodore Roosevelt | May–Jun, Sep–Oct | |
+   | Volcanes de Hawái | Todo el año | |
+   | Voyageurs | Jun–Sep | |
+   | White Sands | Oct–Abr | |
+   | Wind Cave | May–Jun, Sep–Oct | |
+   | Denali | Jun–Sep | |
+   | Gates of the Arctic | Jun–Ago | |
+   | Glacier Bay | Jun–Ago | |
+   | Great Sand Dunes | May–Jun, Sep | ⚠️ sep se menciona como ventana adicional "también excelente", separada de may-jun |
+   | Katmai | Jul, Sep | ⚠️ dos temporadas de observación de osos, no continuas (pico salmón jul vs segunda temporada sep) |
+   | Lake Clark | Jun–Sep | |
+   | New River Gorge | Mar–May, Sep–Oct | ⚠️ primavera sin meses explícitos; texto prioriza sep-oct |
+   | Wrangell-St. Elias | May–Sep | |
+   | Yellowstone | May–Sep | ⚠️ jul-ago "funciona pero con multitudes" — no es mala época, solo más concurrida |
+   | Yosemite | Abr–Jun, Sep–Oct | |
+   | Zion | Mar–May, Sep–Nov | |
+
+   Ver ítem nuevo en Pendientes Humanos para los pasos de aplicación. El código
+   (`QuickFactsRow`, `DestinationDetail`) ya tolera `season_short` NULL/undefined
+   en todo momento — aplicar la migración activa la celda sin otro deploy.
+
+NO se tocó: auth, `has_role`, routing, `vite.config.ts`, `ui/*`, Hero, sync functions, ningún otro hook/query. Verificación: `tsc --noEmit` ✅, `npm run build` ✅, vitest 96/96 ✅; **QA en navegador real (Playwright headless, 390×844)** en los 4 parques pedidos — Guadalupe Mountains (peor caso original: grid 2×2 limpio, sin estiramiento, mapa pasó de encuadrar una esquina al azar a mostrar el polígono completo del parque con ambos pines de sendero), Joshua Tree (grid con celda Entrada `$30`), Redwood (5 pines de senderos dispersos en ~50km de costa — el mapa ahora muestra el tramo completo Smith River–Six Rivers en vez de un zoom absurdo sobre 2-3 pines), Zion (2 pines casi superpuestos — el mapa ahora muestra el polígono completo de Zion Wilderness y áreas vecinas en vez de un acercamiento extremo a un punto). Cero errores de consola en las 4 páginas.
 
 **[2026-07-20] Fix: `/admin/client-itineraries/new` crasheaba al montar — `<Select.Item value="">` en el select de plantilla.** Radix `Select.Item` no acepta `value=""` (lo usa internamente como sentinel para "sin selección"); el select de "Plantilla base" en `AdminClientItineraryNew.tsx` tenía `<SelectItem value="">Empezar en blanco</SelectItem>` para el estado "sin plantilla", lo que tira el error en el primer render (`A <Select.Item /> must have a value prop that is not an empty string`) — la página quedaba inutilizable. Fix: se eliminó ese `SelectItem`; el estado "sin plantilla" ya lo cubre `SelectValue placeholder="Empezar en blanco (sin plantilla)"` con el `Select` en modo no controlado (`value={field.value || undefined}` en vez de `field.value ?? ""`) — sin selección, Radix no encuentra item que matchee y muestra el placeholder solo. El payload ya mapeaba `values.template_id || null` correctamente, así que no hubo que tocar el submit. **Auditoría del resto del builder (grep de `SelectItem` en `src/pages/admin/` y `src/components/admin/`, un archivo a la vez):** el diálogo de creación rápida en `AdminClientItineraries.tsx` (select de parque), el select "Modo" de `ItineraryBlockEditor.tsx` (bloque `traslado`) y el select de estado de `AdminClientItineraryDetail.tsx` no tenían el patrón — todos sus `SelectItem` usan valores reales no vacíos; el único punto de riesgo real (`value={field.value ?? ""}` en el select de "Modo" de `ItineraryBlockEditor`) no crasheaba porque ningún `SelectItem` ahí tiene `value=""` — pero quedaba como trampa latente (un `SelectItem value=""` futuro ahí sí tronaría). **Follow-up mismo día:** ese select de "Modo" también se alineó al mismo patrón (`value={field.value || undefined}` en vez de `?? ""`) para cerrar la trampa, sin tocar sus `SelectItem` (ya usan valores reales `auto`/`shuttle`/`caminar`/`vuelo`) ni el placeholder existente. No se tocó `src/components/ui/select.tsx` (el bug es de uso, no del primitivo), auth, ni ninguna query. Verificación: `tsc --noEmit` ✅, `npm run build` ✅ (ambas pasadas, incluida la del follow-up); revisión manual del flujo — el diálogo abre sin crashear, el select de plantilla muestra el placeholder por defecto y las plantillas publicadas, el select de parque del diálogo rápido sigue listando los 63 destinos publicados (`is_published=true`, sin cambios), y el payload de creación mapea `template_id`/`destination_id` vacíos a `null` igual que antes en ambos flujos (con y sin plantilla/parque opcional). Lección agregada a `docs/decisions.md` (Lecciones técnicas).
 

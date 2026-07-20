@@ -24,12 +24,14 @@ export interface WeatherPayload {
   periods: WeatherPeriod[];
 }
 
-// Solo los campos que consumen ParkAlertsBanner (alerts) y ParkWeatherCard
-// (weather). La tabla NO tiene columna `id` — su clave es `park_code`
-// (seleccionar `id` devolvía 400 y los componentes quedaban vacíos en prod).
+// Campos que consumen ParkAlertsBanner (alerts), ParkWeatherCard (weather) y
+// QuickFactsRow (entrance_fee_usd, celda "Entrada" — 2026-07-20). La tabla NO
+// tiene columna `id` — su clave es `park_code` (seleccionar `id` devolvía 400
+// y los componentes quedaban vacíos en prod).
 interface ParkLiveDataRow {
   alerts: ParkAlert[] | null;
   weather: WeatherPayload | null;
+  entrance_fee_usd: number | null;
 }
 
 export function useParkLiveData(destinationId: string | undefined) {
@@ -51,7 +53,7 @@ export function useParkLiveData(destinationId: string | undefined) {
       };
       const { data, error } = await client
         .from("park_live_data")
-        .select("alerts, weather")
+        .select("alerts, weather, entrance_fee_usd")
         .eq("destination_id", destinationId as string)
         .maybeSingle();
       if (error) throw new Error(error.message);
