@@ -30,47 +30,11 @@ import { Switch } from "@/components/ui/switch";
 import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import type { BlockTipo, BlockExtra, ItBlock, ItDay, ContentV1 } from "@/types/itinerary";
 
-// ─── Exported domain types ────────────────────────────────────────────────────
-
-export type BlockTipo =
-  | "ruta" | "comida" | "alojamiento" | "traslado"
-  | "tip_seguridad" | "permiso" | "costo" | "nota";
-
-export interface BlockExtra {
-  distancia_km?: number | null;
-  desnivel_m?: number | null;
-  apto_principiante?: boolean;
-  duracion?: string | null;
-  modo?: "auto" | "shuttle" | "caminar" | null;
-}
-
-export interface ItBlock {
-  id: string;
-  tipo: BlockTipo;
-  titulo: string;
-  contenido_md: string | null;
-  horario: string | null;
-  precio_usd: number | null;
-  precio_nota: string | null;
-  fuente_url: string | null;
-  afiliado_url: string | null;
-  verify_flag: string | null;
-  extra?: BlockExtra | null;
-}
-
-export interface ItDay {
-  dia: number;
-  titulo: string;
-  bloques: ItBlock[];
-}
-
-export interface ContentV1 {
-  version: 1;
-  parque?: string;
-  hero_image_url?: string;
-  dias: ItDay[];
-}
+// ─── Domain types ─────────────────────────────────────────────────────────────
+// Canónicos en @/types/itinerary (ADR-018); re-export para no romper imports.
+export type { BlockTipo, BlockExtra, ItBlock, ItDay, ContentV1 };
 
 // ─── Block config ─────────────────────────────────────────────────────────────
 

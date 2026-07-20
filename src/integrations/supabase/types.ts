@@ -125,6 +125,104 @@ export type Database = {
         }
         Relationships: []
       }
+      campgrounds: {
+        Row: {
+          accesibilidad_nota: string | null
+          amenidades: Json | null
+          banos: string | null
+          created_at: string | null
+          dentro_del_parque: boolean | null
+          destination_id: string
+          direccion: string | null
+          elevacion_ft: number | null
+          es_recomendado: boolean | null
+          estado: string | null
+          horario: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nombre: string
+          nota_soul: string | null
+          nps_code: string | null
+          num_sitios: number | null
+          orden: number | null
+          precio_nota: string | null
+          precio_usd: number | null
+          reserva_url: string | null
+          reservable: boolean | null
+          rv_max_pies: number | null
+          senal_celular: string | null
+          tiene_agua: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          accesibilidad_nota?: string | null
+          amenidades?: Json | null
+          banos?: string | null
+          created_at?: string | null
+          dentro_del_parque?: boolean | null
+          destination_id: string
+          direccion?: string | null
+          elevacion_ft?: number | null
+          es_recomendado?: boolean | null
+          estado?: string | null
+          horario?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nombre: string
+          nota_soul?: string | null
+          nps_code?: string | null
+          num_sitios?: number | null
+          orden?: number | null
+          precio_nota?: string | null
+          precio_usd?: number | null
+          reserva_url?: string | null
+          reservable?: boolean | null
+          rv_max_pies?: number | null
+          senal_celular?: string | null
+          tiene_agua?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          accesibilidad_nota?: string | null
+          amenidades?: Json | null
+          banos?: string | null
+          created_at?: string | null
+          dentro_del_parque?: boolean | null
+          destination_id?: string
+          direccion?: string | null
+          elevacion_ft?: number | null
+          es_recomendado?: boolean | null
+          estado?: string | null
+          horario?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nombre?: string
+          nota_soul?: string | null
+          nps_code?: string | null
+          num_sitios?: number | null
+          orden?: number | null
+          precio_nota?: string | null
+          precio_usd?: number | null
+          reserva_url?: string | null
+          reservable?: boolean | null
+          rv_max_pies?: number | null
+          senal_celular?: string | null
+          tiene_agua?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campgrounds_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_itineraries: {
         Row: {
           client_email: string | null
@@ -133,13 +231,17 @@ export type Database = {
           content: Json
           created_at: string
           delivered_at: string | null
+          destination_id: string | null
           friendly_slug: string | null
           id: string
+          internal_notes: string | null
           party: Json
           request_id: string | null
           share_token: string
+          show_costs: boolean
           status: string
           template_id: string | null
+          title: string | null
           trip_end: string | null
           trip_start: string | null
           updated_at: string
@@ -151,13 +253,17 @@ export type Database = {
           content?: Json
           created_at?: string
           delivered_at?: string | null
+          destination_id?: string | null
           friendly_slug?: string | null
           id?: string
+          internal_notes?: string | null
           party?: Json
           request_id?: string | null
           share_token?: string
+          show_costs?: boolean
           status?: string
           template_id?: string | null
+          title?: string | null
           trip_end?: string | null
           trip_start?: string | null
           updated_at?: string
@@ -169,18 +275,29 @@ export type Database = {
           content?: Json
           created_at?: string
           delivered_at?: string | null
+          destination_id?: string | null
           friendly_slug?: string | null
           id?: string
+          internal_notes?: string | null
           party?: Json
           request_id?: string | null
           share_token?: string
+          show_costs?: boolean
           status?: string
           template_id?: string | null
+          title?: string | null
           trip_end?: string | null
           trip_start?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "client_itineraries_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "client_itineraries_request_id_fkey"
             columns: ["request_id"]
@@ -199,21 +316,25 @@ export type Database = {
       }
       destinations: {
         Row: {
+          access_difficulty: string | null
           access_type: string | null
           accessibility_markdown: string | null
           affiliate_links: Json | null
           altitude_warning: boolean | null
+          backcountry_camping_free: boolean | null
           base_city: string | null
           beginner_friendly: boolean | null
+          best_basecamp: string | null
           best_season: string | null
           best_sunrise_sunset_spots: Json | null
           camping_available: boolean | null
           cell_signal_status: string | null
           common_fears: Json | null
-          with_kids_markdown: string | null
+          concierge_quick_facts: string | null
           content_version: number | null
           country: string
           created_at: string
+          crowd_calendar: Json | null
           days_needed: string | null
           designation: string | null
           difficulty_description: string | null
@@ -230,6 +351,7 @@ export type Database = {
           food_nearby_markdown: string | null
           full_guide_markdown: string | null
           gallery_images: string[] | null
+          gateway_airport: Json | null
           gear_list_markdown: string | null
           getting_there_markdown: string | null
           good_for: string[] | null
@@ -239,6 +361,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           is_published: boolean | null
+          itinerary_budget: Json | null
           itinerary_markdown: string | null
           last_verified_at: string | null
           latitude: number | null
@@ -249,6 +372,7 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           min_days: number | null
+          nearby_parks: Json | null
           nearest_airport: string | null
           nearest_town: string | null
           nonresident_surcharge: number | null
@@ -272,8 +396,10 @@ export type Database = {
           season_to_avoid: string | null
           seasonal_closures: string | null
           short_description: string | null
+          signature_experience: string | null
           signature_hikes: Json | null
           slug: string
+          special_dates: Json | null
           tags: string[] | null
           timed_entry_required: boolean | null
           timezone: string | null
@@ -284,23 +410,29 @@ export type Database = {
           weather_markdown: string | null
           why_visit_markdown: string | null
           wildlife: string | null
+          with_kids_markdown: string | null
+          zone_closures: Json | null
         }
         Insert: {
+          access_difficulty?: string | null
           access_type?: string | null
           accessibility_markdown?: string | null
           affiliate_links?: Json | null
           altitude_warning?: boolean | null
+          backcountry_camping_free?: boolean | null
           base_city?: string | null
           beginner_friendly?: boolean | null
+          best_basecamp?: string | null
           best_season?: string | null
           best_sunrise_sunset_spots?: Json | null
           camping_available?: boolean | null
           cell_signal_status?: string | null
           common_fears?: Json | null
-          with_kids_markdown?: string | null
+          concierge_quick_facts?: string | null
           content_version?: number | null
           country: string
           created_at?: string
+          crowd_calendar?: Json | null
           days_needed?: string | null
           designation?: string | null
           difficulty_description?: string | null
@@ -317,6 +449,7 @@ export type Database = {
           food_nearby_markdown?: string | null
           full_guide_markdown?: string | null
           gallery_images?: string[] | null
+          gateway_airport?: Json | null
           gear_list_markdown?: string | null
           getting_there_markdown?: string | null
           good_for?: string[] | null
@@ -326,6 +459,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           is_published?: boolean | null
+          itinerary_budget?: Json | null
           itinerary_markdown?: string | null
           last_verified_at?: string | null
           latitude?: number | null
@@ -336,6 +470,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           min_days?: number | null
+          nearby_parks?: Json | null
           nearest_airport?: string | null
           nearest_town?: string | null
           nonresident_surcharge?: number | null
@@ -359,8 +494,10 @@ export type Database = {
           season_to_avoid?: string | null
           seasonal_closures?: string | null
           short_description?: string | null
+          signature_experience?: string | null
           signature_hikes?: Json | null
           slug: string
+          special_dates?: Json | null
           tags?: string[] | null
           timed_entry_required?: boolean | null
           timezone?: string | null
@@ -371,23 +508,29 @@ export type Database = {
           weather_markdown?: string | null
           why_visit_markdown?: string | null
           wildlife?: string | null
+          with_kids_markdown?: string | null
+          zone_closures?: Json | null
         }
         Update: {
+          access_difficulty?: string | null
           access_type?: string | null
           accessibility_markdown?: string | null
           affiliate_links?: Json | null
           altitude_warning?: boolean | null
+          backcountry_camping_free?: boolean | null
           base_city?: string | null
           beginner_friendly?: boolean | null
+          best_basecamp?: string | null
           best_season?: string | null
           best_sunrise_sunset_spots?: Json | null
           camping_available?: boolean | null
           cell_signal_status?: string | null
           common_fears?: Json | null
-          with_kids_markdown?: string | null
+          concierge_quick_facts?: string | null
           content_version?: number | null
           country?: string
           created_at?: string
+          crowd_calendar?: Json | null
           days_needed?: string | null
           designation?: string | null
           difficulty_description?: string | null
@@ -404,6 +547,7 @@ export type Database = {
           food_nearby_markdown?: string | null
           full_guide_markdown?: string | null
           gallery_images?: string[] | null
+          gateway_airport?: Json | null
           gear_list_markdown?: string | null
           getting_there_markdown?: string | null
           good_for?: string[] | null
@@ -413,6 +557,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           is_published?: boolean | null
+          itinerary_budget?: Json | null
           itinerary_markdown?: string | null
           last_verified_at?: string | null
           latitude?: number | null
@@ -423,6 +568,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           min_days?: number | null
+          nearby_parks?: Json | null
           nearest_airport?: string | null
           nearest_town?: string | null
           nonresident_surcharge?: number | null
@@ -446,8 +592,10 @@ export type Database = {
           season_to_avoid?: string | null
           seasonal_closures?: string | null
           short_description?: string | null
+          signature_experience?: string | null
           signature_hikes?: Json | null
           slug?: string
+          special_dates?: Json | null
           tags?: string[] | null
           timed_entry_required?: boolean | null
           timezone?: string | null
@@ -458,6 +606,38 @@ export type Database = {
           weather_markdown?: string | null
           why_visit_markdown?: string | null
           wildlife?: string | null
+          with_kids_markdown?: string | null
+          zone_closures?: Json | null
+        }
+        Relationships: []
+      }
+      email_drip_log: {
+        Row: {
+          email: string
+          email_type: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          sent_at: string
+          status: string | null
+        }
+        Insert: {
+          email: string
+          email_type: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          sent_at?: string
+          status?: string | null
+        }
+        Update: {
+          email?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          sent_at?: string
+          status?: string | null
         }
         Relationships: []
       }
@@ -622,6 +802,24 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_chunks_ingest_lock: {
+        Row: {
+          locked_at: string
+          source_id: string
+          source_table: string
+        }
+        Insert: {
+          locked_at?: string
+          source_id: string
+          source_table: string
+        }
+        Update: {
+          locked_at?: string
+          source_id?: string
+          source_table?: string
+        }
+        Relationships: []
+      }
       media_slider: {
         Row: {
           created_at: string
@@ -658,18 +856,21 @@ export type Database = {
           email: string
           id: string
           source: string | null
+          unsubscribed_at: string | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
           source?: string | null
+          unsubscribed_at?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
           source?: string | null
+          unsubscribed_at?: string | null
         }
         Relationships: []
       }
@@ -691,6 +892,8 @@ export type Database = {
           sync_errors: Json | null
           synced_at: string | null
           updated_at: string | null
+          weather: Json | null
+          weather_synced_at: string | null
         }
         Insert: {
           alerts?: Json | null
@@ -709,6 +912,8 @@ export type Database = {
           sync_errors?: Json | null
           synced_at?: string | null
           updated_at?: string | null
+          weather?: Json | null
+          weather_synced_at?: string | null
         }
         Update: {
           alerts?: Json | null
@@ -727,10 +932,106 @@ export type Database = {
           sync_errors?: Json | null
           synced_at?: string | null
           updated_at?: string | null
+          weather?: Json | null
+          weather_synced_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "park_live_data_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      park_trails: {
+        Row: {
+          coordinates: Json | null
+          created_at: string
+          description_es: string | null
+          destination_id: string
+          difficulty: string | null
+          distance: string | null
+          id: string
+          name: string
+          nps_thing_id: string
+          nps_url: string | null
+          park_code: string
+          synced_at: string
+          updated_at: string
+        }
+        Insert: {
+          coordinates?: Json | null
+          created_at?: string
+          description_es?: string | null
+          destination_id: string
+          difficulty?: string | null
+          distance?: string | null
+          id?: string
+          name: string
+          nps_thing_id: string
+          nps_url?: string | null
+          park_code: string
+          synced_at?: string
+          updated_at?: string
+        }
+        Update: {
+          coordinates?: Json | null
+          created_at?: string
+          description_es?: string | null
+          destination_id?: string
+          difficulty?: string | null
+          distance?: string | null
+          id?: string
+          name?: string
+          nps_thing_id?: string
+          nps_url?: string | null
+          park_code?: string
+          synced_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "park_trails_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      park_trails_sync_state: {
+        Row: {
+          created_at: string
+          destination_id: string
+          last_error: string | null
+          park_code: string
+          synced_at: string
+          trail_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          destination_id: string
+          last_error?: string | null
+          park_code: string
+          synced_at?: string
+          trail_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          destination_id?: string
+          last_error?: string | null
+          park_code?: string
+          synced_at?: string
+          trail_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "park_trails_sync_state_destination_id_fkey"
             columns: ["destination_id"]
             isOneToOne: false
             referencedRelation: "destinations"
@@ -956,15 +1257,92 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      rag_itinerary_context: {
+        Row: {
+          best_basecamp: string | null
+          crowd_calendar: Json | null
+          drive_time_from_la: string | null
+          drive_time_from_san_diego: string | null
+          gateway_airport: Json | null
+          itinerary_budget: Json | null
+          nearby_parks: Json | null
+          signature_experience: string | null
+          slug: string | null
+          special_dates: Json | null
+          title: string | null
+          zone_closures: Json | null
+        }
+        Insert: {
+          best_basecamp?: string | null
+          crowd_calendar?: Json | null
+          drive_time_from_la?: string | null
+          drive_time_from_san_diego?: string | null
+          gateway_airport?: Json | null
+          itinerary_budget?: Json | null
+          nearby_parks?: Json | null
+          signature_experience?: string | null
+          slug?: string | null
+          special_dates?: Json | null
+          title?: string | null
+          zone_closures?: Json | null
+        }
+        Update: {
+          best_basecamp?: string | null
+          crowd_calendar?: Json | null
+          drive_time_from_la?: string | null
+          drive_time_from_san_diego?: string | null
+          gateway_airport?: Json | null
+          itinerary_budget?: Json | null
+          nearby_parks?: Json | null
+          signature_experience?: string | null
+          slug?: string | null
+          special_dates?: Json | null
+          title?: string | null
+          zone_closures?: Json | null
+        }
+        Relationships: []
+      }
+      v_destinations_completeness: {
+        Row: {
+          completitud_pct: number | null
+          is_published: boolean | null
+          park_code: string | null
+          research_status: string | null
+          title: string | null
+        }
+        Insert: {
+          completitud_pct?: never
+          is_published?: boolean | null
+          park_code?: string | null
+          research_status?: string | null
+          title?: string | null
+        }
+        Update: {
+          completitud_pct?: never
+          is_published?: boolean | null
+          park_code?: string | null
+          research_status?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      claim_knowledge_ingest_lock: {
+        Args: {
+          p_source_id: string
+          p_source_table: string
+          p_stale_after?: string
+        }
+        Returns: boolean
+      }
       get_itinerary_by_token: {
         Args: { p_token: string }
         Returns: {
           client_name: string
           content: Json
           status: string
+          title: string
           trip_end: string
           trip_start: string
           updated_at: string
@@ -979,6 +1357,7 @@ export type Database = {
       }
       match_knowledge_chunks: {
         Args: {
+          filter_park_code?: string
           match_count?: number
           min_similarity?: number
           query_embedding: string
@@ -991,6 +1370,10 @@ export type Database = {
           source_field: string
           source_table: string
         }[]
+      }
+      release_knowledge_ingest_lock: {
+        Args: { p_source_id: string; p_source_table: string }
+        Returns: undefined
       }
     }
     Enums: {

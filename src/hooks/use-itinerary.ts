@@ -1,56 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type {
+  BlockType,
+  ItineraryBlock,
+  ItineraryDay,
+  ItineraryContent,
+  ClientItinerary,
+} from "@/types/itinerary";
 
-export type BlockType =
-  | "ruta"
-  | "comida"
-  | "alojamiento"
-  | "traslado"
-  | "tip_seguridad"
-  | "permiso"
-  | "costo"
-  | "nota";
-
-export interface ItineraryBlock {
-  id: string;
-  tipo: BlockType;
-  titulo: string;
-  contenido_md?: string | null;
-  horario?: string | null;
-  precio_usd?: number | null;
-  precio_nota?: string | null;
-  fuente_url?: string | null;
-  afiliado_url?: string | null;
-  verify_flag?: string | null;
-  distancia_km?: number | null;
-  desnivel_m?: number | null;
-  apto_principiante?: boolean | null;
-  duracion?: string | null;
-  modo?: string | null;
-}
-
-export interface ItineraryDay {
-  dia: number;
-  titulo: string;
-  bloques: ItineraryBlock[];
-}
-
-export interface ItineraryContent {
-  version: number;
-  parque?: string;
-  hero_image_url?: string;
-  dias: ItineraryDay[];
-}
-
-export interface ClientItinerary {
-  client_name: string;
-  trip_start: string | null;
-  trip_end: string | null;
-  content: ItineraryContent;
-  status: string;
-  updated_at: string;
-}
+// Tipos canónicos en @/types/itinerary (ADR-018); re-export para no romper imports.
+export type { BlockType, ItineraryBlock, ItineraryDay, ItineraryContent, ClientItinerary };
 
 const db = supabase as unknown as SupabaseClient;
 
