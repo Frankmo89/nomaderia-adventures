@@ -199,6 +199,15 @@
   - `Anyone can submit itinerary request` (`FOR INSERT TO anon, authenticated`) with check `true`
   - `Admins can view itinerary requests` (`FOR SELECT TO authenticated`) using `public.has_role(auth.uid(), 'admin')`
 
+> ✅ **Corrección post-snapshot (2026-07-19):** además de `itinerary_requests`
+> existen las tablas del **itinerary builder** — `itinerary_templates` y
+> `client_itineraries` (migración `20260609100000` y posteriores) — que este
+> snapshot no cubre. **NO son placeholders sin uso:** están EN PRODUCCIÓN con
+> filas reales de clientes servidas vía RPC `get_itinerary_by_token` en
+> `/i/:token` (`ClientItineraryView.tsx`), con editor admin completo en
+> `/admin/client-itineraries` y `/admin/itinerary-templates`. Fuente de verdad:
+> `docs/supabase-schema.md` + ADR-014/ADR-018 en `docs/decisions.md`.
+
 #### `public.email_drip_log`
 - Defined in: `20260228000000_create_email_drip_log.sql`
 - Columns:
@@ -461,6 +470,13 @@ Source: `src/App.tsx`
 - Admin read UI exists: `src/pages/admin/AdminItineraryRequests.tsx`
 - **No active public frontend form writing to `itinerary_requests` found in `src/`**
 - Current conversion flow for itineraries is primarily WhatsApp CTAs (`HeroSection`, `PremiumItinerarySection`, `Servicios`, quiz results)
+
+> ✅ **Corrección post-snapshot (2026-07-19):** la ENTREGA de itinerarios (no la
+> captación) sí tiene flujo completo en producción: el admin construye el
+> itinerario en `/admin/client-itineraries/:id` (`ItineraryBlockEditor`) y el
+> cliente lo ve en `/i/:token` (RPC pública `get_itinerary_by_token`, ADR-014).
+> No asumir que "itinerarios" = solo `itinerary_requests`: son dos features
+> distintas (leads vs. builder). Ver ADR-018.
 
 ### 5.5 `sentinel_leads` writes
 - Written from: `src/pages/SentinelLanding.tsx`
