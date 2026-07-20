@@ -23,7 +23,8 @@ export interface BlockExtra {
   trail_id?: string | null;
   // traslado
   duracion?: string | null;
-  modo?: "auto" | "shuttle" | "caminar" | null;
+  /** "vuelo" (aditivo ADR-018): un vuelo se modela como traslado con modo "vuelo" */
+  modo?: "auto" | "shuttle" | "caminar" | "vuelo" | null;
   /** origen/destino del traslado (extensión ADR-018) */
   origen?: string | null;
   destino?: string | null;
