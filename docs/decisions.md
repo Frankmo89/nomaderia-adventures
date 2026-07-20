@@ -213,6 +213,13 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Decisión:** El contrato JSONB v1 en español (`content.dias[].bloques[]`, tipos `ruta|comida|alojamiento|traslado|tip_seguridad|permiso|costo|nota`, status `borrador|entregado|viaje_activo|completado|archivado`) es **canónico e intocable**: sin renames, sin cambios de tipo. Toda feature nueva estilo Travefy se implementa como (a) campos **opcionales** en el JSONB (p.ej. `extra.reservado`, `extra.confirmacion_ref`, `extra.trail_id`, `dia.fecha`), (b) columnas aditivas en la tabla (`title`, `destination_id`, `show_costs`, `internal_notes` — migración `20260719150000`), o (c) UI pura. Cambios al RPC solo backward-compatible: columnas de retorno aditivas al final; el stripping de costos (`show_costs=false` ⇒ quitar `precio_usd`/`precio_nota` server-side) se añadió sin alterar los campos ya devueltos (verificado por md5 de `content` en los 3 tokens vivos, idéntico antes/después). Tipos canónicos centralizados en `src/types/itinerary.ts` (re-exportados desde `ItineraryBlockEditor` y `use-itinerary` para no romper imports); Zod tolerante (`passthrough`) en `src/lib/itinerary-schema.ts`.
 - **Consecuencias:** NO introducir un contrato paralelo en inglés ni una segunda tabla de itinerarios de cliente. Los datos legacy pueden traer extras de `ruta`/`traslado` aplanados en la raíz del bloque (así los lee `/i/:token`); el editor los escribe anidados en `extra` — cualquier consumidor nuevo debe tolerar ambas formas. `show_costs` defaultea `false` para filas nuevas; las pre-existentes se backfillearon a `true` para no cambiar el rendering de links vivos. Precios escritos a mano dentro de `contenido_md` no se pueden strippear — no poner montos en el markdown si se quiere poder ocultarlos. Lección meta: ante un prompt que declare una tabla "placeholder/sin uso", verificar contra la DB viva y el grep del repo ANTES de escribir la migración.
 
+### ADR-019 — Itinerary builder: reorden por menú/sheet, sin drag & drop
+- **Fecha:** 2026-07-19
+- **Estado:** Vigente
+- **Contexto:** El editor de bloques original usaba `@dnd-kit` para reordenar dentro de un día (long-press de 200 ms en touch), y mover un bloque a OTRO día no existía. En mobile —el contexto real de uso de Frank— el DnD táctil compite con el scroll, es difícil de descubrir y frágil con listas largas; el research de patrones (Wanderlog/Mindtrip vía Mobbin, patrón Travefy) mostró que los builders móviles resuelven reordenamiento con controles explícitos, no con arrastre.
+- **Decisión:** Todo reordenamiento del builder es por controles explícitos: Sheet "Reordenar" con botones ↑/↓ (pestañas: bloques del día y días completos, con renumeración automática `dia = posición`) y Sheet "Mover a día…" (tap en el día destino, el bloque se agrega al final). `@dnd-kit` se eliminó de `ItineraryBlockEditor`; la dependencia permanece en el repo porque `AdminGallery` la usa. Toda operación destructiva o de movimiento dispara toast con "Deshacer" (snapshot del array `dias` previo en un ref). Guardado por acción explícita (un UPDATE de `content` por acción, sin debounce), con indicador "Guardado" en el header.
+- **Consecuencias:** NO reintroducir drag & drop en el builder ni instalar librerías dnd nuevas para él — el reorden por menú/sheet es una decisión de diseño, no una limitación técnica. Si algún día se elimina `AdminGallery` o su DnD, `@dnd-kit` puede desinstalarse (el builder ya no lo importa). Los títulos de día auto ("Día N") se re-sincronizan al reordenar/insertar/borrar días; los títulos personalizados se preservan tal cual.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)
@@ -245,3 +252,22 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   `periods`). Lección: antes de añadir un segundo productor a una columna
   jsonb existente, verificar su consumidor — un nombre de columna genérico
   (`weather`) no garantiza que dos fuentes compartan forma.
+- **Radix `Select.Item` nunca acepta `value=""`:** lo reserva internamente como
+  sentinel de "sin selección", así que un `<SelectItem value="">` crashea en el
+  primer render (`A <Select.Item /> must have a value prop that is not an empty
+  string`) — no es un warning, tira la página entera. Causó el crash de
+  `/admin/client-itineraries/new` (select de plantilla con un item "Empezar en
+  blanco" en `value=""`). Fix correcto: para comportamiento de placeholder, usar
+  `SelectValue placeholder="..."` con el `Select` en modo no controlado
+  (`value={field.value || undefined}`, nunca `?? ""`) — sin selección, ningún
+  item matchea y el placeholder se muestra solo. Para una opción legítima de
+  "ninguno/opcional" (ej. "Sin parque"), usar un valor sentinel real (ej.
+  `"none"`) y mapearlo a `null` al construir el payload de insert/update — nunca
+  `""` como value de un `SelectItem`. El `value=""` SÍ es válido en el prop
+  `value` del `Select` raíz (controla qué item aparece seleccionado, no
+  requiere que exista); el bug es específico de `SelectItem`. Nota: un
+  `Select` controlado con `value={field.value ?? ""}` (en vez de `|| undefined`)
+  no crashea por sí solo si ninguno de sus `SelectItem` tiene `value=""` — pero
+  queda como trampa latente para el próximo `SelectItem` que alguien agregue
+  ahí; se alineó también el select "Modo" de `ItineraryBlockEditor.tsx` al
+  patrón `|| undefined` sin que tuviera el bug activo, para cerrarla.
