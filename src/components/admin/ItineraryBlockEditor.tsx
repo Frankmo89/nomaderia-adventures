@@ -451,7 +451,7 @@ function BlockForm({ tipo, existing, modoPreset, trails, campgrounds, onCancel, 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className={labelCls}>Modo</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Modo" />

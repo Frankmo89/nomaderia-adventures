@@ -186,12 +186,11 @@ const AdminClientItineraryNew = () => {
                 <FormItem>
                   <FormLabel>Plantilla de itinerario</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <SelectTrigger className="bg-card border-border text-foreground">
                         <SelectValue placeholder="Empezar en blanco (sin plantilla)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Empezar en blanco</SelectItem>
                         {templates.map((t) => (
                           <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
                         ))}

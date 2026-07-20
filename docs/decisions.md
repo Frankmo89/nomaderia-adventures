@@ -252,3 +252,22 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   `periods`). Lección: antes de añadir un segundo productor a una columna
   jsonb existente, verificar su consumidor — un nombre de columna genérico
   (`weather`) no garantiza que dos fuentes compartan forma.
+- **Radix `Select.Item` nunca acepta `value=""`:** lo reserva internamente como
+  sentinel de "sin selección", así que un `<SelectItem value="">` crashea en el
+  primer render (`A <Select.Item /> must have a value prop that is not an empty
+  string`) — no es un warning, tira la página entera. Causó el crash de
+  `/admin/client-itineraries/new` (select de plantilla con un item "Empezar en
+  blanco" en `value=""`). Fix correcto: para comportamiento de placeholder, usar
+  `SelectValue placeholder="..."` con el `Select` en modo no controlado
+  (`value={field.value || undefined}`, nunca `?? ""`) — sin selección, ningún
+  item matchea y el placeholder se muestra solo. Para una opción legítima de
+  "ninguno/opcional" (ej. "Sin parque"), usar un valor sentinel real (ej.
+  `"none"`) y mapearlo a `null` al construir el payload de insert/update — nunca
+  `""` como value de un `SelectItem`. El `value=""` SÍ es válido en el prop
+  `value` del `Select` raíz (controla qué item aparece seleccionado, no
+  requiere que exista); el bug es específico de `SelectItem`. Nota: un
+  `Select` controlado con `value={field.value ?? ""}` (en vez de `|| undefined`)
+  no crashea por sí solo si ninguno de sus `SelectItem` tiene `value=""` — pero
+  queda como trampa latente para el próximo `SelectItem` que alguien agregue
+  ahí; se alineó también el select "Modo" de `ItineraryBlockEditor.tsx` al
+  patrón `|| undefined` sin que tuviera el bug activo, para cerrarla.
