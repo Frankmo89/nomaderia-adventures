@@ -125,6 +125,8 @@ Index: `destination_id`
 id              uuid PK
 template_id     uuid → references itinerary_templates(id)  (nullable — cloned-from)
 request_id      uuid → references itinerary_requests(id)   (nullable — links intake)
+destination_id  uuid → references destinations(id)         (nullable — parque directo, sin pasar por template)
+title           text                             -- título admin del viaje (nullable; fallback UI: client_name)
 client_name     text NOT NULL
 client_email    text
 client_whatsapp text                             -- digits only, e.g. 16195551234
@@ -136,13 +138,23 @@ party           jsonb NOT NULL DEFAULT '{}'
 content         jsonb NOT NULL DEFAULT '{"version":1,"dias":[]}'
                 -- See "content JSONB shape (v1)" section below
 share_token     text NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(12),'hex')
+friendly_slug   text UNIQUE (nullable)           -- identificador público legible (ADR-014: friendly_slug ?? share_token)
 status          text NOT NULL DEFAULT 'borrador'
                 -- CHECK: borrador | entregado | viaje_activo | completado | archivado
+show_costs      boolean NOT NULL DEFAULT false   -- false ⇒ el RPC público strippea precio_usd/precio_nota de todos los
+                                                 -- bloques server-side. Las filas anteriores a la migración 20260719150000
+                                                 -- fueron backfilleadas a true (preservar el rendering de links vivos).
+internal_notes  text                             -- notas admin-only; el RPC público NUNCA las devuelve
 delivered_at    timestamptz
 created_at      timestamptz NOT NULL
 updated_at      timestamptz NOT NULL             -- auto-updated via trigger
 ```
-Indexes: `share_token`, `status`
+Indexes: `share_token`, `status`, `friendly_slug`, `destination_id`
+
+> **Contrato v1 canónico (ADR-018):** `content` mantiene el shape v1 en español.
+> Extensiones solo con campos opcionales; nunca renombrar/cambiar tipos.
+> Migraciones: `20260609100000` (create), `20260614000000` (friendly_slug),
+> `20260719150000` (title/destination_id/show_costs/internal_notes + RPC v3).
 
 ### content JSONB shape (v1) — shared by `itinerary_templates` and `client_itineraries`
 
@@ -186,6 +198,21 @@ Indexes: `share_token`, `status`
 - `fuente_url`: official source required (nps.gov, recreation.gov, etc.)
 - `verify_flag`: null for stable data; `"⚠️ VERIFICAR (IA) [YYYY-MM-DD]"` for volatile AI-generated data
 - All content in Spanish
+
+**Extensiones opcionales del contrato v1 (ADR-018 — todas OPCIONALES, aditivas):**
+
+Bloques llevan extras en `extra` (objeto anidado, escrito por el editor admin):
+- `ruta`: `distancia_km`, `desnivel_m`, `apto_principiante`, `trail_id` (→ `park_trails.id`, para autocomplete)
+- `traslado`: `duracion`, `modo` (`auto|shuttle|caminar`), `origen`, `destino`
+- `alojamiento`: `reservado` (boolean — badge "Reservado"), `confirmacion_ref`, `campground_id` (facilityId RIDB o `campgrounds.id`)
+
+Días: `fecha` opcional (`"YYYY-MM-DD"`).
+
+> Datos legacy pueden traer los extras de `ruta`/`traslado` **aplanados en la
+> raíz del bloque** (así los lee `/i/:token`); el editor los escribe anidados en
+> `extra`. Los tipos canónicos viven en `src/types/itinerary.ts` (vista editor
+> `ItBlock` + vista pública tolerante `ItineraryBlock`); los Zod schemas en
+> `src/lib/itinerary-schema.ts` (passthrough — nunca rechazan campos extra).
 
 ### `park_live_data`
 
@@ -265,19 +292,28 @@ todas las columnas salvo `park_code` son nullables.)*
 
 ## RPCs (Remote Procedure Calls)
 
-### `get_itinerary_by_token(p_token text)`
+### `get_itinerary_by_token(p_token text)` — v3
 
 ```sql
 RETURNS TABLE (client_name text, trip_start date, trip_end date,
-               content jsonb, status text, updated_at timestamptz)
+               content jsonb, status text, updated_at timestamptz, title text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
 ```
 
-- **Purpose:** Public entry point for the client-facing itinerary page (`/i/:token` or similar).
+- **Purpose:** Public entry point for the client-facing itinerary page (`/i/:token`).
+- **Token resolution:** `share_token = p_token OR friendly_slug = p_token` (ADR-014).
 - **Visibility filter:** Only returns rows where `status IN ('entregado','viaje_activo','completado')`.
-- **Excluded fields:** `client_email`, `client_whatsapp`, `party`, `template_id`, `request_id`, `share_token`, `delivered_at` — none are returned.
+- **Cost stripping (v3):** when `show_costs = false`, removes `precio_usd` and
+  `precio_nota` from every block of `content.dias[].bloques[]` server-side
+  (tolerant with malformed/legacy content: non-array `dias`/`bloques` pass through).
+  Caveat: prices written free-form inside `contenido_md` are NOT stripped — no
+  escribir montos en el markdown si se piensa ocultar costos.
+- **Excluded fields:** `client_email`, `client_whatsapp`, `party`, `template_id`, `request_id`, `share_token`, `delivered_at`, `internal_notes`, `show_costs` — none are returned.
+- **Backward compatibility:** v3 appended `title` at the end and changed nothing
+  else in the return set (verified 2026-07-19: md5 of `content` returned for the
+  3 live tokens identical before/after the migration).
 - **Grants:** EXECUTE to `anon` and `authenticated`.
-- **Migration:** `20260609100000_create_itinerary_builder_tables.sql`
+- **Migrations:** `20260609100000` (v1) → `20260614000001` (v2: friendly_slug) → `20260719150000` (v3: title + cost stripping)
 
 ## Autenticación
 
