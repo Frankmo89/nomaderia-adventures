@@ -1,46 +1,43 @@
 import { useQuery } from "@tanstack/react-query";
+import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
 
-export type ParkTrailOption = Pick<
-  Tables<"park_trails">,
-  "id" | "name" | "distance" | "difficulty" | "description_es" | "nps_url"
->;
+// park_trails was renamed to park_things_to_do (migration 20260720010000,
+// see docs/decisions.md ADR-021), but src/integrations/supabase/types.ts
+// still has the table under the old key until Frank regenerates types after
+// applying that migration — same bridge pattern as use-media.ts (ADR-009).
+// Widen the client type so `.from("park_things_to_do")` compiles.
+//   npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts
+const db = supabase as unknown as ReturnType<typeof createClient>;
 
-// STOPGAP heuristic — see docs/pending-tasks.md ("park_trails data source
-// likely wrong at la raíz"). park_trails is synced from NPS's /thingstodo
-// endpoint (activity=Hiking), which mixes real named trails ("Hike Ryan
-// Mountain") with non-hiking activities ("Attend a Ranger Stroll", "Rock
-// Climbing at Echo T") under the exact same URL pattern — the two can't be
-// told apart by source/URL, only by guessing from the title. This filter is
-// NOT a real classification: it both hides some real trails (e.g. "Minong
-// Section 4: Hike from North Desor to Windigo" — doesn't start with "Hike"
-// or contain "Trail") and keeps some non-hiking items (e.g. ski/bike trails).
-// Remove once park_trails is re-synced from a real trails data source.
-const TRAIL_NAME_ALLOW = /(^hike\b|\btrail(s)?\b|^walk the\b)/i;
-const NON_TRAIL_KEYWORDS =
-  /\b(attend|become|junior ranger|biking|birding|stargazing|rock climbing|bouldering|drive|paddle|portage|horseback|photographing|visit the|backpacking)\b/i;
-
-function looksLikeTrail(name: string): boolean {
-  return TRAIL_NAME_ALLOW.test(name) && !NON_TRAIL_KEYWORDS.test(name);
+export interface ParkThingToDoOption {
+  id: string;
+  name: string;
+  distance: string | null;
+  difficulty: string | null;
+  description_es: string | null;
+  nps_url: string | null;
 }
 
 /**
- * Senderos oficiales (NPS) de un parque, para el autocomplete de bloques
- * `ruta` en el itinerary builder. Solo lectura.
+ * Actividades de un parque sincronizadas desde el endpoint /thingstodo de
+ * NPS (rutas, paseos guiados, remo, ciclismo, programas de guardaparques,
+ * miradores, etc.) — para el autocomplete de bloques `ruta` en el itinerary
+ * builder. Solo lectura. Distinta de useSignatureHikes: esta es un sync
+ * automático sin curar, no contenido editorial (ver ADR-021).
  */
-export function useParkTrails(destinationId?: string | null) {
-  return useQuery<ParkTrailOption[]>({
-    queryKey: ["park-trails", destinationId],
+export function useParkThingsToDo(destinationId?: string | null) {
+  return useQuery<ParkThingToDoOption[]>({
+    queryKey: ["park-things-to-do", destinationId],
     enabled: !!destinationId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("park_trails")
+      const { data, error } = await db
+        .from("park_things_to_do")
         .select("id, name, distance, difficulty, description_es, nps_url")
         .eq("destination_id", destinationId!)
         .order("name", { ascending: true });
       if (error) throw error;
-      return ((data as ParkTrailOption[]) ?? []).filter((t) => looksLikeTrail(t.name));
+      return (data as ParkThingToDoOption[]) ?? [];
     },
   });
 }

@@ -19,7 +19,7 @@ export interface BlockExtra {
   distancia_km?: number | null;
   desnivel_m?: number | null;
   apto_principiante?: boolean;
-  /** park_trails.id — para autocomplete de rutas (extensión ADR-018) */
+  /** park_things_to_do.id — para autocomplete de rutas (extensión ADR-018/ADR-021) */
   trail_id?: string | null;
   // traslado
   duracion?: string | null;

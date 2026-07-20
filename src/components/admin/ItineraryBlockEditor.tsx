@@ -34,7 +34,9 @@ import {
   bloqueFormSchema, bloqueToFormValues, formValuesToBloque,
   type BloqueFormValues,
 } from "@/lib/itinerary-schema";
-import { useParkTrails, parseDistanceKm, type ParkTrailOption } from "@/hooks/use-park-trails";
+import { useParkThingsToDo, parseDistanceKm, type ParkThingToDoOption } from "@/hooks/use-park-things-to-do";
+import { useSignatureHikes } from "@/hooks/use-signature-hikes";
+import type { SignatureHike } from "@/components/destinations/TrailCards";
 import { useCampgrounds, type CampgroundOption } from "@/hooks/use-campgrounds";
 
 // ─── Domain types ─────────────────────────────────────────────────────────────
@@ -143,13 +145,18 @@ function swap<T>(arr: T[], i: number, j: number): T[] {
   return next;
 }
 
-// ─── Campo de título con sugerencias (park_trails / campgrounds) ──────────────
+// ─── Campo de título con sugerencias (signature_hikes / park_things_to_do /
+// campgrounds) ──────────────────────────────────────────────────────────────
 // Combobox ligero sin dependencias nuevas: Input + lista filtrada client-side.
+// Agrupa por `group` cuando la sugerencia lo trae (ver bloques `ruta`, que
+// combinan dos fuentes distintas — ADR-021).
 
 interface Suggestion {
   id: string;
   label: string;
   meta: string;
+  /** Encabezado mostrado antes del primer ítem de este grupo (p.ej. "Senderos curados"). */
+  group?: string;
 }
 
 interface SuggestTitleFieldProps {
@@ -166,7 +173,9 @@ function SuggestTitleField({ value, onChange, suggestions, onPick, placeholder }
   const matches = (q
     ? suggestions.filter((s) => s.label.toLowerCase().includes(q))
     : suggestions
-  ).slice(0, 6);
+  ).slice(0, 8);
+
+  let lastGroup: string | undefined;
 
   return (
     <div className="relative">
@@ -179,19 +188,29 @@ function SuggestTitleField({ value, onChange, suggestions, onPick, placeholder }
       />
       {open && matches.length > 0 && (
         <div className="absolute left-0 right-0 top-full mt-1 z-30 rounded-md border border-border bg-white shadow-lg overflow-hidden">
-          {matches.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className="w-full flex items-baseline justify-between gap-2 px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-              onMouseDown={(e) => { e.preventDefault(); onPick(s.id); setOpen(false); }}
-            >
-              <span className="text-[13px] text-foreground truncate">{s.label}</span>
-              {s.meta && (
-                <span className="text-[11px] text-muted-foreground shrink-0">{s.meta}</span>
-              )}
-            </button>
-          ))}
+          {matches.map((s) => {
+            const showGroupHeader = !!s.group && s.group !== lastGroup;
+            lastGroup = s.group;
+            return (
+              <div key={s.id}>
+                {showGroupHeader && (
+                  <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground bg-gray-50 border-b border-gray-100">
+                    {s.group}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="w-full flex items-baseline justify-between gap-2 px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                  onMouseDown={(e) => { e.preventDefault(); onPick(s.id); setOpen(false); }}
+                >
+                  <span className="text-[13px] text-foreground truncate">{s.label}</span>
+                  {s.meta && (
+                    <span className="text-[11px] text-muted-foreground shrink-0">{s.meta}</span>
+                  )}
+                </button>
+              </div>
+            );
+          })}
           <p className="px-3 py-1.5 text-[10px] text-muted-foreground bg-gray-50">
             Datos oficiales del parque — o sigue escribiendo texto libre
           </p>
@@ -207,13 +226,19 @@ interface BlockFormProps {
   tipo: BlockTipo;
   existing: ItBlock | null;
   modoPreset?: "vuelo";
-  trails: ParkTrailOption[];
+  hikes: SignatureHike[];
+  thingsToDo: ParkThingToDoOption[];
   campgrounds: CampgroundOption[];
   onCancel: () => void;
   onSubmit: (block: ItBlock) => void;
 }
 
-function BlockForm({ tipo, existing, modoPreset, trails, campgrounds, onCancel, onSubmit }: BlockFormProps) {
+// Prefijo sintético para distinguir sugerencias de signature_hikes (sin id
+// de tabla propio) de las de park_things_to_do (id real, persistible en
+// extra.trail_id) dentro de la misma lista de sugerencias.
+const HIKE_SUGGESTION_PREFIX = "hike:";
+
+function BlockForm({ tipo, existing, modoPreset, hikes, thingsToDo, campgrounds, onCancel, onSubmit }: BlockFormProps) {
   const [trailId, setTrailId] = useState<string | null>(existing?.extra?.trail_id ?? null);
   const [campgroundId, setCampgroundId] = useState<string | null>(
     existing?.extra?.campground_id ?? null,
@@ -232,8 +257,23 @@ function BlockForm({ tipo, existing, modoPreset, trails, campgrounds, onCancel, 
         },
   });
 
-  const pickTrail = (id: string) => {
-    const t = trails.find((x) => x.id === id);
+  const pickActivity = (id: string) => {
+    if (id.startsWith(HIKE_SUGGESTION_PREFIX)) {
+      const h = hikes[Number(id.slice(HIKE_SUGGESTION_PREFIX.length))];
+      if (!h) return;
+      // Sendero curado (destinations.signature_hikes): no tiene id de tabla
+      // propio que persistir en extra.trail_id — solo precarga los campos.
+      setTrailId(null);
+      form.setValue("titulo", h.nombre, { shouldValidate: true });
+      if (h.distancia_km != null) form.setValue("distancia_km", String(h.distancia_km));
+      if (h.desnivel_m != null) form.setValue("desnivel_m", String(h.desnivel_m));
+      form.setValue("apto_principiante", h.apto_principiante === true);
+      if (h.nota?.trim() && !form.getValues("contenido_md")) {
+        form.setValue("contenido_md", h.nota.trim());
+      }
+      return;
+    }
+    const t = thingsToDo.find((x) => x.id === id);
     if (!t) return;
     setTrailId(t.id);
     form.setValue("titulo", t.name, { shouldValidate: true });
@@ -260,11 +300,23 @@ function BlockForm({ tipo, existing, modoPreset, trails, campgrounds, onCancel, 
 
   const suggestions: Suggestion[] =
     tipo === "ruta"
-      ? trails.map((t) => ({
-          id: t.id,
-          label: t.name,
-          meta: [t.distance, t.difficulty].filter(Boolean).join(" · "),
-        }))
+      ? [
+          ...hikes.map((h, i) => ({
+            id: `${HIKE_SUGGESTION_PREFIX}${i}`,
+            label: h.nombre,
+            meta: [
+              h.distancia_km != null ? `${h.distancia_km} km` : null,
+              h.duracion_horas != null ? `${h.duracion_horas} h` : null,
+            ].filter(Boolean).join(" · "),
+            group: "Senderos curados",
+          })),
+          ...thingsToDo.map((t) => ({
+            id: t.id,
+            label: t.name,
+            meta: [t.distance, t.difficulty].filter(Boolean).join(" · "),
+            group: "Otras actividades NPS",
+          })),
+        ]
       : tipo === "alojamiento"
         ? campgrounds.map((c) => ({
             id: c.id,
@@ -276,7 +328,7 @@ function BlockForm({ tipo, existing, modoPreset, trails, campgrounds, onCancel, 
           }))
         : [];
 
-  const handlePick = tipo === "ruta" ? pickTrail : pickCampground;
+  const handlePick = tipo === "ruta" ? pickActivity : pickCampground;
 
   const submit = (values: BloqueFormValues) => {
     const overrides: Partial<BlockExtra> = {};
@@ -607,7 +659,7 @@ export interface ItineraryBlockEditorProps {
   subtitle: string;
   backHref: string;
   onSave: (c: ContentV1) => Promise<void>;
-  /** Habilita autocompletes de park_trails / campgrounds del parque */
+  /** Habilita autocompletes de signature_hikes / park_things_to_do / campgrounds del parque */
   destinationId?: string | null;
   /** Fecha de inicio del viaje — deriva la fecha mostrada por día */
   tripStart?: string | null;
@@ -649,7 +701,8 @@ const ItineraryBlockEditor = ({
   // Undo: snapshot del array de días previo a la operación destructiva
   const undoRef = useRef<ItDay[] | null>(null);
 
-  const { data: trails = [] } = useParkTrails(destinationId);
+  const { data: hikes = [] } = useSignatureHikes(destinationId);
+  const { data: thingsToDo = [] } = useParkThingsToDo(destinationId);
   const { data: campgrounds = [] } = useCampgrounds(destinationId);
 
   // ── Persistencia: un UPDATE por acción explícita (sin debounce) ─────────────
@@ -1027,7 +1080,8 @@ const ItineraryBlockEditor = ({
                           key={block.id}
                           tipo={editing.tipo}
                           existing={block}
-                          trails={trails}
+                          hikes={hikes}
+                          thingsToDo={thingsToDo}
                           campgrounds={campgrounds}
                           onCancel={() => setEditing(null)}
                           onSubmit={saveBlock}
@@ -1103,7 +1157,8 @@ const ItineraryBlockEditor = ({
                       tipo={editing.tipo}
                       existing={null}
                       modoPreset={editing.modoPreset}
-                      trails={trails}
+                      hikes={hikes}
+                      thingsToDo={thingsToDo}
                       campgrounds={campgrounds}
                       onCancel={() => setEditing(null)}
                       onSubmit={saveBlock}

@@ -10,9 +10,10 @@ const INTER_PARK_DELAY_MS = 300;
 
 // Supabase free-tier limit: cap Edge Function work per invocation so a single
 // run never risks the execution-time/CPU ceiling. A weekly pg_cron job (see
-// migration 20260707000001) re-runs this on a fixed schedule, so the batch
-// cursor below (oldest-synced-first) rotates through all 63 parks over time
-// instead of requiring one giant run.
+// migration 20260720010000, which re-points the job created by
+// 20260707000001) re-runs this on a fixed schedule, so the batch cursor
+// below (oldest-synced-first) rotates through all 63 parks over time instead
+// of requiring one giant run.
 const MAX_BATCH = 5;
 
 const corsHeaders = {
@@ -60,9 +61,13 @@ interface DestRow {
   title: string;
 }
 
-// ─── park_trails row shape ────────────────────────────────────────────────────
+// ─── park_things_to_do row shape ───────────────────────────────────────────────
+// Despite the "Hiking" activity filter below, NPS /thingstodo mixes real
+// named hikes with rides, ranger programs, wildlife viewing, scenic drives,
+// etc. under the identical URL pattern — hence "things to do", not "trails".
+// See docs/decisions.md ADR-021.
 
-interface TrailRow {
+interface ThingToDoRow {
   park_code: string;
   destination_id: string;
   nps_thing_id: string;
@@ -78,7 +83,7 @@ interface TrailRow {
 interface ParkSyncResult {
   park_code: string;
   status: "synced" | "error";
-  trails?: number;
+  items?: number;
   error?: string;
 }
 
@@ -106,7 +111,7 @@ async function resolveHikingActivityId(apiKey: string): Promise<string | null> {
     return hit?.id ?? null;
   } catch (err) {
     console.warn(
-      "[sync-park-trails] no se pudo resolver activityId de Hiking, se usará filtro por nombre:",
+      "[sync-park-things-to-do] no se pudo resolver activityId de Hiking, se usará filtro por nombre:",
       err instanceof Error ? err.message : err,
     );
     return null;
@@ -130,11 +135,11 @@ function parseCoordinates(t: NpsThingToDo): { lat: number; lng: number } | null 
   return null;
 }
 
-async function collectParkTrails(
+async function collectParkThingsToDo(
   park: DestRow,
   npsKey: string,
   hikingActivityId: string | null,
-): Promise<{ trails: TrailRow[]; error: string | null }> {
+): Promise<{ items: ThingToDoRow[]; error: string | null }> {
   try {
     const activityParam = hikingActivityId
       ? `&activityId=${encodeURIComponent(hikingActivityId)}`
@@ -153,7 +158,7 @@ async function collectParkTrails(
     }
 
     const syncedAt = new Date().toISOString();
-    const trails: TrailRow[] = items.map((t) => ({
+    const rows: ThingToDoRow[] = items.map((t) => ({
       park_code: park.park_code,
       destination_id: park.id,
       nps_thing_id: t.id,
@@ -166,10 +171,10 @@ async function collectParkTrails(
       synced_at: syncedAt,
     }));
 
-    return { trails, error: null };
+    return { items: rows, error: null };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { trails: [], error: msg.slice(0, 300) };
+    return { items: [], error: msg.slice(0, 300) };
   }
 }
 
@@ -220,17 +225,18 @@ serve(async (req) => {
     const candidates = (rows ?? []) as DestRow[];
 
     // ── Prioritize least-recently-synced parks first ───────────────────────────
-    // Never-synced parks (no park_trails_sync_state row yet) are treated as
-    // highest priority so a fresh table backfills before the rotation settles
-    // into a steady weekly cadence. This reads park_trails_sync_state — a
-    // dedicated per-park bookkeeping table — instead of aggregating
-    // MAX(park_trails.synced_at), because parks with zero Hiking results
-    // (e.g. chis, sagu) never get a park_trails row and would otherwise look
-    // "never synced" forever, starving the rotation on every single run.
+    // Never-synced parks (no park_things_to_do_sync_state row yet) are
+    // treated as highest priority so a fresh table backfills before the
+    // rotation settles into a steady weekly cadence. This reads
+    // park_things_to_do_sync_state — a dedicated per-park bookkeeping table —
+    // instead of aggregating MAX(park_things_to_do.synced_at), because parks
+    // with zero Hiking results (e.g. chis, sagu) never get a
+    // park_things_to_do row and would otherwise look "never synced" forever,
+    // starving the rotation on every single run.
     const { data: syncedRows, error: syncedErr } = await db
-      .from("park_trails_sync_state")
+      .from("park_things_to_do_sync_state")
       .select("park_code, synced_at");
-    if (syncedErr) throw new Error(`Error consultando park_trails_sync_state: ${syncedErr.message}`);
+    if (syncedErr) throw new Error(`Error consultando park_things_to_do_sync_state: ${syncedErr.message}`);
 
     const lastSyncByCode = new Map<string, string>();
     for (const row of (syncedRows ?? []) as { park_code: string; synced_at: string }[]) {
@@ -258,7 +264,7 @@ serve(async (req) => {
     const restantes = prioritized.slice(batch.length).filter((p) => p.lastSynced === null).length;
 
     console.log(
-      `[sync-park-trails] iniciado — candidatos=${candidates.length} batch=${batch.length} restantes=${restantes}`,
+      `[sync-park-things-to-do] iniciado — candidatos=${candidates.length} batch=${batch.length} restantes=${restantes}`,
     );
 
     const hikingActivityId = await resolveHikingActivityId(NPS_API_KEY);
@@ -274,61 +280,61 @@ serve(async (req) => {
         await new Promise<void>((r) => setTimeout(r, INTER_PARK_DELAY_MS));
       }
 
-      const { trails, error } = await collectParkTrails(park, NPS_API_KEY, hikingActivityId);
+      const { items, error } = await collectParkThingsToDo(park, NPS_API_KEY, hikingActivityId);
 
       // Record the sync attempt for every park in the batch — regardless of
       // outcome — so the priority query above always advances the rotation.
       // Without this, a park that legitimately has zero Hiking results (or
       // that errors on every attempt) never gets a synced_at anywhere and
       // gets re-selected forever instead of rotating past.
-      const recordAttempt = async (trailCount: number, lastError: string | null) => {
-        const { error: stateErr } = await db.from("park_trails_sync_state").upsert(
+      const recordAttempt = async (itemCount: number, lastError: string | null) => {
+        const { error: stateErr } = await db.from("park_things_to_do_sync_state").upsert(
           {
             park_code: park.park_code,
             destination_id: park.id,
             synced_at: new Date().toISOString(),
-            trail_count: trailCount,
+            trail_count: itemCount,
             last_error: lastError,
           },
           { onConflict: "park_code" },
         );
         if (stateErr) {
           console.error(
-            `[sync-park-trails] error registrando sync_state ${park.park_code}:`,
+            `[sync-park-things-to-do] error registrando sync_state ${park.park_code}:`,
             stateErr.message,
           );
         }
       };
 
       if (error) {
-        console.error(`[sync-park-trails] error ${park.park_code}:`, error);
+        console.error(`[sync-park-things-to-do] error ${park.park_code}:`, error);
         detalle.push({ park_code: park.park_code, status: "error", error });
         await recordAttempt(0, error);
         failed++;
         continue;
       }
 
-      if (trails.length === 0) {
-        console.log(`[sync-park-trails] ✓ ${park.park_code} — 0 trails de hiking`);
-        detalle.push({ park_code: park.park_code, status: "synced", trails: 0 });
+      if (items.length === 0) {
+        console.log(`[sync-park-things-to-do] ✓ ${park.park_code} — 0 actividades de hiking`);
+        detalle.push({ park_code: park.park_code, status: "synced", items: 0 });
         await recordAttempt(0, null);
         synced++;
         continue;
       }
 
       const { error: upsertErr } = await db
-        .from("park_trails")
-        .upsert(trails, { onConflict: "park_code,nps_thing_id" });
+        .from("park_things_to_do")
+        .upsert(items, { onConflict: "park_code,nps_thing_id" });
 
       if (upsertErr) {
-        console.error(`[sync-park-trails] upsert error ${park.park_code}:`, upsertErr.message);
+        console.error(`[sync-park-things-to-do] upsert error ${park.park_code}:`, upsertErr.message);
         detalle.push({ park_code: park.park_code, status: "error", error: upsertErr.message });
         await recordAttempt(0, upsertErr.message);
         failed++;
       } else {
-        console.log(`[sync-park-trails] ✓ ${park.park_code} — ${trails.length} trails`);
-        detalle.push({ park_code: park.park_code, status: "synced", trails: trails.length });
-        await recordAttempt(trails.length, null);
+        console.log(`[sync-park-things-to-do] ✓ ${park.park_code} — ${items.length} actividades`);
+        detalle.push({ park_code: park.park_code, status: "synced", items: items.length });
+        await recordAttempt(items.length, null);
         synced++;
       }
     }
@@ -343,14 +349,14 @@ serve(async (req) => {
       detalle,
     };
 
-    console.log("[sync-park-trails] completado", { synced, failed, restantes });
+    console.log("[sync-park-things-to-do] completado", { synced, failed, restantes });
 
     return new Response(JSON.stringify(summary), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("[sync-park-trails] error no controlado:", err);
+    console.error("[sync-park-things-to-do] error no controlado:", err);
     const message = err instanceof Error ? err.message : "Error inesperado";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

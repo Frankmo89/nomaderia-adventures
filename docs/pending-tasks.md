@@ -104,23 +104,12 @@ referenciar esta lista primero.
   5. Para alertas diarias automáticas, programar con pg_cron o cron-job.org llamando a la función con `{ mode: "alerts" }` y el header `Authorization: Bearer <admin_jwt>`.
   6. **`NPS_API_KEY`** ya debe estar configurado (usado por `ingest-national-parks`). **`RIDB_API_KEY`** es opcional; si está configurado, se agregan links de campamentos a `park_live_data.campgrounds`.
   7. **SOUL/Live boundary**: esta función escribe ÚNICAMENTE en `park_live_data`. NUNCA modifica `destinations`.
-- [ ] **Aplicar migraciones `create_park_trails` + `setup_pg_cron_park_trails` + `create_park_trails_sync_state` y desplegar `sync-park-trails`**:
-  1. Pegar el SQL de `supabase/migrations/20260707000000_create_park_trails.sql` en el editor SQL de Supabase y ejecutarlo (crea `public.park_trails`; `db push` sigue bloqueado por historial fuera de sync, mismo caveat que ADR-016).
-  2. Pegar el SQL de `supabase/migrations/20260707000001_setup_pg_cron_park_trails.sql` y ejecutarlo — requiere `pg_cron` y `pg_net` habilitados en Dashboard → Database → Extensions; si no lo están, la migración se auto-omite con un `RAISE NOTICE` (no falla) y hay que habilitarlos y re-ejecutarla, o usar cron-job.org (instrucciones en el propio archivo).
-  3. Pegar el SQL de `supabase/migrations/20260708000000_create_park_trails_sync_state.sql` y ejecutarlo (crea `public.park_trails_sync_state` — bookkeeping de rotación, ver bug/fix en el changelog de julio 2026). **Si `park_trails` y el cron ya se habían aplicado antes de este fix, esta migración es obligatoria** — la función ya no puede rotar el batch sin esta tabla.
-  4. `supabase functions deploy sync-park-trails` (o re-desplegar si ya estaba desplegada, para tomar el fix de rotación).
-  5. Primera corrida manual (desde consola del navegador en `/admin`, o `curl` con `Authorization: Bearer <service_role_key>`):
-     ```javascript
-     // Batch automático (máx. 5 parques, prioriza los nunca sincronizados)
-     await supabase.functions.invoke('sync-park-trails')
-     // Forzar un parque específico
-     await supabase.functions.invoke('sync-park-trails', { body: { park_codes: ['yose'] } })
-     ```
-     Repetir ~13 veces (o iterar con `park_codes` explícitos) para el backfill inicial de los 63 parques — después el cron semanal mantiene la rotación.
-  6. Retorna `{ ok, total, batch, synced, failed, restantes, detalle }`.
-  7. **`NPS_API_KEY`** ya debe estar configurado (reusado de `ingest-national-parks`/`sync-park-live-data`), no se necesita secret nuevo.
-  8. **SOUL/Live boundary**: esta función escribe ÚNICAMENTE en `park_trails` y `park_trails_sync_state` (bookkeeping propio). NUNCA modifica `destinations`.
-  9. **Sin verificar contra datos reales de NPS todavía**: `description_es` guarda texto crudo en inglés de NPS (sin traducción — no hay servicio de traducción en este pipeline); `distance` guarda el campo `duration` de NPS (texto libre tipo "1 to 2 hours", NO millas parseadas); `difficulty` siempre queda `NULL` (NPS `/thingstodo` no expone dificultad — no se fabricó). Verificar con una corrida real que `shortDescription`/`bodyText`/`duration` sean los nombres de campo correctos antes de confiar en el contenido — no se pudo confirmar el schema exacto de `/thingstodo` contra la documentación interactiva de NPS (requiere JS, no accesible por fetch). El `activityId` de "Hiking" se resuelve en runtime contra `/activities` (no hardcodeado) con fallback a filtro por nombre si la resolución falla.
+- [x] ~~Aplicar migraciones `create_park_trails` + `setup_pg_cron_park_trails` + `create_park_trails_sync_state` y desplegar `sync-park-trails`~~ **RESUELTO** — confirmado aplicado en producción por auditoría 2026-07-20 (1,190+ filas reales; tabla presente en `src/integrations/supabase/types.ts`). Notas de datos que siguen aplicando bajo el nuevo nombre (ver entrada de rename abajo): `description_es` guarda texto crudo en inglés de NPS (sin traducción — no hay servicio de traducción en este pipeline); `distance` guarda el campo `duration` de NPS (texto libre tipo "1 to 2 hours", NO millas parseadas); `difficulty` siempre queda `NULL` (NPS `/thingstodo` no expone dificultad — no se fabricó). El `activityId` de "Hiking" se resuelve en runtime contra `/activities` (no hardcodeado) con fallback a filtro por nombre si la resolución falla.
+- [ ] **Aplicar migración de rename `20260720010000_rename_park_trails_to_park_things_to_do.sql` y redesplegar la Edge Function renombrada** (2026-07-20, ADR-021 — la tabla nunca tuvo datos malos, solo un nombre engañoso: NPS `/thingstodo` mezcla senderos reales con paseos guiados, programas de guardaparques, remo, ciclismo, etc.):
+  1. Pegar el SQL de `supabase/migrations/20260720010000_rename_park_trails_to_park_things_to_do.sql` en el editor SQL de Supabase y ejecutarlo (`db push` sigue bloqueado, mismo caveat que ADR-016). Usa `ALTER TABLE ... RENAME TO` — no borra ni una fila. También re-registra el cron semanal bajo `weekly-sync-park-things-to-do` si `pg_cron`/`pg_net` están habilitados (des-registra `weekly-sync-park-trails` primero).
+  2. `supabase functions deploy sync-park-things-to-do` (la carpeta fue renombrada vía `git mv`; la función vieja `sync-park-trails` desplegada en producción queda huérfana — se puede borrar desde Dashboard → Edge Functions una vez confirmado que la nueva corre bien).
+  3. Si el cron semanal estaba registrado manualmente en cron-job.org en vez de pg_cron, actualizar ahí también la URL a `.../functions/v1/sync-park-things-to-do` — la migración solo re-registra el cron de pg_cron.
+  4. Regenerar tipos: `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts` — hasta entonces `src/hooks/use-park-things-to-do.ts` usa un bridge cast temporal (mismo patrón ADR-009, comentado en el propio archivo). Quitar el cast una vez el tipo generado traiga la clave `park_things_to_do`.
 - [ ] **Aplicar migración `20260614000003_match_knowledge_chunks_park_filter` y desplegar `concierge-agent`** (fixes del concierge, ADR-016):
   1. Pegar el SQL completo de `supabase/migrations/20260614000003_match_knowledge_chunks_park_filter.sql` en el editor SQL de Supabase y ejecutarlo (es idempotente/re-ejecutable; `db push` está bloqueado por historial fuera de sync).
   2. `supabase functions deploy concierge-agent`
@@ -208,7 +197,7 @@ La mayoría se completó en el PR del builder 2026-07-19 (ver changelog):
 - [x] ~~Toggle "Mostrar costos al cliente" + totales por día y por viaje~~ **HECHO 2026-07-19** (footer del Detail + subtotales en headers de día + total en header).
 - [x] ~~Mover bloque a otro día + reorden por sheet (sin DnD)~~ **HECHO 2026-07-19** (ADR-019).
 - [x] ~~Badge "Reservado" + `confirmacion_ref` en `alojamiento`~~ **HECHO 2026-07-19**.
-- [x] ~~Autocompletes desde `park_trails` y `campgrounds`~~ **HECHO 2026-07-19** (`use-park-trails.ts`, `use-campgrounds.ts`; persisten `extra.trail_id`/`extra.campground_id`).
+- [x] ~~Autocompletes desde `park_trails` y `campgrounds`~~ **HECHO 2026-07-19** (`use-park-trails.ts`, `use-campgrounds.ts`; persisten `extra.trail_id`/`extra.campground_id`). **Actualizado 2026-07-20 (ADR-021):** `park_trails` se renombró a `park_things_to_do` y el hook a `use-park-things-to-do.ts` (`useParkThingsToDo`); el autocomplete de `ruta` ahora combina dos fuentes agrupadas — "Senderos curados" (`destinations.signature_hikes`, hook nuevo `use-signature-hikes.ts`) y "Otras actividades NPS" (`park_things_to_do`).
 Pendiente real:
 - [ ] **Editor:** campo `internal_notes` (textarea admin-only) en `AdminClientItineraryDetail` — la columna existe desde la migración `20260719150000`, sin UI todavía.
 - [ ] **Plantillas:** pasar `destinationId` de la plantilla a `ItineraryBlockEditor` en `AdminItineraryTemplateEditor` para habilitar los autocompletes también ahí (prop opcional ya soportada; no se tocó la página en el PR del builder por la regla "no tocar otras páginas admin").
@@ -217,38 +206,9 @@ Pendiente real:
 - [ ] **Cliente:** render de los extras nuevos en `/i/:token` — badge "Reservado", origen→destino y modo "vuelo" en traslados (hoy el modo se muestra como chip de texto crudo, funcional pero sin ícono propio).
 
 ### Prioridad alta
-- [ ] **⚠ ALTA PRIORIDAD — `park_trails` tiene la fuente de datos mal en la raíz —
-      el filtro heurístico en `use-park-trails.ts` es un parche de UI, no una
-      solución (2026-07-20):** `sync-park-trails` sincroniza desde el endpoint
-      `/thingstodo` de NPS (activity=Hiking), que devuelve una mezcla de
-      senderos reales ("Hike Ryan Mountain") y actividades no relacionadas con
-      senderismo ("Attend a Ranger Stroll", "Rock Climbing at Echo T", "Paddle
-      Tobin Harbor") bajo el mismo patrón de URL (`nps.gov/thingstodo/*`) —
-      confirmado por auditoría: 1,190/1,191 filas de `park_trails` tienen
-      `nps_url` en `/thingstodo/`, incluidas las que sí son senderos reales.
-      Como el URL no distingue, se agregó un filtro por palabras clave del
-      título en `useParkTrails()` (permite `Hike`/`Trail(s)`/`Walk the`,
-      excluye verbos conocidos de actividades no-senderismo) — es un STOPGAP
-      solo de lectura: no toca las filas en la tabla, y su precisión varía
-      mucho por parque (medido: Yellowstone 46/50 filas retenidas = 92%,
-      Joshua Tree 25/48 = 52%, Isle Royale 10/41 = 24%; ver PR de mitigación
-      para detalle). **Investigación de fuente alternativa (2026-07-20):** RIDB
-      (`ridb.recreation.gov`, ya usado por `ingest-park-permits`) **NO** expone
-      un tipo de recurso "Trails" distinto — sus 14 recursos primarios son
-      Activities, Attributes, Campsites, Events, Facilities, FacilityAddresses,
-      Links, Media, Organizations, PermitEntrances, RecreationAreaAddresses,
-      RecreationAreas, Tours, Zones. El modelo `Facility` tiene un campo libre
-      `facility_type_description` sin enum documentado — en el mejor caso
-      algunas facilities individuales podrían estar etiquetadas "Trail"/
-      "Trailhead" por la agencia dueña, pero ni así expone mileage/dificultad
-      estructurados (mismo límite que NPS `/thingstodo`). **Decisión pendiente
-      antes de confiar en este feature para itinerarios de cliente:** (a)
-      filtrar por keyword en `sync-park-trails` en vez de en el hook, para que
-      las filas malas nunca entren a la tabla y luego re-sincronizar los 63
-      parques (sigue siendo heurística sobre NPS `/thingstodo`, no una fuente
-      mejor); o (b) evaluar un proveedor externo con datos reales de
-      senderos (mileage/dificultad) — ej. OpenStreetMap/Overpass — como
-      iniciativa aparte, más grande que un fix rápido.
+- [x] ~~⚠ ALTA PRIORIDAD — `park_trails` tiene la fuente de datos mal en la raíz — el filtro heurístico en `use-park-trails.ts` es un parche de UI, no una solución (2026-07-20)~~ **RESUELTO 2026-07-20 (ADR-021) — corrección al diagnóstico original: los datos nunca estuvieron mal.** La investigación confirmó que `sync-park-trails` sincroniza legítimamente el endpoint `/thingstodo` de NPS (`activity=Hiking`) — `nps_thing_id` (dedup key propio de NPS) y el patrón `nps_url` (`nps.gov/thingstodo/*`, 1,190/1,191 filas) lo confirman. El problema real era el **nombre de la tabla**: "trails" prometía senderos, pero `/thingstodo` mezcla senderos reales con paseos guiados, programas de guardaparques, remo, ciclismo, miradores, etc. bajo el mismo patrón de URL — de ahí el filtro heurístico de palabras clave que se había agregado como STOPGAP (Yellowstone 92% retenido, Joshua Tree 52%, Isle Royale 24% — precisión desigual, como cabía esperar de adivinar por título).
+  **Fix aplicado — rename, no re-sync:** `park_trails → park_things_to_do` (migración `20260720010000`, `ALTER TABLE ... RENAME TO`, preserva las 1,190+ filas), Edge Function `sync-park-trails → sync-park-things-to-do`, hook `use-park-trails.ts → use-park-things-to-do.ts`. El filtro heurístico `looksLikeTrail()` se **eliminó por completo** — ya no hace falta adivinar qué filas son senderos. El autocomplete de bloques `ruta` en el itinerary builder ahora combina dos fuentes agrupadas visualmente: "Senderos curados" (`destinations.signature_hikes`, contenido editorial) y "Otras actividades NPS" (`park_things_to_do`, sync sin curar) — nunca mezcladas sin etiqueta. Ver ADR-021 para el detalle completo y el pendiente humano "Aplicar migración de rename..." arriba para el paso de deploy.
+  La investigación de fuente alternativa (RIDB, OpenStreetMap/Overpass) sigue siendo información válida si en el futuro se quiere mileage/dificultad estructurados para "Senderos curados" más allá de lo que `signature_hikes` ya cubre editorialmente — RIDB (`ridb.recreation.gov`) **no** expone un tipo de recurso "Trails" distinto (14 recursos primarios: Activities, Attributes, Campsites, Events, Facilities, FacilityAddresses, Links, Media, Organizations, PermitEntrances, RecreationAreaAddresses, RecreationAreas, Tours, Zones; `Facility.facility_type_description` es un campo libre sin enum documentado, sin mileage/dificultad estructurados).
 - [x] ~~⚠ BLOQUEANTE — `ingest-knowledge` desplegado en producción NO coincide con el código del repo~~ **RESUELTO (julio 2026):** Frank recuperó el código desplegado real desde el dashboard de Supabase; commiteado verbatim (`recover deployed ingest-knowledge v19 from Supabase dashboard — never committed`) antes de cualquier cambio adicional, así que el drift queda cerrado y trazable en git. Sobre esa base se completó el wire de campgrounds y el guard de duplicados (ver changelog + pendiente Frank abajo).
 - [x] ~~Limpiar duplicados de `knowledge_chunks` en `pefo`/`gumo`~~ **Guard de código agregado (julio 2026)** — ver changelog. El DELETE de limpieza de los duplicados existentes y la migración del constraint siguen **pendientes de ejecución manual por Frank** (ver checklist ordenado abajo) — no se ejecutó SQL contra la DB en esta pasada, solo se escribió.
 - [ ] **Frank — pasos manuales para cerrar el batch de ingesta de 63 parques (en este orden exacto; el orden importa):**

@@ -205,7 +205,7 @@ Indexes: `share_token`, `status`, `friendly_slug`, `destination_id`
 **Extensiones opcionales del contrato v1 (ADR-018 — todas OPCIONALES, aditivas):**
 
 Bloques llevan extras en `extra` (objeto anidado, escrito por el editor admin):
-- `ruta`: `distancia_km`, `desnivel_m`, `apto_principiante`, `trail_id` (→ `park_trails.id`, para autocomplete)
+- `ruta`: `distancia_km`, `desnivel_m`, `apto_principiante`, `trail_id` (→ `park_things_to_do.id` cuando el bloque vino de la sugerencia NPS; `null` cuando vino de un sendero curado de `destinations.signature_hikes` — ver ADR-021)
 - `traslado`: `duracion`, `modo` (`auto|shuttle|caminar`), `origen`, `destino`
 - `alojamiento`: `reservado` (boolean — badge "Reservado"), `confirmacion_ref`, `campground_id` (facilityId RIDB o `campgrounds.id`)
 
