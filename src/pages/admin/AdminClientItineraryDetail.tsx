@@ -31,7 +31,7 @@ interface PartyShape {
   notas?: string | null;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+export const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   borrador:     { label: "Borrador",   className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
   entregado:    { label: "Entregado",  className: "bg-green-100  text-green-800  border-green-200"  },
   viaje_activo: { label: "En viaje",   className: "bg-blue-100   text-blue-800   border-blue-200"   },
@@ -229,10 +229,18 @@ const AdminClientItineraryDetail = () => {
     }
   };
 
+  // Mismo set de estados que la condición WHERE de get_itinerary_by_token —
+  // fuera de estos, el RPC público devuelve 0 filas ("no disponible").
+  const PUBLIC_STATUSES = ["entregado", "viaje_activo", "completado"];
+
   const handleViewAsClient = () => {
     if (!row) return;
-    const identifier = row.friendly_slug ?? row.share_token;
-    window.open(`/i/${identifier}`, "_blank", "noopener,noreferrer");
+    if (PUBLIC_STATUSES.includes(status)) {
+      const identifier = row.friendly_slug ?? row.share_token;
+      window.open(`/i/${identifier}`, "_blank", "noopener,noreferrer");
+    } else {
+      window.open(`/admin/client-itineraries/${row.id}/preview`, "_blank", "noopener,noreferrer");
+    }
   };
 
   const handleDuplicate = async () => {

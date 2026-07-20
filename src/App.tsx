@@ -57,6 +57,7 @@ const AdminItineraryTemplateEditor = lazyWithRetry(() => import("./pages/admin/A
 const AdminClientItineraries = lazyWithRetry(() => import("./pages/admin/AdminClientItineraries"));
 const AdminClientItineraryNew = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryNew"));
 const AdminClientItineraryDetail = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryDetail"));
+const AdminClientItineraryPreview = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryPreview"));
 const ClientItineraryView = lazyWithRetry(() => import("./pages/ClientItineraryView"));
 
 const queryClient = new QueryClient({
@@ -128,6 +129,7 @@ const App = () => (
                 <Route path="client-itineraries" element={<AdminClientItineraries />} />
                 <Route path="client-itineraries/new" element={<AdminClientItineraryNew />} />
                 <Route path="client-itineraries/:id" element={<AdminClientItineraryDetail />} />
+                <Route path="client-itineraries/:id/preview" element={<AdminClientItineraryPreview />} />
               </Route>
               <Route path="*" element={<NotFound />} />
               </Routes>
