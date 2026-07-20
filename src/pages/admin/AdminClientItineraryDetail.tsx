@@ -83,7 +83,11 @@ function generateTextVersion(row: ClientRow, content: ContentV1): string {
   lines.push("");
 
   for (const day of content.dias) {
-    lines.push(`📅 *Día ${day.dia}: ${day.titulo}*`);
+    if (day.bloques.length === 0) continue;
+    const isDefaultTitle = day.titulo === `Día ${day.dia}`;
+    lines.push(
+      isDefaultTitle ? `📅 *Día ${day.dia}*` : `📅 *Día ${day.dia}: ${day.titulo}*`,
+    );
     for (const block of day.bloques) {
       const emoji = TIPO_EMOJI[block.tipo as BlockTipo] ?? "•";
       let line = `${emoji} ${block.titulo}`;
