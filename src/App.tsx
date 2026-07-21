@@ -59,6 +59,7 @@ const AdminClientItineraryNew = lazyWithRetry(() => import("./pages/admin/AdminC
 const AdminClientItineraryDetail = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryDetail"));
 const AdminClientItineraryPreview = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryPreview"));
 const ClientItineraryView = lazyWithRetry(() => import("./pages/ClientItineraryView"));
+const ClientItineraryPrintView = lazyWithRetry(() => import("./pages/ClientItineraryPrintView"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,6 +102,7 @@ const App = () => (
               <Route path="/servicios" element={<ErrorBoundary><Servicios /></ErrorBoundary>} />
               <Route path="/sobre-nosotros" element={<ErrorBoundary><SobreNosotros /></ErrorBoundary>} />
               <Route path="/i/:token" element={<ErrorBoundary><ClientItineraryView /></ErrorBoundary>} />
+              <Route path="/i/:token/print" element={<ErrorBoundary><ClientItineraryPrintView /></ErrorBoundary>} />
               <Route path="/admin/login" element={<ErrorBoundary><AdminLogin /></ErrorBoundary>} />
               <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
                 <Route index element={<AdminDashboard />} />
