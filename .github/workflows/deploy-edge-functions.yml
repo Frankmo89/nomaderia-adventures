@@ -1,0 +1,64 @@
+name: Deploy Supabase Edge Functions
+
+# Deploys every function under supabase/functions/* on every push to main.
+# Exists because Supabase Edge Functions do NOT redeploy on git push --
+# unlike the Cloudflare Pages frontend, they need an explicit deploy step.
+# Without this, code can sit committed in main for weeks while production
+# silently runs an older version (see docs/pending-tasks.md, 2026-07-26
+# entries on generate-blog-draft / discover-trending-blog deployment skew).
+#
+# Deploys ALL functions unconditionally rather than diffing changed paths --
+# simpler, and a deploy of unchanged code is a harmless no-op.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-edge-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy all Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: vrixiuvnhvqafmxlcyex
+        run: |
+          set -uo pipefail
+          failed=""
+
+          for dir in supabase/functions/*/; do
+            name="$(basename "$dir")"
+
+            # _shared is a library of imports for other functions, not a
+            # deployable function itself.
+            if [ "$name" = "_shared" ]; then
+              continue
+            fi
+
+            echo "::group::Deploying $name"
+            if supabase functions deploy "$name" --project-ref "$PROJECT_REF"; then
+              echo "✓ $name deployed"
+            else
+              echo "✗ $name FAILED"
+              failed="$failed $name"
+            fi
+            echo "::endgroup::"
+          done
+
+          if [ -n "$failed" ]; then
+            echo "The following functions failed to deploy:$failed"
+            exit 1
+          fi
