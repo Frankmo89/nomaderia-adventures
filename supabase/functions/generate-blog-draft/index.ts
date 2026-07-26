@@ -461,8 +461,19 @@ serve(async (req) => {
       throw new Error("La respuesta de draft no cumple el formato esperado");
     }
 
+    // title_options es una mejora aditiva (chips de título en el editor) — si
+    // el modelo no la devolvió con la forma esperada, no debe tumbar la
+    // generación del draft completo. Se normaliza a [] y se loguea.
+    const titleOptions = Array.isArray(stepB.title_options) ? stepB.title_options : [];
+    if (!Array.isArray(stepB.title_options)) {
+      console.error(
+        "[generate-blog-draft] title_options ausente o con forma inválida en la respuesta del modelo — se continúa sin alternativas de título:",
+        stepB.title_options,
+      );
+    }
+
     const response: GenerateBlogDraftResponse = {
-      draft: stepB,
+      draft: { ...stepB, title_options: titleOptions },
       sources: stepB.sources,
       verify_flags: stepB.verify_flags,
       model: OPENAI_MODEL,
