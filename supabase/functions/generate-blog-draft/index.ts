@@ -13,6 +13,12 @@ const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-5.2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
+// RAG grounding (match_knowledge_chunks) — mismo modelo de embeddings y umbral
+// que concierge-agent (ADR-015/016): coseno, min_similarity 0.4, sin subirlo.
+const EMBED_MODEL = "text-embedding-3-small";
+const RAG_MATCH_COUNT = 8;
+const RAG_MIN_SIMILARITY = 0.4;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -52,11 +58,93 @@ interface BlogDraft {
   sources: ResearchSource[];
 }
 
+interface RagMeta {
+  used: boolean;
+  chunk_count: number;
+  park_code: string | null;
+  destination_id: string | null;
+}
+
 interface GenerateBlogDraftResponse {
   draft: BlogDraft;
   sources: ResearchSource[];
   verify_flags: string[];
   model: string;
+  rag_meta: RagMeta;
+}
+
+interface DestinationRow {
+  id: string;
+  title: string;
+  park_code: string | null;
+}
+
+interface KnowledgeChunkRow {
+  content: string;
+  metadata: { title?: string; section?: string; park_code?: string } | null;
+  source_field: string;
+}
+
+function normalizeText(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Resuelve el parque asociado a un tema de blog por coincidencia de texto (sin
+ *  campo estructurado destination_id/park_code en el flujo de blog todavía).
+ *  Prioriza títulos de destino más largos/específicos primero. */
+function resolveParkFromTopic(
+  topic: string,
+  category: string | undefined,
+  destinations: DestinationRow[],
+): DestinationRow | null {
+  const haystack = normalizeText(`${topic} ${category ?? ""}`);
+  const candidates = destinations
+    .filter((d) => d.park_code)
+    .sort((a, b) => b.title.length - a.title.length);
+
+  for (const dest of candidates) {
+    const needle = normalizeText(dest.title);
+    if (!needle) continue;
+    const pattern = new RegExp(`\\b${escapeRegExp(needle)}\\b`);
+    if (pattern.test(haystack)) return dest;
+  }
+  return null;
+}
+
+async function embedText(apiKey: string, text: string): Promise<number[]> {
+  const res = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ model: EMBED_MODEL, input: text }),
+  });
+  if (!res.ok) {
+    throw new Error(`OpenAI embedding error ${res.status}: ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.data[0].embedding;
+}
+
+function buildRagContextBlock(chunks: KnowledgeChunkRow[]): string {
+  if (!chunks.length) return "";
+
+  const body = chunks
+    .map((c, i) => {
+      const label = `${c.metadata?.title ?? ""} — Sección: ${c.metadata?.section ?? c.source_field}`;
+      return `[R${i + 1}] ${label}\n${c.content}`;
+    })
+    .join("\n\n---\n\n");
+
+  return `DATOS VERIFICADOS DE NOMADERIA (RAG — contenido editorial propio de Nomaderia, prioridad máxima para hechos):\n\n${body}`;
 }
 
 function buildStepAResearchPrompt(input: {
@@ -177,7 +265,11 @@ content_markdown ejemplo (extracto):
 ${(example.content_markdown || "").slice(0, 2000)}`;
 }
 
-function buildStepBSystemPrompt(fewShotBlock: string): string {
+function buildStepBSystemPrompt(fewShotBlock: string, hasRagContext: boolean): string {
+  const priorityRule = hasRagContext
+    ? `- Orden de prioridad para CUALQUIER afirmación factual (distancias, costos, nombres de senderos, temporadas, permisos): primero el bloque "DATOS VERIFICADOS DE NOMADERIA (RAG)", después el material de investigación (web_search) solo para información genuinamente actual/trending que el RAG no cubra. Si el RAG y la investigación se contradicen, usa el RAG.`
+    : `- No hay bloque RAG para este tema (no es específico de un parque de Nomaderia o no hay contenido editorial propio indexado). Usa el material de investigación (web_search) como única fuente factual.`;
+
   return `${NOMADERIA_SOUL}
 
 Eres editor jefe de Nomaderia para contenido editorial de blog. Debes priorizar MUCHO la voz de Nomaderia: claridad, honestidad radical con principiantes, cero humo y español natural para hispanos en EE. UU.
@@ -187,8 +279,9 @@ Reglas críticas de redacción y verificación:
 - Estructura content_markdown con markdown claro, incluyendo H2 y H3 útiles para escaneo rápido.
 - Mantén enfoque en intención de búsqueda real de principiantes (resolver dudas concretas).
 - NO inventes hechos, cifras, fechas, reglas ni costos.
-- Toda afirmación factual debe estar respaldada por fuentes en sources.
-- Si un dato no está respaldado, omítelo del texto final y agrega el campo o claim a verify_flags.
+${priorityRule}
+- Toda afirmación factual debe estar respaldada por el bloque RAG o por fuentes en sources.
+- Si ni el RAG ni la investigación respaldan un dato, NO lo inventes: márcalo inline en content_markdown como "⚠️ VERIFICAR (IA): <qué falta>" en vez de afirmarlo, y agrega también el campo o claim a verify_flags.
 - meta_description debe ser SEO y tener 160 caracteres o menos.
 - No generes campos fuera del esquema.
 - Campos explícitamente prohibidos en este flujo: hero_image_url, author, reading_time_min, is_published, featured.
@@ -255,6 +348,53 @@ serve(async (req) => {
       }
     }
 
+    // ── RAG grounding (ADR-015/016 convention) ────────────────────────────────
+    // Si el tema es de un parque específico, buscamos chunks verificados en
+    // knowledge_chunks ANTES de llamar al LLM. Si no se resuelve parque (post
+    // general), se omite por completo — no se fuerza el RAG.
+    let ragChunks: KnowledgeChunkRow[] = [];
+    let ragMeta: RagMeta = { used: false, chunk_count: 0, park_code: null, destination_id: null };
+
+    const { data: destinationRows, error: destinationsError } = await serviceClient
+      .from("destinations")
+      .select("id, title, park_code");
+
+    if (destinationsError) {
+      console.error("[generate-blog-draft] no se pudieron leer destinations para RAG:", destinationsError.message);
+    } else {
+      const resolvedDestination = resolveParkFromTopic(title, category, (destinationRows ?? []) as DestinationRow[]);
+
+      if (resolvedDestination?.park_code) {
+        try {
+          const queryEmbedding = await embedText(OPENAI_API_KEY, `${title} ${category ?? ""}`.trim());
+          const { data: chunkData, error: chunkError } = await serviceClient.rpc("match_knowledge_chunks", {
+            query_embedding: queryEmbedding,
+            match_count: RAG_MATCH_COUNT,
+            min_similarity: RAG_MIN_SIMILARITY,
+            filter_park_code: resolvedDestination.park_code,
+          });
+
+          if (chunkError) {
+            console.error("[generate-blog-draft] match_knowledge_chunks falló:", chunkError.message);
+          } else {
+            ragChunks = (chunkData ?? []) as KnowledgeChunkRow[];
+            ragMeta = {
+              used: ragChunks.length > 0,
+              chunk_count: ragChunks.length,
+              park_code: resolvedDestination.park_code,
+              destination_id: resolvedDestination.id,
+            };
+          }
+        } catch (ragErr) {
+          // RAG es un enriquecimiento, no un requisito — un fallo aquí no debe
+          // tumbar la generación del borrador (sigue con web_search + SOUL).
+          console.error("[generate-blog-draft] RAG retrieval falló:", ragErr);
+        }
+      }
+    }
+
+    const ragContextBlock = buildRagContextBlock(ragChunks);
+
     const stepA = await callResponses<StepAResearchOutput>({
       apiKey: OPENAI_API_KEY,
       model: OPENAI_MODEL,
@@ -282,14 +422,15 @@ serve(async (req) => {
       input: [
         {
           role: "system",
-          content: buildStepBSystemPrompt(buildFewShotBlock(examplePost)),
+          content: buildStepBSystemPrompt(buildFewShotBlock(examplePost), ragContextBlock.length > 0),
         },
         {
           role: "user",
           content:
             `Estructura este material en el esquema blog_draft.\n\n` +
             `title: ${title}\ncategory: ${category || ""}\nsuggested_slug: ${suggestedSlug || ""}\n\n` +
-            `Material de investigación (JSON):\n${JSON.stringify(stepA)}`,
+            (ragContextBlock ? `${ragContextBlock}\n\n` : "") +
+            `Material de investigación (JSON, web_search):\n${JSON.stringify(stepA)}`,
         },
       ],
       jsonSchema: {
@@ -307,6 +448,7 @@ serve(async (req) => {
       sources: stepB.sources,
       verify_flags: stepB.verify_flags,
       model: OPENAI_MODEL,
+      rag_meta: ragMeta,
     };
 
     return new Response(
