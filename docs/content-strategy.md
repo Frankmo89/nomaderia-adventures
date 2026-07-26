@@ -83,6 +83,40 @@ Los datos se guardan en `quiz_responses` y alimentan el dashboard de analytics e
 | Personal stories | Emotional connection | Relatos de lectores / community |
 | Gear comparativas | Amazon affiliate | "Salomon vs Merrell: ¿cuál bota te conviene?" |
 
+### Generación de Blog con IA — RAG Grounding (`generate-blog-draft`)
+
+Desde 2026-07, `generate-blog-draft` combina tres fuentes, en este orden de
+prioridad para cualquier afirmación factual:
+
+1. **RAG (`knowledge_chunks`, prioridad máxima)** — si el tema/título del post
+   resuelve a un parque específico (coincidencia de texto contra
+   `destinations.title`, normalizado sin acentos — no hay `destination_id`/
+   `park_code` estructurado en el flujo de blog todavía), se llama
+   `match_knowledge_chunks` con `filter_park_code`, `match_count=8`,
+   `min_similarity=0.4` (misma convención que `concierge-agent`, ADR-015/016 —
+   no subir el umbral). Los chunks se inyectan en el prompt de Step B como un
+   bloque etiquetado `DATOS VERIFICADOS DE NOMADERIA (RAG)`, separado del
+   bloque de voz SOUL y del bloque de resultados de `web_search`.
+2. **`web_search` (Step A)** — solo para información genuinamente actual o
+   trending que el RAG no cubra (noticias, tendencias, cambios recientes).
+3. **Ninguna fuente** — el dato se marca inline en `content_markdown` como
+   `⚠️ VERIFICAR (IA): <qué falta>` (misma convención que `generate-park-content`)
+   y también se agrega a `verify_flags`.
+
+Si no se resuelve ningún parque para el tema (post general, ej. "cómo empacar
+para 5 días de trekking"), el paso RAG se omite por completo — no se fuerza.
+
+Provenance de auditoría: la respuesta de la función incluye `rag_meta: { used,
+chunk_count, park_code, destination_id }`, que `AdminBlogPostForm.tsx` guarda
+en `ai_content_meta.rag_meta` (columna añadida en la migración
+`20260726000000_add_rag_meta_to_ai_content_meta.sql`) junto a `sources` y
+`verify_flags`.
+
+**Alcance de esta iteración:** solo `generate-blog-draft`. `generate-gear-draft`
+sigue sin RAG — se replicará el mismo patrón en un PR de seguimiento una vez
+validado en blog. `discover-trending-blog` (descubrimiento de temas) tampoco
+se tocó.
+
 ## Gear Articles — Pipeline de 12
 
 Prioridad por volumen de búsqueda:

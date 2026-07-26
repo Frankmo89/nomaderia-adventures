@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -303,7 +304,10 @@ const AdminBlogPostForm = () => {
       if (result.error) { toast({ title: "Error", description: result.error.message, variant: "destructive" }); return; }
 
       if (aiDraftResponse && result.data?.id) {
-        const { error: aiMetaError } = await supabase
+        // ai_content_meta.rag_meta was added after the last type generation
+        // (migration 20260726000000). Same bridge-cast pattern as ADR-009 /
+        // use-media.ts — remove once types.ts is regenerated.
+        const { error: aiMetaError } = await (supabase as unknown as SupabaseClient)
           .from("ai_content_meta")
           .upsert(
             {
@@ -312,6 +316,7 @@ const AdminBlogPostForm = () => {
               sources: aiDraftResponse.sources,
               verify_flags: aiDraftResponse.verify_flags,
               model: aiDraftResponse.model,
+              rag_meta: aiDraftResponse.rag_meta,
             },
             { onConflict: "content_type,content_id" },
           );

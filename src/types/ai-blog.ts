@@ -29,11 +29,19 @@ export interface BlogDraft {
   sources: BlogDraftSource[];
 }
 
+export interface RagMeta {
+  used: boolean;
+  chunk_count: number;
+  park_code: string | null;
+  destination_id: string | null;
+}
+
 export interface GenerateBlogResponse {
   draft: BlogDraft;
   sources: BlogDraftSource[];
   verify_flags: string[];
   model: string;
+  rag_meta: RagMeta;
 }
 
 export interface DiscoverBlogResponse {
