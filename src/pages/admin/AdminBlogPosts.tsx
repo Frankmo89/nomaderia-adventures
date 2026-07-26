@@ -12,6 +12,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TrendingBlogCard } from "@/components/admin/TrendingBlogCard";
+import { DirectTopicCard } from "@/components/admin/DirectTopicCard";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
 import AdminEmptyState from "@/components/admin/EmptyState";
@@ -42,6 +43,7 @@ const AdminBlogPosts = () => {
   const [search, setSearch] = useState("");
   const [showDiscoveryPanel, setShowDiscoveryPanel] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
+  const [focusInput, setFocusInput] = useState("");
   const [page, setPage] = useState(1);
   const { toast } = useToast();
   const { sortState, handleSort } = useSortable<BlogSortKey>();
@@ -102,7 +104,7 @@ const AdminBlogPosts = () => {
   const handleDiscoverTrending = () => {
     setShowDiscoveryPanel(true);
     resetDiscovery();
-    discoverTrending();
+    discoverTrending(focusInput.trim() || undefined);
   };
 
   return (
@@ -110,6 +112,12 @@ const AdminBlogPosts = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="font-serif text-3xl text-foreground">Posts del Blog</h1>
         <div className="flex items-center gap-2">
+          <Input
+            value={focusInput}
+            onChange={(e) => setFocusInput(e.target.value)}
+            placeholder="Enfoque (opcional): permisos, invierno, Joshua Tree…"
+            className="w-64 bg-card border-border text-foreground placeholder:text-muted-foreground"
+          />
           <Button type="button" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10" onClick={handleDiscoverTrending} disabled={discoveryPending}>
             <Sparkles className="h-4 w-4 mr-2" /> ✦ Descubrir Temas SEO
           </Button>
@@ -118,6 +126,8 @@ const AdminBlogPosts = () => {
           </Button>
         </div>
       </div>
+
+      <DirectTopicCard />
 
       {showDiscoveryPanel && (
         <section className="mb-8 rounded-xl border border-border bg-card/40 p-4 md:p-6">

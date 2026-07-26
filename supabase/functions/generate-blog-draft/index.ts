@@ -28,6 +28,7 @@ interface GenerateBlogDraftRequest {
   title?: string;
   category?: string;
   suggested_slug?: string;
+  destination_id?: string;
 }
 
 interface ExampleBlogPost {
@@ -48,6 +49,7 @@ interface StepAResearchOutput {
 
 interface BlogDraft {
   title: string;
+  title_options: string[];
   slug: string;
   category: string;
   short_description: string;
@@ -212,6 +214,7 @@ function buildBlogDraftSchema(): JsonSchemaDefinition {
     additionalProperties: false,
     required: [
       "title",
+      "title_options",
       "slug",
       "category",
       "short_description",
@@ -223,6 +226,12 @@ function buildBlogDraftSchema(): JsonSchemaDefinition {
     ],
     properties: {
       title: { type: "string" },
+      title_options: {
+        type: "array",
+        minItems: 3,
+        maxItems: 3,
+        items: { type: "string" },
+      },
       slug: { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
       category: { type: "string" },
       short_description: { type: "string" },
@@ -283,6 +292,7 @@ ${priorityRule}
 - Toda afirmación factual debe estar respaldada por el bloque RAG o por fuentes en sources.
 - Si ni el RAG ni la investigación respaldan un dato, NO lo inventes: márcalo inline en content_markdown como "⚠️ VERIFICAR (IA): <qué falta>" en vez de afirmarlo, y agrega también el campo o claim a verify_flags.
 - meta_description debe ser SEO y tener 160 caracteres o menos.
+- title_options: propone exactamente 3 títulos alternativos a "title", cada uno con ángulo de curiosidad/SEO distinto entre sí y distinto de "title". Escríbelos en español, en segunda persona directa (voz SOUL), apelando a un miedo o duda concreta de un principiante (ej. "¿Y si me pierdo? Así te preparas para tu primer sendero solo"). No repitas la misma estructura de frase en los 3.
 - No generes campos fuera del esquema.
 - Campos explícitamente prohibidos en este flujo: hero_image_url, author, reading_time_min, is_published, featured.
 ${fewShotBlock}`;
@@ -312,6 +322,7 @@ serve(async (req) => {
     const title = body.title?.trim();
     const category = body.category?.trim();
     const suggestedSlug = body.suggested_slug?.trim();
+    const explicitDestinationId = body.destination_id?.trim() || undefined;
 
     if (!title) {
       return new Response(
@@ -362,7 +373,14 @@ serve(async (req) => {
     if (destinationsError) {
       console.error("[generate-blog-draft] no se pudieron leer destinations para RAG:", destinationsError.message);
     } else {
-      const resolvedDestination = resolveParkFromTopic(title, category, (destinationRows ?? []) as DestinationRow[]);
+      // Un destination_id explícito (elegido por Frank en el admin) OVERRIDE
+      // total del heurístico de texto — el heurístico solo corre como
+      // fallback cuando no se pasó nada. No se confía en un park_code
+      // enviado directo desde el cliente (evita el gotcha de aliasing de
+      // ADR-016) — se resuelve contra destinationRows, ya leído arriba.
+      const resolvedDestination = explicitDestinationId
+        ? ((destinationRows ?? []) as DestinationRow[]).find((d) => d.id === explicitDestinationId) ?? null
+        : resolveParkFromTopic(title, category, (destinationRows ?? []) as DestinationRow[]);
 
       if (resolvedDestination?.park_code) {
         try {

@@ -6,15 +6,16 @@ export interface GenerateBlogInput {
   title: string;
   category?: string;
   suggested_slug?: string;
+  destination_id?: string;
 }
 
 export function useBlogDraft() {
   const mutation = useMutation<GenerateBlogResponse, Error, GenerateBlogInput>({
-    mutationFn: async ({ title, category, suggested_slug }: GenerateBlogInput): Promise<GenerateBlogResponse> => {
+    mutationFn: async ({ title, category, suggested_slug, destination_id }: GenerateBlogInput): Promise<GenerateBlogResponse> => {
       const { data, error } = await supabase.functions.invoke<GenerateBlogResponse>(
         "generate-blog-draft",
         {
-          body: { title, category, suggested_slug },
+          body: { title, category, suggested_slug, destination_id },
         },
       );
 

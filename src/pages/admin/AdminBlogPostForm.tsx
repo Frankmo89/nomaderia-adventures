@@ -31,6 +31,7 @@ interface CandidateParams {
   title: string;
   category?: string;
   suggested_slug?: string;
+  destination_id?: string;
 }
 
 const stagedDraftStatuses = [
@@ -83,6 +84,7 @@ const AdminBlogPostForm = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [aiDraftResponse, setAiDraftResponse] = useState<GenerateBlogResponse | null>(null);
+  const [titleOptions, setTitleOptions] = useState<string[]>([]);
   const [draftProgressIndex, setDraftProgressIndex] = useState(0);
   const [draftErrorMessage, setDraftErrorMessage] = useState<string | null>(null);
   const draftAutofillStartedRef = useRef(false);
@@ -113,9 +115,10 @@ const AdminBlogPostForm = () => {
     const title = searchParams.get("title");
     const category = searchParams.get("category") || undefined;
     const suggested_slug = searchParams.get("suggested_slug") || undefined;
+    const destination_id = searchParams.get("destination_id") || undefined;
 
     if (title) {
-      return { title, category, suggested_slug };
+      return { title, category, suggested_slug, destination_id };
     }
 
     return null;
@@ -203,6 +206,7 @@ const AdminBlogPostForm = () => {
           reading_time_min: computeReadingTimeMin(response.draft.content_markdown),
         }));
         setTags(response.draft.tags);
+        setTitleOptions(response.draft.title_options);
       },
       onError: (error) => {
         if (draftAutofillCanceledRef.current) return;
@@ -376,6 +380,24 @@ const AdminBlogPostForm = () => {
       <div className="space-y-2">
         <Label className="text-foreground">Título</Label>
         <Input value={form.title} onChange={(e) => set("title", e.target.value)} required />
+        {!isEdit && titleOptions.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {titleOptions.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => set("title", option)}
+                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${
+                  form.title === option
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="space-y-2">
         <Label className="text-foreground">Slug</Label>

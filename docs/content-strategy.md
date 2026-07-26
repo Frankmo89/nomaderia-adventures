@@ -88,23 +88,37 @@ Los datos se guardan en `quiz_responses` y alimentan el dashboard de analytics e
 Desde 2026-07, `generate-blog-draft` combina tres fuentes, en este orden de
 prioridad para cualquier afirmación factual:
 
-1. **RAG (`knowledge_chunks`, prioridad máxima)** — si el tema/título del post
-   resuelve a un parque específico (coincidencia de texto contra
-   `destinations.title`, normalizado sin acentos — no hay `destination_id`/
-   `park_code` estructurado en el flujo de blog todavía), se llama
-   `match_knowledge_chunks` con `filter_park_code`, `match_count=8`,
-   `min_similarity=0.4` (misma convención que `concierge-agent`, ADR-015/016 —
-   no subir el umbral). Los chunks se inyectan en el prompt de Step B como un
-   bloque etiquetado `DATOS VERIFICADOS DE NOMADERIA (RAG)`, separado del
-   bloque de voz SOUL y del bloque de resultados de `web_search`.
+1. **RAG (`knowledge_chunks`, prioridad máxima)** — resuelve el parque de dos
+   formas, **desde 2026-07-26 la explícita tiene prioridad total sobre la
+   heurística**:
+   - **Explícita (determinista):** el admin de blog (`AdminBlogPosts.tsx` —
+     card "Desarrollar mi propio tema" y el selector de parque en cada
+     sugerencia IA) puede enviar `destination_id` en el request. Cuando viene,
+     `generate-blog-draft` lo resuelve contra `destinations` (mismo query que
+     ya hacía para la heurística, sin segunda consulta) y usa ese resultado
+     directo — la heurística de texto NO corre en absoluto. El selector solo
+     lista destinos con `park_code` no nulo, así que una selección explícita
+     siempre alimenta un `filter_park_code` real.
+   - **Heurística (fallback, sin cambios):** si no se envía `destination_id`,
+     se sigue resolviendo por coincidencia de texto contra `destinations.title`
+     (normalizado sin acentos) — el comportamiento original, para descubrimiento
+     libre o posts generales sin selector usado.
+   - En ambos casos, una vez resuelto el destino, se llama
+     `match_knowledge_chunks` con `filter_park_code`, `match_count=8`,
+     `min_similarity=0.4` (misma convención que `concierge-agent`, ADR-015/016 —
+     no subir el umbral, llamada RPC sin cambios). Los chunks se inyectan en el
+     prompt de Step B como un bloque etiquetado `DATOS VERIFICADOS DE NOMADERIA
+     (RAG)`, separado del bloque de voz SOUL y del bloque de resultados de
+     `web_search`.
 2. **`web_search` (Step A)** — solo para información genuinamente actual o
    trending que el RAG no cubra (noticias, tendencias, cambios recientes).
 3. **Ninguna fuente** — el dato se marca inline en `content_markdown` como
    `⚠️ VERIFICAR (IA): <qué falta>` (misma convención que `generate-park-content`)
    y también se agrega a `verify_flags`.
 
-Si no se resuelve ningún parque para el tema (post general, ej. "cómo empacar
-para 5 días de trekking"), el paso RAG se omite por completo — no se fuerza.
+Si no se resuelve ningún parque para el tema (ni por `destination_id` ni por
+heurística — post general, ej. "cómo empacar para 5 días de trekking"), el
+paso RAG se omite por completo — no se fuerza.
 
 Provenance de auditoría: la respuesta de la función incluye `rag_meta: { used,
 chunk_count, park_code, destination_id }`, que `AdminBlogPostForm.tsx` guarda
@@ -112,10 +126,22 @@ en `ai_content_meta.rag_meta` (columna añadida en la migración
 `20260726000000_add_rag_meta_to_ai_content_meta.sql`) junto a `sources` y
 `verify_flags`.
 
-**Alcance de esta iteración:** solo `generate-blog-draft`. `generate-gear-draft`
-sigue sin RAG — se replicará el mismo patrón en un PR de seguimiento una vez
-validado en blog. `discover-trending-blog` (descubrimiento de temas) tampoco
-se tocó.
+**Descubrimiento dirigido (`discover-trending-blog`):** acepta un `focus`
+opcional en el body (input "Enfoque (opcional)" junto al botón "Descubrir
+Temas SEO"). Cuando viene, se antepone un bloque al prompt pidiendo que los
+candidatos orbiten ese enfoque sin degenerar en un solo tema genérico repetido.
+Vacío = comportamiento idéntico al anterior.
+
+**Títulos alternativos (`title_options`):** además de `title`, el schema de
+`blog_draft` ahora exige `title_options` — exactamente 3 títulos alternativos,
+ángulo de curiosidad/SEO, voz SOUL en segunda persona directa apelando a un
+miedo concreto de principiante. `AdminBlogPostForm.tsx` los muestra como chips
+tocables bajo el campo Título; tocar uno reemplaza el valor del título. Campo
+aditivo — no se persiste en `blog_posts` (solo el título elegido se guarda).
+
+**Alcance de esta iteración:** `generate-blog-draft` y `discover-trending-blog`.
+`generate-gear-draft` sigue sin RAG — se replicará el mismo patrón en un PR de
+seguimiento una vez validado en blog.
 
 ## Gear Articles — Pipeline de 12
 

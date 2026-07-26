@@ -19,6 +19,7 @@ export interface BlogCandidate {
 
 export interface BlogDraft {
   title: string;
+  title_options: string[];
   slug: string;
   category: string;
   short_description: string;

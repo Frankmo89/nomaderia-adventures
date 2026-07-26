@@ -39,15 +39,19 @@ interface BlogCandidatesResponse {
   candidates: BlogCandidate[];
 }
 
-function buildPrompt(existingPosts: ExistingBlogPost[]): string {
+function buildPrompt(existingPosts: ExistingBlogPost[], focus?: string): string {
   const catalog = existingPosts
     .slice(0, 40)
     .map((item) => `${item.slug} :: ${item.title}`)
     .join("\n");
 
+  const focusBlock = focus
+    ? `Enfoque solicitado por el equipo editorial: "${focus}"\nPrioriza fuertemente este ángulo/tema en los candidatos, pero sigue devolviendo temas long-tail reales y variados dentro de ese enfoque — NO conviertas todo en un único tema genérico repetido.\n\n`
+    : "";
+
   return `Eres un estratega SEO editorial de Nomaderia.
 
-Objetivo: descubrir 6 a 8 temas de blog con INTENCIÓN DE BÚSQUEDA real para una audiencia de hispanos residentes en EE. UU. que son principiantes en senderismo y aventura outdoor.
+${focusBlock}Objetivo: descubrir 6 a 8 temas de blog con INTENCIÓN DE BÚSQUEDA real para una audiencia de hispanos residentes en EE. UU. que son principiantes en senderismo y aventura outdoor.
 
 Qué sí priorizar:
 - Long-tail y preguntas de principiante en español: "cómo", "qué llevar", "primera vez", "permiso X explicado", "cuánto cuesta", "vale la pena".
@@ -136,6 +140,9 @@ serve(async (req) => {
       return authResult.error;
     }
 
+    const body = (await req.json().catch(() => ({}))) as { focus?: string };
+    const focus = body.focus?.trim() || undefined;
+
     const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data: existingPosts, error: postsError } = await serviceClient
       .from("blog_posts")
@@ -146,7 +153,7 @@ serve(async (req) => {
       throw new Error(`No se pudieron leer los blog posts existentes: ${postsError.message}`);
     }
 
-    const prompt = buildPrompt((existingPosts ?? []) as ExistingBlogPost[]);
+    const prompt = buildPrompt((existingPosts ?? []) as ExistingBlogPost[], focus);
 
     const response = await callResponses<BlogCandidatesResponse>({
       apiKey: OPENAI_API_KEY,

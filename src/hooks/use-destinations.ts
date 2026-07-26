@@ -172,6 +172,34 @@ export function useDestinationsMapData() {
   });
 }
 
+export interface DestinationParkOption {
+  id: string;
+  title: string;
+  park_code: string;
+}
+
+/**
+ * Solo destinos con park_code (no null) — usado por el selector de parque del
+ * admin de blog para que una selección explícita SIEMPRE alimente un
+ * filter_park_code real en match_knowledge_chunks (RAG determinista).
+ */
+export function useDestinationParkOptions() {
+  return useQuery<DestinationParkOption[]>({
+    queryKey: ["destinations", "park-options"],
+    staleTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("destinations")
+        .select("id, title, park_code")
+        .eq("is_published", true)
+        .not("park_code", "is", null)
+        .order("title");
+      if (error) throw error;
+      return (data as DestinationParkOption[]) ?? [];
+    },
+  });
+}
+
 export function useRelatedDestinations(
   difficultyLevel: string | undefined,
   excludeId: string | undefined
