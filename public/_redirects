@@ -1,1 +1,2 @@
+/assets/* /assets/:splat 404
 /* /index.html 200
