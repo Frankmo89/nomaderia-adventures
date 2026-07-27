@@ -10,14 +10,11 @@ const HAS_PARK_FILL = "#A5C5B4";
 const NO_PARK_FILL = "#E4E2DB"; // stone
 const STROKE_COLOR = "#FBFAF7"; // cloud
 
-// Fades the map to fully transparent behind the fixed navbar so state shapes
-// never sit directly behind the logo/hamburger — clean forest-dark there
-// instead. Fixed pixel stops (not percentages of this section's height) so
-// the fade zone always matches the ~64px fixed navbar + a small buffer,
-// regardless of how tall the header section is — a percentage-based fade
-// left a large empty gap on tall headers. Pure visual mask on this layer;
-// Navbar itself is untouched.
-const TOP_FADE_MASK = "linear-gradient(to bottom, transparent 0px, transparent 64px, black 96px)";
+// Small top blend only — the wrapper below is already offset by `top-16`
+// (64px, matching the fixed Navbar's height) so the map no longer needs a
+// large fade zone to hide behind the navbar. A short 24px blend just softens
+// the top edge instead of a hard cut. Navbar itself is untouched.
+const TOP_FADE_MASK = "linear-gradient(to bottom, transparent 0px, black 24px)";
 
 const STATE_ENTRIES = Object.entries(US_STATE_PATHS);
 
@@ -40,7 +37,12 @@ const USStateTintMap = () => {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+      // top-16 (64px) clears the fixed Navbar's own height so the map centers
+      // within the space actually visible below it, instead of centering
+      // across the full section (which used to push much of it behind/under
+      // the navbar). See PageHeader's extra top padding when `children` is
+      // passed — it gives this offset zone enough room to show the map in full.
+      className="pointer-events-none absolute inset-x-0 top-16 bottom-0 flex items-center justify-center overflow-hidden"
       style={{ maskImage: TOP_FADE_MASK, WebkitMaskImage: TOP_FADE_MASK }}
     >
       <svg

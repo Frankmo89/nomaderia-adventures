@@ -200,30 +200,6 @@ const HeroSection = () => {
           </motion.div>
         </motion.div>
       </div>
-
-      {/* Dot indicators — right, kept above the clipped curve */}
-      <div
-        className="absolute right-8 flex items-center gap-2"
-        style={{ zIndex: 4, bottom: "22%" }}
-      >
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActive(i)}
-            aria-label={`Ir a foto ${i + 1}`}
-            style={{
-              height: 6,
-              width: i === active ? 20 : 6,
-              borderRadius: 3,
-              background: i === active ? "#FAFAFA" : "rgba(255,255,255,0.35)",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              transition: "all 0.3s ease",
-            }}
-          />
-        ))}
-      </div>
     </section>
   );
 };

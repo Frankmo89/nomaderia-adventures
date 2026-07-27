@@ -5,6 +5,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import PageHeader from "@/components/shared/PageHeader";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
+import { CardImage } from "@/components/shared/CardImage";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useGearArticles } from "@/hooks/use-gear-articles";
 import JsonLd from "@/components/JsonLd";
@@ -70,7 +71,7 @@ const GearListing = () => {
                       >
                         <div className="h-44 overflow-hidden relative">
                           {a.hero_image_url ? (
-                            <img src={a.hero_image_url} alt={a.title} loading="lazy" decoding="async" width={400} height={176} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                            <CardImage src={a.hero_image_url} alt={a.title} loading="lazy" decoding="async" width={400} height={176} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                           )}

@@ -14,7 +14,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate-sitemap": "npx tsx scripts/generate-sitemap.ts"
+    "generate-sitemap": "npx tsx scripts/generate-sitemap.ts",
+    "audit-images": "npx tsx scripts/audit-images.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

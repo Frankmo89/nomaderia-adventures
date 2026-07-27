@@ -8,7 +8,6 @@ import {
   LockOpen,
   Route,
   Signal,
-  Bookmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import PageHeader from "@/components/shared/PageHeader";
+import { CardImage } from "@/components/shared/CardImage";
 import USStateTintMap from "@/components/destinations/USStateTintMap";
 import { DistanceFromYou } from "@/components/destinations/DistanceFromYou";
 import { OriginPicker } from "@/components/destinations/OriginPicker";
@@ -88,7 +88,7 @@ function ParkListCard({ park }: { park: ParkCard }) {
       {/* Hero image */}
       <div className="relative h-28 overflow-hidden">
         {park.hero_image_url ? (
-          <img
+          <CardImage
             src={park.hero_image_url}
             alt={park.title}
             loading="lazy"
@@ -104,13 +104,6 @@ function ParkListCard({ park }: { park: ParkCard }) {
         )}
         {/* Scrim con forest-dark (no negro puro) — Design System §4.3 */}
         <div className="absolute inset-0 bg-gradient-to-t from-forest-dark/55 via-forest-dark/10 to-transparent" />
-        {/* Chip de guardar (decorativo, estilo AllTrails) */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm"
-        >
-          <Bookmark className="h-3.5 w-3.5 text-slate" />
-        </div>
         {/* Difficulty badge — calmado green-wash */}
         <span
           className={cn(

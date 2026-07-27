@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Mountain } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
   title: string;
@@ -24,7 +25,16 @@ interface PageHeaderProps {
 // this component's own subtitle color on the same dark surface.
 const PageHeader = ({ title, subtitle, eyebrow, children }: PageHeaderProps) => {
   return (
-    <section className="relative overflow-hidden bg-forest-dark pt-28 pb-14 sm:pt-36 sm:pb-20">
+    <section
+      className={cn(
+        "relative overflow-hidden bg-forest-dark pb-14 sm:pb-20",
+        // `children` (USStateTintMap on Destinos) renders as an absolute layer
+        // starting below the fixed navbar (see its own top-16 offset) — extra
+        // top padding here gives it enough section height to render fully
+        // visible instead of being squeezed/clipped against that offset.
+        children ? "pt-36 sm:pt-44" : "pt-28 sm:pt-36"
+      )}
+    >
       {children}
       <div className="container relative z-10 mx-auto px-4 text-center">
         {eyebrow && (

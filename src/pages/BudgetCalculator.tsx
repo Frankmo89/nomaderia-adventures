@@ -22,11 +22,13 @@ const comfortOptions: { value: ComfortLevel; label: string; icon: LucideIcon }[]
   { value: "premium", label: "Premium", icon: Star },
 ];
 
+// Zonas de origen para EE. UU. (mercado MXN/legacy retirado, ver ADR-012).
+// "Punto de partida" es solo una etiqueta mostrada en el resumen — no alimenta
+// calculateBudget() (el costo de vuelos siempre viene del input manual de
+// flightCost), así que no hay valores de costo por zona que remapear.
 const originZones = [
-  "Tijuana / Baja California",
   "San Diego / Sur de California",
-  "Ciudad de México (CDMX)",
-  "Resto de México",
+  "Los Ángeles",
   "Resto de Estados Unidos",
   "Otro lugar",
 ];
@@ -73,10 +75,12 @@ const BudgetCalculator = () => {
   });
   const { data: destinations = [] } = useDestinations();
   const [selectedSlug, setSelectedSlug] = useState("");
-  const [origin, setOrigin] = useState("");
+  const [origin, setOrigin] = useState(originZones[0]);
   const [days, setDays] = useState(5);
   const [comfort, setComfort] = useState<ComfortLevel>("mid");
-  const [flightCost, setFlightCost] = useState(0);
+  // Texto crudo del input controlado — permite vaciarlo mientras se escribe
+  // (ver flightCostValue abajo para el número usado en el cálculo).
+  const [flightCost, setFlightCost] = useState("");
   const [calculated, setCalculated] = useState(false);
   const [email, setEmail] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
@@ -105,10 +109,13 @@ const BudgetCalculator = () => {
     [destinations, selectedSlug]
   );
 
+  // Input vacío = 0 al calcular; nunca se fuerza "0" de vuelta al campo mientras se escribe.
+  const flightCostValue = flightCost === "" ? 0 : Number(flightCost) || 0;
+
   const breakdown = useMemo(() => {
     if (!calculated || !selectedDest) return null;
 
-    const b = calculateBudget(selectedDest.estimated_budget_usd, comfort, days, flightCost);
+    const b = calculateBudget(selectedDest.estimated_budget_usd, comfort, days, flightCostValue);
 
     return {
       items: [
@@ -121,7 +128,7 @@ const BudgetCalculator = () => {
       ],
       total: b.total,
     };
-  }, [calculated, days, comfort, selectedDest, flightCost]);
+  }, [calculated, days, comfort, selectedDest, flightCostValue]);
 
   const handleCalculate = () => {
     if (selectedSlug && days > 0) setCalculated(true);
@@ -265,7 +272,13 @@ const BudgetCalculator = () => {
                     type="number"
                     min={0}
                     value={flightCost}
-                    onChange={(e) => { setFlightCost(Number(e.target.value) || 0); setCalculated(false); }}
+                    onChange={(e) => {
+                      // Deja vaciar el campo mientras se escribe y quita ceros
+                      // a la izquierda (evita el bug de "0" atorado al inicio).
+                      const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                      setFlightCost(raw);
+                      setCalculated(false);
+                    }}
                     className="bg-background border-border shadow-sm h-11 text-base"
                     placeholder="0"
                   />
