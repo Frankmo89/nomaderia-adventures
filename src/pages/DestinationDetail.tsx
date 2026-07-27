@@ -26,6 +26,7 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 import type { Tables } from "@/integrations/supabase/types";
 import QuickFactsRow from "@/components/destinations/QuickFactsRow";
+import { CardImage } from "@/components/shared/CardImage";
 import DifficultyBadge from "@/components/destinations/DifficultyBadge";
 import HowToGetThere, { type LodgingOption } from "@/components/destinations/HowToGetThere";
 import CredibilityBar from "@/components/destinations/CredibilityBar";
@@ -550,7 +551,7 @@ const DestinationDetail = () => {
                   return (
                     <div key={i} className="flex items-start gap-3 rounded-lg bg-accent/50 px-4 py-3 hover:bg-accent transition-colors">
                       <Icon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                      <span className="text-sm text-foreground/80 leading-relaxed">{item}</span>
+                      <span className="text-sm text-foreground/80 leading-relaxed first-letter:uppercase">{item}</span>
                     </div>
                   );
                 })}
@@ -724,7 +725,7 @@ const DestinationDetail = () => {
                         const ext = dest as Destination & DestExt;
                         const cells = [
                           { label: "DURACIÓN",  value: dest.days_needed },
-                          { label: "ELEVACIÓN", value: ext.max_elevation_ft != null ? `${ext.max_elevation_ft.toLocaleString("en-US")} ft` : null },
+                          { label: "ELEV. MÁXIMA", value: ext.max_elevation_ft != null ? `${ext.max_elevation_ft.toLocaleString("en-US")} ft` : null },
                           { label: "TEMPORADA", value: ext.season_short },
                           { label: "PRINCIPIANTE", value: ext.beginner_friendly === true ? "Sí ✓" : ext.beginner_friendly === false ? "No recomendado" : null },
                         ].filter((c) => c.value);
@@ -1136,7 +1137,7 @@ const DestinationDetail = () => {
                 <Link key={r.id} to={`/destinos/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-40 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <img src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" decoding="async" width={400} height={160} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <CardImage src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" decoding="async" width={400} height={160} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
                     )}

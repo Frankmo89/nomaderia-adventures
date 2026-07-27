@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowRight } from "lucide-react";
+import { CardImage } from "@/components/shared/CardImage";
 
 interface FeaturedBlogPostProps {
   post: {
@@ -29,7 +30,7 @@ const FeaturedBlogPost = ({ post }: FeaturedBlogPostProps) => {
         className="group block relative rounded-2xl overflow-hidden shadow-2xl h-[50vh] min-h-[400px]"
       >
         {post.hero_image_url ? (
-          <img
+          <CardImage
             src={post.hero_image_url}
             alt={post.title}
             loading="eager"

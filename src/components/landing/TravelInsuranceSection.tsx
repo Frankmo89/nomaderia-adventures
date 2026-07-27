@@ -73,7 +73,7 @@ const TravelInsuranceSection = () => {
 
         <Reveal className="flex items-start gap-2 justify-center text-sm text-foreground/55 max-w-xl mx-auto">
           <Info className="h-4 w-4 mt-0.5 shrink-0 text-foreground/35" />
-          <p>El seguro de viaje está incluido en tu Itinerario Completo — te ayudamos a conseguirlo.</p>
+          <p>El seguro de viaje no está incluido, pero es lo más recomendable — en tu Itinerario Completo te ayudamos a conseguir el adecuado para tu viaje.</p>
         </Reveal>
       </div>
     </section>

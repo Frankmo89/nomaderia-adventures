@@ -10,6 +10,7 @@ import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import { useBlogPosts } from "@/hooks/use-blog-posts";
 import FeaturedBlogPost from "@/components/blog/FeaturedBlogPost";
 import JsonLd from "@/components/JsonLd";
+import { CardImage } from "@/components/shared/CardImage";
 
 const categories = [
   "Todo",
@@ -86,7 +87,7 @@ const BlogListing = () => {
                       >
                         <div className="h-44 overflow-hidden relative">
                           {p.hero_image_url ? (
-                            <img src={p.hero_image_url} alt={p.title} loading="lazy" decoding="async" width={400} height={176} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                            <CardImage src={p.hero_image_url} alt={p.title} loading="lazy" decoding="async" width={400} height={176} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                           )}

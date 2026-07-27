@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Clock, DollarSign, Star, Bookmark } from "lucide-react";
+import { MapPin, Clock, DollarSign, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { DestinationCardGridSkeleton } from "@/components/LoadingSkeletons";
 import Reveal from "@/components/editorial/Reveal";
 import { useDestinations } from "@/hooks/use-destinations";
 import { formatRegionDisplay } from "@/lib/regions";
+import { ImageFallback } from "@/components/shared/CardImage";
 
 // Dificultad: badge calmado green-wash para todos los niveles (Design System
 // §4.1). Se diferencia por el texto, no por color de semáforo.
@@ -62,6 +63,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
 
   const DestCard = ({ d, index }: { d: (typeof destinations)[0]; index: number }) => {
     const regionDisplay = formatRegionDisplay(d.region);
+    const [imgFailed, setImgFailed] = useState(false);
 
     return (
       <motion.div
@@ -77,7 +79,7 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
             className="group block h-full overflow-hidden rounded-2xl border border-stone bg-white shadow-[0_4px_16px_rgba(20,32,26,0.08)] transition-shadow duration-200 hover:shadow-[0_8px_24px_rgba(20,32,26,0.12)]"
           >
             <div className="relative h-56 overflow-hidden sm:h-52">
-              {d.hero_image_url ? (
+              {d.hero_image_url && !imgFailed ? (
                 <motion.img
                   src={d.hero_image_url}
                   alt={d.title}
@@ -86,7 +88,10 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
                   className="h-full w-full object-cover object-top img-warm"
                   variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                   transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  onError={() => setImgFailed(true)}
                 />
+              ) : d.hero_image_url ? (
+                <ImageFallback className="h-full w-full" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-green-wash">
                   <MapPin className="h-12 w-12 text-green/40" />
@@ -101,13 +106,6 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
               >
                 <span className="text-white text-sm font-semibold tracking-wide">Explorar →</span>
               </motion.div>
-              {/* Chip de guardar (decorativo, estilo AllTrails) */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm"
-              >
-                <Bookmark className="h-4 w-4 text-slate" />
-              </div>
               <div className="absolute left-3 top-3 flex gap-2">
                 <Badge variant="difficulty">{difficultyLabel[d.difficulty_level]}</Badge>
               </div>

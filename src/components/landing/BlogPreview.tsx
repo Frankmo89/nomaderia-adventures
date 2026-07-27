@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import Reveal from "@/components/editorial/Reveal";
 import { useBlogPosts } from "@/hooks/use-blog-posts";
+import { CardImage, ImageFallback } from "@/components/shared/CardImage";
 
 /**
  * Fisher-Yates shuffle — returns a new shuffled copy of the array.
@@ -46,6 +47,7 @@ const BlogPreview = () => {
   // Elegir 3 posts al azar — se recalcula solo cuando cambia el array de posts
   const featured = useMemo(() => shuffleArray(posts).slice(0, 3), [posts]);
   const [feature, ...rest] = featured;
+  const [featureImgFailed, setFeatureImgFailed] = useState(false);
 
   if (isLoading) {
     return (
@@ -94,7 +96,7 @@ const BlogPreview = () => {
             >
               {/* Image */}
               <div className="relative h-56 overflow-hidden sm:h-80">
-                {feature.hero_image_url ? (
+                {feature.hero_image_url && !featureImgFailed ? (
                   <motion.img
                     src={feature.hero_image_url}
                     alt={feature.title}
@@ -102,7 +104,10 @@ const BlogPreview = () => {
                     className="h-full w-full object-cover object-center img-warm"
                     variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                     transition={{ duration: 0.7, ease: "easeOut" }}
+                    onError={() => setFeatureImgFailed(true)}
                   />
+                ) : feature.hero_image_url ? (
+                  <ImageFallback className="h-full w-full" />
                 ) : (
                   <div className="h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                 )}
@@ -152,7 +157,7 @@ const BlogPreview = () => {
                 <Link to={`/blog/${post.slug}`} className="group flex items-center gap-4 py-5">
                   {post.hero_image_url && (
                     <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-36">
-                      <img
+                      <CardImage
                         src={post.hero_image_url}
                         alt={post.title}
                         loading="lazy"

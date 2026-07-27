@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
+import { CardImage } from "@/components/shared/CardImage";
 import { GearArticleDetailSkeleton } from "@/components/LoadingSkeletons";
 import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import JsonLd from "@/components/JsonLd";
@@ -173,7 +174,11 @@ const BlogPostDetail = () => {
       <section className="py-12">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="prose max-w-none text-foreground/90">
-            <ReactMarkdown>{post.content_markdown || ""}</ReactMarkdown>
+            {/* Hero overlay above already renders the post title as the page's
+                H1 — demote any H1 inside the markdown body (some drafts open
+                with "# Title") to H2 so it doesn't repeat visually and the
+                heading hierarchy stays valid for SEO. */}
+            <ReactMarkdown components={{ h1: "h2" }}>{post.content_markdown || ""}</ReactMarkdown>
           </div>
           <div className="mt-10 pt-6 border-t border-border">
             <ShareButtons
@@ -213,7 +218,7 @@ const BlogPostDetail = () => {
                 <Link key={r.id} to={`/blog/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-32 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <img src={r.hero_image_url} alt={r.title} loading="lazy" decoding="async" width={400} height={128} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <CardImage src={r.hero_image_url} alt={r.title} loading="lazy" decoding="async" width={400} height={128} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20" />
                     )}

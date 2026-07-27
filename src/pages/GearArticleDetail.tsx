@@ -14,6 +14,7 @@ import { useCanonical, usePageMeta, SITE_URL } from "@/hooks/use-seo";
 import SEO from "@/components/SEO";
 import JsonLd from "@/components/JsonLd";
 import ShareButtons from "@/components/ShareButtons";
+import { CardImage } from "@/components/shared/CardImage";
 import type { Tables } from "@/integrations/supabase/types";
 
 type GearArticle = Tables<"gear_articles">;
@@ -250,7 +251,7 @@ const GearArticleDetail = () => {
                 <Link key={r.id} to={`/gear/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-32 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <img src={r.hero_image_url} alt={r.title} loading="lazy" decoding="async" width={400} height={128} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <CardImage src={r.hero_image_url} alt={r.title} loading="lazy" decoding="async" width={400} height={128} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center"><BookOpen className="h-8 w-8 text-accent/40" /></div>
                     )}

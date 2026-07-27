@@ -202,8 +202,8 @@ export function ConciergeChat({
   // Saludo de dos capas (patrón Deel): explica desde el primer mensaje que la IA
   // resuelve dudas 24/7 y que WhatsApp queda reservado para cerrar con Frank.
   const greeting = destinationTitle
-    ? `Soy el concierge de Nomaderia. Puedo ayudarte con cualquier duda sobre ${destinationTitle} — rutas, campamentos, presupuesto. Y cuando quieras tu itinerario completo, te conecto con Frank por WhatsApp.`
-    : "Soy el concierge de Nomaderia. Puedo ayudarte con cualquier duda de los 63 parques — rutas, campamentos, presupuestos. Y cuando quieras tu itinerario completo, te conecto con Frank por WhatsApp.";
+    ? `Soy el concierge de Nomaderia. Puedo ayudarte con cualquier duda sobre ${destinationTitle} — rutas, campamentos, presupuesto. Y cuando quieras tu itinerario completo, te conecto con un experto de Nomaderia por WhatsApp.`
+    : "Soy el concierge de Nomaderia. Puedo ayudarte con cualquier duda de los 63 parques — rutas, campamentos, presupuestos. Y cuando quieras tu itinerario completo, te conecto con un experto de Nomaderia por WhatsApp.";
 
   const footerWhatsappUrl = buildWhatsAppLink(
     destinationTitle

@@ -30,7 +30,7 @@ export default function QuickFactsRow({
   if (maxElevationFt != null)
     facts.push({
       Icon: Mountain,
-      label: "ELEVACIÓN",
+      label: "ELEV. MÁXIMA",
       value: `${maxElevationFt.toLocaleString("en-US")} ft`,
     });
   if (budgetUsd != null)

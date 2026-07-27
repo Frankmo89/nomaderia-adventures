@@ -33,9 +33,9 @@ const SocialProof = () => {
         <p className="text-center max-w-2xl mx-auto mb-14 leading-relaxed font-serif text-xl text-ink">
           Desde 2024, llevamos a{" "}
           <em className="text-green">
-            hispanos residentes en EE.UU.
+            la comunidad hispana
           </em>{" "}
-          a sus primeras aventuras en los parques nacionales — en español, sin suposiciones.
+          a sus primeras aventuras en los parques nacionales de EE. UU. — en español, sin suposiciones.
         </p>
 
         {/* Stats — boxed 2×2 grid */}
