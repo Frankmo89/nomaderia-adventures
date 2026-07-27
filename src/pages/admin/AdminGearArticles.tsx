@@ -12,6 +12,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TrendingGearCard } from "@/components/admin/TrendingGearCard";
+import { GearDirectTopicCard } from "@/components/admin/GearDirectTopicCard";
 import SortableHeader from "@/components/admin/SortableHeader";
 import AdminPagination from "@/components/admin/Pagination";
 import AdminEmptyState from "@/components/admin/EmptyState";
@@ -49,6 +50,7 @@ const AdminGearArticles = () => {
   const [search, setSearch] = useState("");
   const [showDiscoveryPanel, setShowDiscoveryPanel] = useState(false);
   const [statusIndex, setStatusIndex] = useState(0);
+  const [focusInput, setFocusInput] = useState("");
   const [page, setPage] = useState(1);
   const { toast } = useToast();
   const { sortState, handleSort } = useSortable<GearSortKey>();
@@ -106,7 +108,7 @@ const AdminGearArticles = () => {
   const handleDiscoverTrending = () => {
     setShowDiscoveryPanel(true);
     resetDiscovery();
-    discoverTrending();
+    discoverTrending(focusInput.trim() || undefined);
   };
 
   return (
@@ -114,6 +116,12 @@ const AdminGearArticles = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="font-serif text-3xl text-foreground">Artículos de Gear</h1>
         <div className="flex items-center gap-2">
+          <Input
+            value={focusInput}
+            onChange={(e) => setFocusInput(e.target.value)}
+            placeholder="Enfoque (opcional): calzado invierno, hidratación…"
+            className="w-64 bg-card border-border text-foreground placeholder:text-muted-foreground"
+          />
           <Button type="button" variant="outline" className="border-primary/30 text-primary hover:bg-primary/10" onClick={handleDiscoverTrending} disabled={discoveryPending}>
             <Sparkles className="h-4 w-4 mr-2" /> ✦ Descubrir Gear Trending
           </Button>
@@ -122,6 +130,8 @@ const AdminGearArticles = () => {
           </Button>
         </div>
       </div>
+
+      <GearDirectTopicCard />
 
       {showDiscoveryPanel && (
         <section className="mb-8 rounded-xl border border-border bg-card/40 p-4 md:p-6">

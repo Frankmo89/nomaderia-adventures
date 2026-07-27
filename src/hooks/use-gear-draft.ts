@@ -6,15 +6,16 @@ export interface GenerateGearInput {
   title: string;
   category: string;
   suggested_slug?: string;
+  destination_id?: string;
 }
 
 export function useGearDraft() {
   const mutation = useMutation<GenerateGearResponse, Error, GenerateGearInput>({
-    mutationFn: async ({ title, category, suggested_slug }: GenerateGearInput): Promise<GenerateGearResponse> => {
+    mutationFn: async ({ title, category, suggested_slug, destination_id }: GenerateGearInput): Promise<GenerateGearResponse> => {
       const { data, error } = await supabase.functions.invoke<GenerateGearResponse>(
         "generate-gear-draft",
         {
-          body: { title, category, suggested_slug },
+          body: { title, category, suggested_slug, destination_id },
         },
       );
 
