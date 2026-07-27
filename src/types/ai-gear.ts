@@ -28,6 +28,7 @@ export interface GearProductDraft {
 
 export interface GearDraft {
   title: string;
+  title_options: string[];
   slug: string;
   category: string;
   short_description: string;
@@ -37,11 +38,19 @@ export interface GearDraft {
   sources: GearDraftSource[];
 }
 
+export interface RagMeta {
+  used: boolean;
+  chunk_count: number;
+  park_code: string | null;
+  destination_id: string | null;
+}
+
 export interface GenerateGearResponse {
   draft: GearDraft;
   sources: GearDraftSource[];
   verify_flags: string[];
   model: string;
+  rag_meta: RagMeta;
 }
 
 export interface DiscoverGearResponse {

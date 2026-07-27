@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { GenerateGearResponse } from "@/types/ai-gear";
 
 interface Product { name: string; price: string; rating: number; pros: string[]; cons: string[]; affiliate_url: string; }
-interface CandidateParams { title: string; category: string; suggested_slug?: string; }
+interface CandidateParams { title: string; category: string; suggested_slug?: string; destination_id?: string; }
 
 const emptyProduct = (): Product => ({ name: "", price: "", rating: 5, pros: [""], cons: [""], affiliate_url: "" });
 
@@ -36,6 +37,7 @@ const AdminGearArticleForm = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
   const [aiDraftResponse, setAiDraftResponse] = useState<GenerateGearResponse | null>(null);
+  const [titleOptions, setTitleOptions] = useState<string[]>([]);
   const [draftProgressIndex, setDraftProgressIndex] = useState(0);
   const [draftErrorMessage, setDraftErrorMessage] = useState<string | null>(null);
   const draftAutofillStartedRef = useRef(false);
@@ -62,9 +64,10 @@ const AdminGearArticleForm = () => {
     const title = searchParams.get("title");
     const category = searchParams.get("category");
     const suggested_slug = searchParams.get("suggested_slug") || undefined;
+    const destination_id = searchParams.get("destination_id") || undefined;
 
     if (title && category) {
-      return { title, category, suggested_slug };
+      return { title, category, suggested_slug, destination_id };
     }
 
     return null;
@@ -167,6 +170,7 @@ const AdminGearArticleForm = () => {
           cons: product.cons.length ? product.cons : [""],
           affiliate_url: "",
         })));
+        setTitleOptions(response.draft.title_options ?? []);
       },
       onError: (error) => {
         if (draftAutofillCanceledRef.current) return;
@@ -244,7 +248,10 @@ const AdminGearArticleForm = () => {
     }
 
     if (!isEdit && aiDraftResponse && "data" in result && result.data?.id) {
-      const { error: aiMetaError } = await supabase
+      // ai_content_meta.rag_meta was added after the last type generation
+      // (migration 20260726000000). Same bridge-cast pattern as ADR-009 /
+      // use-media.ts — remove once types.ts is regenerated.
+      const { error: aiMetaError } = await (supabase as unknown as SupabaseClient)
         .from("ai_content_meta")
         .upsert(
           {
@@ -253,6 +260,7 @@ const AdminGearArticleForm = () => {
             sources: aiDraftResponse.sources,
             verify_flags: aiDraftResponse.verify_flags,
             model: aiDraftResponse.model,
+            rag_meta: aiDraftResponse.rag_meta,
           },
           { onConflict: "content_type,content_id" },
         );
@@ -323,7 +331,28 @@ const AdminGearArticleForm = () => {
           <CardHeader><CardTitle className="text-card-foreground">Información</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label className="text-card-foreground">Título *</Label><Input value={form.title} onChange={(e) => set("title", e.target.value)} className="bg-background border-border text-foreground" required /></div>
+              <div>
+                <Label className="text-card-foreground">Título *</Label>
+                <Input value={form.title} onChange={(e) => set("title", e.target.value)} className="bg-background border-border text-foreground" required />
+                {!isEdit && titleOptions.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {titleOptions.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => set("title", option)}
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${
+                          form.title === option
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div><Label className="text-card-foreground">Slug *</Label><Input value={form.slug} onChange={(e) => set("slug", e.target.value)} className="bg-background border-border text-foreground" required /></div>
               <div><Label className="text-card-foreground">Categoría *</Label><Input value={form.category} onChange={(e) => set("category", e.target.value)} className="bg-background border-border text-foreground" required /></div>
             </div>

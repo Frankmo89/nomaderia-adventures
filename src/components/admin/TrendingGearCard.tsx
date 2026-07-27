@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { ParkSelect } from "@/components/admin/ParkSelect";
 import type { GearCandidate } from "@/types/ai-gear";
 
 interface TrendingGearCardProps {
@@ -9,11 +12,14 @@ interface TrendingGearCardProps {
 }
 
 export function TrendingGearCard({ candidate }: TrendingGearCardProps) {
+  const [destinationId, setDestinationId] = useState<string | undefined>(undefined);
+
   const candidatePayload = encodeURIComponent(
     JSON.stringify({
       title: candidate.title,
       category: candidate.category,
       suggested_slug: candidate.suggested_slug,
+      destination_id: destinationId,
     }),
   );
 
@@ -51,7 +57,12 @@ export function TrendingGearCard({ candidate }: TrendingGearCardProps) {
         ))}
       </div>
 
-      <div className="mt-5">
+      <div className="mt-4 space-y-1">
+        <Label className="text-xs text-muted-foreground">Parque (opcional)</Label>
+        <ParkSelect value={destinationId} onChange={setDestinationId} />
+      </div>
+
+      <div className="mt-4">
         <Button asChild className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
           <Link to={`/admin/gear-articles/new?candidate=${candidatePayload}`}>Desarrollar este →</Link>
         </Button>

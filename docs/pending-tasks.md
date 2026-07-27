@@ -14,19 +14,28 @@
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
 
-- [ ] **Aplicar migración `20260726000000_add_rag_meta_to_ai_content_meta` y regenerar tipos — bloquea que `AdminBlogPostForm` guarde `ai_content_meta.rag_meta` sin fallar.**
-      `generate-blog-draft` ya envía `rag_meta` en su respuesta (ver changelog
-      "RAG grounding en generate-blog-draft" abajo), y `AdminBlogPostForm.tsx`
-      ya intenta guardarlo, pero hasta que la columna exista en producción el
-      `upsert` a `ai_content_meta` fallará completo (mismo modo de fallo ya
-      tolerado hoy: el post se guarda igual, solo se pierde la metadata de IA,
-      con un toast de advertencia — ver `AdminBlogPostForm.tsx`). Pasos: (1)
-      pegar el SQL de `supabase/migrations/20260726000000_add_rag_meta_to_ai_content_meta.sql`
+- [ ] **Aplicar migración `20260726000000_add_rag_meta_to_ai_content_meta` y regenerar tipos — bloquea que `AdminBlogPostForm` y `AdminGearArticleForm` guarden `ai_content_meta.rag_meta` sin fallar.**
+      `generate-blog-draft` y (desde este cambio) `generate-gear-draft` ya
+      envían `rag_meta` en su respuesta (ver changelog "RAG grounding en
+      generate-blog-draft" y "RAG grounding replicado a gear" abajo), y ambos
+      forms (`AdminBlogPostForm.tsx`, `AdminGearArticleForm.tsx`) ya intentan
+      guardarlo, pero hasta que la columna exista en producción el `upsert` a
+      `ai_content_meta` fallará completo en los dos flujos (mismo modo de
+      fallo ya tolerado hoy: el post/artículo se guarda igual, solo se pierde
+      la metadata de IA, con un toast de advertencia). Pasos: (1) pegar el SQL
+      de `supabase/migrations/20260726000000_add_rag_meta_to_ai_content_meta.sql`
       en el editor de Supabase (mismo patrón que ADR-016/ADR-018/ADR-020 — `db
       push` bloqueado); (2) regenerar tipos:
       `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`;
-      (3) opcional, quitar el cast `SupabaseClient` en el upsert de
-      `AdminBlogPostForm.tsx` una vez el tipo generado cubra `rag_meta`.
+      (3) opcional, quitar el cast `SupabaseClient` en los upserts de
+      `AdminBlogPostForm.tsx` y `AdminGearArticleForm.tsx` una vez el tipo
+      generado cubra `rag_meta`.
+- [ ] **Confirmar que `deploy-edge-functions.yml` desplegó `generate-gear-draft` y `discover-trending-gear` tras el merge a main de la replicación de RAG a gear.**
+      El workflow despliega todas las funciones en cada push a main (ver
+      ADR-023), así que no debería requerir un `supabase functions deploy`
+      manual — pero confirmar la corrida en GitHub Actions antes de dar por
+      validado el flujo de gear en producción (mismo gotcha de drift que
+      motivó ADR-023: código puede quedar commiteado sin desplegar).
 - [ ] **Revisar y aplicar `season_short` (2026-07-20) — bloquea que la celda "Temporada" de `QuickFactsRow` se active en producción.**
       La migración `supabase/migrations/20260720000000_add_destinations_season_short.sql`
       agrega la columna `destinations.season_short` y hace backfill de los 63
@@ -707,6 +716,12 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
 > vive en el historial de git. Entradas recientes primero.
 
 ### Julio 2026
+
+**[2026-07-26] RAG grounding + `destination_id` + descubrimiento dirigido + `title_options` replicados a Gear Articles — mismo patrón validado en blog (confirmado en producción: `generate-blog-draft` v12, `ai_content_meta.rag_meta` con `used:true, chunk_count:8` en un artículo de prueba de Joshua Tree), ahora también en `generate-gear-draft`/`discover-trending-gear`.** Audit-first (Paso 0) confirmó que ninguna de las dos funciones de gear tenía `destination_id`, resolución de parque, RAG ni `title_options` — estructura pre-upgrade, análoga a como estaba blog antes del 2026-07-26.
+1. **`generate-gear-draft`** gana el mismo bloque RAG que `generate-blog-draft`: acepta `destination_id` opcional en el request; resuelve el parque explícito primero (contra `destinations` ya leído, evitando el aliasing de ADR-016), heurística de texto (`resolveParkFromTopic` sobre `title + category`) solo como fallback; llama `match_knowledge_chunks` con `filter_park_code`, `match_count=8`, `min_similarity=0.4` (mismo umbral, ADR-015/016); inyecta los chunks en Step B como bloque `DATOS VERIFICADOS DE NOMADERIA (RAG)` con la misma regla de prioridad (RAG > `web_search` > `⚠️ VERIFICAR (IA)`) — con una aclaración propia de gear: el RAG nunca cubre precios ni reseñas de producto, esos siguen viniendo de `web_search` con `verify_flags`. Un fallo de RAG (embedding o RPC) se loguea y el draft sigue solo con `web_search` + SOUL, igual que en blog. Respuesta gana `rag_meta: { used, chunk_count, park_code, destination_id }` y `draft.title_options` (3 alternativas, voz SOUL, apelando a una duda de principiante al elegir equipo).
+2. **`discover-trending-gear`** gana `focus` opcional en el body, mismo fold-in al prompt que `discover-trending-blog` (bloque antepuesto, vacío = comportamiento idéntico).
+3. **Frontend:** `ParkSelect` (ya genérico, sin cambios) se reutiliza en `TrendingGearCard.tsx` (nuevo estado `destinationId` + `destination_id` en el candidate payload) y en `GearDirectTopicCard.tsx` (nuevo componente — no se generalizó `DirectTopicCard.tsx` porque `generate-gear-draft` exige `category`, a diferencia de blog donde es opcional, así que el card de gear pide tema + categoría + parque). `AdminGearArticles.tsx` gana el input "Enfoque (opcional)" junto al botón de descubrimiento y renderiza `<GearDirectTopicCard />`. `AdminGearArticleForm.tsx` gana `destination_id` en `CandidateParams`, estado `titleOptions` + chips tocables bajo "Título" (mismo patrón visual que `AdminBlogPostForm.tsx`), y guarda `rag_meta` en el upsert a `ai_content_meta` con el mismo bridge-cast `SupabaseClient` que blog (columna aún no aplicada a producción, ver Pendientes Humanos arriba). `useGearDraft`/`useTrendingGear` (`src/hooks/`) y `src/types/ai-gear.ts` (`title_options`, `RagMeta`, `rag_meta`) actualizados en paralelo a sus equivalentes de blog.
+4. **No tocado (fuera de alcance a propósito):** flujos de blog, internals de la RPC `match_knowledge_chunks`, itinerary builder, auth, `src/components/ui/`. `tsc --noEmit` y `npm run build` pasan. **Pendiente Frank:** confirmar que `deploy-edge-functions.yml` desplegó `generate-gear-draft` y `discover-trending-gear` tras el merge a main (ver Pendientes Humanos arriba) — el workflow despliega todo automáticamente en cada push a main, no debería requerir un `supabase functions deploy` manual.
 
 **[2026-07-27] CI cleanup: retiro de `deploy.yml` (GitHub Pages) + retry en `deploy-edge-functions.yml` (ADR-023).** Auditoría de `.github/workflows/` confirmó que `deploy.yml` ("Deploy to GitHub Pages") no tiene ninguna referencia en el repo y apunta a un target que producción no usa (Cloudflare Pages, per `CLAUDE.md`) — eliminado en PR #166. Por separado, una corrida manual de `deploy-edge-functions.yml` falló 5/21 funciones por `522` transitorios de esm.sh durante el bundling (no un bug de código) — PR #167 agrega retry con backoff (hasta 3 intentos) por función antes de contarla como fallida. **Pendiente Frank:** la cuenta de GitHub está billing-locked (bloquea todos los workflows) — resolver el problema de facturación antes de poder confirmar en vivo que el retry funciona.
 

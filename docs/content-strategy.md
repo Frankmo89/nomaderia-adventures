@@ -83,21 +83,22 @@ Los datos se guardan en `quiz_responses` y alimentan el dashboard de analytics e
 | Personal stories | Emotional connection | Relatos de lectores / community |
 | Gear comparativas | Amazon affiliate | "Salomon vs Merrell: ¿cuál bota te conviene?" |
 
-### Generación de Blog con IA — RAG Grounding (`generate-blog-draft`)
+### Generación de Blog y Gear con IA — RAG Grounding
 
-Desde 2026-07, `generate-blog-draft` combina tres fuentes, en este orden de
-prioridad para cualquier afirmación factual:
+Desde 2026-07, `generate-blog-draft` y (desde 2026-07-26) `generate-gear-draft`
+combinan tres fuentes, en este orden de prioridad para cualquier afirmación
+factual:
 
 1. **RAG (`knowledge_chunks`, prioridad máxima)** — resuelve el parque de dos
-   formas, **desde 2026-07-26 la explícita tiene prioridad total sobre la
-   heurística**:
-   - **Explícita (determinista):** el admin de blog (`AdminBlogPosts.tsx` —
-     card "Desarrollar mi propio tema" y el selector de parque en cada
-     sugerencia IA) puede enviar `destination_id` en el request. Cuando viene,
-     `generate-blog-draft` lo resuelve contra `destinations` (mismo query que
-     ya hacía para la heurística, sin segunda consulta) y usa ese resultado
-     directo — la heurística de texto NO corre en absoluto. El selector solo
-     lista destinos con `park_code` no nulo, así que una selección explícita
+   formas, **la explícita tiene prioridad total sobre la heurística**:
+   - **Explícita (determinista):** el admin de blog/gear (`AdminBlogPosts.tsx`
+     y `AdminGearArticles.tsx` — card "Desarrollar mi propio tema" y el
+     selector de parque en cada sugerencia IA, componente compartido
+     `ParkSelect`) puede enviar `destination_id` en el request. Cuando viene,
+     la función lo resuelve contra `destinations` (mismo query que ya hacía
+     para la heurística, sin segunda consulta) y usa ese resultado directo —
+     la heurística de texto NO corre en absoluto. El selector solo lista
+     destinos con `park_code` no nulo, así que una selección explícita
      siempre alimenta un `filter_park_code` real.
    - **Heurística (fallback, sin cambios):** si no se envía `destination_id`,
      se sigue resolviendo por coincidencia de texto contra `destinations.title`
@@ -121,27 +122,35 @@ heurística — post general, ej. "cómo empacar para 5 días de trekking"), el
 paso RAG se omite por completo — no se fuerza.
 
 Provenance de auditoría: la respuesta de la función incluye `rag_meta: { used,
-chunk_count, park_code, destination_id }`, que `AdminBlogPostForm.tsx` guarda
-en `ai_content_meta.rag_meta` (columna añadida en la migración
-`20260726000000_add_rag_meta_to_ai_content_meta.sql`) junto a `sources` y
-`verify_flags`.
+chunk_count, park_code, destination_id }`, que `AdminBlogPostForm.tsx` /
+`AdminGearArticleForm.tsx` guardan en `ai_content_meta.rag_meta` (columna
+añadida en la migración `20260726000000_add_rag_meta_to_ai_content_meta.sql`)
+junto a `sources` y `verify_flags`.
 
-**Descubrimiento dirigido (`discover-trending-blog`):** acepta un `focus`
-opcional en el body (input "Enfoque (opcional)" junto al botón "Descubrir
-Temas SEO"). Cuando viene, se antepone un bloque al prompt pidiendo que los
-candidatos orbiten ese enfoque sin degenerar en un solo tema genérico repetido.
-Vacío = comportamiento idéntico al anterior.
+**Descubrimiento dirigido (`discover-trending-blog` / `discover-trending-gear`):**
+ambas aceptan un `focus` opcional en el body (input "Enfoque (opcional)" junto
+al botón de descubrimiento respectivo). Cuando viene, se antepone un bloque al
+prompt pidiendo que los candidatos orbiten ese enfoque sin degenerar en un solo
+tema genérico repetido. Vacío = comportamiento idéntico al anterior.
 
-**Títulos alternativos (`title_options`):** además de `title`, el schema de
-`blog_draft` ahora exige `title_options` — exactamente 3 títulos alternativos,
-ángulo de curiosidad/SEO, voz SOUL en segunda persona directa apelando a un
-miedo concreto de principiante. `AdminBlogPostForm.tsx` los muestra como chips
-tocables bajo el campo Título; tocar uno reemplaza el valor del título. Campo
-aditivo — no se persiste en `blog_posts` (solo el título elegido se guarda).
+**Títulos alternativos (`title_options`):** además de `title`, los schemas de
+`blog_draft` y `gear_draft` exigen `title_options` — exactamente 3 títulos
+alternativos, ángulo de curiosidad/SEO, voz SOUL en segunda persona directa
+apelando a una duda/miedo concreto de principiante. `AdminBlogPostForm.tsx` /
+`AdminGearArticleForm.tsx` los muestran como chips tocables bajo el campo
+Título; tocar uno reemplaza el valor del título. Campo aditivo — no se persiste
+en `blog_posts`/`gear_articles` (solo el título elegido se guarda).
 
-**Alcance de esta iteración:** `generate-blog-draft` y `discover-trending-blog`.
-`generate-gear-draft` sigue sin RAG — se replicará el mismo patrón en un PR de
-seguimiento una vez validado en blog.
+**Diferencia gear vs. blog:** `generate-gear-draft` sigue exigiendo `category`
+(no es opcional como en blog), así que el card "Desarrollar mi propio tema" de
+gear (`GearDirectTopicCard.tsx`) pide categoría además de tema. El RAG no cubre
+precios ni reseñas de producto — esos siempre vienen de `web_search` y quedan
+sujetos a `verify_flags` igual que antes.
+
+**Alcance:** el patrón RAG grounding + `destination_id` + descubrimiento
+dirigido + `title_options` ahora cubre ambos tipos de contenido editorial —
+`generate-blog-draft`/`discover-trending-blog` y `generate-gear-draft`/
+`discover-trending-gear`.
 
 ## Gear Articles — Pipeline de 12
 

@@ -39,13 +39,17 @@ interface GearResponse {
   candidates: GearCandidate[];
 }
 
-function buildPrompt(existingGear: ExistingGearArticle[]): string {
+function buildPrompt(existingGear: ExistingGearArticle[], focus?: string): string {
   const catalog = existingGear
     .slice(0, 40)
     .map((item) => item.slug)
     .join(", ");
 
-  return `Eres un investigador editorial de Nomaderia. Debes encontrar 6 a 8 temas de equipo outdoor en tendencia para una audiencia de hispanos residentes en EE. UU. que son principiantes.
+  const focusBlock = focus
+    ? `Enfoque solicitado por el equipo editorial: "${focus}"\nPrioriza fuertemente este ángulo/tema en los candidatos, pero sigue devolviendo temas de gear reales y variados dentro de ese enfoque — NO conviertas todo en un único tema genérico repetido.\n\n`
+    : "";
+
+  return `${focusBlock}Eres un investigador editorial de Nomaderia. Debes encontrar 6 a 8 temas de equipo outdoor en tendencia para una audiencia de hispanos residentes en EE. UU. que son principiantes.
 
 Prioriza equipo accesible y de entrada para senderismo y camping (precio razonable, uso real para principiantes). Evita equipo para atletas avanzados, ultralight extremo o expediciones técnicas.
 
@@ -124,6 +128,9 @@ serve(async (req) => {
       return authResult.error;
     }
 
+    const body = (await req.json().catch(() => ({}))) as { focus?: string };
+    const focus = body.focus?.trim() || undefined;
+
     const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data: existingGear, error: gearError } = await serviceClient
       .from("gear_articles")
@@ -134,7 +141,7 @@ serve(async (req) => {
       throw new Error(`No se pudieron leer los gear articles existentes: ${gearError.message}`);
     }
 
-    const prompt = buildPrompt((existingGear ?? []) as ExistingGearArticle[]);
+    const prompt = buildPrompt((existingGear ?? []) as ExistingGearArticle[], focus);
 
     const response = await callResponses<GearResponse>({
       apiKey: OPENAI_API_KEY,
