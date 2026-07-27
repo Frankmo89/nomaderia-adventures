@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
@@ -40,13 +40,12 @@ const AdminDestinationForm = lazyWithRetry(() => import("./pages/admin/AdminDest
 const AdminGearArticles = lazyWithRetry(() => import("./pages/admin/AdminGearArticles"));
 const AdminGearArticleForm = lazyWithRetry(() => import("./pages/admin/AdminGearArticleForm"));
 const AdminQuizResponses = lazyWithRetry(() => import("./pages/admin/AdminQuizResponses"));
-const AdminSubscribers = lazyWithRetry(() => import("./pages/admin/AdminSubscribers"));
+const AdminCorreos = lazyWithRetry(() => import("./pages/admin/AdminCorreos"));
 const AdminItineraryRequests = lazyWithRetry(() => import("./pages/admin/AdminItineraryRequests"));
 const AdminBlogPosts = lazyWithRetry(() => import("./pages/admin/AdminBlogPosts"));
 const AdminBlogPostForm = lazyWithRetry(() => import("./pages/admin/AdminBlogPostForm"));
 const AdminPermitWindows = lazyWithRetry(() => import("./pages/admin/AdminPermitWindows"));
 const AdminPermitAlerts = lazyWithRetry(() => import("./pages/admin/AdminPermitAlerts"));
-const AdminEmailLogs = lazyWithRetry(() => import("./pages/admin/AdminEmailLogs"));
 const AdminGallery = lazyWithRetry(() => import("./pages/admin/AdminGallery"));
 const SystemAudit = lazyWithRetry(() => import("./pages/admin/SystemAudit"));
 const AdminSentinelLeads = lazyWithRetry(() => import("./pages/admin/AdminSentinelLeads"));
@@ -113,14 +112,15 @@ const App = () => (
                 <Route path="gear-articles/new" element={<AdminGearArticleForm />} />
                 <Route path="gear-articles/:id/edit" element={<AdminGearArticleForm />} />
                 <Route path="quiz-responses" element={<AdminQuizResponses />} />
-                <Route path="subscribers" element={<AdminSubscribers />} />
+                <Route path="correos" element={<AdminCorreos />} />
+                <Route path="subscribers" element={<Navigate to="/admin/correos" replace />} />
+                <Route path="email-logs" element={<Navigate to="/admin/correos" replace />} />
                 <Route path="itinerary-requests" element={<AdminItineraryRequests />} />
                 <Route path="blog-posts" element={<AdminBlogPosts />} />
                 <Route path="blog-posts/new" element={<AdminBlogPostForm />} />
                 <Route path="blog-posts/:id/edit" element={<AdminBlogPostForm />} />
                 <Route path="permit-windows" element={<AdminPermitWindows />} />
                 <Route path="permit-alerts" element={<AdminPermitAlerts />} />
-                <Route path="email-logs" element={<AdminEmailLogs />} />
                 <Route path="gallery" element={<AdminGallery />} />
                 <Route path="audit" element={<SystemAudit />} />
                 <Route path="sentinel-leads" element={<AdminSentinelLeads />} />
