@@ -39,17 +39,13 @@ const AdminDestinations = lazyWithRetry(() => import("./pages/admin/AdminDestina
 const AdminDestinationForm = lazyWithRetry(() => import("./pages/admin/AdminDestinationForm"));
 const AdminGearArticles = lazyWithRetry(() => import("./pages/admin/AdminGearArticles"));
 const AdminGearArticleForm = lazyWithRetry(() => import("./pages/admin/AdminGearArticleForm"));
-const AdminQuizResponses = lazyWithRetry(() => import("./pages/admin/AdminQuizResponses"));
 const AdminCorreos = lazyWithRetry(() => import("./pages/admin/AdminCorreos"));
-const AdminItineraryRequests = lazyWithRetry(() => import("./pages/admin/AdminItineraryRequests"));
 const AdminBlogPosts = lazyWithRetry(() => import("./pages/admin/AdminBlogPosts"));
 const AdminBlogPostForm = lazyWithRetry(() => import("./pages/admin/AdminBlogPostForm"));
 const AdminPermitWindows = lazyWithRetry(() => import("./pages/admin/AdminPermitWindows"));
-const AdminPermitAlerts = lazyWithRetry(() => import("./pages/admin/AdminPermitAlerts"));
 const AdminGallery = lazyWithRetry(() => import("./pages/admin/AdminGallery"));
 const SystemAudit = lazyWithRetry(() => import("./pages/admin/SystemAudit"));
-const AdminSentinelLeads = lazyWithRetry(() => import("./pages/admin/AdminSentinelLeads"));
-const AdminLeads = lazyWithRetry(() => import("./pages/admin/AdminLeads"));
+const AdminLeadsHub = lazyWithRetry(() => import("./pages/admin/AdminLeadsHub"));
 const AdminSoul = lazyWithRetry(() => import("./pages/admin/AdminSoul"));
 const AdminItineraryTemplates = lazyWithRetry(() => import("./pages/admin/AdminItineraryTemplates"));
 const AdminItineraryTemplateEditor = lazyWithRetry(() => import("./pages/admin/AdminItineraryTemplateEditor"));
@@ -111,20 +107,20 @@ const App = () => (
                 <Route path="gear-articles" element={<AdminGearArticles />} />
                 <Route path="gear-articles/new" element={<AdminGearArticleForm />} />
                 <Route path="gear-articles/:id/edit" element={<AdminGearArticleForm />} />
-                <Route path="quiz-responses" element={<AdminQuizResponses />} />
+                <Route path="quiz-responses" element={<Navigate to="/admin/leads?tab=quiz" replace />} />
                 <Route path="correos" element={<AdminCorreos />} />
                 <Route path="subscribers" element={<Navigate to="/admin/correos" replace />} />
                 <Route path="email-logs" element={<Navigate to="/admin/correos" replace />} />
-                <Route path="itinerary-requests" element={<AdminItineraryRequests />} />
+                <Route path="itinerary-requests" element={<Navigate to="/admin/leads?tab=solicitudes" replace />} />
                 <Route path="blog-posts" element={<AdminBlogPosts />} />
                 <Route path="blog-posts/new" element={<AdminBlogPostForm />} />
                 <Route path="blog-posts/:id/edit" element={<AdminBlogPostForm />} />
                 <Route path="permit-windows" element={<AdminPermitWindows />} />
-                <Route path="permit-alerts" element={<AdminPermitAlerts />} />
+                <Route path="permit-alerts" element={<Navigate to="/admin/leads?tab=alertas-permiso" replace />} />
                 <Route path="gallery" element={<AdminGallery />} />
                 <Route path="audit" element={<SystemAudit />} />
-                <Route path="sentinel-leads" element={<AdminSentinelLeads />} />
-                <Route path="leads" element={<AdminLeads />} />
+                <Route path="sentinel-leads" element={<Navigate to="/admin/leads" replace />} />
+                <Route path="leads" element={<AdminLeadsHub />} />
                 <Route path="soul" element={<AdminSoul />} />
                 <Route path="itinerary-templates" element={<AdminItineraryTemplates />} />
                 <Route path="itinerary-templates/:id" element={<AdminItineraryTemplateEditor />} />

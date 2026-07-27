@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { Search, MessageCircle, Inbox } from "lucide-react";
+import { Download, Search, MessageCircle, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +33,6 @@ type LeadSortKey = "email" | "source" | "destination" | "createdAt" | "status";
 
 const COL_COUNT = 7;
 
-const db = supabase as unknown as SupabaseClient;
-
 const SOURCE_CONFIG = {
   sentinel: { label: "Alerta",     cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
   quiz:     { label: "Quiz",       cls: "bg-stone-700 text-stone-300 border-stone-600" },
@@ -60,6 +57,27 @@ const relDate = (iso: string): string => {
 
 const fmtSlug = (slug: string): string =>
   slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+const exportCSV = (leads: UnifiedLead[]) => {
+  const headers = ["Email", "Fuente", "Destino", "Estado", "Fecha"];
+  const rows = leads.map((l) => [
+    l.email,
+    SOURCE_CONFIG[l.source].label,
+    l.destination ?? "",
+    STATUS_CONFIG[l.status].label,
+    new Date(l.createdAt).toLocaleDateString("es-MX"),
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 const buildWaMessage = (lead: UnifiedLead): string => {
   if (lead.source === "sentinel")
@@ -92,16 +110,16 @@ const AdminLeads = () => {
   useEffect(() => {
     const load = async () => {
       const [sentinelRes, quizRes, itinRes] = await Promise.all([
-        db
+        supabase
           .from("sentinel_leads")
           .select("id, email, source, created_at, status, contacted_at")
           .order("created_at", { ascending: false }),
-        db
+        supabase
           .from("quiz_responses")
           .select("id, email, recommended_destinations, created_at, status, contacted_at")
           .not("email", "is", null)
           .order("created_at", { ascending: false }),
-        db
+        supabase
           .from("itinerary_requests")
           .select("id, name, email, destination, created_at, status, contacted_at")
           .order("created_at", { ascending: false }),
@@ -201,7 +219,7 @@ const AdminLeads = () => {
       setItems((prev) =>
         prev.map((l) => (l.id === lead.id ? { ...l, status: "contactado", contactedAt: now } : l))
       );
-      db.from(SOURCE_TABLE[lead.source])
+      supabase.from(SOURCE_TABLE[lead.source])
         .update({ status: "contactado", contacted_at: now })
         .eq("id", lead.dbId)
         .then(({ error }) => {
@@ -238,12 +256,19 @@ const AdminLeads = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-serif text-3xl text-foreground">Leads</h1>
-        {!loading && (
-          <p className="text-sm text-muted-foreground mt-1">
-            Bandeja unificada · {totalLeads} lead{totalLeads !== 1 ? "s" : ""}
-          </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="font-serif text-3xl text-foreground">Leads</h1>
+          {!loading && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Bandeja unificada · {totalLeads} lead{totalLeads !== 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
+        {sorted.length > 0 && (
+          <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => exportCSV(sorted)}>
+            <Download className="h-4 w-4 mr-2" /> Exportar CSV
+          </Button>
         )}
       </div>
 

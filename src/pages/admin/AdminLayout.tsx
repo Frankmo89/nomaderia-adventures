@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
-  Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare,
-  LogOut, FileText, Compass, Mail, ImageIcon, ShieldCheck, ChevronDown,
-  BellRing, BellPlus, Target, Menu, Inbox, Sparkles, LayoutList, ScrollText,
+  Mountain, LayoutDashboard, MapPin, BookOpen,
+  LogOut, FileText, Mail, ImageIcon, ShieldCheck, ChevronDown,
+  BellRing, Menu, Inbox, Sparkles, LayoutList, ScrollText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -28,6 +28,11 @@ const dashboardLink: NavItem = { label: "Dashboard", href: "/admin", icon: Layou
 // producto pagado (Itinerario Completo), necesita primacía sobre el resto.
 const itinerariesLink: NavItem = { label: "Itinerarios de Clientes", href: "/admin/client-itineraries", icon: ScrollText };
 
+// Bandeja unificada (Todos/Quiz/Solicitudes/Alertas de Permiso en tabs).
+// Standalone como itinerariesLink — un solo destino, no amerita un grupo de 1 ítem.
+// alert:true preserva el badge de leads recientes (antes en el ítem "Leads de Alerta").
+const leadsLink: NavItem = { label: "Leads", href: "/admin/leads", icon: Inbox, alert: true };
+
 const navGroups: NavGroup[] = [
   {
     label: "Contenido",
@@ -36,16 +41,6 @@ const navGroups: NavGroup[] = [
       { label: "Equipo", href: "/admin/gear-articles", icon: BookOpen },
       { label: "Blog", href: "/admin/blog-posts", icon: FileText },
       { label: "Plantillas de Itinerario", href: "/admin/itinerary-templates", icon: LayoutList },
-    ],
-  },
-  {
-    label: "Leads",
-    links: [
-      { label: "Todos los Leads", href: "/admin/leads", icon: Inbox },
-      { label: "Leads de Alerta", href: "/admin/sentinel-leads", icon: Target, alert: true },
-      { label: "Respuestas del Quiz", href: "/admin/quiz-responses", icon: MessageSquare },
-      { label: "Solicitudes", href: "/admin/itinerary-requests", icon: Compass },
-      { label: "Alertas de Permiso", href: "/admin/permit-alerts", icon: BellPlus },
     ],
   },
   {
@@ -117,6 +112,12 @@ const GroupedNav = ({ currentPath, recentLeadCount, onNavigate }: GroupedNavProp
       <NavItemLink
         item={itinerariesLink}
         active={isActive(itinerariesLink.href)}
+        recentLeadCount={recentLeadCount}
+        onNavigate={onNavigate}
+      />
+      <NavItemLink
+        item={leadsLink}
+        active={isActive(leadsLink.href)}
         recentLeadCount={recentLeadCount}
         onNavigate={onNavigate}
       />
