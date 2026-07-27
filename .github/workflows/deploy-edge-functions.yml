@@ -9,6 +9,11 @@ name: Deploy Supabase Edge Functions
 #
 # Deploys ALL functions unconditionally rather than diffing changed paths --
 # simpler, and a deploy of unchanged code is a harmless no-op.
+#
+# Each function is retried up to 3x with backoff before being counted as
+# failed -- bundling fetches remote imports (esm.sh) at deploy time, which
+# has been observed to 522 transiently and fail otherwise-good deploys
+# (see 2026-07-27 run: 5/21 functions failed on esm.sh 522s alone).
 
 on:
   push:
@@ -38,6 +43,7 @@ jobs:
         run: |
           set -uo pipefail
           failed=""
+          max_attempts=3
 
           for dir in supabase/functions/*/; do
             name="$(basename "$dir")"
@@ -49,10 +55,31 @@ jobs:
             fi
 
             echo "::group::Deploying $name"
-            if supabase functions deploy "$name" --project-ref "$PROJECT_REF"; then
+
+            # Bundling fetches remote imports (esm.sh) at deploy time, which
+            # occasionally 522s transiently -- retry with backoff before
+            # counting the function as failed, since a bad esm.sh response
+            # is not a real deploy failure.
+            attempt=1
+            ok=false
+            until [ "$attempt" -gt "$max_attempts" ]; do
+              if supabase functions deploy "$name" --project-ref "$PROJECT_REF"; then
+                ok=true
+                break
+              fi
+              echo "Attempt $attempt/$max_attempts failed for $name"
+              if [ "$attempt" -lt "$max_attempts" ]; then
+                sleep_seconds=$((10 * attempt))
+                echo "Retrying in ${sleep_seconds}s..."
+                sleep "$sleep_seconds"
+              fi
+              attempt=$((attempt + 1))
+            done
+
+            if [ "$ok" = true ]; then
               echo "✓ $name deployed"
             else
-              echo "✗ $name FAILED"
+              echo "✗ $name FAILED after $max_attempts attempts"
               failed="$failed $name"
             fi
             echo "::endgroup::"
