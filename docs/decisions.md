@@ -252,6 +252,37 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ---
 
+### ADR-023 — CI: retry en deploy de Edge Functions; retiro del workflow de GitHub Pages
+- **Fecha:** 2026-07-27
+- **Estado:** Vigente
+- **Contexto:** Dos hallazgos al auditar `.github/workflows/`. (1) `deploy.yml`
+  ("Deploy to GitHub Pages") es un remanente de antes de la migración a
+  Cloudflare Pages — no referenciado en ningún doc ni otro workflow, y sin
+  relación con cómo se sirve producción hoy. (2) Una corrida manual de
+  `deploy-edge-functions.yml` (run `30236052876`, 2026-07-27) falló 5 de 21
+  funciones (`generate-blog-draft`, `send-drip-emails`, `send-welcome-email`,
+  `unsubscribe`, `check-permit-alerts`) con `Import '...esm.sh/@supabase/
+  supabase-js@2.48.0' failed: 522` — `supabase functions deploy` resuelve
+  imports remotos de esm.sh al momento del bundling, y un 522 transitorio de
+  esm.sh tumbaba el deploy de una función sana. Nota aparte: las fallas de
+  `deploy.yml` desde el 2026-07-26 eran en realidad la cuenta de GitHub
+  bloqueada por facturación (afecta a todos los workflows por igual), no un
+  bug propio del workflow — igual se retiró por apuntar a un target que no se
+  usa.
+- **Decisión:** Se eliminó `deploy.yml` (PR #166). Se agregó retry con
+  backoff (hasta 3 intentos, 10s/20s) alrededor de cada `supabase functions
+  deploy` en `deploy-edge-functions.yml`, para que un 522 transitorio de
+  esm.sh no cuente como fallo real (PR #167).
+- **Consecuencias:** Producción sigue siendo exclusivamente Cloudflare Pages
+  (ADR ya implícito en `CLAUDE.md` — no había ADR explícito para esto antes).
+  Si `deploy-edge-functions.yml` sigue fallando *después* de 3 intentos por
+  función, tratarlo como fallo real (no reintentar más ni subir el cap sin
+  evidencia nueva). La cuenta de GitHub estuvo billing-locked el 2026-07-27 —
+  verificar que ya no lo esté antes de asumir que el fix de retry se probó en
+  producción.
+
+---
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
