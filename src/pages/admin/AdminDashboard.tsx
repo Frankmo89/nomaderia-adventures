@@ -524,7 +524,7 @@ const AdminDashboard = () => {
 
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground/70">Gear Articles</CardTitle>
+            <CardTitle className="text-sm font-medium text-card-foreground/70">Equipo</CardTitle>
             <BookOpen className="h-5 w-5 text-secondary" />
           </CardHeader>
           <CardContent>
@@ -553,7 +553,7 @@ const AdminDashboard = () => {
 
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground/70">Blog Posts</CardTitle>
+            <CardTitle className="text-sm font-medium text-card-foreground/70">Blog</CardTitle>
             <FileText className="h-5 w-5 text-accent" />
           </CardHeader>
           <CardContent>

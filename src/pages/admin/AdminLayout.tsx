@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
-  Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare, Users,
+  Mountain, LayoutDashboard, MapPin, BookOpen, MessageSquare,
   LogOut, FileText, Compass, Mail, ImageIcon, ShieldCheck, ChevronDown,
   BellRing, BellPlus, Target, Menu, Inbox, Sparkles, LayoutList, ScrollText,
 } from "lucide-react";
@@ -24,13 +24,18 @@ type NavGroup = {
 
 const dashboardLink: NavItem = { label: "Dashboard", href: "/admin", icon: LayoutDashboard };
 
+// Top-priority standalone item, own row right below Dashboard — este es el
+// producto pagado (Itinerario Completo), necesita primacía sobre el resto.
+const itinerariesLink: NavItem = { label: "Itinerarios de Clientes", href: "/admin/client-itineraries", icon: ScrollText };
+
 const navGroups: NavGroup[] = [
   {
     label: "Contenido",
     links: [
       { label: "Destinos", href: "/admin/destinations", icon: MapPin },
-      { label: "Gear Articles", href: "/admin/gear-articles", icon: BookOpen },
-      { label: "Blog Posts", href: "/admin/blog-posts", icon: FileText },
+      { label: "Equipo", href: "/admin/gear-articles", icon: BookOpen },
+      { label: "Blog", href: "/admin/blog-posts", icon: FileText },
+      { label: "Plantillas de Itinerario", href: "/admin/itinerary-templates", icon: LayoutList },
     ],
   },
   {
@@ -38,20 +43,17 @@ const navGroups: NavGroup[] = [
     links: [
       { label: "Todos los Leads", href: "/admin/leads", icon: Inbox },
       { label: "Leads de Alerta", href: "/admin/sentinel-leads", icon: Target, alert: true },
-      { label: "Quiz Responses", href: "/admin/quiz-responses", icon: MessageSquare },
+      { label: "Respuestas del Quiz", href: "/admin/quiz-responses", icon: MessageSquare },
       { label: "Solicitudes", href: "/admin/itinerary-requests", icon: Compass },
-      { label: "Itinerarios de Clientes", href: "/admin/client-itineraries", icon: ScrollText },
-      { label: "Plantillas de Itinerario", href: "/admin/itinerary-templates", icon: LayoutList },
       { label: "Alertas de Permiso", href: "/admin/permit-alerts", icon: BellPlus },
-      { label: "Ventanas de Permiso", href: "/admin/permit-windows", icon: BellRing },
     ],
   },
   {
     label: "Datos",
     links: [
-      { label: "Subscribers", href: "/admin/subscribers", icon: Users },
-      { label: "Email Logs", href: "/admin/email-logs", icon: Mail },
+      { label: "Correos", href: "/admin/correos", icon: Mail },
       { label: "Galería", href: "/admin/gallery", icon: ImageIcon },
+      { label: "Ventanas de Permiso", href: "/admin/permit-windows", icon: BellRing },
     ],
   },
   {
@@ -79,7 +81,7 @@ const NavItemLink = ({ item, active, recentLeadCount, onNavigate }: NavItemLinkP
       className={cn(
         "relative flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
         active
-          ? "bg-[rgba(217,119,6,0.10)] text-[#FBBF24] font-semibold"
+          ? "bg-primary/10 text-primary font-semibold"
           : "text-sidebar-foreground/55 hover:bg-sidebar-accent/50"
       )}
     >
@@ -109,6 +111,12 @@ const GroupedNav = ({ currentPath, recentLeadCount, onNavigate }: GroupedNavProp
       <NavItemLink
         item={dashboardLink}
         active={isActive(dashboardLink.href)}
+        recentLeadCount={recentLeadCount}
+        onNavigate={onNavigate}
+      />
+      <NavItemLink
+        item={itinerariesLink}
+        active={isActive(itinerariesLink.href)}
         recentLeadCount={recentLeadCount}
         onNavigate={onNavigate}
       />
