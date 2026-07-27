@@ -206,7 +206,7 @@ const AdminBlogPostForm = () => {
           reading_time_min: computeReadingTimeMin(response.draft.content_markdown),
         }));
         setTags(response.draft.tags);
-        setTitleOptions(response.draft.title_options);
+        setTitleOptions(response.draft.title_options ?? []);
       },
       onError: (error) => {
         if (draftAutofillCanceledRef.current) return;
