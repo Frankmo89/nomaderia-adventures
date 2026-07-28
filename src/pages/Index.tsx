@@ -14,6 +14,8 @@ import NewsletterSignup from "@/components/landing/NewsletterSignup";
 import Footer from "@/components/landing/Footer";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { PRICING } from "@/config/pricing";
+import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
+import { BRAND_ASSETS } from "@/config/assets";
 import { useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import JsonLd from "@/components/JsonLd";
@@ -60,6 +62,8 @@ const Index = () => {
       description:
         "Itinerarios personalizados y alertas de permisos para hispanos en EE. UU. Planea tu aventura en Yosemite, Grand Canyon y más. En español.",
       email: "nomaderia.travel@gmail.com",
+      telephone: `+${WHATSAPP_NUMBER}`,
+      image: BRAND_ASSETS.defaultOgImage,
       sameAs: [
         "https://www.instagram.com/nomaderia.mx",
         "https://www.tiktok.com/@nomaderia.mx",
