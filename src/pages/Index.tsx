@@ -4,6 +4,7 @@ import PromiseSection from "@/components/landing/PromiseSection";
 import QuizSection from "@/components/landing/QuizSection";
 import DestinationsCatalog from "@/components/landing/DestinationsCatalog";
 import PainContrast from "@/components/landing/PainContrast";
+import FaqSection from "@/components/landing/FaqSection";
 import GearPreview from "@/components/landing/GearPreview";
 import BlogPreview from "@/components/landing/BlogPreview";
 import SocialProof from "@/components/landing/SocialProof";
@@ -89,6 +90,8 @@ const Index = () => {
       <PainContrast />
       <QuizSection />
       <TravelInsuranceSection />
+      <SectionDivider variant="layered" fill="#E8F1EA" />
+      <FaqSection />
       <SectionDivider variant="layered" fill="#F4EFE7" />
       <PremiumItinerarySection />
       <SectionDivider variant="simple" fill="#1C1917" />
