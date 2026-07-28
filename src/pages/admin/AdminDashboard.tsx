@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { trackAdminEvent } from "@/lib/admin-tracking";
 import { cn } from "@/lib/utils";
+import { PRICING } from "@/config/pricing";
+import type { ContentV1 } from "@/types/itinerary";
 
 interface Stats {
   destinations: number;
@@ -25,7 +27,7 @@ interface Stats {
   quiz: number;
   sentinelLeads: number;
   subscribers: number;
-  itineraryRequests: number;
+  clientItineraries: number;
   emailsSent: number;
 }
 
@@ -36,8 +38,35 @@ interface TrendDeltas {
   sentinelPrev: number;
   subscribersThis: number;
   subscribersPrev: number;
-  itineraryThis: number;
-  itineraryPrev: number;
+  clientItinerariesThis: number;
+  clientItinerariesPrev: number;
+}
+
+interface ClientItineraryRow {
+  id: string;
+  title: string | null;
+  client_name: string;
+  status: string;
+  updated_at: string;
+  delivered_at: string | null;
+  content: unknown;
+  destinations: { title: string } | null;
+}
+
+// Mismos colores que STATUS_CONFIG en AdminClientItineraries.tsx — no se
+// importa de ahí para no tocar ese archivo (fuera de alcance). "viaje_activo"
+// se deja fuera a propósito: la tarea solo pidió estos 4 buckets.
+const ITINERARY_STATUS_CONFIG: Record<string, { label: string; badgeClass: string; dotClass: string }> = {
+  borrador:   { label: "Borrador",   badgeClass: "bg-yellow-100 text-yellow-800 border-yellow-200", dotClass: "bg-yellow-500" },
+  entregado:  { label: "Entregado",  badgeClass: "bg-green-100 text-green-800 border-green-200",   dotClass: "bg-green-500" },
+  completado: { label: "Completado", badgeClass: "bg-gray-100 text-gray-700 border-gray-200",       dotClass: "bg-gray-400" },
+  archivado:  { label: "Archivado",  badgeClass: "bg-stone-100 text-stone-600 border-stone-200",    dotClass: "bg-stone-400" },
+};
+
+function getItineraryPark(row: ClientItineraryRow): string {
+  if (row.destinations?.title) return row.destinations.title;
+  const c = row.content as unknown as ContentV1 | null;
+  return c?.parque ?? "—";
 }
 
 interface RecentItem {
@@ -124,9 +153,10 @@ const AdminDashboard = () => {
     aiGeneratedBlog: 0,
     gear: 0, gearDrafts: 0,
     blog: 0, blogDrafts: 0,
-    quiz: 0, sentinelLeads: 0, subscribers: 0, itineraryRequests: 0, emailsSent: 0,
+    quiz: 0, sentinelLeads: 0, subscribers: 0, clientItineraries: 0, emailsSent: 0,
   });
   const [recent, setRecent] = useState<RecentItem[]>([]);
+  const [clientItineraries, setClientItineraries] = useState<ClientItineraryRow[]>([]);
   const [sentinelRecent, setSentinelRecent] = useState<SentinelLead[]>([]);
   const [quizRecent, setQuizRecent] = useState<RecentQuizResponse[]>([]);
   const [deltas, setDeltas] = useState<TrendDeltas | null>(null);
@@ -139,7 +169,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [dPub, dDraft, aiContentMeta, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
+      const [dPub, dDraft, aiContentMeta, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ci, emailsSent, recentD, recentG, recentB] = await Promise.all([
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", false),
         db.from("ai_content_meta").select("content_type").in("content_type", ["gear", "blog"]),
@@ -150,7 +180,7 @@ const AdminDashboard = () => {
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }),
         supabase.from("sentinel_leads").select("id", { count: "exact", head: true }),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
-        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }),
+        supabase.from("client_itineraries").select("id", { count: "exact", head: true }),
         db.from("email_drip_log").select("id", { count: "exact", head: true }),
         supabase.from("destinations").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
         supabase.from("gear_articles").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
@@ -180,7 +210,7 @@ const AdminDashboard = () => {
         quiz: q.count || 0,
         sentinelLeads: sentinelLeads.count || 0,
         subscribers: s.count || 0,
-        itineraryRequests: ir.count || 0,
+        clientItineraries: ci.count || 0,
         emailsSent: emailsSent.count || 0,
       });
       const combined: RecentItem[] = [
@@ -228,15 +258,15 @@ const AdminDashboard = () => {
       // 7-day trend deltas (this week vs previous week, two date-bounded count queries per metric)
       const w1 = new Date(Date.now() - 7 * 86_400_000).toISOString();
       const w2 = new Date(Date.now() - 14 * 86_400_000).toISOString();
-      const [qThis, qPrev, slThis, slPrev, sThis, sPrev, irThis, irPrev] = await Promise.all([
+      const [qThis, qPrev, slThis, slPrev, sThis, sPrev, ciThis, ciPrev] = await Promise.all([
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }).gte("created_at", w1),
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
         supabase.from("sentinel_leads").select("id", { count: "exact", head: true }).gte("created_at", w1),
         supabase.from("sentinel_leads").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).gte("created_at", w1),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
-        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }).gte("created_at", w1),
-        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
+        supabase.from("client_itineraries").select("id", { count: "exact", head: true }).gte("created_at", w1),
+        supabase.from("client_itineraries").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
       ]);
       setDeltas({
         quizThis: qThis.count ?? 0,
@@ -245,9 +275,17 @@ const AdminDashboard = () => {
         sentinelPrev: slPrev.count ?? 0,
         subscribersThis: sThis.count ?? 0,
         subscribersPrev: sPrev.count ?? 0,
-        itineraryThis: irThis.count ?? 0,
-        itineraryPrev: irPrev.count ?? 0,
+        clientItinerariesThis: ciThis.count ?? 0,
+        clientItinerariesPrev: ciPrev.count ?? 0,
       });
+
+      // Pipeline de Itinerarios — filas completas para breakdown de estado,
+      // seguimiento y cálculo de ingresos del mes (dataset chico, un solo fetch).
+      const ciRows = await supabase
+        .from("client_itineraries")
+        .select("id, title, client_name, status, updated_at, delivered_at, content, destinations(title)")
+        .order("updated_at", { ascending: false });
+      if (ciRows.data) setClientItineraries(ciRows.data as unknown as ClientItineraryRow[]);
 
       setFetchedAt(new Date());
     };
@@ -321,6 +359,37 @@ const AdminDashboard = () => {
   const typeLabel: Record<RecentItem["type"], string> = { destination: "Destino", gear: "Gear", blog: "Blog" };
   const typeHref: Record<RecentItem["type"], string> = { destination: "/admin/destinations", gear: "/admin/gear-articles", blog: "/admin/blog-posts" };
   const aiGeneratedTotal = stats.aiGeneratedGear + stats.aiGeneratedBlog;
+
+  // Pipeline de Itinerarios — derivado de clientItineraries, sin queries extra.
+  const pipelineCounts: Record<"borrador" | "entregado" | "completado" | "archivado", number> = {
+    borrador: 0, entregado: 0, completado: 0, archivado: 0,
+  };
+  for (const row of clientItineraries) {
+    if (row.status in pipelineCounts) {
+      pipelineCounts[row.status as keyof typeof pipelineCounts]++;
+    }
+  }
+
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+  const needsFollowUp = clientItineraries
+    .filter(
+      (r) =>
+        (r.status === "borrador" || r.status === "entregado") &&
+        Date.now() - new Date(r.updated_at).getTime() >= THREE_DAYS_MS
+    )
+    .sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
+
+  // "Ingresos del mes": entregado/completado con delivered_at (poblado al marcar
+  // "entregado" en AdminClientItineraryDetail.tsx) dentro del mes calendario actual.
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const deliveredThisMonth = clientItineraries.filter(
+    (r) =>
+      (r.status === "entregado" || r.status === "completado") &&
+      r.delivered_at &&
+      new Date(r.delivered_at) >= startOfMonth
+  );
+  const revenueThisMonth = deliveredThisMonth.length * PRICING.itinerarioCompleto;
 
   return (
     <div>
@@ -570,9 +639,9 @@ const AdminDashboard = () => {
             <Compass className="h-5 w-5 text-trail" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-card-foreground">{stats.itineraryRequests}</p>
-            <p className="text-xs text-muted-foreground mt-1">solicitud{stats.itineraryRequests !== 1 ? "es" : ""} recibida{stats.itineraryRequests !== 1 ? "s" : ""}</p>
-            {deltas && <DeltaChip thisWeek={deltas.itineraryThis} prevWeek={deltas.itineraryPrev} className="mt-1" />}
+            <p className="text-3xl font-bold text-card-foreground">{stats.clientItineraries}</p>
+            <p className="text-xs text-muted-foreground mt-1">itinerario{stats.clientItineraries !== 1 ? "s" : ""} de cliente{stats.clientItineraries !== 1 ? "s" : ""}</p>
+            {deltas && <DeltaChip thisWeek={deltas.clientItinerariesThis} prevWeek={deltas.clientItinerariesPrev} className="mt-1" />}
           </CardContent>
         </Card>
 
@@ -691,6 +760,84 @@ const AdminDashboard = () => {
             Error al jalar RIDB — ver consola.
           </span>
         )}
+      </div>
+
+      {/* Pipeline de Itinerarios */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Compass className="h-5 w-5 text-primary" />
+          <h2 className="font-serif text-xl text-foreground">Pipeline de Itinerarios</h2>
+          <span className="text-xs text-muted-foreground">({clientItineraries.length} en total)</span>
+        </div>
+
+        {/* Breakdown por estado */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {(["borrador", "entregado", "completado", "archivado"] as const).map((key) => {
+            const cfg = ITINERARY_STATUS_CONFIG[key];
+            return (
+              <Card key={key} className="bg-card border-border">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", cfg.dotClass)} />
+                    <span className="text-xs font-medium text-muted-foreground">{cfg.label}</span>
+                  </div>
+                  <p className="text-2xl font-bold text-card-foreground">{pipelineCounts[key]}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Ingresos del mes */}
+        <div className="rounded-lg border border-border bg-card p-4 mb-4">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Ingresos del mes</p>
+          <p className="text-2xl font-bold text-card-foreground">
+            ${revenueThisMonth.toLocaleString("es-MX")}{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              · {deliveredThisMonth.length} entregado{deliveredThisMonth.length !== 1 ? "s" : ""} este mes
+            </span>
+          </p>
+        </div>
+
+        {/* Necesitan seguimiento */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-foreground">Necesitan seguimiento</h3>
+            {needsFollowUp.length > 5 && (
+              <Link to="/admin/client-itineraries" className="text-xs text-primary hover:underline">
+                Ver todos
+              </Link>
+            )}
+          </div>
+          {needsFollowUp.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Todo al día · sin itinerarios estancados 👌</p>
+          ) : (
+            <div className="rounded-lg border border-border overflow-hidden">
+              {needsFollowUp.slice(0, 5).map((row) => {
+                const cfg = ITINERARY_STATUS_CONFIG[row.status] ?? ITINERARY_STATUS_CONFIG.borrador;
+                const daysIdle = Math.floor((Date.now() - new Date(row.updated_at).getTime()) / 86_400_000);
+                return (
+                  <Link
+                    key={row.id}
+                    to={`/admin/client-itineraries/${row.id}`}
+                    className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{row.client_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{getItineraryPark(row)}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className={cn("text-xs whitespace-nowrap", cfg.badgeClass)}>
+                        {cfg.label}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{daysIdle}d sin actividad</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* CHANGE 5: Activity + Analytics side by side */}
