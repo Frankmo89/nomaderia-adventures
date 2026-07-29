@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { trackAdminEvent } from "@/lib/admin-tracking";
 import { cn } from "@/lib/utils";
+import { PRICING } from "@/config/pricing";
+import type { Tables } from "@/integrations/supabase/types";
+import type { ContentV1 } from "@/types/itinerary";
 
 interface Stats {
   destinations: number;
@@ -25,7 +28,7 @@ interface Stats {
   quiz: number;
   sentinelLeads: number;
   subscribers: number;
-  itineraryRequests: number;
+  clientItineraries: number;
   emailsSent: number;
 }
 
@@ -87,6 +90,35 @@ const fitnessLabels: Record<string, string> = {
   sedentary: "🚶 Sedentario", light_activity: "🏃 Activo casual", moderate: "💪 Regular", active: "🔥 Muy activo",
 };
 
+// Mismos colores de badge que AdminClientItineraries.tsx / AdminClientItineraryDetail.tsx
+const ITINERARY_STATUS_CONFIG: Record<string, { label: string; badgeCls: string; dotCls: string }> = {
+  borrador:   { label: "Borrador",   badgeCls: "bg-yellow-100 text-yellow-800 border-yellow-200", dotCls: "bg-yellow-500" },
+  entregado:  { label: "Entregado",  badgeCls: "bg-green-100 text-green-800 border-green-200",   dotCls: "bg-green-500" },
+  completado: { label: "Completado", badgeCls: "bg-gray-100 text-gray-700 border-gray-200",      dotCls: "bg-gray-500" },
+  archivado:  { label: "Archivado",  badgeCls: "bg-stone-100 text-stone-600 border-stone-200",   dotCls: "bg-stone-500" },
+};
+const ITINERARY_STATUS_ORDER = ["borrador", "entregado", "completado", "archivado"] as const;
+
+type PipelineRow = Pick<Tables<"client_itineraries">, "id" | "client_name" | "status" | "updated_at" | "delivered_at" | "content"> & {
+  destinations: { title: string } | null;
+};
+
+interface FollowUpItem {
+  id: string;
+  clientName: string;
+  park: string;
+  status: string;
+  daysSinceUpdate: number;
+}
+
+interface ItineraryPipeline {
+  statusCounts: Record<(typeof ITINERARY_STATUS_ORDER)[number], number>;
+  followUp: FollowUpItem[];
+  followUpTotal: number;
+  revenueTotal: number;
+  revenueCount: number;
+}
+
 const db = supabase as unknown as SupabaseClient;
 
 function getGreeting(): string {
@@ -124,12 +156,13 @@ const AdminDashboard = () => {
     aiGeneratedBlog: 0,
     gear: 0, gearDrafts: 0,
     blog: 0, blogDrafts: 0,
-    quiz: 0, sentinelLeads: 0, subscribers: 0, itineraryRequests: 0, emailsSent: 0,
+    quiz: 0, sentinelLeads: 0, subscribers: 0, clientItineraries: 0, emailsSent: 0,
   });
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [sentinelRecent, setSentinelRecent] = useState<SentinelLead[]>([]);
   const [quizRecent, setQuizRecent] = useState<RecentQuizResponse[]>([]);
   const [deltas, setDeltas] = useState<TrendDeltas | null>(null);
+  const [pipeline, setPipeline] = useState<ItineraryPipeline | null>(null);
   const [quizAnalytics, setQuizAnalytics] = useState<{
     interests: Record<string, number>;
     origins: Record<string, number>;
@@ -139,7 +172,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [dPub, dDraft, aiContentMeta, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ir, emailsSent, recentD, recentG, recentB] = await Promise.all([
+      const [dPub, dDraft, aiContentMeta, gPub, gDraft, bPub, bDraft, q, sentinelLeads, s, ci, emailsSent, recentD, recentG, recentB] = await Promise.all([
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", true),
         supabase.from("destinations").select("id", { count: "exact", head: true }).eq("is_published", false),
         db.from("ai_content_meta").select("content_type").in("content_type", ["gear", "blog"]),
@@ -150,7 +183,7 @@ const AdminDashboard = () => {
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }),
         supabase.from("sentinel_leads").select("id", { count: "exact", head: true }),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
-        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }),
+        supabase.from("client_itineraries").select("id", { count: "exact", head: true }),
         db.from("email_drip_log").select("id", { count: "exact", head: true }),
         supabase.from("destinations").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
         supabase.from("gear_articles").select("id, title, is_published, created_at").order("created_at", { ascending: false }).limit(3),
@@ -180,7 +213,7 @@ const AdminDashboard = () => {
         quiz: q.count || 0,
         sentinelLeads: sentinelLeads.count || 0,
         subscribers: s.count || 0,
-        itineraryRequests: ir.count || 0,
+        clientItineraries: ci.count || 0,
         emailsSent: emailsSent.count || 0,
       });
       const combined: RecentItem[] = [
@@ -189,6 +222,53 @@ const AdminDashboard = () => {
         ...(recentB.data || []).map((r) => ({ ...r, type: "blog" as const, is_published: r.is_published ?? false })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 6);
       setRecent(combined);
+
+      // Pipeline de Itinerarios: breakdown por status, seguimiento y revenue del mes
+      const { data: pipelineRows } = await supabase
+        .from("client_itineraries")
+        .select("id, client_name, status, updated_at, delivered_at, content, destinations(title)");
+      if (pipelineRows) {
+        const now = Date.now();
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const statusCounts: ItineraryPipeline["statusCounts"] = { borrador: 0, entregado: 0, completado: 0, archivado: 0 };
+        const followUp: FollowUpItem[] = [];
+        let revenueCount = 0;
+
+        for (const row of pipelineRows as unknown as PipelineRow[]) {
+          if (row.status in statusCounts) {
+            statusCounts[row.status as keyof typeof statusCounts] += 1;
+          }
+
+          const daysSinceUpdate = Math.floor((now - new Date(row.updated_at).getTime()) / 86_400_000);
+          if ((row.status === "borrador" || row.status === "entregado") && daysSinceUpdate >= 3) {
+            const content = row.content as unknown as ContentV1 | null;
+            followUp.push({
+              id: row.id,
+              clientName: row.client_name,
+              park: row.destinations?.title ?? content?.parque ?? "—",
+              status: row.status,
+              daysSinceUpdate,
+            });
+          }
+
+          // delivered_at se fija al pasar a "entregado" (AdminClientItineraryDetail.tsx); es el proxy
+          // más fiel a "fecha de entrega" que existe hoy en el schema — ver nota en PR.
+          if ((row.status === "entregado" || row.status === "completado") && row.delivered_at) {
+            const d = new Date(row.delivered_at);
+            if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) revenueCount += 1;
+          }
+        }
+
+        followUp.sort((a, b) => b.daysSinceUpdate - a.daysSinceUpdate);
+        setPipeline({
+          statusCounts,
+          followUp: followUp.slice(0, 5),
+          followUpTotal: followUp.length,
+          revenueTotal: revenueCount * PRICING.itinerarioCompleto,
+          revenueCount,
+        });
+      }
 
       // 48h panels
       const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
@@ -228,15 +308,15 @@ const AdminDashboard = () => {
       // 7-day trend deltas (this week vs previous week, two date-bounded count queries per metric)
       const w1 = new Date(Date.now() - 7 * 86_400_000).toISOString();
       const w2 = new Date(Date.now() - 14 * 86_400_000).toISOString();
-      const [qThis, qPrev, slThis, slPrev, sThis, sPrev, irThis, irPrev] = await Promise.all([
+      const [qThis, qPrev, slThis, slPrev, sThis, sPrev, ciThis, ciPrev] = await Promise.all([
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }).gte("created_at", w1),
         supabase.from("quiz_responses").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
         supabase.from("sentinel_leads").select("id", { count: "exact", head: true }).gte("created_at", w1),
         supabase.from("sentinel_leads").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).gte("created_at", w1),
         supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
-        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }).gte("created_at", w1),
-        supabase.from("itinerary_requests").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
+        supabase.from("client_itineraries").select("id", { count: "exact", head: true }).gte("created_at", w1),
+        supabase.from("client_itineraries").select("id", { count: "exact", head: true }).gte("created_at", w2).lt("created_at", w1),
       ]);
       setDeltas({
         quizThis: qThis.count ?? 0,
@@ -245,8 +325,8 @@ const AdminDashboard = () => {
         sentinelPrev: slPrev.count ?? 0,
         subscribersThis: sThis.count ?? 0,
         subscribersPrev: sPrev.count ?? 0,
-        itineraryThis: irThis.count ?? 0,
-        itineraryPrev: irPrev.count ?? 0,
+        itineraryThis: ciThis.count ?? 0,
+        itineraryPrev: ciPrev.count ?? 0,
       });
 
       setFetchedAt(new Date());
@@ -570,8 +650,8 @@ const AdminDashboard = () => {
             <Compass className="h-5 w-5 text-trail" />
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-card-foreground">{stats.itineraryRequests}</p>
-            <p className="text-xs text-muted-foreground mt-1">solicitud{stats.itineraryRequests !== 1 ? "es" : ""} recibida{stats.itineraryRequests !== 1 ? "s" : ""}</p>
+            <p className="text-3xl font-bold text-card-foreground">{stats.clientItineraries}</p>
+            <p className="text-xs text-muted-foreground mt-1">itinerario{stats.clientItineraries !== 1 ? "s" : ""} de cliente{stats.clientItineraries !== 1 ? "s" : ""}</p>
             {deltas && <DeltaChip thisWeek={deltas.itineraryThis} prevWeek={deltas.itineraryPrev} className="mt-1" />}
           </CardContent>
         </Card>
@@ -692,6 +772,83 @@ const AdminDashboard = () => {
           </span>
         )}
       </div>
+
+      {/* Pipeline de Itinerarios */}
+      {pipeline && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Compass className="h-5 w-5 text-trail" />
+            <h2 className="font-serif text-xl text-foreground">Pipeline de Itinerarios</h2>
+          </div>
+          <div className="bg-white border border-[#E7E2D9] rounded-xl p-4 md:p-5">
+            {/* Breakdown por status */}
+            <div className="flex flex-wrap gap-x-5 gap-y-2 pb-4 mb-4 border-b border-[#E7E2D9]">
+              {ITINERARY_STATUS_ORDER.map((key) => (
+                <div key={key} className="flex items-center gap-1.5">
+                  <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", ITINERARY_STATUS_CONFIG[key].dotCls)} />
+                  <span className="text-sm text-card-foreground">
+                    {ITINERARY_STATUS_CONFIG[key].label} <span className="font-semibold">{pipeline.statusCounts[key]}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Ingresos del mes */}
+            <div className="pb-4 mb-4 border-b border-[#E7E2D9]">
+              <p className="text-[10.5px] font-bold text-muted-foreground tracking-[0.1em] uppercase mb-1.5">Ingresos del mes</p>
+              <p className="text-2xl font-bold text-card-foreground">
+                ${pipeline.revenueTotal.toLocaleString("es-MX")}
+                <span className="text-sm font-normal text-muted-foreground ml-1.5">
+                  · {pipeline.revenueCount} entregado{pipeline.revenueCount !== 1 ? "s" : ""} este mes
+                </span>
+              </p>
+            </div>
+
+            {/* Necesitan seguimiento */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10.5px] font-bold text-muted-foreground tracking-[0.1em] uppercase">Necesitan seguimiento</p>
+                {pipeline.followUpTotal > 5 && (
+                  <Link
+                    to="/admin/client-itineraries"
+                    className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    Ver todos ({pipeline.followUpTotal})
+                  </Link>
+                )}
+              </div>
+              {pipeline.followUp.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nada pendiente · Buen trabajo 👌</p>
+              ) : (
+                <div className="space-y-2">
+                  {pipeline.followUp.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/admin/client-itineraries/${item.id}`}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-[#E7E2D9] px-3 py-2.5 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-card-foreground truncate">
+                          {item.clientName} · {item.park}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge
+                            variant="outline"
+                            className={cn("text-[10.5px] whitespace-nowrap", ITINERARY_STATUS_CONFIG[item.status]?.badgeCls)}
+                          >
+                            {ITINERARY_STATUS_CONFIG[item.status]?.label ?? item.status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground shrink-0">{item.daysSinceUpdate}d sin actividad</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CHANGE 5: Activity + Analytics side by side */}
       <div className="grid grid-cols-[1.15fr_1fr] gap-4">

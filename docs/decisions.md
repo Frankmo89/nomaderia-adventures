@@ -332,3 +332,18 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   queda como trampa latente para el próximo `SelectItem` que alguien agregue
   ahí; se alineó también el select "Modo" de `ItineraryBlockEditor.tsx` al
   patrón `|| undefined` sin que tuviera el bug activo, para cerrarla.
+- **"Itinerarios" en 0 en el Dashboard: contador de una tabla muerta.**
+  `AdminDashboard.tsx` contaba `itinerary_requests` para el stat card
+  "Itinerarios" — pero esa tabla es el intake de leads legacy, sin ningún
+  formulario público que le escriba desde hace tiempo (ver `claude-context.md`
+  §5.4). El feature real y activo es el builder (`client_itineraries`,
+  `/admin/client-itineraries`) — dos tablas con nombres que suenan a lo mismo
+  pero son features distintas (ADR-018, nota post-snapshot). Lección: cuando
+  un contador del admin muestra 0 pese a haber actividad real, no asumir RLS
+  (ver primera viñeta de esta sección) sin antes confirmar que la query
+  apunta a la tabla que el flujo *activo* realmente escribe — grep del nombre
+  de la tabla contra los componentes que hacen `.insert()`/`.update()` primero.
+  Además: `client_itineraries.delivered_at` ya existe en el schema y se fija
+  una sola vez al pasar a status `entregado` — es el campo correcto para
+  "fecha de entrega" en cálculos de revenue, no `updated_at` (que cambia con
+  cualquier edición posterior, incluida una vuelta a `borrador`).
