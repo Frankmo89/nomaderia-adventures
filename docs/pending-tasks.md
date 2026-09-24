@@ -253,8 +253,7 @@ Fuente: `docs/ai-roadmap.md`. No implementar en un PR de docs.
 | `--sidebar-primary` sigue ámbar `#D97706` | `src/index.css` | Nav admin activo usa `text-primary` (verde) — inconsistencia CSS |
 | Anton listado como display font | Corregido en `design-system.md` esta pasada | Ya retirado del código |
 | `claude-context` §10 decía `--primary` = `#D97706` | Corregido esta pasada | Ahora Trail Green |
-| `ABOUT.md` (raíz): “dark mode nativo” + monetización “100% afiliados” | **No editado** (fuera de `docs/`+`CLAUDE.md`) | Stale vs light theme + producto $49 |
-| `README.md` primary = Sunset Orange `#E86C3A` | **No editado** (raíz) | Stale vs Trail Green |
+| `ABOUT.md` / `README.md` (raíz) | **Corregidos** en follow-up del mismo PR #177 (2026-09-24) | Light theme + mix $49 + afiliados; Trail Green primario |
 
 ### Hits en `src/` / `public/` / `supabase/` de mercados o naming viejo
 **(listar only — no fix en esta PR)**
@@ -791,8 +790,9 @@ tablas; §7 conflictos docs↔código. (7) `docs/content-strategy.md` — audien
 SoCal + producto $49 (quitado TJ/CDMX y rango $250–$2,000 como SKU). (8)
 Banners de obsolescencia en `visual-audit.md` y
 `research-itinerary-client-view.md`. (9) Esta página: listas Phase 1 +
-conflictos/`src` hits. **No editados:** `ABOUT.md` / `README.md` (raíz) —
-stale claims listados arriba. Base: `origin/main` (PR #176 DB aún abierto).
+conflictos/`src` hits. Base: `origin/main` (PR #176 DB aún abierto).
+**Follow-up mismo PR:** `ABOUT.md` + `README.md` — quitado dark mode nativo /
+100% afiliados / Sunset Orange; alineados a light theme, $49 + afiliados, Trail Green.
 
 ### Julio 2026
 
