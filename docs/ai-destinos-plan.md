@@ -1,3 +1,9 @@
+> ⚠️ **PASADA 2026-09-24 / ADR-017:** este plan describe el flujo IA de
+> descubrimiento de destinos que fue **retirado** (catálogo cerrado). No
+> implementar. El color `primary #D97706` citado abajo está obsoleto — marca
+> vigente = Trail Green (`docs/design-system.md`). Dirección AI vigente:
+> `docs/ai-roadmap.md`.
+
 # 🏔️ PLAN MAESTRO — "Destino Inteligente"
 
 > ⛔ **RETIRADO (2026-07-19).** El flujo de descubrimiento/borrador IA de

@@ -1,12 +1,12 @@
 # Nomaderia Adventures
 
-> Plataforma de aventuras y viajes para personas activas que quieren explorar el mundo — sin morir en el intento.
+> Guías en español para **adultos hispanos en Southern California (25–45)**, first-time hikers — sin morir en el intento.
 
-Nomaderia Adventures es una web app completa construida con React + TypeScript que ayuda a viajeros a:
+Nomaderia Adventures es una web app (React + TypeScript) con un producto de pago: **Itinerario Completo Nomaderia — $49 USD** (cierre hoy por WhatsApp). También ayuda a viajeros a:
 
-- Descubrir destinos de trekking y aventura con guías detalladas
+- Descubrir parques y destinos con guías detalladas en español
 - Calcular presupuestos de viaje personalizados
-- Encontrar el equipo adecuado con reseñas y links de afiliados
+- Encontrar equipo con reseñas y links de afiliados (Amazon Associates)
 - Leer el blog de consejos de preparación física y viaje
 - Recibir recomendaciones personalizadas a través de un quiz interactivo
 
@@ -178,23 +178,25 @@ Todas las tablas tienen campo `is_published` para controlar qué contenido es vi
 
 ---
 
-## Paleta de Colores (Nomaderia Campfire Night)
+## Paleta de Colores (tema claro editorial)
 
-| Token | Color | Hex |
-|-------|-------|-----|
-| `primary` | Sunset Orange | `#E86C3A` |
-| `secondary` | Trail Green | `#4A7C59` |
-| `accent` | Sky Blue | `#6BA3BE` |
-| `background` | Charcoal | `#1C1917` |
-| `foreground` | Light Sand | `#F5F0EB` |
+Fuente de verdad: `docs/design-system.md`. Resumen:
 
-Tipografías: **Playfair Display** (headings) + **Inter** (body).
+| Token | Color | Hex | Uso |
+|-------|-------|-----|-----|
+| `green` | Trail Green | `#1F6F43` | **Primario** — botones, nav activo, marca |
+| `green-dark` | Pine | `#16512F` | Hover de botones verdes |
+| `cloud` | Cloud | `#FBFAF7` | Fondo de página |
+| `ink` | Ink | `#13211A` | Títulos |
+| `forest-dark` | Forest Charcoal | `#14201A` | Secciones oscuras / footer (no es “dark mode” del sitio) |
+
+Tema **light** (sin toggle público). Tipografías: **Playfair Display** (headings) · **Inter** (body) · **Oswald** (eyebrows).
 
 ---
 
 ## Despliegue
 
-El proyecto es compatible con cualquier plataforma estática (Vercel, Netlify, Cloudflare Pages).
+Producción hoy: **Cloudflare Pages** (`https://nomaderia.com`). Compatible con cualquier host estático.
 
 ```sh
 npm run build

@@ -1,259 +1,71 @@
 # Nomaderia Adventures — Contexto para Agentes AI
 
-> **Entrypoint del proyecto.** Léelo completo antes de tocar nada. Para detalle
-> profundo, consulta `docs/`. Este archivo es la fuente de verdad del *estado
-> actual*; el histórico vive en `docs/pending-tasks.md` y las decisiones duras en
-> `docs/decisions.md`.
-
----
-
-## ⛔ PROTOCOLO DE AGENTE (REGLAS INQUEBRANTABLES)
-
-Estas reglas existen para evitar el **AI Drift**: que un agente reescriba
-arquitectura ya decidida, duplique archivos o rompa convenciones. No son
-opcionales.
-
-1. **LECTURA OBLIGATORIA.** Antes de proponer soluciones o escribir código, lee
-   en silencio: `CLAUDE.md` → `docs/claude-context.md` → `docs/decisions.md` →
-   `docs/pending-tasks.md`. Si una propuesta contradice una decisión en
-   `decisions.md`, **detente y avísalo** en vez de implementarla.
-2. **EJECUCIÓN ATÓMICA.** Un cambio lógico = un commit. No mezcles tareas
-   distintas en el mismo commit ni en el mismo PR.
-3. **ACTUALIZACIÓN DE MEMORIA.** Al terminar una tarea, actualiza
-   `docs/pending-tasks.md`. Si la arquitectura cambió, actualiza también
-   `CLAUDE.md` o `docs/claude-context.md`.
-4. **MEMORIA TÉCNICA.** Si resolviste un bug no obvio, cambiaste una convención
-   o tomaste una decisión de arquitectura/negocio, **documenta la lección en
-   `docs/decisions.md`** de forma concisa (una entrada ADR por decisión).
-5. **SEGURIDAD.** Nunca toques `.env`. Nunca pongas credenciales de Supabase,
-   Resend ni Stripe en el código. Secretos solo vía Supabase Dashboard / CLI.
-6. **VERIFICACIÓN ANTES DE PR.** `node node_modules/typescript/bin/tsc --noEmit`
-   **y** `npm run build` deben pasar. Reporta hallazgos de lint/test
-   preexistentes sin "arreglarlos" de paso.
-7. **NO DUPLICAR DOCS.** La memoria ya está estructurada (`CLAUDE.md` raíz +
-   `docs/`). No crees `clauderules.md`, `pending_tasks.md` en raíz, ni variantes.
-   Edita los archivos existentes.
-
----
-
-## 📍 Estado Actual (Mayo 2026)
-
-- **Sitio en producción:** https://nomaderia.com — Hosting: **Cloudflare Pages**.
-- **Producto activo en sitio:** **Itinerario Completo Nomaderia** — **$49 USD**.
-- **Canal de cierre vigente:** CTA por **WhatsApp** ("Diseña mi aventura por WhatsApp").
-- **Primer lead real capturado** vía `/sentinel` (SentinelLanding). El funnel de
-  conversión ya produjo señal real → priorizar lo que reduce fricción a la venta.
-- **Modelo de negocio congelado** en **un solo producto**, **USD únicamente**
-  (ver `docs/decisions.md` ADR-012). Los tiers legacy y los precios MXN están
-  **retirados**.
+> **Entrypoint.** Léelo completo antes de tocar nada. Detalle: `docs/`.
+> Estado actual = este archivo + `docs/claude-context.md`. Histórico = `docs/pending-tasks.md`.
+> Decisiones duras = `docs/decisions.md`. Dirección AI (planned) = `docs/ai-roadmap.md`.
 
 ---
 
 ## Qué es
 
-Plataforma web en español para **hispanos residentes en EE. UU.** (25-45 años),
-principiantes en aventura outdoor. Mercado primario: **SoCal / San Diego**.
-Combina guías de destinos, blog, quiz interactivo, calculadora de presupuesto y
-servicios de pago. Compite contra AllTrails/Chimani en un solo eje:
-**idioma + audiencia + honestidad con principiantes**.
+Plataforma web en español para **adultos hispanos en Southern California (25–45)**,
+primeros pasos en hiking. Un producto: **Itinerario Completo Nomaderia — $49 USD**.
+Sitio: https://nomaderia.com · Hosting: Cloudflare Pages · Moneda: **USD only**.
 
-**Funnel principal:** SEO / Ads → Landing → Quiz (captura email) → Destino →
-Affiliate links / Servicio de pago. Canal de cierre: **WhatsApp**, no el sitio.
+Canal de cierre **hoy**: WhatsApp (`Diseña mi aventura por WhatsApp`). Stripe Payment
+Link pendiente de configurar (`STRIPE_LINK_ITINERARIO_49` placeholder).
 
-## Productos y Precios (USD únicamente)
+## Estado actual (código)
 
-| Producto | Precio | Canal de cobro |
-|----------|--------|----------------|
-| Itinerario Completo Nomaderia | $49 USD | WhatsApp |
+- Catálogo cerrado de parques nacionales US; quiz, blog, gear, calculadora, concierge IA (RAG).
+- Itinerary builder en producción: admin edita → entrega `/i/:token`.
+- Tema **light** editorial (Trail Green `#1F6F43`). Sin dark-mode toggle público.
+- Stack congelado (ADR-001): React 18 · TypeScript · Vite · Tailwind · Shadcn/UI ·
+  Framer Motion · Supabase (Postgres, Edge Functions, RLS, pgvector) · Resend · Stripe.
 
-Fuente de verdad en código: `src/config/pricing.ts`.
+## Nueva dirección — sistema de agentes AI (**planned**, ADR-024)
 
-## Monetización (4 vías)
+1. Funnel: quiz → ranking de parques → preview IA gratis → pago Stripe $49 → draft en builder → Frank aprueba → `/i/:token`.
+2. Entregable $49: mapa, permisos, hikes, gear afiliado, alertas vivas; email primero.
+3. Content engine: reports en Drive → RAG → posts/reels → aprobación Frank → métricas.
+4. ML: ranking rules + `us-parks-recommender`; loguear eventos desde día 1; ranker con datos.
+5. Verifier: cada itinerario/post vs `park_live_data` + fuentes citadas antes de ship.
 
-1. **Servicio directo por WhatsApp** — Itinerario Completo Nomaderia — $49 USD.
-2. **Viator 8%** — habilitado por certificación TAP (The Travel Institute).
-3. **Amazon Associates** — tag `nomaderia-20` (en product cards de gear).
-4. **Travelpayouts** — Klook, Tiqets, Localrent, Welcome Pickups.
+Detalle y fases: `docs/ai-roadmap.md`. Research desk: `docs/research-desk.md`.
 
-## Stack (NO proponer cambios de stack — ver ADR-001)
+## Reglas duras
 
-```
-Frontend:    React 18.3 + TypeScript 5.8
-Build:       Vite 5.4 (plugin-react-swc)
-Estilos:     Tailwind CSS 3.4 + shadcn/ui + Radix UI
-Animaciones: Framer Motion 12
-Routing:     React Router DOM 6
-Backend:     Supabase (PostgreSQL + Auth + Storage)  · ID: vrixiuvnhvqafmxlcyex
-Data:        TanStack React Query 5
-Formularios: React Hook Form + Zod
-Email:       Resend (Edge Functions)
-Pagos:       Stripe Payment Links
-Testing:     Vitest + Testing Library
-Hosting:     Cloudflare Pages
-```
+1. Leer `CLAUDE.md` → `docs/claude-context.md` → `docs/decisions.md` → `docs/pending-tasks.md` antes de proponer.
+2. Un cambio lógico = un commit/PR. Actualizar `pending-tasks.md` al terminar.
+3. Nunca tocar `.env` ni hardcodear secretos. No editar `src/components/ui/` ni `types.ts` a mano.
+4. No cambiar auth / RLS / queries Supabase sin instrucción explícita.
+5. No reintroducir MXN, tiers legacy, mercado CDMX/TJ cross-border, ni orange como primario (ADR-002/012/006).
+6. Antes de PR: `npx tsc --noEmit` y `npm run build` deben pasar.
+7. Documentar solo lo que existe en código. Lo planned va marcado **planned**.
 
-> **Prohibido:** Next.js, Vue, Redux o cualquier cambio de framework/state mgmt.
-> shadcn + Framer Motion + React Query cubren todo. (ADR-001)
+## Mapa de docs
 
-## Estructura del Proyecto
-
-```
-src/
-├── pages/                    # Una página por ruta
-│   ├── Index.tsx             # Homepage (hero, quiz, destinos, gear, newsletter)
-│   ├── Destinations.tsx      # /destinos (directorio de parques con filtros)
-│   ├── DestinationDetail.tsx # /destinos/:slug (tabs: ¿Puedo?, Prep, Itinerario, Gear, Reserva)
-│   ├── ClientItineraryView.tsx # /i/:token (itinerario de cliente por token, noindex)
-│   ├── GearListing.tsx       # /gear (filtro por categoría)
-│   ├── GearArticleDetail.tsx # /gear/:slug (markdown + product cards con affiliate)
-│   ├── BlogListing.tsx       # /blog
-│   ├── BlogPostDetail.tsx    # /blog/:slug
-│   ├── BudgetCalculator.tsx  # /calculadora
-│   ├── SentinelLanding.tsx   # /sentinel (redirect de 3 líneas → /servicios)
-│   ├── Servicios.tsx         # /servicios (productos y precios)
-│   ├── SobreNosotros.tsx     # /sobre-nosotros (about + credencial TAP)
-│   ├── PrivacyPolicy.tsx     # /privacidad
-│   ├── TermsAndConditions.tsx # /terminos
-│   ├── Gracias.tsx           # /gracias (ruta legacy/redirección)
-│   └── admin/                # Panel protegido (Supabase Auth + rol admin, DARK)
-├── components/
-│   ├── landing/              # Secciones de homepage (Navbar, Hero, Quiz, Footer, etc.)
-│   ├── destinations/         # Secciones de /destinos/:slug (TrailsSection, ParkAlertsBanner, ParkWeatherCard, HowToGetThere, etc.)
-│   ├── ConciergeLauncher.tsx # Launcher global del Concierge IA (montado en App.tsx, persiste entre rutas)
-│   └── ui/                   # shadcn/ui — NO editar manualmente
-├── config/
-│   ├── pricing.ts            # Producto único ($49 USD, CTA por WhatsApp)
-│   └── assets.ts             # Brand assets URLs
-├── hooks/                    # Custom hooks con TanStack Query
-│   ├── use-destinations.ts   # useDestinations(), useDestinationBySlug(), useRelatedDestinations()
-│   ├── use-gear-articles.ts  # useGearArticles(), useFeaturedGearArticles()
-│   ├── use-blog-posts.ts     # useBlogPosts()
-│   ├── use-quiz.ts           # useQuiz() — estado + submit del quiz
-│   ├── use-seo.ts            # useCanonical() + useJsonLd() + usePageMeta()
-│   ├── use-public-stats.ts   # usePublicStats() — conteos reales (destinos, posts)
-│   └── use-media.ts          # useMediaSlider() + upload/toggle/delete helpers
-├── integrations/supabase/
-│   ├── client.ts             # Cliente Supabase (instancia única)
-│   └── types.ts              # Tipos auto-generados (NO editar — regenerar con CLI)
-├── lib/
-│   ├── utils.ts              # cn() = clsx + tailwind-merge
-│   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
-│   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
-└── supabase/functions/       # Edge Functions — 20 en total
-    ├── send-*                # 4: quiz-email, welcome-email, drip-emails, quiz-results
-    ├── concierge-agent/      # Concierge IA (RAG sobre knowledge_chunks) — EN PRODUCCIÓN
-    ├── ingest-*              # 4: knowledge, national-parks, park-permits, campgrounds
-    ├── sync-park-*           # 3: live-data, trails, weather
-    ├── generate-*            # 3: park-content, gear-draft, blog-draft
-    ├── discover-*            # 3: trending-gear, trending-blog, permit-windows
-    ├── unsubscribe/          # Baja de newsletter/drip (token HMAC, pública)
-    └── check-permit-alerts/  # (El flujo IA de destinos —discover-trending-destinations +
-                              #  generate-destination-draft— se retiró: catálogo 63 parques cerrado)
-```
-
-## Rutas
-
-```
-/                    → Index.tsx           /destinos        → Destinations.tsx
-/destinos/:slug      → DestinationDetail   /i/:token        → ClientItineraryView.tsx
-/gear                → GearListing.tsx     /gear/:slug      → GearArticleDetail.tsx
-/blog                → BlogListing.tsx     /blog/:slug      → BlogPostDetail.tsx
-/calculadora         → BudgetCalculator    /servicios       → Servicios.tsx
-/sobre-nosotros      → SobreNosotros.tsx   /privacidad      → PrivacyPolicy.tsx
-/terminos            → TermsAndConditions  /gracias         → Gracias.tsx (redirect → /servicios)
-/sentinel            → SentinelLanding.tsx (redirect → /servicios)
-/admin/*             → AdminLayout (protegido, dark)
-```
-
-## Patrones Obligatorios
-
-- **Fetch público:** siempre vía custom hooks en `src/hooks/` con TanStack Query.
-  NO `useEffect + fetch` en componentes públicos. (ADR-007)
-- **Fetch admin:** `useEffect + useState` directo con el cliente Supabase. Válido
-  porque no necesita caching. (ADR-007)
-- **Imports:** alias `@/` siempre → `import { Button } from "@/components/ui/button"`.
-- **Animaciones:** Framer Motion con
-  `initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}`.
-- **Formularios:** React Hook Form + Zod siempre.
-- **Clases condicionales:** `cn()` de `@/lib/utils` siempre.
-- **WhatsApp:** todo enlace pasa por `buildWhatsAppLink(message)` de
-  `@/lib/whatsapp` (número `18588996802` hardcodeado en ese archivo — no se lee
-  de ninguna variable de entorno).
-- **SEO:** toda página pública llama `usePageMeta()` de `@/hooks/use-seo`.
-
-## Design System
-
-> **Fuente de verdad visual: `docs/design-system.md`.** Léelo antes de tocar
-> cualquier UI; la tabla de abajo es solo el resumen.
-
-Tema **CLARO** editorial (sin toggle). Mobile-first. Luminoso, limpio, enfocado
-en fotografía.
-
-| Token | Hex | Tailwind / Uso |
-|-------|-----|----------------|
-| Trail Green (primario) | #1F6F43 | `bg-green` — botones de acción, nav activo, precios |
-| Pine (hover primario) | #16512F | `bg-green-dark` — hover/pressed de botones verdes |
-| Cloud (fondo) | #FBFAF7 | `bg-cloud` — fondo de página por defecto |
-| Ink (títulos) | #13211A | `text-ink` — títulos sobre claro |
-| Forest Charcoal | #14201A | `bg-forest-dark` — secciones oscuras, footer, scrims |
-| Sunset Amber | #D97706 | ⚠️ **SOLO en el Hero** (vía token legacy `--primary`, pendiente de retiro — ver pending-tasks §Fase 2+). NO usarlo en ningún otro componente. |
-
-Tipografías: `font-serif` → **Playfair Display** (headings editoriales) ·
-`font-sans` → **Inter** (body/UI) · `font-condensed` → **Oswald**
-(eyebrows/labels/unidades de stats).
-
-> **Excepción dark:** el **admin sidebar** usa variante oscura por ser panel
-> interno. Todo lo demás es light theme. (ADR-006)
-
-## Reglas Críticas (NO violar)
-
-- NO editar `src/components/ui/` — generados por shadcn/ui.
-- NO editar `src/integrations/supabase/types.ts` a mano — regenerar:
-  `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`
-- NO instalar librerías UI/animación adicionales.
-- NO usar `any` en código nuevo.
-- NO crear componentes en `src/pages/` — solo páginas ahí.
-- NO hacer fetch directo en componentes públicos — usar hooks de `src/hooks/`.
-- NO cambiar lógica de auth (`supabase.auth.*`, RPC `has_role`) ni queries de
-  Supabase sin instrucción explícita.
-- NO reintroducir precios MXN ni el esquema legacy de tiers por duración. (ADR-012)
+| Archivo | Contenido |
+|---------|-----------|
+| `docs/claude-context.md` | Arquitectura **como está el código hoy** |
+| `docs/decisions.md` | ADRs |
+| `docs/ai-roadmap.md` | Dirección AI + fases (**planned**) |
+| `docs/research-desk.md` | Bot de research en Drive (**planned**) |
+| `docs/design-system.md` | Tokens visuales (fuente de verdad UI) |
+| `docs/pending-tasks.md` | Humanos / Phase 1 / conflictos + changelog |
+| `docs/supabase-schema.md` | Tablas, RLS, auth |
+| `docs/content-strategy.md` | Monetización, SEO, quiz |
+| `docs/seccion-9-concierge-ia.md` | Concierge RAG en producción |
+| `docs/admin-patterns.md` | Convenciones del panel admin |
 
 ## Comandos
 
 ```sh
-npm run dev           # Dev server → http://localhost:8080
-npm run build         # Build producción → dist/   (debe pasar antes de PR)
-npm run lint          # ESLint
-npm run test          # Vitest
-node node_modules/typescript/bin/tsc --noEmit  # Type check — debe pasar antes de PR
+npm run dev
+npm run build
+npx tsc --noEmit
+npm run test
 ```
 
-## Variables de Entorno
-
-```env
-VITE_SUPABASE_URL=               # https://vrixiuvnhvqafmxlcyex.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=   # Publishable key (sb_publishable_*)
-VITE_SITE_URL=                   # https://nomaderia.com
-VITE_GA_MEASUREMENT_ID=          # GA4 — G-CK9STWJDFM
-VITE_SENTRY_DSN=                 # Sentry error tracking (opcional)
-```
-
-> El número de WhatsApp (`18588996802`) NO es variable de entorno: está
-> hardcodeado en `src/lib/whatsapp.ts`.
-
-## Contacto y Redes
-
-Email: nomaderia.travel@gmail.com · Instagram/TikTok: @nomaderia.mx ·
-Facebook: Nomaderia · WhatsApp: 18588996802
-
-## Documentación Extendida
-
-| Archivo | Contenido |
-|---------|-----------|
-| `docs/claude-context.md` | Auditoría completa de arquitectura (10 secciones, snapshot) |
-| `docs/decisions.md` | **Registro de decisiones y lecciones de IA (ADRs)** |
-| `docs/seccion-9-concierge-ia.md` | Concierge IA con RAG — **EN PRODUCCIÓN** (`ConciergeLauncher` global en `App.tsx` + Edge Function `concierge-agent`). Leer antes de tocar IA/embeddings; partes del doc son históricas de la fase parqueada |
-| `docs/pending-tasks.md` | Pendientes (humanos + código) y changelog |
-| `docs/supabase-schema.md` | Tablas, columnas, tipos, RLS, auth |
-| `docs/content-strategy.md` | Monetización, affiliate, SEO, blog, quiz |
-| `docs/admin-patterns.md` | Patrones del panel admin, CRUD, convenciones |
+Env (nombres): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SITE_URL`,
+`VITE_GA_MEASUREMENT_ID`, `VITE_SENTRY_DSN`. WhatsApp `18588996802` está en `src/lib/whatsapp.ts` (no env).

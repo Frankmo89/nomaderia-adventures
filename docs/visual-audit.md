@@ -1,3 +1,9 @@
+> ⚠️ **PASADA 2026-09-24:** este audit es un snapshot (2026-06-02). Varios
+> hallazgos de color están **obsoletos**: `--primary` ya no es `#D97706` (es
+> Trail Green `#1F6F43`); el ámbar del Hero vive en `--hero-accent`. Conservar
+> el archivo como histórico de UI — no usarlo como fuente de verdad de tokens.
+> Tokens vigentes: `docs/design-system.md`.
+
 # Visual & Aesthetic Audit — Nomaderia Adventures
 
 > Scope: Index (all landing sections), Destinations, DestinationDetail,

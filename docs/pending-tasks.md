@@ -5,7 +5,22 @@
 > actualiza este archivo (mueve la tarea de "Pendiente" a "Changelog").
 >
 > Sitio en producción: **https://nomaderia.com** · Hosting: Cloudflare Pages ·
-> Producto único a **$49 USD** vía WhatsApp · Primer lead real capturado vía `/sentinel`.
+> Producto único a **$49 USD** · Cierre hoy: **WhatsApp** · Dirección AI:
+> **planned** (`docs/ai-roadmap.md`, ADR-024).
+
+---
+
+## Cómo leer esta página (2026-09-24)
+
+Tres listas de trabajo activo arriba del histórico:
+
+1. **Humanos** — solo Frank (Stripe, migraciones manuales, assets, etc.).
+2. **Phase 1 build** — código del sales flow + eventos (aún no empezado; docs only).
+3. **Conflictos docs ↔ código / hits en `src/`** — hallados en la pasada de docs;
+   **no arreglar código en PRs de docs**.
+
+El resto de “Pendientes de Código” / Backlog más abajo se conserva como histórico
+operativo (no borrado).
 
 ---
 
@@ -209,6 +224,52 @@ referenciar esta lista primero.
 - [ ] **Verificar sitio en Google Search Console.**
 - [ ] **Re-aplicar a Travelpayouts** rechazados cuando el tráfico supere
       ~1,000/mes: GetYourGuide, Booking, Expedia, Trip.com, DiscoverCars.
+
+---
+
+
+## 🤖 Phase 1 build tasks (sales flow + events) — **planned / no code yet**
+
+Fuente: `docs/ai-roadmap.md`. No implementar en un PR de docs.
+
+- [ ] Crear Payment Link Stripe $49 y cablear `STRIPE_LINK_ITINERARIO_49` (también en lista humana).
+- [ ] Preview IA gratis post-quiz: top 3 parques + day 1 + mapa (sin cobro).
+- [ ] Cutover de cierre: WhatsApp → Stripe checkout del Itinerario Completo.
+- [ ] Auto-crear draft en `client_itineraries` tras pago confirmado.
+- [ ] Cola / estados para que Frank edite y apruebe antes de `/i/:token`.
+- [ ] Migración **proposal** `funnel_events` (NO confundir con `admin_events` existente) + instrumentación:
+      `quiz_answered`, `parks_shown`, `park_chosen`, `purchase`, `frank_edit`.
+- [ ] Email-first delivery del entregable (Fase 2 puede ampliar live alerts; Phase 1 al menos confirma el link).
+
+---
+
+## ⚠️ Conflictos docs ↔ código y hits en `src/` (pasada 2026-09-24)
+
+### Docs vs código (tokens / claims)
+
+| Conflicto | Dónde | Notas |
+|-----------|-------|-------|
+| `sky` / `stone` hex del design-system ≠ CSS legacy | `docs/design-system.md` §7 vs `src/index.css` | Migración diferida (comentarios en Tailwind) |
+| `--sidebar-primary` sigue ámbar `#D97706` | `src/index.css` | Nav admin activo usa `text-primary` (verde) — inconsistencia CSS |
+| Anton listado como display font | Corregido en `design-system.md` esta pasada | Ya retirado del código |
+| `claude-context` §10 decía `--primary` = `#D97706` | Corregido esta pasada | Ahora Trail Green |
+| `ABOUT.md` / `README.md` (raíz) | **Corregidos** en follow-up del mismo PR #177 (2026-09-24) | Light theme + mix $49 + afiliados; Trail Green primario |
+
+### Hits en `src/` / `public/` / `supabase/` de mercados o naming viejo
+**(listar only — no fix en esta PR)**
+
+| Archivo | Qué |
+|---------|-----|
+| `src/hooks/use-quiz.ts` | Keys de scoring `tijuana_baja`, `cdmx`; reason `"Perfecto para escapada corta"` |
+| `src/hooks/use-quiz.test.ts` | Tests de las mismas keys / copy |
+| `src/pages/admin/AdminQuizResponses.tsx` | Labels UI `Tijuana/Baja`, `CDMX` para origins legacy |
+| `src/components/landing/DidYouKnowSection.tsx` | Copy “a 4 horas de la CDMX” (Nevado de Toluca) |
+| `src/pages/BudgetCalculator.tsx` | Comentario menciona MXN/legacy (OK como nota; zones ya US) |
+| `src/components/itinerary/ClientItineraryLayout.tsx` | Hex `#D97706` hardcodeado en iconos de bloque (no brand primary) |
+| `public/sitemap.xml` | URL de blog `...-cdmx-principiantes` (slug de contenido) |
+| `supabase/functions/discover-trending-gear/index.ts` | Palabra “expediciones” en prompt (genérico, no SKU) |
+
+No se encontraron en `src/` los SKUs retirados Escapada/Aventura/Expedición como productos, ni precios `$29` / `$9/$25/$59`, ni “Solución Completa”, ni URLs Lovable preview.
 
 ---
 
@@ -714,6 +775,24 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
 
 > Histórico condensado por temas. El detalle commit-a-commit anterior a Mayo 2026
 > vive en el historial de git. Entradas recientes primero.
+
+### Septiembre 2026
+
+**[2026-09-24] Docs-only — alinear contexto con dirección de agentes AI (ADR-024).**
+Sin tocar `src/`, `supabase/`, `public/`, configs. Cambios: (1) `CLAUDE.md`
+reescrito corto (<150 líneas) como entrypoint + mapa de docs. (2) Nuevo
+`docs/ai-roadmap.md` (fases, `funnel_events` proposal, ML, verifier — todo
+**planned**). (3) Nuevo `docs/research-desk.md` (carpetas 01–07 + formato de
+report Drive). (4) ADR-024 en `docs/decisions.md`. (5) `docs/claude-context.md`
+revalidado vs repo (tokens, edge functions, rutas `/i/:token`, admin hubs,
+`admin_events` vs proposal). (6) `docs/design-system.md` — Anton retirado en
+tablas; §7 conflictos docs↔código. (7) `docs/content-strategy.md` — audiencia
+SoCal + producto $49 (quitado TJ/CDMX y rango $250–$2,000 como SKU). (8)
+Banners de obsolescencia en `visual-audit.md` y
+`research-itinerary-client-view.md`. (9) Esta página: listas Phase 1 +
+conflictos/`src` hits. Base: `origin/main` (PR #176 DB aún abierto).
+**Follow-up mismo PR:** `ABOUT.md` + `README.md` — quitado dark mode nativo /
+100% afiliados / Sunset Orange; alineados a light theme, $49 + afiliados, Trail Green.
 
 ### Julio 2026
 
