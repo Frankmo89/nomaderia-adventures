@@ -1,9 +1,11 @@
-# CLAUDE CONTEXT — Full Architecture Audit (Read-only)
+# CLAUDE CONTEXT — Architecture as the code is TODAY
 
-> ⚠️ **Snapshot de auditoría (pre-edit).** Las secciones de schema/RLS/Edge
-> Functions/design (1-6, 10) siguen vigentes. El modelo de negocio y precios
-> evolucionó después de este snapshot: la **fuente de verdad actual** es
-> `CLAUDE.md` + `docs/decisions.md` (ADR-003). Ver notas inline en 7.2 y 9.3.
+> **Fuente de verdad de arquitectura.** Contrastar siempre con el repo antes de
+> documentar tablas/rutas/columnas nuevas. Negocio/producto: `CLAUDE.md` +
+> ADR-012. Dirección AI (**planned**): `docs/ai-roadmap.md` + ADR-024.
+> Este archivo describe lo que **existe en código**, no el roadmap.
+>
+> Última pasada de alineación docs: **2026-09-24**.
 
 ## Baseline validation run (pre-edit)
 - `npm run lint` → **fails** (pre-existing):
@@ -243,19 +245,31 @@
 - Guarded by extension checks (`pg_cron`, `pg_net`)
 
 ### 1.5 Edge Functions
-- `supabase/functions/send-quiz-email/index.ts`
-  - Trigger type: HTTP invoke (`supabase.functions.invoke("send-quiz-email")`)
-  - Behavior: sends quiz-result email via Resend with top destination, related destinations, discount code, and WhatsApp CTA
-- `supabase/functions/send-quiz-results/index.ts`
-  - Trigger type: HTTP invoke (not referenced by frontend currently)
-  - Behavior: sends a quiz result summary email template via Resend
-- `supabase/functions/send-welcome-email/index.ts`
-  - Trigger type: HTTP invoke (`supabase.functions.invoke("send-welcome-email")`)
-  - Behavior: validates recent newsletter subscription in DB and sends welcome email via Resend
-- `supabase/functions/send-drip-emails/index.ts`
-  - Trigger type: HTTP invoke (manual/scheduled)
-  - Behavior: sends delayed drip emails (`gear_guide`, `itinerary_cta`) and writes status logs in `email_drip_log`
-  - Also designed to be triggered daily by pg_cron migration
+
+Inventario en `supabase/functions/` (20 funciones + `_shared`, verificado 2026-09-24):
+
+**Email (Resend)**
+- `send-quiz-email` — invoke desde `use-quiz`; resultado + CTA WhatsApp
+- `send-quiz-results` — plantilla alterna; sin invoke frontend detectado
+- `send-welcome-email` — invoke desde newsletter signup
+- `send-drip-emails` — drip + `email_drip_log`; también pg_cron
+
+**IA / contenido**
+- `concierge-agent` — RAG sobre `knowledge_chunks` (en producción vía `ConciergeLauncher`)
+- `ingest-knowledge` — chunking + embeddings
+- `generate-park-content`, `generate-blog-draft`, `generate-gear-draft`
+- `discover-trending-blog`, `discover-trending-gear`, `discover-permit-windows`
+
+**Datos de parques**
+- `ingest-national-parks`, `ingest-park-permits`, `ingest-campgrounds`
+- `sync-park-live-data`, `sync-park-weather`, `sync-park-things-to-do`
+- `check-permit-alerts`
+
+**Otros**
+- `unsubscribe` — baja newsletter/drip (token HMAC)
+
+> El flujo IA de *descubrimiento de destinos* (`discover-trending-destinations` /
+> `generate-destination-draft`) fue **retirado** (ADR-017); catálogo cerrado.
 
 ### 1.6 Storage buckets (observed from code usage)
 - `destinations` (destination hero image uploads)
@@ -310,6 +324,16 @@ Source: `src/App.tsx`
 | `/admin/gallery` | `src/pages/admin/AdminGallery.tsx` | Media slider gallery manager with upload/toggle/delete. | Reads/writes `media_slider` + bucket `media_gallery` directly. | No | Upload, active toggle, delete |
 | `/admin/audit` | `src/pages/admin/SystemAudit.tsx` | Operational diagnostic page for env, Supabase, analytics, email test, image checks. | Reads `destinations`; invokes Edge Function `send-quiz-email`. | No | Send test email, verify images |
 | `*` | `src/pages/NotFound.tsx` | 404 fallback page. | None | No | Return link to `/` |
+
+
+> ✅ **Corrección post-snapshot (2026-09-24):** rutas adicionales en `App.tsx` no
+> listadas arriba: `/gracias` (redirect → `/servicios`), `/i/:token` +
+> `/i/:token/print` (`ClientItineraryView` / print), admin hub `/admin/leads`,
+> `/admin/correos`, `/admin/soul`, `/admin/permit-windows`,
+> `/admin/itinerary-templates`, `/admin/client-itineraries/*`. Varias rutas admin
+> legacy (`quiz-responses`, `subscribers`, `email-logs`, `itinerary-requests`,
+> `sentinel-leads`, `permit-alerts`) redirigen al hub de leads/correos.
+> Navbar CTA principal: “Descubre Tu Aventura” → `/#quiz` (ya no `#destinos` hash).
 
 ---
 
@@ -366,6 +390,7 @@ Source: `src/App.tsx`
 - `NewsletterSignup.tsx` — newsletter opt-in form + welcome-email trigger
 - `Footer.tsx` — footer nav, social links, legal links, affiliate disclosure
 - `MediaSlider.tsx` — wrapper that feeds media items into shared background slideshow
+- Also present (2026-09-24): `FaqSection.tsx`, `PainContrast.tsx`, `PromiseSection.tsx`, `SectionDivider.tsx`, `TerrainDivider.tsx`
 
 ### 4.2 `src/components/shared/` files
 - `BackgroundSlideshow.tsx` — reusable image/video background rotator with overlay
@@ -479,8 +504,9 @@ Source: `src/App.tsx`
 > distintas (leads vs. builder). Ver ADR-018.
 
 ### 5.5 `sentinel_leads` writes
-- Written from: `src/pages/SentinelLanding.tsx`
-- Insert location: `supabase.from("sentinel_leads").insert({ email })`
+- Table still exists; admin leads UI can read historical rows.
+- `/sentinel` (`SentinelLanding.tsx`) is a **redirect to `/servicios`** — no active public insert path in the current page flow.
+- WhatsApp click tracking for admin uses **`admin_events`** (`src/lib/admin-tracking.ts`), not `sentinel_leads`.
 
 ---
 
@@ -629,9 +655,11 @@ Via `useDestinationBySlug()` and `useRelatedDestinations()`:
 
 ### 9.3 Pricing status
 
-- Current commercial model: `Itinerario Completo Nomaderia` at `$49 USD`
-- Primary purchase flow: WhatsApp CTA (`Diseña mi aventura por WhatsApp`)
-- Legacy multi-tier/MXN documentation should not be treated as current anywhere in this repo
+- Current commercial model: `Itinerario Completo Nomaderia` at `$49 USD` (`src/config/pricing.ts`)
+- Primary purchase flow **today**: WhatsApp CTA (`Diseña mi aventura por WhatsApp`)
+- Stripe: `STRIPE_LINK_ITINERARIO_49` is still the placeholder string `REEMPLAZAR_CON_LINK_DE_49_USD`
+- Planned cutover (not built): AI preview → Stripe → auto draft → Frank approve (`docs/ai-roadmap.md`)
+- Legacy multi-tier / MXN / Escapada-Aventura-Expedición must not be treated as current
 
 ### 9.4 `console.error` and related runtime error logs
 - `src/main.tsx` — fatal bootstrap error log
@@ -639,35 +667,43 @@ Via `useDestinationBySlug()` and `useRelatedDestinations()`:
 - `src/pages/NotFound.tsx` — logs every 404 path via `console.error`
 
 ### 9.5 Schema drift risks observed
-- `quiz_responses.main_barrier` exists in generated TS types and is written from `useQuiz`, but not present in tracked migration DDL
-- `email_drip_log` exists in migrations and admin pages, but is missing from generated `src/integrations/supabase/types.ts`
-- `media_slider` and `sentinel_leads` are used in code but absent from tracked migrations/types in this repo
+- `quiz_responses.main_barrier` exists in generated TS types and is written from `useQuiz`; confirm migration coverage before assuming DDL parity
+- `park_trails` still appears as the generated types key; runtime/hooks use `park_things_to_do` (ADR-021 bridge cast) until types are regenerated after migration
+- `admin_events` exists (admin WhatsApp tracking) — **not** the planned `funnel_events` learning table (`docs/ai-roadmap.md`)
+- Tables present in types today (sample): `destinations`, `gear_articles`, `blog_posts`, `quiz_responses`, `newsletter_subscribers`, `itinerary_requests`, `itinerary_templates`, `client_itineraries`, `park_live_data`, `knowledge_chunks`, `ai_content_meta`, `permit_windows`, `permit_alerts`, `campgrounds`, `media_slider`, `sentinel_leads`, `admin_events`, `email_drip_log`, `waitlist`, …
 
 ---
 
 ## SECTION 10 — DESIGN SYSTEM
 
 ### 10.1 Exact Tailwind + token values
-Sources: `tailwind.config.ts`, `src/index.css`
+Sources: `tailwind.config.ts`, `src/index.css` (verificado 2026-09-24). Fuente de verdad visual: `docs/design-system.md`.
 
-- Dark mode config: `darkMode: ["class"]`
-- Fonts:
+- Dark mode config: `darkMode: ["class"]` — **sin toggle público**; tema efectivo = light editorial. Admin sidebar es la excepción dark (ADR-006).
+- Fonts (Google Fonts en `index.html` + `tailwind.config.ts`):
   - `font-serif`: `"Playfair Display", serif`
   - `font-sans`: `"Inter", sans-serif`
+  - `font-condensed`: `"Oswald", sans-serif`
+  - Anton / `font-display`: **retirado** (no está en el request ni en Tailwind)
 - Core brand HSL tokens (`:root`):
   - `--background: 0 0% 98%` (≈ `#FAFAFA`)
   - `--foreground: 20 13% 10%` (≈ `#1C1917`)
-  - `--primary: 32 95% 44%` (≈ `#D97706`)
+  - `--primary: 147 56% 28%` (≈ `#1F6F43` Trail Green — remapeado PR 4)
+  - `--primary-foreground: 0 0% 100%`
+  - `--hero-accent: 32 95% 44%` (≈ `#D97706` — **solo HeroSection**)
   - `--secondary: 143 64% 24%` (≈ `#166534`)
-  - `--accent: 30 10% 94%` (light warm gray)
-- Other custom tokens:
-  - `--sand`, `--forest`, `--sunset`, `--trail`, `--sky`, `--charcoal`
+  - `--ring: 147 56% 28%` (match primary)
+- Design-system hex tokens also on Tailwind: `green`, `green-dark`, `green-wash`, `terracotta`, `amber`, `warning`, `forest-dark`, `spruce`, `cloud`, `ink`, `slate`, `sage`, `mist`
+- Legacy CSS vars still present: `--sand`, `--forest`, `--sunset`, `--trail`, `--sky`, `--charcoal`, `--stone`, `--walnut`, `--clay` (algunos hex divergen del design-system — ver `docs/design-system.md` §7)
+- `--sidebar-primary` sigue en ámbar `#D97706` en CSS; el nav activo del admin usa `text-primary` (verde). Conflicto listado en pending-tasks.
 
 ### 10.2 Installed shadcn/ui components (folder inventory)
 - `accordion`, `alert`, `alert-dialog`, `badge`, `breadcrumb`, `button`, `calendar`, `card`, `carousel`, `chart`, `checkbox`, `command`, `dialog`, `drawer`, `dropdown-menu`, `form`, `input`, `input-otp`, `label`, `pagination`, `popover`, `resizable`, `select`, `separator`, `sheet`, `sidebar`, `skeleton`, `sonner`, `switch`, `table`, `tabs`, `textarea`, `toast`, `toaster`, `toggle`, `tooltip`, plus `use-toast` helper
 
 ### 10.3 Dark mode implementation
-- Tailwind is configured for class-based dark mode, but runtime theme is effectively light editorial (no app-level toggle implemented)
+- Tailwind `darkMode: ["class"]` is present for class-based variants.
+- **Runtime theme is light editorial** — no public theme toggle.
+- Do not document or reintroduce “dark mode nativo” as product direction (ADR-006).
 
 ### 10.4 Custom CSS/global styles
 - Main global stylesheet: `src/index.css`

@@ -1,3 +1,8 @@
+> ⚠️ **PASADA 2026-09-24:** los hex `#D97706` en iconos de bloque (`comida`,
+> `permiso`, tips) siguen hardcodeados en `ClientItineraryLayout.tsx` — son
+> acentos de tipo de bloque, **no** el token de marca `--primary` (hoy Trail
+> Green). No documentar `#D97706` como “primary” de producto.
+
 # Investigación de UX — Vista de Itinerario para el Cliente (Mobile Web)
 
 > **Fecha:** 2026-06-09 · **Método:** Mobbin MCP (iOS), 5 rondas de búsqueda.
@@ -102,7 +107,7 @@ con icono: ✓ Free cancellation, ⏱ Duration, 👥 Guide language)
 | Tipo | Icono | Dot color | Tratamiento especial |
 |------|-------|-----------|---------------------|
 | `ruta` | 🥾 | `#166534` (secondary) | Stats chip: distancia + desnivel |
-| `comida` | 🍽 | `#D97706` (primary) | — |
+| `comida` | 🍽 | `#D97706` (accent de bloque; no brand primary) | — |
 | `alojamiento` | 🏕 | `#4B5563` | "CHECK IN" badge si aplica |
 | `traslado` | 🚗 | `#6B7280` | Duración + modo de transporte |
 | `tip_seguridad` | ⚠️ | `#B45309` | Fondo `#FEF3C7`, borde izquierdo amber |

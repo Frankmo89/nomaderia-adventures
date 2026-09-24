@@ -60,7 +60,7 @@ Cuatro fuentes, cada una con un trabajo claro. **Nunca mezcles Anton y Playfair 
 
 | Fuente | Rol | Ejemplo |
 |---|---|---|
-| **Anton** | Titulares de momentos de foto full-bleed; tipografía de declaración oversized. Solo mayúsculas. | "TU PRÓXIMA AVENTURA" sobre foto |
+| ~~**Anton**~~ | **Retirado (2026-07-14).** 0 usos; fuera de Google Fonts y de `tailwind.config.ts`. No reintroducir sin PR que lo use. | — |
 | **Oswald** (mayúsculas, `letter-spacing: 0.08em`) | Eyebrows, kickers de sección, labels de dificultad, unidades de stats. | "DESTINOS · CALIFORNIA" |
 | **Playfair Display** | Títulos editoriales en secciones claras, títulos de blog/artículos. | "Guías honestas para principiantes" |
 | **Inter** | Todo el cuerpo, UI, botones, captions, formularios. | todo lo demás |
@@ -110,7 +110,7 @@ Cuatro fuentes, cada una con un trabajo claro. **Nunca mezcles Anton y Playfair 
 ### 4.3 Sección de foto full-bleed (estilo Patagonia)
 - **Scrim:** nunca una caja plana. Usa degradado lineal direccional desde donde está el texto: `linear-gradient(to top, rgba(20,32,26,0.72) 0%, rgba(20,32,26,0.25) 45%, transparent 75%)` para texto abajo-izquierda. El degradado usa `forest-dark`, no negro puro, para que los verdes de la foto sigan vivos.
 - **Posición del texto:** abajo-izquierda por defecto, u óptico-centro para tomas simétricas de valle/montaña.
-- **Titular** en Anton mayúsculas blanco; línea de apoyo en Inter `mist`.
+- **Titular** en tipografía de display (hoy: Playfair/Inter bold sobre foto — Anton retirado); línea de apoyo en Inter `mist`.
 - **Eyebrow** arriba en Oswald, opcionalmente con un subrayado corto terracota.
 - **Ritmo:** alterna estas secciones de foto full-bleed con secciones claras `cloud` editoriales (Playfair + valor). Patrón: foto → editorial claro → tarjetas → foto → valor claro → CTA oscuro. Nunca dos secciones de foto seguidas.
 - **CTA sobre foto:** pill blanco o terracota, nunca verde-sobre-foto-ocupada (el verde se pierde en el follaje).
@@ -159,7 +159,7 @@ colors:
   mist:         #EAF0EC   // texto sobre oscuro
 
 fonts:
-  display:   'Anton'            // titulares de foto, mayúsculas
+  # display/Anton: RETIRADO — no está en tailwind ni en index.html
   condensed: 'Oswald'           // eyebrows, unidades de stats, labels
   serif:     'Playfair Display' // títulos editoriales
   sans:      'Inter'            // cuerpo + UI
@@ -173,3 +173,19 @@ shadow-card: 0 4px 16px rgba(20,32,26,0.08)
 ## 6. Excepciones conocidas
 - (Documentar aquí cualquier pantalla que legítimamente se salga del sistema, con la razón.)
 - **Admin sidebar (`AdminLayout.tsx`) — excepción dark, pero NO de color de marca:** el sidebar es oscuro (ADR-006), pero su estado activo de navegación usa el mismo verde de marca que el resto del sitio (`text-primary` / `bg-primary/10`, token `--primary` remapeado a Trail Green `#1F6F43` en PR 4). **[2026-07-27]** El estado activo tenía un bug: usaba `bg-[rgba(217,119,6,0.10)]` + `text-[#FBBF24]` (ámbar/naranja, el `--sidebar-primary` legacy que nunca se remapeó junto con `--primary`), mientras el ícono activo y la barra lateral de acento ya usaban `text-primary`/`bg-primary` (verde) — dos colores distintos en el mismo ítem activo. Corregido a `bg-primary/10 text-primary` para que todo el ítem activo sea consistente. El ícono de alerta (`BellPlus`, `text-[#F59E0B]` en "Leads de Alerta") es un color de **estado** (pendiente/advertencia), no de navegación — se conserva ámbar a propósito, no es parte de este fix. Si se vuelve a ver ámbar/naranja en el nav activo del admin, es una regresión de este fix.
+
+
+---
+
+## 7. Conflictos docs ↔ código (pasada 2026-09-24)
+
+Comparado contra `tailwind.config.ts` + `src/index.css` en `main`:
+
+| Tema | Doc decía | Código hoy | Acción |
+|------|-----------|------------|--------|
+| `--primary` | Históricamente ámbar en audits | Trail Green `#1F6F43` (`147 56% 28%`) | Doc §2 ya usa `green` como primario; OK |
+| Anton / `font-display` | Listado como fuente activa en §3/§5 | Removido de fonts request y Tailwind | Corregido en esta pasada |
+| `sky` hex | `#2E6F9E` en §5 | CSS legacy `--sky: 195 33% 58%` (otro tono); migración diferida en comentarios de config | Conflicto conocido — ver pending-tasks |
+| `stone` hex | `#E4E2DB` en §5 | CSS `--stone` ≈ `#E7E0D6` | Conflicto conocido — ver pending-tasks |
+| `--sidebar-primary` | (implícito verde de marca en admin) | Sigue `#D97706` en CSS; nav activo usa `text-primary` (verde) | Conflicto código — listado en pending-tasks, no fix en esta PR |
+| Orange como primario de marca | Audits viejos / README | No; acento Hero = `--hero-accent` `#D97706` solo | No reintroducir |

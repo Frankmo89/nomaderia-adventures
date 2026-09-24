@@ -281,6 +281,30 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   verificar que ya no lo esté antes de asumir que el fix de retry se probó en
   producción.
 
+### ADR-024 — AI agent direction
+- **Fecha:** 2026-09
+- **Estado:** Vigente (dirección **planned**; sin migración ni código de funnel nuevo aún)
+- **Contexto:** El sitio vende un solo producto ($49 USD) por WhatsApp y ya tiene
+  piezas de IA (concierge RAG, drafts de blog/gear, itinerary builder, `park_live_data`).
+  Falta un sistema unificado: agentes que investigan, rankean, borran itinerarios y
+  contenidos, con Frank como aprobador humano y un loop de aprendizaje con eventos.
+- **Decisión:** Nomaderia se construye como **sistema de agentes AI** con aprobación
+  humana. Flujo de ventas planned: quiz → ranked parks → preview IA gratis → Stripe
+  $49 → draft en builder → Frank edita/aprueba → `/i/:token` (+ email primero).
+  Content engine: Drive research → RAG → drafts → approve → publish → métricas.
+  ML: rules + `us-parks-recommender` primero; loguear `funnel_events` desde día 1;
+  ranker cuando haya datos; edits de Frank = labeled data. Verifier obligatorio
+  contra `park_live_data` + fuentes antes de ship. Fases 1→4 en `docs/ai-roadmap.md`.
+- **Alternativas rechazadas:**
+  1. **Herramienta B2B para agentes de viajes en México** — fuera de audiencia
+     (hispanos en SoCal, USD) y diluye el producto único $49.
+  2. **Cambio de stack** (Next.js, otro backend, etc.) — viola ADR-001.
+  3. **Segundo producto / reintroducir tiers** — viola ADR-012; un solo SKU.
+- **Consecuencias:** Documentar lo planned como planned. No inventar tablas/rutas
+  en docs como si existieran. No confundir `funnel_events` (proposal) con
+  `admin_events` (ya existe para tracking admin). Seguir WhatsApp como cierre
+  hasta que Stripe + preview estén cableados.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)

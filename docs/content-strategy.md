@@ -5,7 +5,7 @@
 ### Canales de Ingreso
 1. **Travelpayouts** — Vuelos, hoteles, seguros, tours. Status: aprobado en red general; rechazado en GetYourGuide, Booking, Expedia, Trip.com, DiscoverCars por tráfico insuficiente. Re-aplicar cuando el sitio supere ~1,000 visitas/mes.
 2. **Amazon Associates** — Equipo outdoor (botas, bastones, mochilas, cámaras). Tag: `nomaderia-20`. Status: activo.
-3. **Itinerarios Premium** — Servicio personalizado como agente de viajes certificada (TAP Test, The Travel Institute). Formulario en `itinerary_requests` → contacto directo. Rango: $250-$2,000 USD.
+3. **Itinerario Completo Nomaderia** — Servicio personalizado como agente de viajes certificada (TAP Test, The Travel Institute). Producto único **$49 USD** (ADR-012). Hoy: cierre por WhatsApp; Stripe Payment Link pendiente. Captación legacy `itinerary_requests` (sin form público activo). Dirección AI planned: `docs/ai-roadmap.md`.
 4. **Newsletter** → Futuro: email marketing con ofertas de afiliado segmentadas por quiz responses.
 5. **Seguros de Viaje** — Sección "Protege Tu Aventura" en homepage. Comisiones vía Travelpayouts (red de seguros, ya aprobada). Componente: `TravelInsuranceSection.tsx`. Relevancia alta para principiantes que no consideran seguro para aventuras outdoor. Comisión típica: 15-30% por póliza.
 
@@ -172,8 +172,8 @@ Cada artículo incluye: content_markdown + products JSONB con `{name, price, pro
 
 ## Audiencia — Datos Clave
 
-- **Región primaria:** Frontera Tijuana-San Diego + México + USA hispano
-- **Rango de presupuesto:** $250-$2,000 USD
+- **Región primaria:** Southern California / San Diego (hispanos residentes en EE. UU., ADR-002)
+- **Producto:** Itinerario Completo Nomaderia — $49 USD (presupuesto de viaje del cliente varía por parque; el SKU es fijo)
 - **Nivel:** Principiante a intermedio
 - **Motivación:** "Quiero hacerlo pero no sé por dónde empezar"
 - **El dato de origen geográfico del quiz** es clave para priorizar contenido regional vs internacional
