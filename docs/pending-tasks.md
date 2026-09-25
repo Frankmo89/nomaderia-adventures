@@ -23,6 +23,13 @@ referenciar esta lista primero.
       solicitudes de privacidad; (3) entidad legal / dirección si debe
       publicarse. §2 de pago ya actualizado (Stripe checkout live; Nomaderia no
       almacena tarjetas). Quitar o reescribir los marcadores tras revisión.
+- [ ] **T02 — Aplicar migración `events` y regenerar tipos.** Pegar el SQL completo
+      de `supabase/migrations/20260925000000_create_events.sql` en el SQL Editor
+      (nunca `db push`). Luego:
+      `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
+      Tras regenerar, se puede quitar el cast `SupabaseClient` en
+      `src/lib/events.ts` (ADR-009). Sin este paso, `logEvent` falla en silencio
+      en producción (warn en consola) porque la tabla no existe.
 - [ ] **Phase 1 FRANK (bloqueará merges de T02+):** cuando un agente abra PR de
       migración/EF, pegar el SQL del cuerpo del PR en el SQL Editor (nunca
       `db push`); regenerar tipos; confirmar corrida de
@@ -361,6 +368,15 @@ Siempre que hagas cambios al código:
   con scores + `reasons`/`why`. Tests Vitest (`ranking.test.ts`, 8) con fixture
   de parks.csv. No toca `use-quiz.ts`. Cola T03 → `DONE`.
   `vitest run src/lib/ranking.test.ts` + `tsc --noEmit` + `npm run build` pasan.
+
+- [2026-09-25] **T02 — Tabla `events` + `logEvent` (product analytics).** Migración
+  aditiva `20260925000000_create_events.sql`: `events(id, created_at, session_id,
+  lead_id null, type, payload jsonb)`; RLS INSERT anon/authenticated, SELECT solo
+  admin via `has_role` (RPC no tocado). Helper `src/lib/events.ts` —
+  fire-and-forget, session_id en sessionStorage, nunca tira ni bloquea UI; cast
+  ADR-009 hasta regen de tipos. Docs: `supabase-schema.md` + cola T02 → `DONE`.
+  Distinto de `admin_events`. **FRANK:** pegar SQL + regenerar tipos.
+  `tsc --noEmit` + `npm run build` pasan.
 
 - [2026-09-25] **T01 follow-up — Privacy §2 refleja Stripe Payment Link live.** §2 ya
   no dice cobro manual por WhatsApp ni marca `⚠️ VERIFICAR` de «activar Stripe»;

@@ -85,6 +85,19 @@ recommended_destinations text[]
 created_at              timestamptz
 ```
 
+### `events` — product analytics (Phase 1 T02)
+```
+id          uuid PK DEFAULT gen_random_uuid()
+created_at  timestamptz NOT NULL DEFAULT now()
+session_id  text NOT NULL                 → browser session (sessionStorage)
+lead_id     uuid NULL                     → set once client creates a lead (T05+)
+type        text NOT NULL                 → event name
+payload     jsonb NOT NULL DEFAULT '{}'   → arbitrary context
+```
+- Migration: `20260925000000_create_events.sql` (**Frank must paste in SQL Editor**).
+- Client helper: `src/lib/events.ts` → `logEvent(type, payload?, leadId?)` (fire-and-forget).
+- **Not** the same as `admin_events` (admin WhatsApp-click tracking).
+
 ### `newsletter_subscribers`
 ```
 id              uuid PK
@@ -292,6 +305,7 @@ todas las columnas salvo `park_code` son nullables.)*
 
 - **Tablas de contenido** (`destinations`, `gear_articles`, `blog_posts`): SELECT público con filtro `is_published = true`. INSERT/UPDATE/DELETE solo admin via `has_role()`.
 - **`quiz_responses`**: INSERT público (anon + authenticated). SELECT solo admin.
+- **`events`**: INSERT público (anon + authenticated). SELECT solo admin via `has_role()`. Sin UPDATE/DELETE públicos. Distinto de `admin_events`.
 - **`newsletter_subscribers`**: INSERT público. SELECT solo admin.
 - **`itinerary_requests`**: SELECT solo admin. INSERT solo admin (migración `20260609000000` eliminó el INSERT público). UPDATE solo admin (política explícita añadida para cubrir writes de `status`/`contacted_at`).
 - **`itinerary_templates`**: ALL (SELECT/INSERT/UPDATE/DELETE) solo admin via `has_role()`. Sin acceso público.
