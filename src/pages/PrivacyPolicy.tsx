@@ -41,9 +41,7 @@ const PrivacyPolicy = () => {
               <li><strong className="text-foreground">Solicitud de itinerario personalizado:</strong> nombre, correo electrónico, destino de interés, presupuesto estimado y mensaje opcional.</li>
             </ul>
             <p className="mt-2">
-              No recopilamos datos de pago en el sitio. El cobro del Itinerario Completo Nomaderia ($49 USD) se coordina de forma manual por WhatsApp.{" "}
-              <span className="text-sage text-sm">⚠️ VERIFICAR</span>
-              {/* Si se activa Stripe Payment Link, actualizar esta sección: el procesador de pagos puede recibir datos de tarjeta; Nomaderia no almacena números de tarjeta. */}
+              El pago del Itinerario Completo Nomaderia ($49 USD) se procesa en la página de checkout alojada por <strong className="text-foreground">Stripe</strong>. Nomaderia no almacena números de tarjeta ni datos sensibles de pago.
             </p>
           </section>
 

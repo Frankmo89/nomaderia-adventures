@@ -547,6 +547,7 @@ Source: `src/pages/Servicios.tsx`
 - `Itinerario Completo Nomaderia` — `$49 USD` — WhatsApp
 - On-site CTA label: `Diseña mi aventura por WhatsApp`
 - No retired lower-price tier or multi-product framing in current pricing
+- **Stripe Payment Link $49 is live in production:** `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00` (not a future/placeholder state).
 
 ### 7.3 CTAs and destinations
 - Hero CTA → WhatsApp

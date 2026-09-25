@@ -21,8 +21,8 @@ referenciar esta lista primero.
       legales marcados por IA: (1) si Nomaderia califica como «business» bajo
       CCPA/CPRA y qué derechos exactos listar; (2) plazos de respuesta a
       solicitudes de privacidad; (3) entidad legal / dirección si debe
-      publicarse; (4) actualizar §2 de datos de pago cuando exista Stripe
-      Payment Link real. Quitar o reescribir los marcadores tras revisión.
+      publicarse. §2 de pago ya actualizado (Stripe checkout live; Nomaderia no
+      almacena tarjetas). Quitar o reescribir los marcadores tras revisión.
 - [ ] **Phase 1 FRANK (bloqueará merges de T02+):** cuando un agente abra PR de
       migración/EF, pegar el SQL del cuerpo del PR en el SQL Editor (nunca
       `db push`); regenerar tipos; confirmar corrida de
@@ -355,13 +355,19 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-09-25] **T01 follow-up — Privacy §2 refleja Stripe Payment Link live.** §2 ya
+  no dice cobro manual por WhatsApp ni marca `⚠️ VERIFICAR` de «activar Stripe»;
+  texto: Stripe procesa el pago en su checkout alojado; Nomaderia no almacena
+  números de tarjeta. `docs/claude-context.md` §7.2 anota el Payment Link live
+  (`https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`). `tsc` + `build` pasan.
+
 - [2026-09-25] **T01 — Política de privacidad: MX/LFPDPPP → EE. UU. / California.**
   `PrivacyPolicy.tsx`: eliminados LFPDPPP, México y derechos ARCO; §1 encuadre
   US + hispanos SoCal/SD; §7 derechos de privacidad (CA/EE. UU.); §8 legislación
   aplicable alineada a `/terminos` (EE. UU. + California, foro Condado de San
   Diego); fecha → septiembre 2026; tipografía «Utilizamos» corregida; Resend
   listado en terceros. Claims dudosos marcados `⚠️ VERIFICAR` para Frank (CCPA
-  umbral, plazos, entidad, Stripe futuro). Cola: T01 → `DONE` en esta rama.
+  umbral, plazos, entidad). Cola: T01 → `DONE` en esta rama.
   `tsc --noEmit` + `npm run build` pasan.
 
 - [2026-09-25] **Setup Phase 1 agent queue (docs + Cursor rules only — sin app code).**

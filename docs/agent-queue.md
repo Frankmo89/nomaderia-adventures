@@ -30,7 +30,7 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 | **Scope** | `src/pages/PrivacyPolicy.tsx`: quitar legislación mexicana y LFPDPPP; alinear a EE. UU. + California, foro Condado de San Diego (mismo encuadre que `/terminos`). Marcar claims legales dudosos con `⚠️ VERIFICAR` para Frank. |
 | **Done when** | Privacidad ya no cita LFPDPPP/México/ARCO; jurisdicción US+CA; claims marcados; `tsc` + `build` pasan. |
 | **Audit** | Sigue citando LFPDPPP, México y derechos ARCO (§1, §7). Terms ya migró a US/CA (PR #178). |
-| **FRANK** | Revisar y resolver todos los `⚠️ VERIFICAR` en `/privacidad` (umbral CCPA/CPRA, plazos de respuesta, entidad legal, y si Stripe Payment Link cambia la sección de datos de pago). |
+| **FRANK** | Revisar y resolver los `⚠️ VERIFICAR` restantes en `/privacidad` (umbral CCPA/CPRA, plazos de respuesta, entidad legal). §2 pago ya refleja Stripe live — no volver a marcar como «futuro». |
 
 ---
 
