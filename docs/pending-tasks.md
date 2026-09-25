@@ -30,6 +30,13 @@ referenciar esta lista primero.
       Tras regenerar, se puede quitar el cast `SupabaseClient` en
       `src/lib/events.ts` (ADR-009). Sin este paso, `logEvent` falla en silencio
       en producción (warn en consola) porque la tabla no existe.
+- [ ] **T05 — Aplicar migración `leads` + confirmar deploy de `quiz-preview`.** Pegar
+      el SQL de `supabase/migrations/20260925120000_create_leads.sql` en el SQL
+      Editor (nunca `db push`). Regenerar tipos (mismo comando que T02). Confirmar
+      que `deploy-edge-functions.yml` desplegó la EF nueva `quiz-preview` tras
+      merge a `main`. Secreto requerido (nombre solo): `OPENAI_API_KEY` — el mismo
+      que ya usa `concierge-agent`; no hace falta un secreto nuevo. Tras regenerar
+      tipos, se puede quitar el cast ADR-009 del insert a `leads` en `use-quiz.ts`.
 - [ ] **Phase 1 FRANK (bloqueará merges de T02+):** cuando un agente abra PR de
       migración/EF, pegar el SQL del cuerpo del PR en el SQL Editor (nunca
       `db push`); regenerar tipos; confirmar corrida de
@@ -38,6 +45,7 @@ referenciar esta lista primero.
       `pricing.ts` (T06), `STRIPE_WEBHOOK_SECRET` + webhook en Stripe Dashboard
       (T06), confirmar `RESEND_API_KEY` + dominio (T07), cron night-before con
       `CRON_SECRET` (T11). Revisar claims `⚠️ VERIFICAR` de T01 (privacidad).
+      T05: `OPENAI_API_KEY` (ya existente — no crear otro).
 - [ ] **Aplicar migración `20260726000000_add_rag_meta_to_ai_content_meta` y regenerar tipos — bloquea que `AdminBlogPostForm` y `AdminGearArticleForm` guarden `ai_content_meta.rag_meta` sin fallar.**
       `generate-blog-draft` y (desde este cambio) `generate-gear-draft` ya
       envían `rag_meta` en su respuesta (ver changelog "RAG grounding en
