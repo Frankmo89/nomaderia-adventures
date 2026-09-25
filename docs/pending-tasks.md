@@ -17,14 +17,19 @@
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
 
+- [ ] **T01 — Revisar `⚠️ VERIFICAR` en `/privacidad` (PrivacyPolicy.tsx).** Claims
+      legales marcados por IA: (1) si Nomaderia califica como «business» bajo
+      CCPA/CPRA y qué derechos exactos listar; (2) plazos de respuesta a
+      solicitudes de privacidad; (3) entidad legal / dirección si debe
+      publicarse. §2 de pago ya actualizado (Stripe checkout live; Nomaderia no
+      almacena tarjetas). Quitar o reescribir los marcadores tras revisión.
 - [ ] **T02 — Aplicar migración `events` y regenerar tipos.** Pegar el SQL completo
       de `supabase/migrations/20260925000000_create_events.sql` en el SQL Editor
       (nunca `db push`). Luego:
       `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
       Tras regenerar, se puede quitar el cast `SupabaseClient` en
       `src/lib/events.ts` (ADR-009). Sin este paso, `logEvent` falla en silencio
-      en producción (warn en consola) porque la tabla no existe.
-- [ ] **Phase 1 FRANK (bloqueará merges de T02+):** cuando un agente abra PR de
+      en producción (warn en consola) porque la tabla no existe.- [ ] **Phase 1 FRANK (bloqueará merges de T02+):** cuando un agente abra PR de
       migración/EF, pegar el SQL del cuerpo del PR en el SQL Editor (nunca
       `db push`); regenerar tipos; confirmar corrida de
       `deploy-edge-functions.yml` tras merge. Secretos a configurar cuando toque
@@ -363,6 +368,21 @@ Siempre que hagas cambios al código:
   fire-and-forget, session_id en sessionStorage, nunca tira ni bloquea UI; cast
   ADR-009 hasta regen de tipos. Docs: `supabase-schema.md` + cola T02 → `DONE`.
   Distinto de `admin_events`. **FRANK:** pegar SQL + regenerar tipos.
+  `tsc --noEmit` + `npm run build` pasan.
+
+- [2026-09-25] **T01 follow-up — Privacy §2 refleja Stripe Payment Link live.** §2 ya
+  no dice cobro manual por WhatsApp ni marca `⚠️ VERIFICAR` de «activar Stripe»;
+  texto: Stripe procesa el pago en su checkout alojado; Nomaderia no almacena
+  números de tarjeta. `docs/claude-context.md` §7.2 anota el Payment Link live
+  (`https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`). `tsc` + `build` pasan.
+
+- [2026-09-25] **T01 — Política de privacidad: MX/LFPDPPP → EE. UU. / California.**
+  `PrivacyPolicy.tsx`: eliminados LFPDPPP, México y derechos ARCO; §1 encuadre
+  US + hispanos SoCal/SD; §7 derechos de privacidad (CA/EE. UU.); §8 legislación
+  aplicable alineada a `/terminos` (EE. UU. + California, foro Condado de San
+  Diego); fecha → septiembre 2026; tipografía «Utilizamos» corregida; Resend
+  listado en terceros. Claims dudosos marcados `⚠️ VERIFICAR` para Frank (CCPA
+  umbral, plazos, entidad). Cola: T01 → `DONE` en esta rama.
   `tsc --noEmit` + `npm run build` pasan.
 
 - [2026-09-25] **Setup Phase 1 agent queue (docs + Cursor rules only — sin app code).**
