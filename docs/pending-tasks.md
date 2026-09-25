@@ -29,7 +29,8 @@ referenciar esta lista primero.
       `npx supabase gen types typescript --project-id vrixiuvnhvqafmxlcyex > src/integrations/supabase/types.ts`.
       Tras regenerar, se puede quitar el cast `SupabaseClient` en
       `src/lib/events.ts` (ADR-009). Sin este paso, `logEvent` falla en silencio
-      en producción (warn en consola) porque la tabla no existe.- [ ] **Phase 1 FRANK (bloqueará merges de T02+):** cuando un agente abra PR de
+      en producción (warn en consola) porque la tabla no existe.
+- [ ] **Phase 1 FRANK (bloqueará merges de T02+):** cuando un agente abra PR de
       migración/EF, pegar el SQL del cuerpo del PR en el SQL Editor (nunca
       `db push`); regenerar tipos; confirmar corrida de
       `deploy-edge-functions.yml` tras merge. Secretos a configurar cuando toque
@@ -361,6 +362,13 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-09-25] **T03 — `src/lib/ranking.ts` port del us-parks-recommender.** TypeScript
+  puro (sin I/O): pesos `W_CONTENT/DAYS/DIFF/BUDGET` + crowd penalty, cosine+IDF
+  sobre biome/tags, filtros mes/remote/permits/drive-hours, `rankParks(..., k=3)`
+  con scores + `reasons`/`why`. Tests Vitest (`ranking.test.ts`, 8) con fixture
+  de parks.csv. No toca `use-quiz.ts`. Cola T03 → `DONE`.
+  `vitest run src/lib/ranking.test.ts` + `tsc --noEmit` + `npm run build` pasan.
+
 - [2026-09-25] **T02 — Tabla `events` + `logEvent` (product analytics).** Migración
   aditiva `20260925000000_create_events.sql`: `events(id, created_at, session_id,
   lead_id null, type, payload jsonb)`; RLS INSERT anon/authenticated, SELECT solo
@@ -384,7 +392,6 @@ Siempre que hagas cambios al código:
   listado en terceros. Claims dudosos marcados `⚠️ VERIFICAR` para Frank (CCPA
   umbral, plazos, entidad). Cola: T01 → `DONE` en esta rama.
   `tsc --noEmit` + `npm run build` pasan.
-
 - [2026-09-25] **Setup Phase 1 agent queue (docs + Cursor rules only — sin app code).**
   Audité T01–T11 contra el repo: todos `TODO` (ninguno `DONE`/`BLOCKED`).
   Hallazgos clave: Privacy aún LFPDPPP; no hay `events`/`logEvent` (`admin_events`

@@ -51,7 +51,7 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 
 | | |
 |---|---|
-| **Status** | `TODO` |
+| **Status** | `DONE` |
 | **Depends on** | — |
 | **Scope** | Portar la fórmula de [Frankmo89/us-parks-recommender](https://github.com/Frankmo89/us-parks-recommender) a `src/lib/ranking.ts`: TypeScript puro, inputs tipados, top 3 parques con scores y reasons. Tests con Vitest (ya hay setup). |
 | **Done when** | `ranking.ts` + tests verdes; top 3 con scores/reasons; sin I/O de red. |
