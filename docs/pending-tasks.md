@@ -6,6 +6,9 @@
 >
 > Sitio en producción: **https://nomaderia.com** · Hosting: Cloudflare Pages ·
 > Producto único a **$49 USD** vía WhatsApp · Primer lead real capturado vía `/sentinel`.
+>
+> **Cola Phase 1 (cloud agents):** [`docs/agent-queue.md`](./agent-queue.md) ·
+> roadmap: [`docs/ai-roadmap.md`](./ai-roadmap.md) · ADR-024.
 
 ---
 
@@ -14,6 +17,14 @@
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
 
+- [ ] **Phase 1 FRANK (bloqueará merges de T02+):** cuando un agente abra PR de
+      migración/EF, pegar el SQL del cuerpo del PR en el SQL Editor (nunca
+      `db push`); regenerar tipos; confirmar corrida de
+      `deploy-edge-functions.yml` tras merge. Secretos a configurar cuando toque
+      cada task (nombrar solo, no pegar valores): Payment Link $49 en
+      `pricing.ts` (T06), `STRIPE_WEBHOOK_SECRET` + webhook en Stripe Dashboard
+      (T06), confirmar `RESEND_API_KEY` + dominio (T07), cron night-before con
+      `CRON_SECRET` (T11). Revisar claims `⚠️ VERIFICAR` de T01 (privacidad).
 - [ ] **Aplicar migración `20260726000000_add_rag_meta_to_ai_content_meta` y regenerar tipos — bloquea que `AdminBlogPostForm` y `AdminGearArticleForm` guarden `ai_content_meta.rag_meta` sin fallar.**
       `generate-blog-draft` y (desde este cambio) `generate-gear-draft` ya
       envían `rag_meta` en su respuesta (ver changelog "RAG grounding en
@@ -338,6 +349,15 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-09-25] **Setup Phase 1 agent queue (docs + Cursor rules only — sin app code).**
+  Audité T01–T11 contra el repo: todos `TODO` (ninguno `DONE`/`BLOCKED`).
+  Hallazgos clave: Privacy aún LFPDPPP; no hay `events`/`logEvent` (`admin_events`
+  es otro producto); ranking portátil desde `Frankmo89/us-parks-recommender`
+  (público); quiz parcial; Stripe link placeholder; `/i/:token` + RPC ya existen
+  como base de T10. Añadidos: `.cursor/rules/nomaderia.mdc` (alwaysApply),
+  `docs/agent-queue.md`, `docs/ai-roadmap.md` (puntero; el archivo no existía),
+  ADR-024, links en `CLAUDE.md`. Phase 2 queda fuera de la cola.
+
 - [2026-09-25] **Términos: legislación MX → EE. UU. / California + auditoría link bio Instagram.**
   (1) `src/pages/TermsAndConditions.tsx`: §2 describe servicio con sede en EE. UU.
   para hispanos en SoCal/San Diego, producto USD-only; §8 deja de citar leyes de
@@ -348,7 +368,8 @@ Siempre que hagas cambios al código:
   en `Footer.tsx` y JSON-LD `sameAs` en `Index.tsx` — correctos como perfiles, no
   como destino de bio. El bio debe apuntar a `https://nomaderia.com` (pendiente
   humano arriba). Nota: `PrivacyPolicy.tsx` aún menciona LFPDPPP de México — fuera
-  de alcance de este cambio. `tsc --noEmit` + `npm run build` pasan.
+  de alcance de este cambio (ahora T01 en `docs/agent-queue.md`). `tsc --noEmit` +
+  `npm run build` pasan.
 
 - [2026-07-26] **Hotfix producción: crash en `AdminBlogPostForm` ("Cannot read properties of undefined (reading 'length')") al usar "Desarrollar mi propio tema" con parque seleccionado.** Causa raíz: **desfase de despliegue**, no un bug de schema ni del modelo. `generate-blog-draft` (edge function) se había actualizado en git (título/`destination_id`/`title_options`, ver entrada anterior del mismo día) pero **nunca se redesplegó a Supabase** — la función en vivo seguía en `v10`, previa incluso al trabajo de RAG grounding, así que la respuesta real no tenía la clave `title_options` en absoluto. `setTitleOptions(response.draft.title_options)` dejaba el estado en `undefined`, y `titleOptions.length` en el render tronaba. Confirmado leyendo el código fuente realmente desplegado vía Supabase MCP (`get_edge_function`), no solo reproduciendo. **Redesplegado directamente `generate-blog-draft` a `v11`** (verificado re-leyendo el código en vivo tras el deploy). Defensa en profundidad agregada en ambos lados para que esta clase de bug no vuelva a tronar la UI: `src/pages/admin/AdminBlogPostForm.tsx` ahora hace `setTitleOptions(response.draft.title_options ?? [])`; `generate-blog-draft/index.ts` normaliza `title_options` a `[]` y loguea si el modelo no lo devuelve como array, en vez de dejarlo pasar sin validar — un campo bonus mal formado ya no puede tumbar la generación del draft completo. `node node_modules/typescript/bin/tsc --noEmit` + `npm run build` pasan. **Lección operativa:** los Edge Functions de Supabase no se despliegan solos al hacer `git push` — cualquier cambio a `supabase/functions/*` necesita `supabase functions deploy <nombre>` (o el equivalente vía MCP) además del commit, o el código en producción queda desincronizado del repo sin ningún error visible hasta que algo como esto lo expone.
 
