@@ -349,6 +349,13 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-09-25] **T03 — `src/lib/ranking.ts` port del us-parks-recommender.** TypeScript
+  puro (sin I/O): pesos `W_CONTENT/DAYS/DIFF/BUDGET` + crowd penalty, cosine+IDF
+  sobre biome/tags, filtros mes/remote/permits/drive-hours, `rankParks(..., k=3)`
+  con scores + `reasons`/`why`. Tests Vitest (`ranking.test.ts`, 8) con fixture
+  de parks.csv. No toca `use-quiz.ts`. Cola T03 → `DONE`.
+  `vitest run src/lib/ranking.test.ts` + `tsc --noEmit` + `npm run build` pasan.
+
 - [2026-09-25] **Setup Phase 1 agent queue (docs + Cursor rules only — sin app code).**
   Audité T01–T11 contra el repo: todos `TODO` (ninguno `DONE`/`BLOCKED`).
   Hallazgos clave: Privacy aún LFPDPPP; no hay `events`/`logEvent` (`admin_events`
