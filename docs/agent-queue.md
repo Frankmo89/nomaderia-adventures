@@ -63,7 +63,7 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 
 | | |
 |---|---|
-| **Status** | `TODO` |
+| **Status** | `DONE` |
 | **Depends on** | T02 |
 | **Scope** | Campos: ciudad de salida, fechas, grupo (niños, adultos mayores, familiares desde fuera de EE. UU.), fitness, lodging, presupuesto. Loguear cada respuesta con `logEvent`. Extender el quiz actual (`QuizSection` + `use-quiz`), no crear uno paralelo. |
 | **Done when** | Campos nuevos + `logEvent` por respuesta; sin romper submit existente a `quiz_responses`. |

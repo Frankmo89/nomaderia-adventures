@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logEvent } from "@/lib/events";
 
 export interface QuizOption {
   label: string;
@@ -10,11 +11,13 @@ export interface QuizOption {
   description?: string;
 }
 
+export type QuizStepType = "options" | "combined" | "dates" | "group";
+
 export interface QuizStep {
   question: string;
   subtitle?: string;
   key: string;
-  type?: "combined";
+  type?: QuizStepType;
   options?: QuizOption[];
 }
 
@@ -199,6 +202,7 @@ const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) =>
     const proximityMap: Record<string, string[]> = {
       tijuana_baja: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
       sandiego_socal: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
+      los_angeles: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california"],
       cdmx: ["méxico", "nevado", "toluca"],
       resto_mx: ["méxico"],
       resto_usa: ["estados unidos", "usa"],
@@ -226,7 +230,9 @@ function scoreDestination(
   const matchReasons: string[] = [];
 
   for (const [key, ruleFn] of Object.entries(SCORING_RULES)) {
-    const answer = answers[key];
+    // start_city feeds the legacy origin proximity rule (Quiz v2)
+    const answer =
+      key === "origin" ? answers.origin || answers.start_city : answers[key];
     if (!answer) continue;
     const { points, reason } = ruleFn(answer, d);
     score += points;
@@ -258,8 +264,7 @@ export function useQuiz(totalSteps: number) {
 
   const isQuizDone = step >= totalSteps;
 
-  const handleSelect = (key: string, value: string) => {
-    setAnswers((prev) => ({ ...prev, [key]: value }));
+  const advanceAfterAnswer = () => {
     if (step < totalSteps - 1) {
       setDirection(1);
       setTimeout(() => setStep((s) => s + 1), 400);
@@ -267,6 +272,17 @@ export function useQuiz(totalSteps: number) {
       setDirection(1);
       setStep(totalSteps);
     }
+  };
+
+  const handleSelect = (key: string, value: string) => {
+    setAnswers((prev) => {
+      const next = { ...prev, [key]: value };
+      // Keep origin in sync for proximity scoring when answering start_city
+      if (key === "start_city") next.origin = value;
+      return next;
+    });
+    logEvent("quiz_answer", { key, value });
+    advanceAfterAnswer();
   };
 
   const handleBack = () => {
@@ -342,11 +358,24 @@ export function useQuiz(totalSteps: number) {
         fitness_level: answers.fitness_level,
         interest: answers.interest,
         trip_duration: answers.trip_duration,
-        travel_style: answers.origin || null,
+        travel_style: answers.start_city || answers.origin || null,
         budget_range: answers.budget_range ?? answers.budget ?? null,
         main_barrier: answers.main_barrier || null,
         recommended_destinations: results.map((d) => d.id),
         is_us_resident: answers.is_us_resident !== undefined ? answers.is_us_resident === "true" : null,
+      });
+      logEvent("quiz_completed", {
+        email_captured: true,
+        start_city: answers.start_city ?? null,
+        trip_start_date: answers.trip_start_date ?? null,
+        trip_end_date: answers.trip_end_date ?? null,
+        group_kids: answers.group_kids ?? null,
+        group_older_adults: answers.group_older_adults ?? null,
+        group_visitors_abroad: answers.group_visitors_abroad ?? null,
+        lodging: answers.lodging ?? null,
+        fitness_level: answers.fitness_level ?? null,
+        budget_range: answers.budget_range ?? null,
+        top_destination_ids: results.map((d) => d.id),
       });
       // Enviar email con resultados del quiz
       if (results.length > 0) {
@@ -385,8 +414,20 @@ export function useQuiz(totalSteps: number) {
 
   const handleCombinedSubmit = (fields: Record<string, string>) => {
     setAnswers((prev) => ({ ...prev, ...fields }));
+    for (const [key, value] of Object.entries(fields)) {
+      logEvent("quiz_answer", { key, value });
+    }
     setDirection(1);
     setStep(totalSteps);
+  };
+
+  /** Advance from multi-field steps (dates, group) without breaking single-select flow. */
+  const handleFieldsSubmit = (fields: Record<string, string>) => {
+    setAnswers((prev) => ({ ...prev, ...fields }));
+    for (const [key, value] of Object.entries(fields)) {
+      logEvent("quiz_answer", { key, value });
+    }
+    advanceAfterAnswer();
   };
 
   return {
@@ -396,6 +437,6 @@ export function useQuiz(totalSteps: number) {
     direction, isQuizDone,
     handleSelect, handleBack, handleSwipe,
     fetchResults, handleEmailSubmit, handleShowEmailCapture,
-    handleCombinedSubmit,
+    handleCombinedSubmit, handleFieldsSubmit,
   };
 }

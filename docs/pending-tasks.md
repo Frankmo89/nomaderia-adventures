@@ -362,6 +362,14 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-09-25] **T04 — Quiz v2: ciudad, fechas, grupo, lodging + `logEvent`.** Extiende
+  `QuizSection`/`use-quiz` (no quiz paralelo): pasos `start_city`, `dates`
+  (inicio/fin), `group` (niños / adultos mayores / familiares fuera EE. UU.),
+  `lodging`; conserva fitness/interés/duración/barrera/presupuesto/combined.
+  Cada respuesta → `logEvent("quiz_answer")`; al guardar email →
+  `quiz_completed` con campos v2. Submit a `quiz_responses` intacto
+  (`travel_style` = start_city). Cola T04 → `DONE`. `tsc` + `build` pasan.
+
 - [2026-09-25] **T03 — `src/lib/ranking.ts` port del us-parks-recommender.** TypeScript
   puro (sin I/O): pesos `W_CONTENT/DAYS/DIFF/BUDGET` + crowd penalty, cosine+IDF
   sobre biome/tags, filtros mes/remote/permits/drive-hours, `rankParks(..., k=3)`

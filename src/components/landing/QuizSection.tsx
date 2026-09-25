@@ -3,7 +3,8 @@ import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motio
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass,
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
-  Mail, Loader2, Calendar, HeartPulse, Backpack, Tent,
+  Mail, Loader2, Calendar, HeartPulse, Backpack, Tent, MapPin,
+  Users, BedDouble, Baby, UserRound, Globe2, Hotel, Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,17 +47,41 @@ const seasonOptions = [
   { label: "Soy flexible", value: "flexible" },
 ];
 
+const iconCls = "h-6 w-6 sm:h-7 sm:w-7";
 
 const steps: QuizStep[] = [
+  {
+    question: "¿Desde qué ciudad sales?",
+    subtitle: "Así calculamos distancias y tiempos de manejo",
+    key: "start_city",
+    options: [
+      { label: "San Diego / Sur de California", value: "sandiego_socal", icon: <MapPin className={iconCls} />, description: "Mercado primario Nomaderia" },
+      { label: "Los Ángeles", value: "los_angeles", icon: <MapPin className={iconCls} />, description: "Área metropolitana de LA" },
+      { label: "Resto de Estados Unidos", value: "resto_usa", icon: <Globe2 className={iconCls} />, description: "Otra ciudad en EE. UU." },
+      { label: "Otro lugar", value: "otro", icon: <Compass className={iconCls} />, description: "Fuera de EE. UU. o no listado" },
+    ],
+  },
+  {
+    question: "¿Qué fechas tienes en mente?",
+    subtitle: "Puedes ajustarlas después; nos ayudan a afinar temporada",
+    key: "dates",
+    type: "dates",
+  },
+  {
+    question: "¿Con quién viajas?",
+    subtitle: "Marca todo lo que aplique (puedes dejar vacío si van solo adultos)",
+    key: "group",
+    type: "group",
+  },
   {
     question: "¿Cuál es tu nivel de actividad física?",
     subtitle: "Esto nos ayuda a encontrar rutas adecuadas para ti",
     key: "fitness_level",
     options: [
-      { label: "Camino poco", value: "sedentary", icon: <Footprints className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Paseos cortos y tranquilos" },
-      { label: "Camino seguido", value: "light_activity", icon: <Map className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Caminatas de unas horas" },
-      { label: "Hago ejercicio regular", value: "moderate", icon: <Mountain className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Entreno varias veces por semana" },
-      { label: "Soy bastante activo", value: "active", icon: <Shield className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Listo para cualquier desafío" },
+      { label: "Camino poco", value: "sedentary", icon: <Footprints className={iconCls} />, description: "Paseos cortos y tranquilos" },
+      { label: "Camino seguido", value: "light_activity", icon: <Map className={iconCls} />, description: "Caminatas de unas horas" },
+      { label: "Hago ejercicio regular", value: "moderate", icon: <Mountain className={iconCls} />, description: "Entreno varias veces por semana" },
+      { label: "Soy bastante activo", value: "active", icon: <Shield className={iconCls} />, description: "Listo para cualquier desafío" },
     ],
   },
   {
@@ -64,10 +89,10 @@ const steps: QuizStep[] = [
     subtitle: "Cada paisaje ofrece una experiencia única",
     key: "interest",
     options: [
-      { label: "Montañas", value: "mountains", icon: <Mountain className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Cumbres, valles y aire fresco" },
-      { label: "Bosques", value: "forests", icon: <TreePine className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Senderos entre la naturaleza" },
-      { label: "Desiertos", value: "deserts", icon: <Sun className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Paisajes áridos y majestuosos" },
-      { label: "Caminos Culturales", value: "cultural", icon: <Compass className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Historia y tradiciones vivas" },
+      { label: "Montañas", value: "mountains", icon: <Mountain className={iconCls} />, description: "Cumbres, valles y aire fresco" },
+      { label: "Bosques", value: "forests", icon: <TreePine className={iconCls} />, description: "Senderos entre la naturaleza" },
+      { label: "Desiertos", value: "deserts", icon: <Sun className={iconCls} />, description: "Paisajes áridos y majestuosos" },
+      { label: "Caminos Culturales", value: "cultural", icon: <Compass className={iconCls} />, description: "Historia y tradiciones vivas" },
     ],
   },
   {
@@ -75,9 +100,20 @@ const steps: QuizStep[] = [
     subtitle: "Hay aventuras para cada agenda",
     key: "trip_duration",
     options: [
-      { label: "Un fin de semana", value: "weekend", icon: <Sun className="h-6 w-6 sm:h-7 sm:w-7" />, description: "2-3 días de aventura" },
-      { label: "Una semana", value: "one_week", icon: <Compass className="h-6 w-6 sm:h-7 sm:w-7" />, description: "5-7 días para explorar" },
-      { label: "Dos semanas o más", value: "two_weeks", icon: <Map className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Viaje largo e inmersivo" },
+      { label: "Un fin de semana", value: "weekend", icon: <Sun className={iconCls} />, description: "2-3 días de aventura" },
+      { label: "Una semana", value: "one_week", icon: <Compass className={iconCls} />, description: "5-7 días para explorar" },
+      { label: "Dos semanas o más", value: "two_weeks", icon: <Map className={iconCls} />, description: "Viaje largo e inmersivo" },
+    ],
+  },
+  {
+    question: "¿Dónde prefieres dormir?",
+    subtitle: "Hotel, camping o una mezcla — tú decides",
+    key: "lodging",
+    options: [
+      { label: "Hotel o motel", value: "hotel", icon: <Hotel className={iconCls} />, description: "Cama y baño privados" },
+      { label: "Cabaña / lodge", value: "cabin", icon: <Home className={iconCls} />, description: "Más cerca de la naturaleza" },
+      { label: "Camping", value: "camping", icon: <Tent className={iconCls} />, description: "Carpa o vehículo" },
+      { label: "Mezcla / aún no sé", value: "mixed", icon: <BedDouble className={iconCls} />, description: "Flexible según el parque" },
     ],
   },
   {
@@ -85,10 +121,10 @@ const steps: QuizStep[] = [
     subtitle: "Nomaderia está diseñado para ayudarte con esto",
     key: "main_barrier",
     options: [
-      { label: "No saber por dónde empezar", value: "lack_info", icon: <Map className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Miedo a perderme o elegir mal" },
-      { label: "Siento que me falta condición", value: "fitness_doubt", icon: <HeartPulse className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Temor a no aguantar el ritmo" },
-      { label: "No tengo el equipo adecuado", value: "no_gear", icon: <Backpack className="h-6 w-6 sm:h-7 sm:w-7" />, description: "No quiero gastar en ropa técnica" },
-      { label: "Me preocupa la incomodidad", value: "comfort", icon: <Tent className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Temas de baño, clima o dormir mal" },
+      { label: "No saber por dónde empezar", value: "lack_info", icon: <Map className={iconCls} />, description: "Miedo a perderme o elegir mal" },
+      { label: "Siento que me falta condición", value: "fitness_doubt", icon: <HeartPulse className={iconCls} />, description: "Temor a no aguantar el ritmo" },
+      { label: "No tengo el equipo adecuado", value: "no_gear", icon: <Backpack className={iconCls} />, description: "No quiero gastar en ropa técnica" },
+      { label: "Me preocupa la incomodidad", value: "comfort", icon: <Tent className={iconCls} />, description: "Temas de baño, clima o dormir mal" },
     ],
   },
   {
@@ -96,10 +132,10 @@ const steps: QuizStep[] = [
     subtitle: "Encuentra destinos que se ajusten a tu bolsillo",
     key: "budget_range",
     options: [
-      { label: "Económico", value: "low", icon: <Wallet className="h-6 w-6 sm:h-7 sm:w-7" />, description: "Menos de $500 USD" },
-      { label: "Moderado", value: "medium", icon: <DollarSign className="h-6 w-6 sm:h-7 sm:w-7" />, description: "$500 - $1,500 USD" },
-      { label: "Premium", value: "high", icon: <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />, description: "$1,500 - $3,000 USD" },
-      { label: "Sin límite", value: "unlimited", icon: <Sparkles className="h-6 w-6 sm:h-7 sm:w-7" />, description: "La aventura no tiene precio" },
+      { label: "Económico", value: "low", icon: <Wallet className={iconCls} />, description: "Menos de $500 USD" },
+      { label: "Moderado", value: "medium", icon: <DollarSign className={iconCls} />, description: "$500 - $1,500 USD" },
+      { label: "Premium", value: "high", icon: <TrendingUp className={iconCls} />, description: "$1,500 - $3,000 USD" },
+      { label: "Sin límite", value: "unlimited", icon: <Sparkles className={iconCls} />, description: "La aventura no tiene precio" },
     ],
   },
   {
@@ -457,7 +493,7 @@ const QuizSection = () => {
     isQuizDone,
     handleSelect, handleBack, handleSwipe,
     fetchResults, handleEmailSubmit,
-    handleCombinedSubmit,
+    handleCombinedSubmit, handleFieldsSubmit,
   } = useQuiz(steps.length);
 
   const reduceMotion = useReducedMotion();
@@ -471,6 +507,11 @@ const QuizSection = () => {
   }, []);
   const [combinedSeason, setCombinedSeason] = useState("");
   const [isUsResident, setIsUsResident] = useState<boolean | null>(null);
+  const [tripStartDate, setTripStartDate] = useState("");
+  const [tripEndDate, setTripEndDate] = useState("");
+  const [groupKids, setGroupKids] = useState(false);
+  const [groupOlderAdults, setGroupOlderAdults] = useState(false);
+  const [groupVisitorsAbroad, setGroupVisitorsAbroad] = useState(false);
 
   useEffect(() => {
     if (isQuizDone && !showResults && !loading) {
@@ -483,9 +524,10 @@ const QuizSection = () => {
   };
 
   const currentStep = steps[Math.min(step, steps.length - 1)];
-  const isCombinedStep = currentStep?.type === "combined";
+  const stepType = currentStep?.type ?? "options";
+  const isCustomStep = stepType === "combined" || stepType === "dates" || stepType === "group";
 
-  const dragProps = isCombinedStep ? {} : {
+  const dragProps = isCustomStep ? {} : {
     drag: "x" as const,
     dragConstraints: { left: 0, right: 0 },
     dragElastic: 0.15,
@@ -496,6 +538,25 @@ const QuizSection = () => {
     if (!combinedSeason || isUsResident === null) return;
     handleCombinedSubmit({ season: combinedSeason, is_us_resident: String(isUsResident) });
   };
+
+  const onDatesSubmit = () => {
+    if (!tripStartDate || !tripEndDate) return;
+    if (tripEndDate < tripStartDate) return;
+    handleFieldsSubmit({
+      trip_start_date: tripStartDate,
+      trip_end_date: tripEndDate,
+    });
+  };
+
+  const onGroupSubmit = () => {
+    handleFieldsSubmit({
+      group_kids: String(groupKids),
+      group_older_adults: String(groupOlderAdults),
+      group_visitors_abroad: String(groupVisitorsAbroad),
+    });
+  };
+
+  const datesValid = Boolean(tripStartDate && tripEndDate && tripEndDate >= tripStartDate);
 
   if (loading && !showResults) return (
     <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
@@ -535,7 +596,7 @@ const QuizSection = () => {
         <Reveal className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 bg-green-wash border border-green/20 rounded-full px-4 py-1.5 text-sm text-green mb-4">
             <Sparkles className="h-3.5 w-3.5" />
-            Cuestionario personalizado · 1 minuto
+            Cuestionario personalizado · unos minutos
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">
             ¿No Sabes A Dónde Ir?
@@ -592,7 +653,86 @@ const QuizSection = () => {
                 </p>
               )}
 
-              {isCombinedStep ? (
+              {stepType === "dates" ? (
+                <div className="space-y-5 mt-5">
+                  <div className="space-y-2">
+                    <label htmlFor="quiz-trip-start" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      Fecha de inicio
+                    </label>
+                    <Input
+                      id="quiz-trip-start"
+                      type="date"
+                      value={tripStartDate}
+                      onChange={(e) => setTripStartDate(e.target.value)}
+                      className="bg-muted border-border text-foreground h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="quiz-trip-end" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      Fecha de regreso
+                    </label>
+                    <Input
+                      id="quiz-trip-end"
+                      type="date"
+                      value={tripEndDate}
+                      min={tripStartDate || undefined}
+                      onChange={(e) => setTripEndDate(e.target.value)}
+                      className="bg-muted border-border text-foreground h-11"
+                    />
+                  </div>
+                  {tripStartDate && tripEndDate && tripEndDate < tripStartDate && (
+                    <p className="text-sm text-destructive">La fecha de regreso debe ser igual o posterior al inicio.</p>
+                  )}
+                  <Button
+                    onClick={onDatesSubmit}
+                    disabled={!datesValid}
+                    className="w-full bg-green text-white shadow-lg shadow-green/20 h-11 mt-2"
+                  >
+                    Continuar <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              ) : stepType === "group" ? (
+                <div className="space-y-3 mt-5">
+                  {(
+                    [
+                      { key: "kids", label: "Viajamos con niños", description: "Menores en el grupo", icon: <Baby className={iconCls} />, checked: groupKids, set: setGroupKids },
+                      { key: "older", label: "Hay adultos mayores", description: "Ritmo más calmado", icon: <UserRound className={iconCls} />, checked: groupOlderAdults, set: setGroupOlderAdults },
+                      { key: "abroad", label: "Familiares desde fuera de EE. UU.", description: "Visitan desde otro país", icon: <Users className={iconCls} />, checked: groupVisitorsAbroad, set: setGroupVisitorsAbroad },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => opt.set(!opt.checked)}
+                      className={cn(
+                        "w-full flex items-center gap-4 px-4 py-5 rounded-2xl border transition-colors duration-200 text-left",
+                        opt.checked
+                          ? "bg-green-wash border-green/50"
+                          : cn("bg-white border-stone/20", canHover && "hover:border-stone/40")
+                      )}
+                    >
+                      <div className={cn(
+                        "w-11 h-11 rounded-xl flex items-center justify-center shrink-0",
+                        opt.checked ? "bg-green-wash" : "bg-muted"
+                      )}>
+                        {opt.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm sm:text-base font-medium text-foreground leading-snug">{opt.label}</p>
+                        <p className="text-sm text-stone-500 mt-0.5 leading-snug">{opt.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                  <Button
+                    onClick={onGroupSubmit}
+                    className="w-full bg-green text-white shadow-lg shadow-green/20 h-11 mt-2"
+                  >
+                    Continuar <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              ) : stepType === "combined" ? (
                 <div className="space-y-5 mt-5">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -660,15 +800,12 @@ const QuizSection = () => {
                             : cn("bg-white border-stone/20", canHover && "hover:border-stone/40")
                         )}
                       >
-                        {/* Icon tile */}
                         <div className={cn(
                           "w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors duration-200",
                           isSelected ? "bg-green-wash" : "bg-muted"
                         )}>
                           {opt.icon}
                         </div>
-
-                        {/* Label + description */}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm sm:text-base font-medium text-foreground leading-snug">
                             {opt.label}
@@ -685,7 +822,7 @@ const QuizSection = () => {
                 </div>
               )}
 
-              {!isCombinedStep && (
+              {!isCustomStep && (
                 <p className="text-xs text-muted-foreground mt-5 text-center sm:hidden">← Desliza para navegar →</p>
               )}
             </motion.div>
