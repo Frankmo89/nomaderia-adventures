@@ -13,14 +13,19 @@ const PrivacyPolicy = () => {
       <Navbar />
       <div className="container mx-auto px-4 pt-28 pb-16 max-w-3xl">
         <h1 className="font-serif text-4xl text-foreground mb-2">Política de Privacidad</h1>
-        <p className="text-sm text-muted-foreground mb-10">Última actualización: febrero de 2026</p>
+        <p className="text-sm text-muted-foreground mb-10">Última actualización: septiembre de 2026</p>
 
         <div className="space-y-8 text-foreground/80 leading-relaxed">
 
           <section>
             <h2 className="font-serif text-xl text-foreground mb-3">1. Responsable del tratamiento</h2>
             <p>
-              <strong className="text-foreground">Nomaderia Adventures</strong> («Nomaderia», «nosotros») es responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) de México.
+              <strong className="text-foreground">Nomaderia Adventures</strong> («Nomaderia», «nosotros») es responsable del tratamiento de tus datos personales. Operamos un servicio con sede en Estados Unidos, orientado a hispanos residentes en EE. UU. (mercado primario: Sur de California / San Diego).
+            </p>
+            <p className="mt-2">
+              {/* ⚠️ VERIFICAR: entidad legal exacta, dirección comercial y si aplica CCPA/CPRA como «business» vs. umbral de ingresos. */}
+              Esta política se interpreta conforme a las leyes de privacidad aplicables de los Estados Unidos y del Estado de California.{" "}
+              <span className="text-sage text-sm">⚠️ VERIFICAR</span>
             </p>
             <p className="mt-2">
               Contacto: <a href="mailto:nomaderia.travel@gmail.com" className="text-primary hover:underline">nomaderia.travel@gmail.com</a>
@@ -35,12 +40,16 @@ const PrivacyPolicy = () => {
               <li><strong className="text-foreground">Quiz de destinos:</strong> preferencias de viaje (nivel físico, tipo de experiencia, duración, estilo) y, opcionalmente, correo electrónico.</li>
               <li><strong className="text-foreground">Solicitud de itinerario personalizado:</strong> nombre, correo electrónico, destino de interés, presupuesto estimado y mensaje opcional.</li>
             </ul>
-            <p className="mt-2">No recopilamos datos de pago ni datos sensibles.</p>
+            <p className="mt-2">
+              No recopilamos datos de pago en el sitio. El cobro del Itinerario Completo Nomaderia ($49 USD) se coordina de forma manual por WhatsApp.{" "}
+              <span className="text-sage text-sm">⚠️ VERIFICAR</span>
+              {/* Si se activa Stripe Payment Link, actualizar esta sección: el procesador de pagos puede recibir datos de tarjeta; Nomaderia no almacena números de tarjeta. */}
+            </p>
           </section>
 
           <section>
             <h2 className="font-serif text-xl text-foreground mb-3">3. Finalidad del tratamiento</h2>
-            <p>Utilisamos tus datos para:</p>
+            <p>Utilizamos tus datos para:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>Enviarte contenido de valor sobre aventura y trekking (newsletter).</li>
               <li>Recomendarte destinos según tu perfil (quiz).</li>
@@ -65,38 +74,52 @@ const PrivacyPolicy = () => {
             <p>Utilizamos los siguientes servicios para operar el sitio:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li><strong className="text-foreground">Supabase</strong> — almacenamiento seguro de datos (base de datos cifrada en reposo y en tránsito).</li>
+              <li><strong className="text-foreground">Resend</strong> — envío de correos transaccionales y de newsletter.</li>
             </ul>
             <p className="mt-2">
-              Estos proveedores actúan como encargados del tratamiento y están obligados contractualmente a proteger tus datos.
+              Estos proveedores actúan como proveedores de servicio y están obligados contractualmente a proteger tus datos.{" "}
+              <span className="text-sage text-sm">⚠️ VERIFICAR</span>
             </p>
           </section>
 
           <section>
             <h2 className="font-serif text-xl text-foreground mb-3">6. Conservación de datos</h2>
             <p>
-              Conservamos tus datos mientras sean necesarios para la finalidad con la que fueron recabados o hasta que solicites su eliminación. Los suscriptores al newsletter pueden darse de baja en cualquier momento escribiendo a <a href="mailto:nomaderia.travel@gmail.com" className="text-primary hover:underline">nomaderia.travel@gmail.com</a>.
+              Conservamos tus datos mientras sean necesarios para la finalidad con la que fueron recabados o hasta que solicites su eliminación. Los suscriptores al newsletter pueden darse de baja en cualquier momento escribiendo a <a href="mailto:nomaderia.travel@gmail.com" className="text-primary hover:underline">nomaderia.travel@gmail.com</a> o usando el enlace de baja en nuestros correos.
             </p>
           </section>
 
           <section>
-            <h2 className="font-serif text-xl text-foreground mb-3">7. Derechos ARCO</h2>
+            <h2 className="font-serif text-xl text-foreground mb-3">7. Tus derechos de privacidad</h2>
             <p>
-              De conformidad con la LFPDPPP, tienes derecho de <strong className="text-foreground">Acceso, Rectificación, Cancelación y Oposición</strong> (derechos ARCO) al tratamiento de tus datos personales.
+              {/* ⚠️ VERIFICAR: alcance exacto CCPA/CPRA (acceso, eliminación, corrección, opt-out de venta/compartición, no discriminación) y plazos de respuesta. */}
+              Según las leyes de privacidad de California y otras normas aplicables en EE. UU., puedes solicitar acceso a la información personal que tenemos sobre ti, pedir su corrección o eliminación, y oponerte a ciertos usos.{" "}
+              <span className="text-sage text-sm">⚠️ VERIFICAR</span>
             </p>
             <p className="mt-2">
-              Para ejercer estos derechos, envía un correo a <a href="mailto:nomaderia.travel@gmail.com" className="text-primary hover:underline">nomaderia.travel@gmail.com</a> con el asunto «Derechos ARCO» indicando tu nombre y la solicitud específica. Responderemos en un plazo máximo de 20 días hábiles.
+              Para ejercer estos derechos, envía un correo a{" "}
+              <a href="mailto:nomaderia.travel@gmail.com" className="text-primary hover:underline">nomaderia.travel@gmail.com</a>{" "}
+              con el asunto «Privacidad» indicando tu nombre y la solicitud específica. Responderemos en un plazo razonable conforme a la ley aplicable.{" "}
+              <span className="text-sage text-sm">⚠️ VERIFICAR</span>
             </p>
           </section>
 
           <section>
-            <h2 className="font-serif text-xl text-foreground mb-3">8. Cambios a esta política</h2>
+            <h2 className="font-serif text-xl text-foreground mb-3">8. Legislación aplicable</h2>
+            <p>
+              Esta política se rige por las leyes de los Estados Unidos de América y del Estado de California, sin perjuicio de las normas de protección al consumidor que te correspondan por tu lugar de residencia. Para cualquier controversia relacionada con el tratamiento de datos o con esta política, las partes se someten a los tribunales competentes del Condado de San Diego, California, salvo que la ley aplicable exija otro foro.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-xl text-foreground mb-3">9. Cambios a esta política</h2>
             <p>
               Podemos actualizar esta política de privacidad en cualquier momento. La fecha de última actualización siempre estará visible al inicio de esta página. El uso continuado del sitio después de cualquier cambio implica tu aceptación de la política actualizada.
             </p>
           </section>
 
           <section>
-            <h2 className="font-serif text-xl text-foreground mb-3">9. Contacto</h2>
+            <h2 className="font-serif text-xl text-foreground mb-3">10. Contacto</h2>
             <p>
               Si tienes preguntas sobre esta política o sobre el tratamiento de tus datos, escríbenos a{" "}
               <a href="mailto:nomaderia.travel@gmail.com" className="text-primary hover:underline">nomaderia.travel@gmail.com</a>.
