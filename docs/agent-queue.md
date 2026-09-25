@@ -37,12 +37,12 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 
 | | |
 |---|---|
-| **Status** | `TODO` |
+| **Status** | `DONE` |
 | **Depends on** | — |
 | **Scope** | Migración aditiva `events(id, created_at, session_id, lead_id null, type, payload jsonb)`. RLS: `anon` INSERT; solo admins (`has_role`) SELECT. Añadir `src/lib/events.ts` con `logEvent(type, payload)` que nunca tire ni bloquee la UI. |
 | **Done when** | SQL en `supabase/migrations/` (pegado en el PR); `logEvent` fire-and-forget; tipos/docs actualizados si aplica. |
 | **Audit** | No existe tabla `events` ni `src/lib/events.ts`. Sí existe `admin_events` + `trackAdminEvent` (admin-only) — **no reusar**; es otro producto. |
-| **FRANK** | Pegar SQL en SQL Editor; regenerar tipos. |
+| **FRANK** | Pegar SQL de `20260925000000_create_events.sql` en el SQL Editor; regenerar tipos (`npx supabase gen types …`). Hasta entonces `logEvent` usa cast ADR-009. |
 
 ---
 
