@@ -3,7 +3,8 @@
  * (`src/recommender.py` + `src/features.py`).
  *
  * Pure TypeScript: no network I/O. Callers pass the park catalog (e.g. mapped
- * from `destinations`). Does NOT replace the heuristic scorer in `use-quiz.ts`.
+ * from `destinations` via `quiz-ranking.ts`). Wired into the quiz in T05
+ * (`use-quiz.ts` → `rankQuizDestinations` → `rankParks`).
  *
  * Weights (frozen in upstream, not retuned):
  *   W_CONTENT=0.55, W_DAYS=0.18, W_DIFF=0.14, W_BUDGET=0.08, CROWD_PENALTY=0.12

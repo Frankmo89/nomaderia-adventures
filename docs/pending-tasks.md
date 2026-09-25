@@ -362,6 +362,20 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-09-25] **T05 — Results + AI preview + lead capture.** Cablea `rankParks`
+  (T03) al quiz vía `src/lib/quiz-ranking.ts` + catálogo estático
+  `ranking-catalog.ts` (parks.csv del recommender); reemplaza el scorer
+  heurístico de `use-quiz.ts`. Top 3 con reasons; elección de parque →
+  `logEvent("park_selected")`. Preview IA gratuita: EF nueva `quiz-preview`
+  (mismo `OPENAI_API_KEY` + gpt-4o-mini + `park_live_data` que concierge;
+  alertas ausentes se declaran, no se inventan). Tabla `leads` (migración
+  `20260925120000_create_leads.sql`): INSERT anon, SELECT admin via
+  `has_role`; `lead_id` = `crypto.randomUUID()` en el browser, sin SELECT
+  de vuelta. Email del quiz también inserta lead + `lead_created`. Cola
+  T05 → `DONE`. **FRANK:** pegar SQL; regenerar tipos; EF entra al loop de
+  `deploy-edge-functions.yml` (secreto: `OPENAI_API_KEY` ya existente).
+  `tsc --noEmit` + `npm run build` + tests ranking/quiz-ranking.
+
 - [2026-09-25] **T04 — Quiz v2: ciudad, fechas, grupo, lodging + `logEvent`.** Extiende
   `QuizSection`/`use-quiz` (no quiz paralelo): pasos `start_city`, `dates`
   (inicio/fin), `group` (niños / adultos mayores / familiares fuera EE. UU.),

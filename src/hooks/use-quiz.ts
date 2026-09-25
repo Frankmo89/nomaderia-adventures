@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logEvent } from "@/lib/events";
+import { rankQuizDestinations, type QuizDestinationRow } from "@/lib/quiz-ranking";
 
 export interface QuizOption {
   label: string;
@@ -35,219 +36,32 @@ export interface QuizDestination {
   region: string | null;
   tags: string[] | null;
   best_season: string | null;
+  park_code: string | null;
   score: number;
   matchPercent: number;
   matchReasons: string[];
 }
 
-type DestinationFields = {
-  id: string;
-  title: string;
-  experience_type: string | null;
-  difficulty_level: string;
-  short_description: string | null;
-  estimated_budget_usd: number | null;
-  days_needed: string | null;
-  country: string;
-  region: string | null;
-  tags: string[] | null;
-  best_season: string | null;
-};
-
-const SCORING_RULES: Record<string, (answer: string, dest: DestinationFields) => { points: number; reason: string }> = {
-  fitness_level: (answer, dest) => {
-    const diffMap: Record<string, string[]> = {
-      sedentary: ["easy"],
-      light_activity: ["easy", "moderate"],
-      moderate: ["moderate", "challenging"],
-      active: ["challenging"],
-    };
-    const allowed = diffMap[answer] || [];
-    if (allowed.includes(dest.difficulty_level)) {
-      if (answer === "sedentary") {
-        return { points: 3, reason: "Nivel de dificultad ideal para tu condición actual" };
-      }
-      if (answer === "light_activity") {
-        return { points: 2, reason: "Dificultad moderada, perfecta para ti" };
-      }
-      if (answer === "moderate") {
-        return { points: 2, reason: "Buen reto para tu nivel de actividad" };
-      }
-      if (answer === "active") {
-        return { points: 3, reason: "Aventura desafiante a la altura de tu energía" };
-      }
-    }
-    return { points: 0, reason: "" };
-  },
-
-  interest: (answer, dest) => {
-    const typeMap: Record<string, string[]> = {
-      mountains: ["trekking", "mountaineering", "hiking", "montaña", "glaciar"],
-      forests: ["trekking", "hiking", "nature", "bosque", "selva"],
-      deserts: ["desert", "canyon", "rock", "desierto"],
-      cultural: ["cultural", "pilgrimage", "camino", "históric"],
-    };
-
-    const keywords = typeMap[answer] || [];
-    const destText = `${dest.experience_type || ""} ${dest.short_description || ""} ${dest.title || ""}`.toLowerCase();
-    const textMatch = keywords.some((k) => destText.includes(k));
-
-    // Also check tags array
-    const destTags = (dest.tags || []).map((t: string) => t.toLowerCase());
-    const tagMatch = keywords.some((k) => destTags.some((tag: string) => tag.includes(k)));
-
-    const geoHints: Record<string, string[]> = {
-      mountains: ["patagonia", "nepal", "andes", "sierra", "torres"],
-      forests: ["bosque", "selva", "forest"],
-      deserts: ["desierto", "joshua", "cañón", "canyon", "gran cañón"],
-      cultural: ["santiago", "camino", "cultural"],
-    };
-    const geoMatch = (geoHints[answer] || []).some((k) => destText.includes(k));
-
-    if (tagMatch) {
-      return { points: 5, reason: "El paisaje que buscas" };
-    }
-    if (textMatch || geoMatch) {
-      return { points: 4, reason: "El paisaje que buscas" };
-    }
-    return { points: 0, reason: "" };
-  },
-
-  trip_duration: (answer, dest) => {
-    const parseDays = (value: unknown): number => {
-      if (value == null) return NaN;
-      if (typeof value === "number") return value;
-      if (typeof value === "string") {
-        const match = value.match(/\d+/);
-        if (match) {
-          const parsed = parseInt(match[0], 10);
-          return Number.isNaN(parsed) ? NaN : parsed;
-        }
-      }
-      return NaN;
-    };
-
-    const days = parseDays(dest.days_needed);
-    if (answer === "weekend") {
-      if (!isNaN(days) && days <= 3) {
-        return { points: 2, reason: "Perfecto para escapada corta" };
-      }
-      const desc = dest.short_description?.toLowerCase() ?? "";
-      if (desc.includes("1 día") || desc.includes("2 día") || desc.includes("fin de semana")) {
-        return { points: 2, reason: "Perfecto para escapada corta" };
-      }
-    } else if (answer === "one_week") {
-      if (!isNaN(days) && days >= 4 && days <= 8) {
-        return { points: 2, reason: "Ideal para una semana" };
-      }
-    } else if (answer === "two_weeks") {
-      if (!isNaN(days) && days >= 9 && days <= 16) {
-        return { points: 2, reason: "Aventura extendida perfecta" };
-      }
-    }
-    return { points: 0, reason: "" };
-  },
-
-  budget_range: (answer, dest) => {
-    const budget = dest.estimated_budget_usd;
-    if (budget == null) return { points: 0, reason: "" };
-    if (answer === "low" && budget <= 500) return { points: 2, reason: "Dentro de tu presupuesto" };
-    if (answer === "medium" && budget > 500 && budget <= 1500) return { points: 2, reason: "Presupuesto moderado ideal" };
-    if (answer === "high" && budget > 1500 && budget <= 3000) return { points: 2, reason: "Gran aventura, buena inversión" };
-    if (answer === "unlimited" && budget > 3000) return { points: 1, reason: "Sin límite de presupuesto" };
-    return { points: 0, reason: "" };
-  },
-
-  season: (answer, dest) => {
-    const bestSeason = (dest.best_season || "").toLowerCase();
-    if (!bestSeason || answer === "flexible") return { points: 1, reason: "" };
-
-    const now = new Date();
-    const monthNames = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-
-    let targetMonth = "";
-    if (answer === "next_month") {
-      targetMonth = monthNames[(now.getMonth() + 1) % 12];
-    } else if (answer === "three_months") {
-      targetMonth = monthNames[(now.getMonth() + 3) % 12];
-    } else if (answer === "six_months") {
-      targetMonth = monthNames[(now.getMonth() + 6) % 12];
-    }
-
-    if (!targetMonth) return { points: 1, reason: "" };
-
-    if (bestSeason.includes(targetMonth)) {
-      return { points: 3, reason: "Temporada perfecta" };
-    }
-
-    // Check if nearby months match
-    const targetIdx = monthNames.indexOf(targetMonth);
-    const nearbyMonths = [
-      monthNames[(targetIdx + 1) % 12],
-      monthNames[(targetIdx + 11) % 12],
-    ];
-    if (nearbyMonths.some((m) => bestSeason.includes(m))) {
-      return { points: 1, reason: "" };
-    }
-
-    return { points: -1, reason: "" };
-  },
-
-  origin: (answer, dest) => {
-    const country = (dest.country || "").toLowerCase();
-    const region = (dest.region || "").toLowerCase();
-    const title = (dest.title || "").toLowerCase();
-
-    // Proximity scoring by origin zone
-    const proximityMap: Record<string, string[]> = {
-      tijuana_baja: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
-      sandiego_socal: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california", "méxico"],
-      los_angeles: ["estados unidos", "usa", "joshua", "gran cañón", "yosemite", "anza-borrego", "california"],
-      cdmx: ["méxico", "nevado", "toluca"],
-      resto_mx: ["méxico"],
-      resto_usa: ["estados unidos", "usa"],
-      otro: [],
-    };
-
-    const nearby = proximityMap[answer] || [];
-    const destText = `${country} ${region} ${title}`;
-
-    if (nearby.some((k) => destText.includes(k))) {
-      return { points: 2, reason: "Cerca de ti" };
-    }
-    return { points: 0, reason: "" };
-  },
-};
-
-// Maximum achievable score: fitness:3 + interest:5 + trip_duration:2 + budget_range:2 + season:3 + origin:2
-const MAX_SCORE = 17;
-
-function scoreDestination(
-  answers: Record<string, string>,
-  d: DestinationFields
-): { score: number; matchReasons: string[] } {
-  let score = 0;
-  const matchReasons: string[] = [];
-
-  for (const [key, ruleFn] of Object.entries(SCORING_RULES)) {
-    // start_city feeds the legacy origin proximity rule (Quiz v2)
-    const answer =
-      key === "origin" ? answers.origin || answers.start_city : answers[key];
-    if (!answer) continue;
-    const { points, reason } = ruleFn(answer, d);
-    score += points;
-    if (reason && !matchReasons.includes(reason)) {
-      matchReasons.push(reason);
-    }
-  }
-
-  return { score, matchReasons };
+export interface QuizPreview {
+  day1_plan: string;
+  entry_cost: string;
+  alerts_summary: string;
+  alerts_available: boolean;
+  synced_at: string | null;
+  park_code: string;
+  park_title: string;
 }
 
-function toMatchPercent(score: number, maxScore: number): number {
-  if (maxScore <= 0) return 40;
-  const pct = Math.round(40 + (score / maxScore) * 60);
-  return Math.min(100, Math.max(40, pct));
+const QUIZ_SELECT =
+  "id, title, slug, short_description, difficulty_level, country, estimated_budget_usd, days_needed, hero_image_url, experience_type, region, tags, best_season, park_code, latitude, longitude, requires_permit";
+
+function getSessionIdForLead(): string | null {
+  try {
+    if (typeof window === "undefined") return null;
+    return window.sessionStorage.getItem("nomaderia_session_id");
+  } catch {
+    return null;
+  }
 }
 
 export function useQuiz(totalSteps: number) {
@@ -260,6 +74,10 @@ export function useQuiz(totalSteps: number) {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<QuizDestination[]>([]);
   const [direction, setDirection] = useState(1);
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<QuizPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const { toast } = useToast();
 
   const isQuizDone = step >= totalSteps;
@@ -277,7 +95,6 @@ export function useQuiz(totalSteps: number) {
   const handleSelect = (key: string, value: string) => {
     setAnswers((prev) => {
       const next = { ...prev, [key]: value };
-      // Keep origin in sync for proximity scoring when answering start_city
       if (key === "start_city") next.origin = value;
       return next;
     });
@@ -303,45 +120,112 @@ export function useQuiz(totalSteps: number) {
     }
   };
 
+  const loadPreview = useCallback(async (dest: QuizDestination, quizAnswers: Record<string, string>) => {
+    if (!dest.park_code) {
+      setPreview(null);
+      return;
+    }
+    setPreviewLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke<QuizPreview>("quiz-preview", {
+        body: {
+          park_code: dest.park_code,
+          destination_slug: dest.slug,
+          destination_title: dest.title,
+          fitness_level: quizAnswers.fitness_level,
+          lodging: quizAnswers.lodging,
+          trip_duration: quizAnswers.trip_duration,
+        },
+        headers: {
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data && !("error" in data)) {
+        setPreview(data);
+      } else {
+        setPreview(null);
+      }
+    } catch (err) {
+      console.warn("[quiz-preview]", err);
+      setPreview(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, []);
+
   const fetchResults = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: destinations } = await supabase
+      const { data: destinations, error } = await supabase
         .from("destinations")
-        .select("id, title, slug, short_description, difficulty_level, country, estimated_budget_usd, days_needed, hero_image_url, experience_type, region, tags, best_season")
+        .select(QUIZ_SELECT)
         .eq("is_published", true);
 
-      const scored: QuizDestination[] = (destinations || []).map((d) => {
-        const { score, matchReasons } = scoreDestination(answers, d);
-        return {
-          id: d.id,
-          title: d.title,
-          slug: d.slug,
-          short_description: d.short_description,
-          difficulty_level: d.difficulty_level,
-          country: d.country,
-          estimated_budget_usd: d.estimated_budget_usd,
-          days_needed: d.days_needed,
-          hero_image_url: d.hero_image_url,
-          experience_type: d.experience_type,
-          region: d.region,
-          tags: d.tags ?? null,
-          best_season: d.best_season ?? null,
-          score,
-          matchPercent: toMatchPercent(score, MAX_SCORE),
-          matchReasons,
-        };
-      });
-      scored.sort((a, b) => b.score - a.score);
-      const top = scored.slice(0, 3);
+      if (error) throw error;
+
+      const rows = (destinations ?? []) as QuizDestinationRow[];
+      const ranked = rankQuizDestinations(rows, answers, 3);
+
+      const top: QuizDestination[] = ranked.map(({ destination, ranked: r, matchPercent }) => ({
+        id: destination.id,
+        title: destination.title,
+        slug: destination.slug,
+        short_description: destination.short_description,
+        difficulty_level: destination.difficulty_level,
+        country: destination.country,
+        estimated_budget_usd: destination.estimated_budget_usd,
+        days_needed: destination.days_needed,
+        hero_image_url: destination.hero_image_url,
+        experience_type: destination.experience_type,
+        region: destination.region,
+        tags: destination.tags ?? null,
+        best_season: destination.best_season ?? null,
+        park_code: destination.park_code,
+        score: r.score,
+        matchPercent,
+        matchReasons: r.reasons,
+      }));
+
       setResults(top);
       setShowResults(true);
+
+      const first = top[0] ?? null;
+      if (first) {
+        setSelectedDestinationId(first.id);
+        logEvent("park_selected", {
+          park_code: first.park_code,
+          destination_id: first.id,
+          slug: first.slug,
+          title: first.title,
+          source: "auto_top_result",
+        });
+        void loadPreview(first, answers);
+      }
     } catch {
       toast({ title: "Error", description: "Algo salió mal. Intenta de nuevo.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [answers, toast]);
+  }, [answers, toast, loadPreview]);
+
+  const selectPark = useCallback((destinationId: string) => {
+    const dest = results.find((d) => d.id === destinationId);
+    if (!dest) return;
+    setSelectedDestinationId(destinationId);
+    logEvent(
+      "park_selected",
+      {
+        park_code: dest.park_code,
+        destination_id: dest.id,
+        slug: dest.slug,
+        title: dest.title,
+        source: "user_choice",
+      },
+      leadId,
+    );
+    void loadPreview(dest, answers);
+  }, [results, leadId, loadPreview, answers]);
 
   const handleEmailSubmit = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -351,6 +235,36 @@ export function useQuiz(totalSteps: number) {
     }
     setLoading(true);
     try {
+      const newLeadId = crypto.randomUUID();
+      const selected = results.find((d) => d.id === selectedDestinationId) ?? results[0] ?? null;
+
+      const db = supabase as unknown as SupabaseClient;
+      // Insert lead — never SELECT it back (client keeps newLeadId).
+      const { error: leadError } = await db.from("leads").insert({
+        id: newLeadId,
+        email,
+        session_id: getSessionIdForLead(),
+        selected_park_code: selected?.park_code ?? null,
+        selected_destination_id: selected?.id ?? null,
+        quiz_answers: answers,
+        top_park_codes: results.map((d) => d.park_code).filter((c): c is string => Boolean(c)),
+      });
+      if (leadError) {
+        console.warn("[leads] insert failed:", leadError.message);
+      } else {
+        setLeadId(newLeadId);
+        logEvent(
+          "lead_created",
+          {
+            email_captured: true,
+            selected_park_code: selected?.park_code ?? null,
+            selected_destination_id: selected?.id ?? null,
+            top_park_codes: results.map((d) => d.park_code).filter(Boolean),
+          },
+          newLeadId,
+        );
+      }
+
       await supabase.from("newsletter_subscribers").insert({ email, source: "quiz" }).select();
       // Cast needed until types are regenerated to include is_us_resident (ADR-009 pattern)
       await (supabase as unknown as SupabaseClient).from("quiz_responses").insert({
@@ -364,20 +278,26 @@ export function useQuiz(totalSteps: number) {
         recommended_destinations: results.map((d) => d.id),
         is_us_resident: answers.is_us_resident !== undefined ? answers.is_us_resident === "true" : null,
       });
-      logEvent("quiz_completed", {
-        email_captured: true,
-        start_city: answers.start_city ?? null,
-        trip_start_date: answers.trip_start_date ?? null,
-        trip_end_date: answers.trip_end_date ?? null,
-        group_kids: answers.group_kids ?? null,
-        group_older_adults: answers.group_older_adults ?? null,
-        group_visitors_abroad: answers.group_visitors_abroad ?? null,
-        lodging: answers.lodging ?? null,
-        fitness_level: answers.fitness_level ?? null,
-        budget_range: answers.budget_range ?? null,
-        top_destination_ids: results.map((d) => d.id),
-      });
-      // Enviar email con resultados del quiz
+      logEvent(
+        "quiz_completed",
+        {
+          email_captured: true,
+          lead_id: newLeadId,
+          start_city: answers.start_city ?? null,
+          trip_start_date: answers.trip_start_date ?? null,
+          trip_end_date: answers.trip_end_date ?? null,
+          group_kids: answers.group_kids ?? null,
+          group_older_adults: answers.group_older_adults ?? null,
+          group_visitors_abroad: answers.group_visitors_abroad ?? null,
+          lodging: answers.lodging ?? null,
+          fitness_level: answers.fitness_level ?? null,
+          budget_range: answers.budget_range ?? null,
+          top_destination_ids: results.map((d) => d.id),
+          top_park_codes: results.map((d) => d.park_code).filter(Boolean),
+          selected_park_code: selected?.park_code ?? null,
+        },
+        newLeadId,
+      );
       if (results.length > 0) {
         try {
           await supabase.functions.invoke("send-quiz-email", {
@@ -435,6 +355,8 @@ export function useQuiz(totalSteps: number) {
     showResults, showEmailCapture, emailSubmitted,
     loading, results,
     direction, isQuizDone,
+    selectedDestinationId, selectPark,
+    leadId, preview, previewLoading,
     handleSelect, handleBack, handleSwipe,
     fetchResults, handleEmailSubmit, handleShowEmailCapture,
     handleCombinedSubmit, handleFieldsSubmit,
