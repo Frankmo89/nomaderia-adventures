@@ -81,6 +81,10 @@ referenciar esta lista primero.
       `SobreNosotros.tsx`).
 - [ ] **Configurar WhatsApp Business** en el número `18588996802` y guardar las 4
       respuestas rápidas.
+- [ ] **Verificar el link del bio de Instagram (@nomaderia.mx)** — debe apuntar a
+      `https://nomaderia.com`, **no** a TikTok. El bio link se configura en la app
+      de Instagram (no vive en este repo). En el código solo hay perfiles sociales
+      (`Footer.tsx`, `sameAs` en `Index.tsx`); no hay URL de "link in bio".
 - [ ] **Fase 4c — Subir PNG del patrón de fondo de `QuizSection`** (último pendiente de la Fase 4, sistema de diseño). Bloqueado en Frank: requiere el asset final (no hay placeholder aceptable a producción). Con esto, Fase 4 queda cerrada.
 - [ ] **Facebook Pixel:** crear cuenta en Business Manager, obtener el Pixel ID y
       reemplazar `TU_PIXEL_ID_AQUI` en `index.html`.
@@ -333,6 +337,18 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-09-25] **Términos: legislación MX → EE. UU. / California + auditoría link bio Instagram.**
+  (1) `src/pages/TermsAndConditions.tsx`: §2 describe servicio con sede en EE. UU.
+  para hispanos en SoCal/San Diego, producto USD-only; §8 deja de citar leyes de
+  los Estados Unidos Mexicanos / LFPDPPP y pasa a leyes de EE. UU. y California,
+  foro en Condado de San Diego; fecha de actualización → septiembre 2026.
+  (2) Instagram bio link: **no está en el codebase**. Los únicos enlaces sociales
+  son perfiles (`instagram.com/nomaderia.mx`, `tiktok.com/@nomaderia.mx`, Facebook)
+  en `Footer.tsx` y JSON-LD `sameAs` en `Index.tsx` — correctos como perfiles, no
+  como destino de bio. El bio debe apuntar a `https://nomaderia.com` (pendiente
+  humano arriba). Nota: `PrivacyPolicy.tsx` aún menciona LFPDPPP de México — fuera
+  de alcance de este cambio. `tsc --noEmit` + `npm run build` pasan.
 
 - [2026-07-26] **Hotfix producción: crash en `AdminBlogPostForm` ("Cannot read properties of undefined (reading 'length')") al usar "Desarrollar mi propio tema" con parque seleccionado.** Causa raíz: **desfase de despliegue**, no un bug de schema ni del modelo. `generate-blog-draft` (edge function) se había actualizado en git (título/`destination_id`/`title_options`, ver entrada anterior del mismo día) pero **nunca se redesplegó a Supabase** — la función en vivo seguía en `v10`, previa incluso al trabajo de RAG grounding, así que la respuesta real no tenía la clave `title_options` en absoluto. `setTitleOptions(response.draft.title_options)` dejaba el estado en `undefined`, y `titleOptions.length` en el render tronaba. Confirmado leyendo el código fuente realmente desplegado vía Supabase MCP (`get_edge_function`), no solo reproduciendo. **Redesplegado directamente `generate-blog-draft` a `v11`** (verificado re-leyendo el código en vivo tras el deploy). Defensa en profundidad agregada en ambos lados para que esta clase de bug no vuelva a tronar la UI: `src/pages/admin/AdminBlogPostForm.tsx` ahora hace `setTitleOptions(response.draft.title_options ?? [])`; `generate-blog-draft/index.ts` normaliza `title_options` a `[]` y loguea si el modelo no lo devuelve como array, en vez de dejarlo pasar sin validar — un campo bonus mal formado ya no puede tumbar la generación del draft completo. `node node_modules/typescript/bin/tsc --noEmit` + `npm run build` pasan. **Lección operativa:** los Edge Functions de Supabase no se despliegan solos al hacer `git push` — cualquier cambio a `supabase/functions/*` necesita `supabase functions deploy <nombre>` (o el equivalente vía MCP) además del commit, o el código en producción queda desincronizado del repo sin ningún error visible hasta que algo como esto lo expone.
 

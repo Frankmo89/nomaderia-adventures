@@ -13,7 +13,7 @@ const TermsAndConditions = () => {
       <Navbar />
       <div className="container mx-auto px-4 pt-28 pb-16 max-w-3xl">
         <h1 className="font-serif text-4xl text-foreground mb-2">Términos y Condiciones</h1>
-        <p className="text-sm text-muted-foreground mb-10">Última actualización: marzo de 2026</p>
+        <p className="text-sm text-muted-foreground mb-10">Última actualización: septiembre de 2026</p>
 
         <div className="space-y-8 text-foreground/80 leading-relaxed">
 
@@ -27,7 +27,7 @@ const TermsAndConditions = () => {
           <section>
             <h2 className="font-serif text-xl text-foreground mb-3">2. Descripción del servicio</h2>
             <p>
-              Nomaderia es una plataforma informativa orientada a viajeros hispanohablantes que desean planear aventuras outdoor (trekking, mochilero). Ofrecemos guías de destinos, recomendaciones de equipo, una calculadora de presupuesto, un quiz de destinos y, a través de agentes certificados, itinerarios personalizados de pago.
+              Nomaderia es una plataforma informativa con sede en Estados Unidos, orientada a hispanos residentes en EE. UU. (mercado primario: Sur de California / San Diego) que desean planear su primera aventura outdoor. Ofrecemos guías de destinos (en especial parques nacionales de EE. UU.) en español, recomendaciones de equipo, una calculadora de presupuesto, un quiz de destinos y, a través de un agente de viajes certificado, el Itinerario Completo Nomaderia — servicio de pago cotizado y cobrado únicamente en dólares estadounidenses (USD).
             </p>
           </section>
 
@@ -72,7 +72,7 @@ const TermsAndConditions = () => {
           <section>
             <h2 className="font-serif text-xl text-foreground mb-3">8. Legislación aplicable</h2>
             <p>
-              Estos términos se rigen por las leyes de los Estados Unidos Mexicanos, incluyendo la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP). Para cualquier controversia, las partes se someten a los tribunales competentes de México.
+              Estos términos se rigen por las leyes de los Estados Unidos de América y del Estado de California, sin perjuicio de las normas de protección al consumidor que te correspondan por tu lugar de residencia. Para cualquier controversia relacionada con el uso del sitio o con el Itinerario Completo Nomaderia, las partes se someten a los tribunales competentes del Condado de San Diego, California, salvo que la ley aplicable exija otro foro.
             </p>
           </section>
 
