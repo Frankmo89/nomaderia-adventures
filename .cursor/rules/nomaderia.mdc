@@ -1,0 +1,36 @@
+---
+description: Nomaderia Adventures — reglas inquebrantables para cloud agents (Phase 1+)
+alwaysApply: true
+---
+
+# Nomaderia — Agent Rules
+
+## Before any work
+
+1. Read `CLAUDE.md` and `docs/agent-queue.md`.
+2. Then read `docs/decisions.md`, `docs/pending-tasks.md`, and any docs linked from your task.
+3. **Audit first:** read the schema (`docs/supabase-schema.md`, migrations, generated types) and the existing code you will touch **before** writing code. Do not invent tables, columns, or patterns that already exist under another name.
+
+## Hard prohibitions
+
+- Never touch `supabase.auth`, the `has_role` RPC, Stripe **price or product** config, or **existing** Supabase SELECT queries. New queries on **new** tables are fine.
+- Routing: you may **ADD** routes. Never change or remove existing ones.
+- Migrations: **additive only**. Write SQL under `supabase/migrations/` and paste the full SQL in the PR body. Never run `db push`; Frank applies SQL by hand in the Supabase SQL Editor.
+- Edge Functions do **not** deploy on git push alone. Say in the PR that Frank must run (or confirm) `deploy-edge-functions.yml`.
+- Never put secrets in code, PRs, or logs. Name the secrets needed — nothing more.
+- No stack changes (no Next.js, Vue, Redux, extra UI/animation libraries). Justify any new npm package in the PR body.
+- Never invent park data, prices, or business numbers. Mark doubtful facts `⚠️ VERIFICAR (IA)`.
+
+## Product / UI
+
+- All visible text in Spanish.
+- Mobile-first, light theme per `docs/design-system.md`.
+- Orange `#D97706` only in the Hero (legacy amber). Everywhere else: Trail Green and the design-system tokens.
+
+## Delivery shape
+
+- One task from `docs/agent-queue.md` = one branch = one **Draft** PR.
+- `node node_modules/typescript/bin/tsc --noEmit` and `npm run build` must pass before opening/updating the PR.
+- In your PR branch, set your task to **DONE** in `docs/agent-queue.md`. `main` shows DONE only after Frank merges.
+- List anything only Frank can do under **FRANK:** in the PR body and in `docs/pending-tasks.md`.
+- If blocked or unsure, **stop and ask**. Do not guess.

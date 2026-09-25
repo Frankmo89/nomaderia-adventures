@@ -14,9 +14,11 @@ arquitectura ya decidida, duplique archivos o rompa convenciones. No son
 opcionales.
 
 1. **LECTURA OBLIGATORIA.** Antes de proponer soluciones o escribir código, lee
-   en silencio: `CLAUDE.md` → `docs/claude-context.md` → `docs/decisions.md` →
-   `docs/pending-tasks.md`. Si una propuesta contradice una decisión en
-   `decisions.md`, **detente y avísalo** en vez de implementarla.
+   en silencio: `CLAUDE.md` → `docs/agent-queue.md` → `docs/claude-context.md` →
+   `docs/decisions.md` → `docs/pending-tasks.md`. Si una propuesta contradice una
+   decisión en `decisions.md`, **detente y avísalo** en vez de implementarla.
+   Cola Phase 1 (funnel IA): `docs/agent-queue.md` + reglas
+   `.cursor/rules/nomaderia.mdc` (ADR-024).
 2. **EJECUCIÓN ATÓMICA.** Un cambio lógico = un commit. No mezcles tareas
    distintas en el mismo commit ni en el mismo PR.
 3. **ACTUALIZACIÓN DE MEMORIA.** Al terminar una tarea, actualiza
@@ -250,6 +252,7 @@ Facebook: Nomaderia · WhatsApp: 18588996802
 
 | Archivo | Contenido |
 |---------|-----------|
+| `docs/agent-queue.md` | **Cola Phase 1** (T01–T11) para cloud agents — un task = un Draft PR (ADR-024) |
 | `docs/claude-context.md` | Auditoría completa de arquitectura (10 secciones, snapshot) |
 | `docs/decisions.md` | **Registro de decisiones y lecciones de IA (ADRs)** |
 | `docs/seccion-9-concierge-ia.md` | Concierge IA con RAG — **EN PRODUCCIÓN** (`ConciergeLauncher` global en `App.tsx` + Edge Function `concierge-agent`). Leer antes de tocar IA/embeddings; partes del doc son históricas de la fase parqueada |
@@ -257,3 +260,5 @@ Facebook: Nomaderia · WhatsApp: 18588996802
 | `docs/supabase-schema.md` | Tablas, columnas, tipos, RLS, auth |
 | `docs/content-strategy.md` | Monetización, affiliate, SEO, blog, quiz |
 | `docs/admin-patterns.md` | Patrones del panel admin, CRUD, convenciones |
+| `docs/design-system.md` | Tokens, tipografía, reglas UI (light theme) |
+| `.cursor/rules/nomaderia.mdc` | Reglas alwaysApply para agentes (audit-first, migraciones, Stripe, etc.) |

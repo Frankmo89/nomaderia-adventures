@@ -281,6 +281,26 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   verificar que ya no lo esté antes de asumir que el fix de retry se probó en
   producción.
 
+### ADR-024 — Phase 1 AI funnel vía cola de cloud agents
+- **Fecha:** 2026-09
+- **Estado:** Vigente
+- **Contexto:** El funnel de conversión (quiz → ranking → lead → Stripe $49 →
+  draft IA → review de Frank → `/i/:token` → emails) debe construirse por
+  agentes autónomos sin reescribir auth, pricing, ni queries SELECT existentes.
+  Hacía falta una cola explícita y reglas always-on para evitar AI Drift y PRs
+  monolíticos.
+- **Decisión:** Phase 1 se ejecuta como tasks `T01`–`T11` en
+  `docs/agent-queue.md`, una task = un branch = un Draft PR. Reglas alwaysApply
+  en `.cursor/rules/nomaderia.mdc`. Migraciones solo aditivas (Frank pega SQL);
+  Edge Functions requieren confirmación de `deploy-edge-functions.yml`. Phase 2
+  (closure alerts, assistant in-page, botones WhatsApp) queda fuera de la cola.
+- **Consecuencias:** Agentes deben leer `CLAUDE.md` + `docs/agent-queue.md`
+  antes de codear; marcar DONE solo en su rama; listar FRANK: en PR +
+  `pending-tasks.md`. No inventar tablas que ya existen bajo otro nombre
+  (`admin_events` ≠ `events`; builder manual ≠ drafts post-pago). No tocar
+  `supabase.auth`, `has_role`, config de precio/producto Stripe, ni SELECTs
+  existentes.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)
