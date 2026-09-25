@@ -75,12 +75,12 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 
 | | |
 |---|---|
-| **Status** | `TODO` |
+| **Status** | `DONE` |
 | **Depends on** | T02, T03, T04 |
-| **Scope** | Mostrar top 3 del ranking. Preview IA gratuita (día 1, costo de entrada, alertas live) vía Edge Function que reutilice provider/patrón de `concierge-agent` (OpenAI). Captura de email en tabla nueva `leads`; crear `lead_id` en el browser con `crypto.randomUUID()` (anon INSERT only, sin SELECT). Loguear elección de parque. |
+| **Scope** | Mostrar top 3 del ranking. Preview IA gratuita (día 1, precio de entrada, alertas live) vía Edge Function que reutilice provider/patrón de `concierge-agent` (OpenAI). Captura de email en tabla nueva `leads`; crear `lead_id` en el browser con `crypto.randomUUID()` (anon INSERT only, sin SELECT). Loguear elección de parque. |
 | **Done when** | Top 3 + preview + insert lead + eventos; SQL aditivo en el PR; EF documentada para deploy. |
 | **Audit** | Resultados del quiz + CTA WhatsApp existen; no hay preview IA ni tabla `leads` con UUID cliente. Tablas cercanas (`quiz_responses`, `sentinel_leads`, `itinerary_requests`) **no sustituyen** este contrato. |
-| **FRANK** | Pegar SQL; confirmar `deploy-edge-functions.yml` (nueva EF); secretos ya usados por concierge (`OPENAI_API_KEY`) — no inventar nombres nuevos sin necesidad. |
+| **FRANK** | Pegar SQL `20260925120000_create_leads.sql`; confirmar auto-deploy de `quiz-preview` vía `deploy-edge-functions.yml` (ya itera `supabase/functions/*/`); secreto existente `OPENAI_API_KEY` (mismo que concierge — no hace falta uno nuevo). Regenerar tipos tras pegar SQL. |
 
 ---
 

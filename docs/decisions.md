@@ -301,6 +301,27 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   `supabase.auth`, `has_role`, config de precio/producto Stripe, ni SELECTs
   existentes.
 
+### ADR-025 — Quiz ranking wire + client UUID leads + quiz-preview
+- **Fecha:** 2026-09
+- **Estado:** Vigente
+- **Contexto:** T05 necesita top-3 del ranker híbrido (T03), preview IA gratis
+  con datos NPS reales, y un `lead_id` estable para Stripe (T06) sin dar a
+  anon SELECT sobre la fila del lead.
+- **Decisión:**
+  1. Bridge `quiz-ranking.ts` + catálogo estático `ranking-catalog.ts` (parks.csv)
+     mapea `destinations.park_code` → `RankingPark`; `use-quiz.fetchResults` llama
+     `rankQuizDestinations` (ya no el scorer heurístico).
+  2. Tabla nueva `leads` (no reusar `sentinel_leads`/`quiz_responses`): RLS igual
+     que `events` (INSERT público, SELECT solo `has_role` admin). El browser
+     genera `id` con `crypto.randomUUID()` y **nunca** hace SELECT del lead.
+  3. EF `quiz-preview` reutiliza `OPENAI_API_KEY` + gpt-4o-mini + patrón de
+     `park_live_data`/alias de `concierge-agent`. Tarifas y alertas salen de NPS
+     live; si `alerts` es null, el copy lo dice — no se inventa un número.
+- **Consecuencias:** T06 puede pasar `lead_id` a Stripe `client_reference_id`
+  sin leer la DB. Frank pega el SQL y deja que `deploy-edge-functions.yml`
+  despliegue `quiz-preview` (mismo secreto OpenAI). Cast ADR-009 en inserts a
+  `leads` hasta regenerar tipos.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)

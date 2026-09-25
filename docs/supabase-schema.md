@@ -98,6 +98,22 @@ payload     jsonb NOT NULL DEFAULT '{}'   → arbitrary context
 - Client helper: `src/lib/events.ts` → `logEvent(type, payload?, leadId?)` (fire-and-forget).
 - **Not** the same as `admin_events` (admin WhatsApp-click tracking).
 
+### `leads` — Phase 1 funnel lead (T05)
+```
+id                      uuid PK             → client-generated (crypto.randomUUID); NOT defaulted
+created_at              timestamptz NOT NULL DEFAULT now()
+email                   text NOT NULL
+session_id              text NULL
+selected_park_code      text NULL
+selected_destination_id uuid NULL → FK destinations(id) ON DELETE SET NULL
+quiz_answers            jsonb NOT NULL DEFAULT '{}'
+top_park_codes          text[] NOT NULL DEFAULT '{}'
+```
+- Migration: `20260925120000_create_leads.sql` (**Frank must paste in SQL Editor**).
+- RLS: INSERT anon/authenticated; SELECT solo admin via `has_role`. **Sin SELECT público.**
+- Distinct from `sentinel_leads` / `quiz_responses` / `itinerary_requests`.
+- Client never reads the row back after insert (keeps the UUID it generated).
+
 ### `newsletter_subscribers`
 ```
 id              uuid PK
@@ -306,6 +322,7 @@ todas las columnas salvo `park_code` son nullables.)*
 - **Tablas de contenido** (`destinations`, `gear_articles`, `blog_posts`): SELECT público con filtro `is_published = true`. INSERT/UPDATE/DELETE solo admin via `has_role()`.
 - **`quiz_responses`**: INSERT público (anon + authenticated). SELECT solo admin.
 - **`events`**: INSERT público (anon + authenticated). SELECT solo admin via `has_role()`. Sin UPDATE/DELETE públicos. Distinto de `admin_events`.
+- **`leads`**: INSERT público (anon + authenticated). SELECT solo admin via `has_role()`. Sin SELECT público (el cliente genera el UUID y no lo relee). Distinto de `sentinel_leads` / `quiz_responses`.
 - **`newsletter_subscribers`**: INSERT público. SELECT solo admin.
 - **`itinerary_requests`**: SELECT solo admin. INSERT solo admin (migración `20260609000000` eliminó el INSERT público). UPDATE solo admin (política explícita añadida para cubrir writes de `status`/`contacted_at`).
 - **`itinerary_templates`**: ALL (SELECT/INSERT/UPDATE/DELETE) solo admin via `has_role()`. Sin acceso público.

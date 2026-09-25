@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Link } from "react-router-dom";
 import { useQuiz } from "@/hooks/use-quiz";
-import type { QuizDestination, QuizStep } from "@/hooks/use-quiz";
+import type { QuizDestination, QuizPreview, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import Reveal from "@/components/editorial/Reveal";
@@ -297,14 +297,81 @@ const EmailCapture = ({
   );
 };
 
+// --- Free AI preview panel (T05) ---
+const PreviewPanel = ({
+  preview,
+  loading,
+  parkTitle,
+}: {
+  preview: QuizPreview | null;
+  loading: boolean;
+  parkTitle: string;
+}) => {
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-stone/20 bg-white/80 p-5 sm:p-6 flex items-center gap-3">
+        <Loader2 className="h-5 w-5 animate-spin text-green shrink-0" />
+        <p className="text-sm text-muted-foreground">
+          Generando preview gratuito de {parkTitle}…
+        </p>
+      </div>
+    );
+  }
+  if (!preview) return null;
+
+  return (
+    <div className="rounded-2xl border border-green/20 bg-green-wash/40 p-5 sm:p-6 space-y-4">
+      <div>
+        <p className="text-eyebrow text-green mb-1">Preview gratis</p>
+        <h3 className="font-serif text-xl font-semibold text-foreground">
+          Día 1 en {preview.park_title}
+        </h3>
+      </div>
+      <p className="text-sm sm:text-base text-foreground/90 leading-relaxed whitespace-pre-line">
+        {preview.day1_plan}
+      </p>
+      <div className="space-y-2 text-sm border-t border-stone/15 pt-4">
+        <p className="text-foreground">
+          <span className="font-medium text-ink">Entrada: </span>
+          {preview.entry_cost}
+        </p>
+        <p className={cn("text-foreground", !preview.alerts_available && "text-stone-500")}>
+          <span className="font-medium text-ink">Alertas: </span>
+          {preview.alerts_summary}
+        </p>
+        {preview.synced_at && (
+          <p className="text-xs text-stone-400">
+            Datos NPS sincronizados: {new Date(preview.synced_at).toLocaleDateString("es-US")}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // --- Sub-component: #1 hero result ---
-const HeroResultCard = ({ d }: { d: QuizDestination }) => (
+const HeroResultCard = ({
+  d,
+  selected,
+  onSelect,
+}: {
+  d: QuizDestination;
+  selected: boolean;
+  onSelect: () => void;
+}) => (
   <div>
     <p className="text-eyebrow text-secondary mb-3">Tu Destino Ideal</p>
     <h2 className="font-serif font-bold text-4xl md:text-5xl text-foreground leading-tight mb-5">
       {d.title}
     </h2>
-    <div className="relative rounded-2xl overflow-hidden h-64 md:h-80 mb-5">
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "relative w-full rounded-2xl overflow-hidden h-64 md:h-80 mb-5 text-left ring-offset-cloud transition-shadow",
+        selected ? "ring-2 ring-green ring-offset-2" : "ring-0",
+      )}
+    >
       {d.hero_image_url ? (
         <img
           src={d.hero_image_url}
@@ -317,53 +384,100 @@ const HeroResultCard = ({ d }: { d: QuizDestination }) => (
         <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-green/10" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/80 via-transparent to-transparent" />
-    </div>
+      {selected && (
+        <span className="absolute top-3 right-3 bg-green text-white text-xs font-semibold px-3 py-1 rounded-md">
+          Seleccionado
+        </span>
+      )}
+    </button>
     <div className="space-y-3">
       <CompatibilityPill percent={d.matchPercent} size="md" />
+      {d.matchReasons.length > 0 && (
+        <p className="text-sm text-stone-500">{d.matchReasons.join(" · ")}</p>
+      )}
       {d.short_description && (
         <p className="text-base text-muted-foreground line-clamp-2">{d.short_description}</p>
       )}
-      <Link
-        to={`/destinos/${d.slug}`}
-        className="inline-flex items-center gap-2 bg-green hover:bg-green-dark text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-lg shadow-green/30 transition-colors"
-      >
-        Ver Guía Completa <ArrowRight className="h-4 w-4" />
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onSelect}
+          className={cn(
+            "inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors",
+            selected
+              ? "bg-green text-white"
+              : "bg-white border border-stone/30 text-foreground hover:border-green/40",
+          )}
+        >
+          {selected ? "Parque elegido" : "Elegir este parque"}
+        </button>
+        <Link
+          to={`/destinos/${d.slug}`}
+          className="inline-flex items-center gap-2 bg-green hover:bg-green-dark text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-lg shadow-green/30 transition-colors"
+        >
+          Ver Guía Completa <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
     </div>
   </div>
 );
 
 // --- Sub-component: alternative result card ---
-const AlternativeCard = ({ d }: { d: QuizDestination }) => (
-  <Link
-    to={`/destinos/${d.slug}`}
-    className="block rounded-2xl overflow-hidden card-depth bg-card border border-border group"
+const AlternativeCard = ({
+  d,
+  selected,
+  onSelect,
+}: {
+  d: QuizDestination;
+  selected: boolean;
+  onSelect: () => void;
+}) => (
+  <div
+    className={cn(
+      "rounded-2xl overflow-hidden card-depth bg-card border group",
+      selected ? "border-green ring-1 ring-green/40" : "border-border",
+    )}
   >
-    <div className="relative h-40 overflow-hidden">
-      {d.hero_image_url ? (
-        <img
-          src={d.hero_image_url}
-          alt={`Vista de ${d.title}`}
-          loading="lazy"
-          decoding="async"
-          className="w-full h-full object-cover img-warm transition-transform duration-700 group-hover:scale-105"
-        />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-green/10" />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/50 via-transparent to-transparent" />
-    </div>
-    <div className="p-4 space-y-2">
-      <h3 className="font-serif font-bold text-lg text-foreground leading-tight">{d.title}</h3>
-      <CompatibilityPill percent={d.matchPercent} size="sm" />
-      {d.short_description && (
-        <p className="text-sm text-muted-foreground line-clamp-2">{d.short_description}</p>
-      )}
-      <span className="text-sm font-medium text-green inline-flex items-center gap-1 pt-1">
+    <button type="button" onClick={onSelect} className="block w-full text-left">
+      <div className="relative h-40 overflow-hidden">
+        {d.hero_image_url ? (
+          <img
+            src={d.hero_image_url}
+            alt={`Vista de ${d.title}`}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover img-warm transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-green/10" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/50 via-transparent to-transparent" />
+        {selected && (
+          <span className="absolute top-2 right-2 bg-green text-white text-[10px] font-semibold px-2 py-0.5 rounded">
+            Elegido
+          </span>
+        )}
+      </div>
+      <div className="p-4 space-y-2">
+        <h3 className="font-serif font-bold text-lg text-foreground leading-tight">{d.title}</h3>
+        <CompatibilityPill percent={d.matchPercent} size="sm" />
+        {d.matchReasons.length > 0 && (
+          <p className="text-xs text-stone-500 line-clamp-2">{d.matchReasons.join(" · ")}</p>
+        )}
+        {d.short_description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">{d.short_description}</p>
+        )}
+      </div>
+    </button>
+    <div className="px-4 pb-4">
+      <Link
+        to={`/destinos/${d.slug}`}
+        className="text-sm font-medium text-green inline-flex items-center gap-1"
+      >
         Ver Guía <ArrowRight className="h-3.5 w-3.5" />
-      </span>
+      </Link>
     </div>
-  </Link>
+  </div>
 );
 
 // --- Sub-component: Results view ---
@@ -375,6 +489,10 @@ const QuizResults = ({
   emailSubmitted,
   onEmailSubmit,
   isUsResident,
+  selectedDestinationId,
+  onSelectPark,
+  preview,
+  previewLoading,
 }: {
   results: QuizDestination[];
   email: string;
@@ -383,16 +501,22 @@ const QuizResults = ({
   emailSubmitted: boolean;
   onEmailSubmit: () => void;
   isUsResident: boolean | null;
+  selectedDestinationId: string | null;
+  onSelectPark: (id: string) => void;
+  preview: QuizPreview | null;
+  previewLoading: boolean;
 }) => {
   const reduceMotion = useReducedMotion();
   const topDestination = results[0];
   const alternatives = results.slice(1);
+  const selected =
+    results.find((d) => d.id === selectedDestinationId) ?? topDestination;
   const residentLine = isUsResident !== null
     ? `\nResidencia en EE. UU.: ${isUsResident ? "Sí" : "No"}`
     : "";
-  const whatsAppUrl = topDestination
+  const whatsAppUrl = selected
     ? buildWhatsAppLink(
-        `Hola equipo de Nomaderia, acabo de hacer el Quiz, mi destino ideal es ${topDestination.title} y quiero que planifiquen mi itinerario personalizado. ¿Qué paquetes tienen?${residentLine}`,
+        `Hola equipo de Nomaderia, acabo de hacer el Quiz, mi destino ideal es ${selected.title} y quiero que planifiquen mi itinerario personalizado. ¿Qué paquetes tienen?${residentLine}`,
       )
     : undefined;
 
@@ -410,14 +534,34 @@ const QuizResults = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
-            <HeroResultCard d={topDestination} />
+            <HeroResultCard
+              d={topDestination}
+              selected={selectedDestinationId === topDestination.id}
+              onSelect={() => onSelectPark(topDestination.id)}
+            />
+          </motion.div>
+        )}
+
+        {/* Free AI preview for selected park */}
+        {selected && (
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduceMotion ? 0 : 0.25, duration: 0.45 }}
+            className="mt-8"
+          >
+            <PreviewPanel
+              preview={preview}
+              loading={previewLoading}
+              parkTitle={selected.title}
+            />
           </motion.div>
         )}
 
         {/* Alternatives — stagger 120ms after hero */}
         {alternatives.length > 0 && (
           <div className="mt-10 sm:mt-14">
-            <p className="text-eyebrow text-stone-400 mb-5">También te puede gustar</p>
+            <p className="text-eyebrow text-stone-400 mb-5">También te puede gustar — elige uno</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {alternatives.map((d, i) => (
                 <motion.div
@@ -426,14 +570,18 @@ const QuizResults = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={reduceMotion ? { duration: 0 } : { delay: 0.12 + i * 0.12, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <AlternativeCard d={d} />
+                  <AlternativeCard
+                    d={d}
+                    selected={selectedDestinationId === d.id}
+                    onSelect={() => onSelectPark(d.id)}
+                  />
                 </motion.div>
               ))}
             </div>
           </div>
         )}
 
-        {/* WhatsApp CTA — primary conversion action (logic untouched) */}
+        {/* WhatsApp CTA — primary conversion action */}
         {whatsAppUrl && (
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, y: 24 }}
@@ -453,7 +601,7 @@ const QuizResults = ({
           </motion.div>
         )}
 
-        {/* Email capture — always visible, discount offer (logic untouched) */}
+        {/* Email capture → creates Phase 1 lead (client UUID) */}
         <motion.div
           initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -491,6 +639,8 @@ const QuizSection = () => {
     showResults, emailSubmitted,
     loading, results,
     isQuizDone,
+    selectedDestinationId, selectPark,
+    preview, previewLoading,
     handleSelect, handleBack, handleSwipe,
     fetchResults, handleEmailSubmit,
     handleCombinedSubmit, handleFieldsSubmit,
@@ -579,6 +729,10 @@ const QuizSection = () => {
       emailSubmitted={emailSubmitted}
       onEmailSubmit={handleEmailSubmit}
       isUsResident={isUsResident}
+      selectedDestinationId={selectedDestinationId}
+      onSelectPark={selectPark}
+      preview={preview}
+      previewLoading={previewLoading}
     />
   );
 
