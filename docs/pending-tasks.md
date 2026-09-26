@@ -375,12 +375,25 @@ Pendiente real:
 
 Siempre que hagas cambios al código:
 1. Lee `CLAUDE.md`, `docs/claude-context.md`, `docs/decisions.md` y este archivo.
-2. Un cambio lógico = un commit. `tsc --noEmit` y `npm run build` deben pasar.
+2. Un cambio lógico = un commit. `npm run typecheck`, `npm run typecheck:functions`
+   y `npm run build` deben pasar (`tsc --noEmit` a secas revisa 0 archivos — ADR-027).
 3. Actualiza este archivo (mueve la tarea a "Changelog reciente").
 4. Si la arquitectura cambió, actualiza `CLAUDE.md`. Si fue una decisión dura,
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-09-26] **Type check real en CI: tsc por proyecto + `deno check` (ADR-027).**
+  `tsc --noEmit` (regla 6 + `ci.yml`) revisaba 0 archivos por el root tsconfig
+  de solo references, y `supabase/functions/` nunca se type-checkeaba. Se
+  arreglaron los 13 errores latentes en commits propios (6 Deno: `.returns<T>()`
+  en selects dinámicos + `SupabaseClient` en vez de `ReturnType<typeof
+  createClient>`; 7 app: puente `media_slider` obsoleto, `.from<T>` de v1 en
+  `AdminEmailLogs` —su export CSV habría tronado con `status` null—,
+  `DraftSource` interface → type, guard de `data` en
+  `AdminClientItineraryNew`). Nuevos scripts `typecheck` y
+  `typecheck:functions`; ambos bloqueantes en `ci.yml` (Deno 2.9.7, caché de
+  deps, reintento solo del fetch). `concierge-agent` no se tocó.
 
 - [2026-09-26] **Motor de ranking: copia a mano → motor real vendorizado (ADR-026).**
   `src/lib/ranking.ts` + `ranking-catalog.ts` (port T03) habían derivado del
