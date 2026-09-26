@@ -4,7 +4,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@engine/*": ["./supabase/functions/_shared/engine/*"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,

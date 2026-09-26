@@ -1,0 +1,75 @@
+name: Engine upstream check
+
+# The ranking engine is vendored at a pinned commit of
+# Frankmo89/us-parks-recommender (supabase/functions/_shared/engine/engine.lock.json).
+# Production never moves until someone runs `npm run sync:engine -- --to <sha>`
+# and merges — so this job exists to make sure an upstream engine_version bump
+# is *noticed*: it compares the pin against upstream main weekly and keeps one
+# open issue up to date while they differ.
+#
+# No third-party actions, no extra secrets: GITHUB_TOKEN + gh only.
+
+on:
+  schedule:
+    - cron: "0 14 * * 1" # Mondays 14:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Compare pin with upstream main
+        id: check
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run check:engine-upstream
+
+      - name: Open or update the tracking issue
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPORT: ${{ steps.check.outputs.report }}
+        run: |
+          set -euo pipefail
+          title="Engine upstream moved: us-parks-recommender ahead of vendored pin"
+          body="$(cat <<EOF
+          The vendored ranking engine (\`supabase/functions/_shared/engine\`) is pinned to a commit that is no longer upstream \`main\`.
+
+          \`\`\`json
+          ${REPORT}
+          \`\`\`
+
+          **Before syncing:** read upstream \`CHANGELOG.md\` and \`docs/engine-contract.md\` for the new version. If \`engine_version\` changed, re-check \`src/lib/quiz-ranking.ts\` and bump \`SUPPORTED_ENGINE_VERSION\` in the same PR — the Vitest guard fails until you do.
+
+          _Updated automatically by \`.github/workflows/engine-upstream-check.yml\` on $(date -u +%Y-%m-%dT%H:%MZ)._
+          EOF
+          )"
+          existing="$(gh issue list --state open --label engine-upstream --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body "$body"
+            echo "Updated issue #$existing"
+          else
+            gh label create engine-upstream --color D97706 --description "Vendored ranking engine is behind upstream" 2>/dev/null || true
+            gh issue create --title "$title" --label engine-upstream --body "$body"
+          fi
+
+      - name: Fail the run if the compare step errored for another reason
+        if: steps.check.outcome == 'failure' && steps.check.outputs.changed != 'true'
+        run: |
+          echo "check:engine-upstream failed without reporting a change (network/API error?)"
+          exit 1

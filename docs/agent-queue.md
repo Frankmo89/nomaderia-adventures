@@ -56,6 +56,7 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 | **Scope** | Portar la fórmula de [Frankmo89/us-parks-recommender](https://github.com/Frankmo89/us-parks-recommender) a `src/lib/ranking.ts`: TypeScript puro, inputs tipados, top 3 parques con scores y reasons. Tests con Vitest (ya hay setup). |
 | **Done when** | `ranking.ts` + tests verdes; top 3 con scores/reasons; sin I/O de red. |
 | **Audit** | Repo público legible (`src/recommender.py`, `features.py`, pesos `W_CONTENT`/`W_DAYS`/…). El quiz actual tiene un scorer heurístico distinto en `use-quiz.ts` — **no lo reemplazar aquí**; solo añadir el lib. Vitest: `npm test` / `vitest.config.ts`. |
+| **Superseded** | 2026-09-26 — el port a mano derivó del upstream y se **eliminó** (ADR-026). El motor ahora se vendoriza byte a byte en `supabase/functions/_shared/engine/` con `npm run sync:engine` (pin `engine.lock.json`, motor 0.2.0) y se consume vía alias `@engine` (Vite) y ruta relativa (Deno). **No** recrear `src/lib/ranking.ts`. |
 
 ---
 
@@ -81,6 +82,7 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 | **Done when** | Top 3 + preview + insert lead + eventos; SQL aditivo en el PR; EF documentada para deploy. |
 | **Audit** | Resultados del quiz + CTA WhatsApp existen; no hay preview IA ni tabla `leads` con UUID cliente. Tablas cercanas (`quiz_responses`, `sentinel_leads`, `itinerary_requests`) **no sustituyen** este contrato. |
 | **FRANK** | Pegar SQL `20260925120000_create_leads.sql`; confirmar auto-deploy de `quiz-preview` vía `deploy-edge-functions.yml` (ya itera `supabase/functions/*/`); secreto existente `OPENAI_API_KEY` (mismo que concierge — no hace falta uno nuevo). Regenerar tipos tras pegar SQL. |
+| **Update** | 2026-09-26 — `quiz-ranking.ts` ya no usa `ranking.ts`/`ranking-catalog.ts`: es un adaptador sobre el motor vendorizado (`@engine`, ADR-026). `quiz-preview` re-corre el motor y verifica el parque (contrato §6.1). |
 
 ---
 

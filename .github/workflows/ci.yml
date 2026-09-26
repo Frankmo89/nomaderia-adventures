@@ -1,0 +1,44 @@
+name: CI
+
+# Codifies the pre-PR gate from CLAUDE.md (tsc + build) plus tests and the
+# vendored-engine drift check. Until this existed the gate was only a rule
+# agents followed by hand, so SUPPORTED_ENGINE_VERSION / parity fixtures had
+# nothing enforcing them on PRs.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: node node_modules/typescript/bin/tsc --noEmit
+
+      - name: Tests (includes engine parity fixtures + SUPPORTED_ENGINE_VERSION guard)
+        run: npm test
+
+      - name: Vendored engine matches its pin
+        run: npm run verify:engine
+
+      - name: Build
+        # `npm run build` also runs generate-sitemap, which needs Supabase env
+        # vars and hard-fails under CI=true. Cloudflare Pages owns the sitemap;
+        # here we only prove the bundle compiles.
+        run: npx tsx scripts/build-soul.ts && npx vite build
