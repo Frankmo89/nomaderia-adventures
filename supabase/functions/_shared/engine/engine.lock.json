@@ -1,0 +1,24 @@
+{
+  "upstream_repo": "Frankmo89/us-parks-recommender",
+  "upstream_commit": "f0dd8e27d7bfecfe92c84e013072eec3ce606a77",
+  "engine_version": "0.2.0",
+  "content_hash": "60db29d69bacc28a47e8070ee70f2bace63281806ae119f0206b5d65f393cf7d",
+  "synced_at": "2026-09-26T18:37:43.496Z",
+  "files": {
+    "supabase/functions/_shared/engine/engine.ts": {
+      "source": "ts/src/engine.ts",
+      "source_sha256": "577c712d216f90d701b6e6669f008d8a19b72dc4cdafa6900e006abd27b71f25",
+      "sha256": "577c712d216f90d701b6e6669f008d8a19b72dc4cdafa6900e006abd27b71f25"
+    },
+    "supabase/functions/_shared/engine/engine-data.generated.ts": {
+      "source": "web/engine_data.json",
+      "source_sha256": "8efa444708cfb37d7c33b8e97d6bf965dd9374e631959331596a3d94fc828539",
+      "sha256": "094cdc4565b9d47206e97169453b8bb5ab839d9f9001107d35e3bb0be41f1788"
+    },
+    "src/lib/engine/__fixtures__/engine_fixtures.json": {
+      "source": "data/engine_fixtures.json",
+      "source_sha256": "008a9d1355a61b7eef6dd4af45e12728bd32fa26069b42c319863b263894f5c4",
+      "sha256": "008a9d1355a61b7eef6dd4af45e12728bd32fa26069b42c319863b263894f5c4"
+    }
+  }
+}

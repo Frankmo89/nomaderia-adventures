@@ -16,6 +16,8 @@ export default defineConfig(() => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Vendored ranking engine, shared byte-for-byte with the Deno Edge Functions.
+      "@engine": path.resolve(__dirname, "./supabase/functions/_shared/engine"),
     },
   },
   build: {
