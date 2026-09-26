@@ -3,7 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logEvent } from "@/lib/events";
-import { rankQuizDestinations, type QuizDestinationRow } from "@/lib/quiz-ranking";
+import {
+  InvalidProfileError,
+  rankQuizDestinations,
+  type QuizDestinationRow,
+  type TripProfile,
+} from "@/lib/quiz-ranking";
 
 export interface QuizOption {
   label: string;
@@ -38,8 +43,12 @@ export interface QuizDestination {
   best_season: string | null;
   park_code: string | null;
   score: number;
+  /** Engine `match_percent` (fit score, not a probability). */
   matchPercent: number;
   matchReasons: string[];
+  rank: number;
+  /** Contract §3: within tie_epsilon of a neighbor — a close call, not a clear winner. */
+  tiedWithNeighbors: boolean;
 }
 
 export interface QuizPreview {
@@ -50,6 +59,17 @@ export interface QuizPreview {
   synced_at: string | null;
   park_code: string;
   park_title: string;
+  /** Engine version the Edge Function ran; compare with the client's for deploy skew. */
+  engine_version?: string | null;
+  engine_mismatch?: boolean;
+  /** True when the Edge Function re-ran the engine and found this park in its output. */
+  engine_verified?: boolean;
+}
+
+interface RankingMeta {
+  profile: TripProfile;
+  engine_version: string;
+  candidate_park_codes: string[];
 }
 
 const QUIZ_SELECT =
@@ -78,6 +98,7 @@ export function useQuiz(totalSteps: number) {
   const [leadId, setLeadId] = useState<string | null>(null);
   const [preview, setPreview] = useState<QuizPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [rankingMeta, setRankingMeta] = useState<RankingMeta | null>(null);
   const { toast } = useToast();
 
   const isQuizDone = step >= totalSteps;
@@ -120,7 +141,11 @@ export function useQuiz(totalSteps: number) {
     }
   };
 
-  const loadPreview = useCallback(async (dest: QuizDestination, quizAnswers: Record<string, string>) => {
+  const loadPreview = useCallback(async (
+    dest: QuizDestination,
+    quizAnswers: Record<string, string>,
+    meta: RankingMeta | null,
+  ) => {
     if (!dest.park_code) {
       setPreview(null);
       return;
@@ -135,6 +160,10 @@ export function useQuiz(totalSteps: number) {
           fitness_level: quizAnswers.fitness_level,
           lodging: quizAnswers.lodging,
           trip_duration: quizAnswers.trip_duration,
+          // Lets the Edge Function re-run the same engine over the same candidates (contract §6.1).
+          profile: meta?.profile ?? null,
+          engine_version: meta?.engine_version ?? null,
+          candidate_park_codes: meta?.candidate_park_codes ?? null,
         },
         headers: {
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
@@ -142,6 +171,9 @@ export function useQuiz(totalSteps: number) {
       });
       if (error) throw new Error(error.message);
       if (data && !("error" in data)) {
+        if (data.engine_mismatch) {
+          console.warn("[quiz-preview] engine_version skew: client", meta?.engine_version, "server", data.engine_version);
+        }
         setPreview(data);
       } else {
         setPreview(null);
@@ -165,9 +197,9 @@ export function useQuiz(totalSteps: number) {
       if (error) throw error;
 
       const rows = (destinations ?? []) as QuizDestinationRow[];
-      const ranked = rankQuizDestinations(rows, answers, 3);
+      const outcome = rankQuizDestinations(rows, answers, 3);
 
-      const top: QuizDestination[] = ranked.map(({ destination, ranked: r, matchPercent }) => ({
+      const top: QuizDestination[] = outcome.results.map(({ destination, ranked: r, matchPercent, reasons }) => ({
         id: destination.id,
         title: destination.title,
         slug: destination.slug,
@@ -184,11 +216,28 @@ export function useQuiz(totalSteps: number) {
         park_code: destination.park_code,
         score: r.score,
         matchPercent,
-        matchReasons: r.reasons,
+        matchReasons: reasons,
+        rank: r.rank,
+        tiedWithNeighbors: r.tied_with_neighbors,
       }));
 
+      const meta: RankingMeta = {
+        profile: outcome.profile,
+        engine_version: outcome.engine_version,
+        candidate_park_codes: outcome.candidate_park_codes,
+      };
+      setRankingMeta(meta);
       setResults(top);
       setShowResults(true);
+
+      logEvent("quiz_results_ranked", {
+        engine_version: outcome.engine_version,
+        content_hash: outcome.content_hash,
+        top_park_codes: top.map((d) => d.park_code).filter(Boolean),
+        tie_groups: outcome.tie_groups,
+        relaxed_drive_filter: outcome.relaxed_drive_filter,
+        candidate_count: outcome.candidate_park_codes.length,
+      });
 
       const first = top[0] ?? null;
       if (first) {
@@ -200,9 +249,12 @@ export function useQuiz(totalSteps: number) {
           title: first.title,
           source: "auto_top_result",
         });
-        void loadPreview(first, answers);
+        void loadPreview(first, answers, meta);
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof InvalidProfileError) {
+        console.warn("[quiz] invalid engine profile:", err.message);
+      }
       toast({ title: "Error", description: "Algo salió mal. Intenta de nuevo.", variant: "destructive" });
     } finally {
       setLoading(false);
@@ -224,8 +276,8 @@ export function useQuiz(totalSteps: number) {
       },
       leadId,
     );
-    void loadPreview(dest, answers);
-  }, [results, leadId, loadPreview, answers]);
+    void loadPreview(dest, answers, rankingMeta);
+  }, [results, leadId, loadPreview, answers, rankingMeta]);
 
   const handleEmailSubmit = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -295,6 +347,7 @@ export function useQuiz(totalSteps: number) {
           top_destination_ids: results.map((d) => d.id),
           top_park_codes: results.map((d) => d.park_code).filter(Boolean),
           selected_park_code: selected?.park_code ?? null,
+          engine_version: rankingMeta?.engine_version ?? null,
         },
         newLeadId,
       );
