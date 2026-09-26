@@ -140,8 +140,13 @@ src/
 ├── lib/
 │   ├── utils.ts              # cn() = clsx + tailwind-merge
 │   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
+│   ├── quiz-ranking.ts       # Adaptador quiz → motor de ranking vendorizado (@engine, ADR-026)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
 └── supabase/functions/       # Edge Functions — 20 en total
+    ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts
+    │                         #  (engine.ts byte a byte + engine-data.generated.ts + engine.lock.json).
+    │                         #  NO editar a mano. Vite lo importa como `@engine/*`; Deno por ruta relativa.
+    ├── quiz-preview/         # Preview IA del quiz; re-corre el motor y verifica el parque (§6.1)
     ├── send-*                # 4: quiz-email, welcome-email, drip-emails, quiz-results
     ├── concierge-agent/      # Concierge IA (RAG sobre knowledge_chunks) — EN PRODUCCIÓN
     ├── ingest-*              # 4: knowledge, national-parks, park-permits, campgrounds
@@ -219,6 +224,9 @@ Tipografías: `font-serif` → **Playfair Display** (headings editoriales) ·
 - NO cambiar lógica de auth (`supabase.auth.*`, RPC `has_role`) ni queries de
   Supabase sin instrucción explícita.
 - NO reintroducir precios MXN ni el esquema legacy de tiers por duración. (ADR-012)
+- NO editar `supabase/functions/_shared/engine/` ni portar el ranking a mano:
+  el motor se vendoriza con `npm run sync:engine -- --to <sha>` y
+  `verify:engine` falla ante cualquier byte distinto del pin. (ADR-026)
 
 ## Comandos
 
@@ -226,8 +234,11 @@ Tipografías: `font-serif` → **Playfair Display** (headings editoriales) ·
 npm run dev           # Dev server → http://localhost:8080
 npm run build         # Build producción → dist/   (debe pasar antes de PR)
 npm run lint          # ESLint
-npm run test          # Vitest
+npm run test          # Vitest (incluye paridad del motor: 26 fixtures Python)
 node node_modules/typescript/bin/tsc --noEmit  # Type check — debe pasar antes de PR
+npm run sync:engine -- --to <sha>   # Mover el pin del motor de ranking (ADR-026)
+npm run verify:engine               # Re-descarga en el pin y falla si algo derivó
+npm run check:engine-upstream       # ¿Upstream main va adelante del pin? (exit 2 = sí)
 ```
 
 ## Variables de Entorno

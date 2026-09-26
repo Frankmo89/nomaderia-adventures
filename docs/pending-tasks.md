@@ -30,6 +30,18 @@ referenciar esta lista primero.
       Tras regenerar, se puede quitar el cast `SupabaseClient` en
       `src/lib/events.ts` (ADR-009). Sin este paso, `logEvent` falla en silencio
       en producción (warn en consola) porque la tabla no existe.
+- [ ] **Motor de ranking vendorizado (ADR-026) — confirmar deploy + habilitar CI.**
+      (1) Confirmar que `deploy-edge-functions.yml` redesplegó `quiz-preview` tras
+      el merge: ahora importa `../_shared/engine/engine.ts` (motor 0.2.0) y
+      devuelve `engine_version`/`engine_verified`. Sin redeploy, el frontend
+      (Cloudflare) y la EF corren motores distintos → la respuesta trae
+      `engine_mismatch: true` (solo warn; no rompe). (2) Verificar que GitHub
+      Actions esté desbloqueado (cuenta estuvo billing-locked el 2026-07-27,
+      ADR-023): los workflows nuevos `ci.yml` (gate de PR) y
+      `engine-upstream-check.yml` (cron semanal) no corren sin eso. (3) Opcional:
+      correr `workflow_dispatch` de `engine-upstream-check.yml` una vez para
+      validar que puede crear el label/issue `engine-upstream`. Sin secretos
+      nuevos ni migraciones.
 - [ ] **T05 — Aplicar migración `leads` + confirmar deploy de `quiz-preview`.** Pegar
       el SQL de `supabase/migrations/20260925120000_create_leads.sql` en el SQL
       Editor (nunca `db push`). Regenerar tipos (mismo comando que T02). Confirmar
@@ -369,6 +381,33 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-09-26] **Motor de ranking: copia a mano → motor real vendorizado (ADR-026).**
+  `src/lib/ranking.ts` + `ranking-catalog.ts` (port T03) habían derivado del
+  upstream `Frankmo89/us-parks-recommender`: filtro duro de mes (upstream ya
+  es penalización suave), un solo bioma por parque (21/63 parques tienen dos
+  arriba), tags distintos en 33/63 parques, IDF recalculado sobre el subset,
+  sin tie-break `park_code`/`tie_groups`, sin validación, `match_percent`
+  remapeado 40–100. Se eliminan y se reemplazan por `scripts/sync-engine.ts`,
+  que vendoriza byte a byte `ts/src/engine.ts`, `web/engine_data.json` (como
+  `.ts` generado) y `data/engine_fixtures.json` al commit pineado en
+  `supabase/functions/_shared/engine/engine.lock.json` (pin inicial
+  `f0dd8e2`, motor **0.2.0**, `content_hash 60db29d6…`). Alias `@engine`
+  (Vite/Vitest/tsconfig) → la misma carpeta que importan las Edge Functions.
+  `src/lib/quiz-ranking.ts` queda como adaptador puro (quiz → `TripProfile`,
+  catálogo acotado a destinos publicados **sin** overrides de
+  `destinations.lat/lon/requires_permit`, `match_percent` del motor tal cual,
+  chips en español desde `facts`/`breakdown`, radio de manejo relajado una vez
+  si vacía el catálogo). `quiz-preview` re-corre el motor server-side y solo
+  cita hechos del motor si el parque elegido está en su salida (contrato
+  §6.1); responde `engine_version`/`engine_mismatch`/`engine_verified`.
+  Tests: 27 de paridad (26 perfiles Python) + guard
+  `SUPPORTED_ENGINE_VERSION`. CI nuevo: `ci.yml` (tsc/test/verify:engine/build)
+  y `engine-upstream-check.yml` (semanal; abre/actualiza issue
+  `engine-upstream` si upstream `main` mueve versión/hash/motor/fixtures).
+  Verificado: `tsc --noEmit`, `npm run build`, `npm test` (102), `deno check`
+  + corrida Deno 2.9 de los 26 fixtures. **FRANK:** ver pendiente humano
+  «Motor de ranking vendorizado». `concierge-agent` no se tocó (tarea aparte).
 
 - [2026-09-25] **T05 — Results + AI preview + lead capture.** Cablea `rankParks`
   (T03) al quiz vía `src/lib/quiz-ranking.ts` + catálogo estático

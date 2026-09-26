@@ -322,6 +322,61 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   despliegue `quiz-preview` (mismo secreto OpenAI). Cast ADR-009 en inserts a
   `leads` hasta regenerar tipos.
 
+### ADR-026 — Motor de ranking vendorizado por script con pin a commit (no copia a mano, no npm)
+- **Fecha:** 2026-09
+- **Estado:** Vigente (reemplaza el punto 1 de ADR-025 y el enfoque "port" de T03)
+- **Contexto:** T03 portó a mano `Frankmo89/us-parks-recommender` a
+  `src/lib/ranking.ts` + `ranking-catalog.ts`. En días ya había derivado del
+  upstream (filtro duro de mes vs. penalización suave, un bioma por parque vs.
+  multi-bioma en 21/63, tags distintos en 33/63, IDF sobre subset, sin
+  tie-break/`tie_groups`, sin validación, `match_percent` inventado 40–100).
+  Upstream ahora publica un contrato (`docs/engine-contract.md`), un port TS
+  puro sin dependencias (`ts/src/engine.ts`), un export versionado
+  (`web/engine_data.json` con `engine_version` + `content_hash`) y fixtures de
+  paridad Python (`data/engine_fixtures.json`). Hay dos runtimes consumidores:
+  Vite/npm (quiz) y Deno (Edge Functions, imports por URL/relativos, sin
+  `deno.json`/`npm:`). Opciones evaluadas: (a) paquete npm — exige publicar
+  desde upstream (`ts/` es `private`, sin build/tags/release), `npm:` en Deno
+  se resuelve en deploy (misma fragilidad que ADR-023) y dos mecanismos de
+  resolución distintos; (b) vendorizar por script con pin. Se descartó también
+  importar `engine.ts` por URL raw de GitHub (solo Deno; fetch en deploy).
+- **Decisión:** (b). `scripts/sync-engine.ts` (tsx, sin deps nuevas) descarga
+  `ts/src/engine.ts` **byte a byte**, `web/engine_data.json` (emitido como
+  `engine-data.generated.ts` para que Vite y Deno lo importen igual, sin
+  `resolveJsonModule`/import attributes) y `data/engine_fixtures.json`, y
+  escribe `supabase/functions/_shared/engine/engine.lock.json` con
+  `upstream_commit`, `engine_version`, `content_hash` y sha256 por archivo.
+  **Una sola copia**, en `_shared/engine/` (la importan las EF por ruta
+  relativa) con alias `@engine` para Vite/Vitest/tsconfig. Mismo patrón que
+  `build-soul.ts`. El adaptador `src/lib/quiz-ranking.ts` no puntúa nada:
+  mapea respuestas → `TripProfile`, acota el catálogo a destinos publicados
+  **conservando `vocab.tag_idf`/pesos** del export (scores idénticos a los
+  fixtures), usa `match_percent` del motor tal cual, traduce `facts`/`breakdown`
+  a chips en español y relaja una vez el radio de manejo si vacía el catálogo
+  (§3). **Sin overrides** del catálogo desde `destinations` (lat/lon,
+  `requires_permit`): editar el catálogo es cambio breaking del motor.
+  `quiz-preview` re-corre el motor server-side sobre los mismos candidatos y
+  solo cita hechos del motor si devolvió el parque elegido (§6.1);
+  `InvalidProfileError` → 400. Detección de bumps: (1) nada cambia sin un
+  commit que mueva el lock; (2) `engine-upstream-check.yml` compara el pin con
+  upstream `main` cada semana y mantiene un issue `engine-upstream`;
+  (3) `SUPPORTED_ENGINE_VERSION` en el adaptador + guard Vitest fallan hasta
+  que un humano relea CHANGELOG/contrato y lo suba; (4) `engine_version` viaja
+  en eventos (`quiz_results_ranked`, `quiz_completed`) y en la respuesta de
+  `quiz-preview` (`engine_mismatch` marca skew Cloudflare vs. EF). `ci.yml`
+  corre tsc/test/`verify:engine`/build en PRs.
+- **Consecuencias:** NO editar nada en `_shared/engine/` salvo el README —
+  `npm run verify:engine` re-descarga en el pin y falla ante cualquier byte
+  distinto. Para actualizar: `npm run sync:engine -- --to <sha completo>`,
+  leer upstream CHANGELOG + contrato, ajustar el adaptador si aplica, subir
+  `SUPPORTED_ENGINE_VERSION`, todo en el mismo PR. NO reintroducir un port a
+  mano, un catálogo estático ni remapeos del `match_percent`. NO llamar al
+  motor con el catálogo completo cuando el producto solo ofrece destinos
+  publicados (acotar por `park_code`, nunca recalcular IDF). El texto del
+  motor (`why`) es inglés: traducir en presentación, jamás alterar el orden.
+  `concierge-agent` (tool-calling §6) es tarea separada — usará el mismo
+  `_shared/engine/`.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)
