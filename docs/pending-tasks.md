@@ -341,6 +341,11 @@ Pendiente real:
 - [ ] **Logo final** — subir a Supabase y actualizar `src/config/assets.ts`
       (resolver el `TODO` de la línea 7).
 
+### Concierge + motor (seguimiento de ADR-029)
+- [ ] **Frontend: tarjetas de recomendación en `ConciergeChat`.** `concierge-agent` ya devuelve `recommendations[]` (`title`, `url`, `nps_url`, `match_percent`, `tied`, `reasons_es`); `use-concierge.ts` aún no tipa ni muestra esos campos. `match_percent` siempre con caption de "compatibilidad", nunca como probabilidad.
+- [ ] **Concierge multi-turn.** Hoy es single-turn (`{question, destination_slug}`): "¿y el segundo?" no funciona. Agregar historial acotado desde el cliente; el servidor **re-corre el motor** con el perfil, nunca confía en un ranking que mande el cliente.
+- [ ] **Quiz: `INTEREST_TO_PROFILE.deserts.tags` incluye `"desert"`** (bioma, no tag del vocab — contrato §1 dice no mandarlo). El motor lo ignora, así que no cambia scores; quitarlo en un PR aparte.
+
 ### Calidad / mantenimiento (tareas separadas)
 - [ ] **Mapa interactivo real en /destinos — sigue diferido (research Mobbin, reconfirmado 2026-07):** el tinte decorativo por estado ya se implementó ([2026-07] `USStateTintMap`, ver changelog) en el slot `children` de `PageHeader` — sin pines, sin coordenadas, plano. `useDestinationsMapData()` en `src/hooks/use-destinations.ts` sigue **sin usarse**, expuesto tal cual (`{id, title, slug, region, difficulty_level, latitude, longitude}`, 63/63 destinos con `latitude`/`longitude` pobladas) para el día que se justifique un mapa interactivo real tipo Airbnb (tiles + lista sincronizada). Research de Mobbin reconfirmado: ningún competidor premium usa mapa ilustrado estático con 60+ pines individuales a este nivel de densidad — no construir esa variante. Si el mapa interactivo se justifica por datos de conversión, ir directo a esa implementación (Mapbox/Leaflet + `useDestinationsMapData()`) en vez de una capa intermedia de pines. `parseNpsLatLong()` en `src/lib/parse-nps-lat-long.ts` (con tests) queda como utilidad documentada/fallback para ese trabajo futuro, sin usarse hoy.
 - [ ] **Drift de esquema sin reconciliar (`docs/supabase-schema.md`):** el doc no lista `destinations.latitude`/`longitude` (entre otras columnas reales: `access_difficulty`, `designation`, `nps_url`, `min_days`/`max_days`, etc.). Estas columnas ya existen en `src/integrations/supabase/types.ts` (tipos regenerados) sin migración committeada que las agregue. Reconciliar la sección de `destinations` con el estado real de la DB en una tarea separada. **La parte de `park_live_data` se reconcilió 2026-07-16** (ver changelog: sección del doc reescrita contra `information_schema` — PK real `park_code`, sin columna `id`, columnas `entrance_fee_usd`/`nps_images`/`coordinates`/`permits`/`weather` documentadas); nota: los tipos generados siguen sin `weather` en `park_live_data` — se corrige al regenerar tipos (tarea de Frank).
@@ -399,6 +404,20 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-09-26] **Concierge recomienda parques solo vía el motor (ADR-029).**
+  En modo global, `concierge-agent` elegía parques a partir de los chunks RAG más
+  parecidos. Ahora llama la herramienta `recommend_parks` (contrato §1, enums de
+  `ENGINE_DATA`) sobre los 63 destinos publicados; la salida llega al modelo en
+  español sin floats (`_shared/engine-es.ts`), con empates explícitos y links a
+  guía + nps.gov. Una revisión de la respuesta (`_shared/park-mentions.ts`)
+  rechaza parques no respaldados: una regeneración y luego respuesta fija desde
+  el motor. Tarifas/alertas siempre con fecha + nps.gov; chunks de cierres/clima
+  marcados como guía editorial; `nearby_parks` fuera del modo global. También:
+  `sources` volvió a funcionar (salía siempre vacío: los chunks no guardan
+  `slug`), supabase-js pineado a 2.48.0 en concierge/quiz-preview, y helpers
+  del motor compartidos quiz ↔ Edge Functions vía alias `@shared`. 117 tests.
+  No probado contra OpenAI en vivo (sin secretos locales) — ver PR.
 
 - [2026-09-26] **Ingesta RAG dirigida por contenido (ADR-028).** Migración
   `20260926120000_knowledge_ingest_content_triggers.sql`: `content_version` sube

@@ -149,7 +149,9 @@ src/
     │                         #  NO editar a mano. Vite lo importa como `@engine/*`; Deno por ruta relativa.
     ├── quiz-preview/         # Preview IA del quiz; re-corre el motor y verifica el parque (§6.1)
     ├── send-*                # 4: quiz-email, welcome-email, drip-emails, quiz-results
-    ├── concierge-agent/      # Concierge IA (RAG sobre knowledge_chunks) — EN PRODUCCIÓN
+    ├── _shared/engine-es.ts  # Presentación en español del motor + scoping (Vite: `@shared/*`; lo usan quiz, quiz-preview y concierge)
+    ├── _shared/park-mentions.ts # Detector de parques nombrados — revisión de respuestas del concierge (ADR-029)
+    ├── concierge-agent/      # Concierge IA (RAG + tool `recommend_parks` → motor, ADR-029) — EN PRODUCCIÓN
     ├── ingest-*              # 4: knowledge, national-parks, park-permits, campgrounds
     ├── sync-park-*           # 3: live-data, trails, weather
     ├── generate-*            # 3: park-content, gear-draft, blog-draft
