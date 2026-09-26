@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAdmin } from "../_shared/admin-auth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -279,7 +279,7 @@ async function processOnePark(
   park: DestRow,
   apiKey: string,
   force: boolean,
-  db: ReturnType<typeof createClient>,
+  db: SupabaseClient,
 ): Promise<ParkResult> {
   const base = { park_code: park.park_code, slug: park.slug };
 
@@ -628,10 +628,10 @@ serve(async (req) => {
       query = query.eq("is_published", false);
     }
 
-    const { data: rows, error: dbErr } = await query;
+    const { data: rows, error: dbErr } = await query.returns<DestRow[]>();
     if (dbErr) throw new Error(`Error consultando destinos: ${dbErr.message}`);
 
-    const parks = (rows ?? []) as DestRow[];
+    const parks = rows ?? [];
 
     // Count remaining unpublished parks (for pagination context)
     const { count: totalPending } = await db

@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAdmin } from "../_shared/admin-auth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -269,7 +269,7 @@ function buildWritePayload(c: NpsCampground): Record<string, unknown> {
 
 // ─── Match by nps_code or nombre, then update or insert ───────────────────────
 
-type DbClient = ReturnType<typeof createClient>;
+type DbClient = SupabaseClient;
 
 async function upsertCampground(
   c: NpsCampground,

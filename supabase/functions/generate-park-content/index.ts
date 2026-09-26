@@ -813,10 +813,10 @@ serve(async (req) => {
       query = query.eq("research_status", "pendiente").eq("is_published", false);
     }
 
-    const { data: rows, error: fetchErr } = await query.limit(limit);
+    const { data: rows, error: fetchErr } = await query.limit(limit).returns<ParkRow[]>();
     if (fetchErr) throw fetchErr;
 
-    const batch = (rows ?? []) as ParkRow[];
+    const batch = rows ?? [];
     console.log(`[generate-park-content] batch: ${batch.length} parque(s)`);
 
     let procesados = 0;
