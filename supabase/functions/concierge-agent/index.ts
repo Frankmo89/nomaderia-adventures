@@ -14,7 +14,7 @@
 // Output: { answer: string, sources: Source[], escalate: boolean, whatsapp_url?: string }
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const OPENAI_KEY   = Deno.env.get("OPENAI_API_KEY")!;
@@ -107,22 +107,29 @@ async function embedQuery(text: string): Promise<number[]> {
   return data.data[0].embedding;
 }
 
-/** Deduplica fuentes por slug+section */
-function deduplicateSources(chunks: KnowledgeChunk[]): Source[] {
+/**
+ * Deduplica fuentes por slug+section.
+ * ingest-knowledge guarda `park_code` pero NO `slug` en metadata, así que el
+ * slug se resuelve desde `destinations` (slugByCode). Sin esto, `sources`
+ * salía siempre vacío.
+ */
+function deduplicateSources(chunks: KnowledgeChunk[], slugByCode: Map<string, string>): Source[] {
   const seen = new Set<string>();
   const sources: Source[] = [];
   for (const chunk of chunks) {
-    const key = `${chunk.metadata.slug}-${chunk.metadata.section}`;
-    if (!seen.has(key) && chunk.metadata.slug) {
+    const slug = chunk.metadata.slug
+      ?? (chunk.metadata.park_code ? slugByCode.get(chunk.metadata.park_code) : undefined);
+    const key = `${slug}-${chunk.metadata.section}`;
+    if (!seen.has(key) && slug) {
       seen.add(key);
       const isDestination = chunk.source_table === "destinations";
       sources.push({
         title:   chunk.metadata.title  ?? "Nomaderia",
-        slug:    chunk.metadata.slug,
+        slug,
         section: chunk.metadata.section ?? chunk.source_field,
         url:     isDestination
-          ? `${SITE_URL}/destinos/${chunk.metadata.slug}`
-          : `${SITE_URL}/gear/${chunk.metadata.slug}`,
+          ? `${SITE_URL}/destinos/${slug}`
+          : `${SITE_URL}/gear/${slug}`,
       });
     }
   }
@@ -418,7 +425,15 @@ serve(async (req) => {
 
     const chatData = await chatRes.json();
     const answer   = chatData.choices[0].message.content as string;
-    const sources  = deduplicateSources(chunks);
+
+    const { data: destRows } = await supabase
+      .from("destinations")
+      .select("park_code, slug")
+      .eq("is_published", true)
+      .returns<Array<{ park_code: string | null; slug: string }>>();
+    const slugByCode = new Map<string, string>();
+    for (const d of destRows ?? []) if (d.park_code) slugByCode.set(d.park_code, d.slug);
+    const sources  = deduplicateSources(chunks, slugByCode);
 
     // ── 9. Responder ──────────────────────────────────────────────────────────
     return new Response(
