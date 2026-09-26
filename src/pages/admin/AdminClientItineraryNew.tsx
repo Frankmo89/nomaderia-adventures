@@ -153,8 +153,8 @@ const AdminClientItineraryNew = () => {
 
     setSaving(false);
 
-    if (error) {
-      toast({ title: "Error al crear itinerario", description: error.message, variant: "destructive" });
+    if (error || !data) {
+      toast({ title: "Error al crear itinerario", description: error?.message, variant: "destructive" });
       return;
     }
 

@@ -1,8 +1,10 @@
-export interface DraftSource {
+// A type alias (not an interface) so it stays assignable to the `Json`
+// column type when persisted to ai_content_meta.sources.
+export type DraftSource = {
   title: string;
   url: string;
   used_for: string;
-}
+};
 
 export interface PermitWindowDraft {
   park: string;
