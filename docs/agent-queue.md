@@ -118,10 +118,10 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 |---|---|
 | **Status** | `TODO` |
 | **Depends on** | T06 |
-| **Scope** | Tras orden pagada: draft día a día con plan B, hikes por nivel, permisos con fechas, costo total, gear con tag Amazon `nomaderia-20` + disclosure FTC junto a cada link, reglas de tarifas para visitantes de fuera de EE. UU. Usar datos NPS + RAG (`knowledge_chunks`). Verifier marca hechos sin fuente `⚠️ VERIFICAR`. Guardar en tabla `drafts` con flags. Si la re-ingesta RAG sigue pendiente de Frank, usar **solo NPS** y decirlo en el PR. |
+| **Scope** | Tras orden pagada: draft día a día con plan B, hikes por nivel, permisos con fechas, costo total, gear con tag Amazon `nomaderia-20` + disclosure FTC junto a cada link, reglas de tarifas para visitantes de fuera de EE. UU. Usar datos NPS + RAG (`knowledge_chunks`). Verifier marca hechos sin fuente `⚠️ VERIFICAR`. Guardar en tabla `drafts` con flags. Si `knowledge_chunks` no cubre el parque, usar **solo NPS** y decirlo en el PR. |
 | **Done when** | EF/job genera draft+flags; tabla `drafts`; SQL en el PR. |
-| **Audit** | Builder manual (`itinerary_templates` / `client_itineraries`) existe; no hay auto-draft post-pago ni verifier. RAG: ~1758 chunks / 63 parques, pero cleanup + `knowledge_chunks_ingest_lock` siguen pendientes humanos — fallback NPS documentado. |
-| **FRANK** | Pegar SQL; deploy EF; opcional completar ingest lock si se quiere RAG completo. |
+| **Audit** | Builder manual (`itinerary_templates` / `client_itineraries`) existe; no hay auto-draft post-pago ni verifier. RAG listo (verificado 2026-09-26): 1,768 chunks / 63 parques, sin duplicados; cleanup `pefo`/`gumo`, `knowledge_chunks_ingest_lock` y constraint único ya aplicados. |
+| **FRANK** | Pegar SQL; deploy EF. |
 
 ---
 

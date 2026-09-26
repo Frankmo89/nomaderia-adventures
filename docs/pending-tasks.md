@@ -282,7 +282,7 @@ Pendiente real:
   La investigación de fuente alternativa (RIDB, OpenStreetMap/Overpass) sigue siendo información válida si en el futuro se quiere mileage/dificultad estructurados para "Senderos curados" más allá de lo que `signature_hikes` ya cubre editorialmente — RIDB (`ridb.recreation.gov`) **no** expone un tipo de recurso "Trails" distinto (14 recursos primarios: Activities, Attributes, Campsites, Events, Facilities, FacilityAddresses, Links, Media, Organizations, PermitEntrances, RecreationAreaAddresses, RecreationAreas, Tours, Zones; `Facility.facility_type_description` es un campo libre sin enum documentado, sin mileage/dificultad estructurados).
 - [x] ~~⚠ BLOQUEANTE — `ingest-knowledge` desplegado en producción NO coincide con el código del repo~~ **RESUELTO (julio 2026):** Frank recuperó el código desplegado real desde el dashboard de Supabase; commiteado verbatim (`recover deployed ingest-knowledge v19 from Supabase dashboard — never committed`) antes de cualquier cambio adicional, así que el drift queda cerrado y trazable en git. Sobre esa base se completó el wire de campgrounds y el guard de duplicados (ver changelog + pendiente Frank abajo).
 - [x] ~~Limpiar duplicados de `knowledge_chunks` en `pefo`/`gumo`~~ **Guard de código agregado (julio 2026)** — ver changelog. El DELETE de limpieza de los duplicados existentes y la migración del constraint siguen **pendientes de ejecución manual por Frank** (ver checklist ordenado abajo) — no se ejecutó SQL contra la DB en esta pasada, solo se escribió.
-- [ ] **Frank — pasos manuales para cerrar el batch de ingesta de 63 parques (en este orden exacto; el orden importa):**
+- [x] ~~**Frank — pasos manuales para cerrar el batch de ingesta de 63 parques (en este orden exacto; el orden importa):**~~ **HECHO — verificado contra la DB 2026-09-26:** 0 duplicados, `knowledge_chunks_ingest_lock` + `knowledge_chunks_source_field_unique` existen, re-ingesta completa del 2026-07-14 (1,768 chunks / 63 parques). Pasos conservados como referencia:
   1. **Limpiar duplicados de `pefo`/`gumo` primero.** Pegar y ejecutar en el editor SQL de Supabase:
      ```sql
      -- ANTES: confirma el estado actual (pefo ~460, gumo ~152)
@@ -360,7 +360,7 @@ Pendiente real:
   tentativa: agente único con tool-calling + `pgvector`; proveedor de embeddings
   por definir. **No** agregar dependencias todavía.
   **Auditoría de pre-ingesta (julio 2026, solo lectura contra DB en vivo):** `knowledge_chunks` ya tiene 1758 chunks cubriendo los 63/63 parques (confirma que una ingesta completa previa sí ocurrió — coincide con el `skipped: 63` observado). `match_knowledge_chunks` en vivo coincide con la migración local (`query_embedding, match_count, min_similarity, filter_park_code` — 4 args) — sin drift ahí. Contenido de `destinations`: **0 columnas nulas** en los 63 parques publicados para todos los campos que lee `ingest-knowledge` (los 14 markdown directos + `signature_hikes`/`faqs` JSONB) — no hay parques "vacíos" que excluir por contenido, el catálogo está completo. `campgrounds`: 82 filas curadas en 46 parques (`destination_id` distintos) — coincide con el ~46 esperado; `ingest-knowledge` no las lee (confirmado por grep en el archivo completo, cero referencias a `campgrounds`). **`renderCampgrounds` no existe en ningún archivo del repo** (búsqueda global sin resultados) — si la tarea pendiente recordada se refería a una función ya escrita, es una confusión con `renderLodging`/`renderHikes`/`renderFears`/`renderFaqs`, que sí existen en `ingest-knowledge/index.ts` y son el patrón a seguir. Esfuerzo estimado para wirearlas: ~30-45 min (tipo `CampgroundRow`, función `renderCampgrounds()`, query a `campgrounds` por `destination_id`, push a `buildChunks()`) — chico, no bloqueante por sí solo. **Los bloqueantes reales están en Pendientes de Código → Prioridad alta** (drift del código desplegado vs. repo en `grca`, y duplicados sin limpiar en `pefo`/`gumo`) — resolver esos dos primero. Con eso resuelto: recomendación es wirear campgrounds en la misma pasada antes de re-ingestar los 63 (evita un segundo re-embed completo); si hay presión de tiempo, correr sin campgrounds ahora es seguro igual — el ingest es idempotente por parque vía `content_version`, así que un re-ingest scoped a los 46 `park_codes` con campgrounds más adelante no rompe nada.
-  **Actualización (julio 2026):** ambos bloqueantes resueltos en código — ver entrada de changelog "`ingest-knowledge`: recuperado el código desplegado real...". `renderCampgrounds` sí existía, pero solo en la versión desplegada nunca commiteada (no en el repo, que es lo que se buscó entonces); ya recuperada, commiteada y con la data cableada. Falta solo la ejecución manual de Frank (limpieza SQL + migración + deploy + re-ingest en serie) antes de dar luz verde al batch de 63 — ver checklist ordenado en Pendientes de Código → Prioridad alta.
+  **Actualización (julio 2026):** ambos bloqueantes resueltos en código — ver entrada de changelog "`ingest-knowledge`: recuperado el código desplegado real...". `renderCampgrounds` sí existía, pero solo en la versión desplegada nunca commiteada (no en el repo, que es lo que se buscó entonces); ya recuperada, commiteada y con la data cableada. La ejecución manual de Frank (limpieza SQL + migración + deploy + re-ingest) ya se hizo — verificado 2026-09-26.
 - **Emails:** Email 4 de re-engagement a 30 días; tracking de opens/clicks con
   webhooks de Resend → tabla `email_events`.
 - **Dashboard avanzado:** desglose de conversiones por `source`, top destinos
@@ -382,6 +382,17 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-09-26] **Auditoría read-only de `knowledge_chunks` + docs corregidos.**
+  Estado real en DB: 1,768 chunks, 63/63 parques, 30 `source_field`, todos del
+  2026-07-14; 0 duplicados; lock + constraint único aplicados; `content_version`
+  guardado = actual en los 63 (nada que re-ingestar). La cifra 1172 (2026-06-16)
+  estaba superada. Docs corregidos: `seccion-9` marcaba `gear_articles` como
+  implementado — no lo es (`ingest-knowledge` solo acepta `source: "destinations"`);
+  `agent-queue.md` T08 listaba cleanup/lock como pendientes — ya aplicados.
+  Hallazgos abiertos (sin código aún): nada sube `content_version` al editar un
+  parque, y el webhook `auto-ingest-destinations` dispara un escaneo de los 63
+  parques por cada fila actualizada.
 
 - [2026-09-26] **Type check real en CI: tsc por proyecto + `deno check` (ADR-027).**
   `tsc --noEmit` (regla 6 + `ci.yml`) revisaba 0 archivos por el root tsconfig
