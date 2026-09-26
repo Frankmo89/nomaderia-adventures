@@ -14,6 +14,8 @@
     "verify:engine": "tsx scripts/sync-engine.ts --verify",
     "check:engine-upstream": "tsx scripts/sync-engine.ts --check-upstream",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
+    "typecheck:functions": "deno check --no-lock supabase/functions",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

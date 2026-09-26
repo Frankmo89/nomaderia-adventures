@@ -15,7 +15,6 @@ import {
   toggleMediaActive,
   deleteMediaItem,
 } from "@/hooks/use-media";
-import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import {
@@ -36,9 +35,6 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
-// media_slider not yet in generated types — widen the client
-const db = supabase as unknown as ReturnType<typeof createClient>;
 
 // ── Sortable card ─────────────────────────────────────────────────────────────
 
@@ -175,7 +171,7 @@ const AdminGallery = () => {
   );
 
   const load = async () => {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from("media_slider")
       .select("id, media_type, public_url, storage_path, display_order, is_active, created_at")
       .order("display_order", { ascending: true });
@@ -256,7 +252,7 @@ const AdminGallery = () => {
     try {
       await Promise.all(
         updates.map(async (u) => {
-          const { error } = await db
+          const { error } = await supabase
             .from("media_slider")
             .update({ display_order: u.newOrder })
             .eq("id", u.id);

@@ -279,18 +279,18 @@ serve(async (req) => {
     try {
       let q = supabase.from("destinations").select(`${baseSelect}, content_version`);
       if (requestedCodes) q = q.in("park_code", requestedCodes);
-      const { data, error } = await q;
+      const { data, error } = await q.returns<DestRow[]>();
       if (error) throw error;
-      destinations = (data ?? []) as DestRow[];
+      destinations = data ?? [];
       hasContentVersion = true;
     } catch (err) {
       const msg = String(err);
       if (msg.includes("content_version") || msg.includes("42703")) {
         let q = supabase.from("destinations").select(baseSelect);
         if (requestedCodes) q = q.in("park_code", requestedCodes);
-        const { data, error } = await q;
+        const { data, error } = await q.returns<DestRow[]>();
         if (error) throw error;
-        destinations = (data ?? []) as DestRow[];
+        destinations = data ?? [];
       } else { throw err; }
     }
     if (destinations.length === 0) {

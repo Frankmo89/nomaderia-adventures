@@ -4,6 +4,11 @@ name: CI
 # vendored-engine drift check. Until this existed the gate was only a rule
 # agents followed by hand, so SUPPORTED_ENGINE_VERSION / parity fixtures had
 # nothing enforcing them on PRs.
+#
+# Type checking is per-project on purpose: the root tsconfig.json is
+# `"files": []` + references, so a bare `tsc --noEmit` checks zero files
+# (ADR-027). Edge Functions run on Deno, so tsc never sees them — deno check
+# covers supabase/functions/.
 
 on:
   pull_request:
@@ -28,8 +33,33 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Type check
-        run: node node_modules/typescript/bin/tsc --noEmit
+      - name: Type check (app + node configs)
+        run: npm run typecheck
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.7
+
+      - name: Cache Deno deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ runner.os }}-${{ hashFiles('supabase/functions/**/*.ts') }}
+          restore-keys: deno-${{ runner.os }}-
+
+      - name: Fetch Edge Function deps
+        # Only this step touches the network. esm.sh 522s transiently (ADR-023),
+        # so retry the fetch — never the type check, where a failure is real.
+        run: |
+          for attempt in 1 2 3; do
+            deno cache --no-lock supabase/functions && exit 0
+            echo "deno cache attempt $attempt/3 failed"
+            [ "$attempt" -lt 3 ] && sleep $((10 * attempt))
+          done
+          exit 1
+
+      - name: Type check (Edge Functions)
+        run: deno check --no-lock --cached-only supabase/functions
 
       - name: Tests (includes engine parity fixtures + SUPPORTED_ENGINE_VERSION guard)
         run: npm test

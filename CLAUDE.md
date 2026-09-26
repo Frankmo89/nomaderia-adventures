@@ -29,8 +29,9 @@ opcionales.
    `docs/decisions.md`** de forma concisa (una entrada ADR por decisión).
 5. **SEGURIDAD.** Nunca toques `.env`. Nunca pongas credenciales de Supabase,
    Resend ni Stripe en el código. Secretos solo vía Supabase Dashboard / CLI.
-6. **VERIFICACIÓN ANTES DE PR.** `node node_modules/typescript/bin/tsc --noEmit`
-   **y** `npm run build` deben pasar. Reporta hallazgos de lint/test
+6. **VERIFICACIÓN ANTES DE PR.** `npm run typecheck`, `npm run typecheck:functions`
+   (Deno) **y** `npm run build` deben pasar. Ojo: `tsc --noEmit` a secas revisa
+   **cero** archivos (root tsconfig = solo references, ADR-027). Reporta hallazgos de lint/test
    preexistentes sin "arreglarlos" de paso.
 7. **NO DUPLICAR DOCS.** La memoria ya está estructurada (`CLAUDE.md` raíz +
    `docs/`). No crees `clauderules.md`, `pending_tasks.md` en raíz, ni variantes.
@@ -235,7 +236,8 @@ npm run dev           # Dev server → http://localhost:8080
 npm run build         # Build producción → dist/   (debe pasar antes de PR)
 npm run lint          # ESLint
 npm run test          # Vitest (incluye paridad del motor: 26 fixtures Python)
-node node_modules/typescript/bin/tsc --noEmit  # Type check — debe pasar antes de PR
+npm run typecheck     # tsc -p tsconfig.app.json + tsconfig.node.json — debe pasar antes de PR
+npm run typecheck:functions  # deno check de supabase/functions (requiere Deno 2.9) — debe pasar antes de PR
 npm run sync:engine -- --to <sha>   # Mover el pin del motor de ranking (ADR-026)
 npm run verify:engine               # Re-descarga en el pin y falla si algo derivó
 npm run check:engine-upstream       # ¿Upstream main va adelante del pin? (exit 2 = sí)

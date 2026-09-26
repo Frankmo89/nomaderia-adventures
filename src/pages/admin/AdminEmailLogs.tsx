@@ -16,7 +16,7 @@ interface EmailLog {
   email: string;
   email_type: string;
   sent_at: string;
-  status: string;
+  status: string | null;
   error_message: string | null;
 }
 
@@ -32,7 +32,7 @@ const getEmailLogValue = (l: EmailLog, key: EmailLogSortKey): string => {
   switch (key) {
     case "email": return l.email;
     case "email_type": return l.email_type;
-    case "status": return l.status;
+    case "status": return l.status ?? "";
     case "sent_at": return l.sent_at;
   }
 };
@@ -42,7 +42,7 @@ const exportCSV = (items: EmailLog[]) => {
   const rows = items.map((l) => [
     l.email,
     typeLabels[l.email_type] || l.email_type,
-    l.status,
+    l.status ?? "",
     new Date(l.sent_at).toLocaleDateString("es-MX"),
     l.error_message || "",
   ]);
@@ -71,7 +71,7 @@ const TypeBadge = ({ type }: { type: string }) => {
   );
 };
 
-const StatusBadge = ({ status }: { status: string }) => {
+const StatusBadge = ({ status }: { status: string | null }) => {
   if (status === "sent") {
     return <Badge className="bg-green-700/30 text-green-400 border-green-700/40 border">Enviado</Badge>;
   }
@@ -99,7 +99,7 @@ const AdminEmailLogs = () => {
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
-        .from<EmailLog>("email_drip_log")
+        .from("email_drip_log")
         .select("*")
         .order("sent_at", { ascending: false });
       setItems(data || []);

@@ -125,6 +125,9 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   regenerado (falta `SUPABASE_ACCESS_TOKEN` en el entorno del agente).
 - **Decisión:** Usar `(supabase as unknown as SupabaseClient).from("...")` como
   puente temporal en `AdminDashboard.tsx`, `SentinelLanding.tsx` y `use-media.ts`.
+  *(2026-09-26: `media_slider` ya está en `types.ts`; se quitó el puente de
+  `use-media.ts` y `AdminGallery.tsx` — ADR-027. Si un puente hace falta, usar
+  `SupabaseClient`, **nunca** `ReturnType<typeof createClient>`.)*
 - **Consecuencias:** NO editar `types.ts` a mano para "arreglarlo". El fix real es
   que Frank regenere los tipos con la CLI (ver pending-tasks). Una vez regenerados,
   eliminar los casts.
@@ -377,6 +380,31 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   `concierge-agent` (tool-calling §6) es tarea separada — usará el mismo
   `_shared/engine/`.
 
+### ADR-027 — Type check real: tsc por proyecto + `deno check` de Edge Functions, bloqueantes en CI
+- **Fecha:** 2026-09-26
+- **Estado:** Vigente
+- **Contexto:** El gate "tsc debe pasar" (CLAUDE.md regla 6 y `ci.yml`) corría
+  `tsc --noEmit` sobre el `tsconfig.json` raíz, que es `"files": []` +
+  `references`. Sin `-b`, tsc no sigue references: revisaba **0 archivos** y
+  pasaba siempre. Con `-p tsconfig.app.json` aparecían 7 errores latentes.
+  Aparte, `supabase/functions/` (Deno) nunca estuvo en ningún tsconfig; un
+  `deno check` mostró 6 errores más.
+- **Decisión:** `npm run typecheck` = `tsc --noEmit -p tsconfig.app.json && -p
+  tsconfig.node.json` (explícito, no `tsc -b`: evita `composite` y archivos
+  `.tsbuildinfo`). `npm run typecheck:functions` = `deno check --no-lock
+  supabase/functions` (todo el directorio, incl. `_shared` no importado).
+  Ambos **bloqueantes** en `ci.yml` desde el PR que los agrega — nunca en modo
+  "solo reportar". Deno pineado a 2.9.7 (el `deno check` usa su TS embebido).
+  En CI la red se aísla: `deno cache` con 3 reintentos (esm.sh 522, ADR-023) y
+  luego `deno check --cached-only`, que no se reintenta. `--no-lock` para no
+  crear un `deno.lock` que el deploy de funciones pudiera recoger. Los 13
+  errores se arreglaron antes, en commits propios.
+- **Consecuencias:** No volver a `tsc --noEmit` a secas en docs/CI. Tipar los
+  clientes de las EF con `Database` **no** era el fix (se probó: no resuelve
+  ninguno de los 6) y además `types.ts` vive fuera del bundle de funciones —
+  si algún día se hace, es un proyecto aparte. Ver lecciones técnicas sobre
+  `.returns<T>()` y `ReturnType<typeof createClient>`.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)
@@ -428,3 +456,16 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   queda como trampa latente para el próximo `SelectItem` que alguien agregue
   ahí; se alineó también el select "Modo" de `ItineraryBlockEditor.tsx` al
   patrón `|| undefined` sin que tuviera el bug activo, para cerrarla.
+- **`.select()` con string armado en runtime pierde el tipo de fila:** supabase-js
+  parsea el string del select *a nivel de tipos*. Si es `[...].join(", ")`,
+  `"a" + "b"` o un template, el parser no puede y las filas salen como
+  `GenericStringError[]` (tenga o no el cliente `<Database>`), así que un
+  `as Row[]` falla. Fix: `.returns<Row[]>()` al final de la query, sin cast.
+- **Nunca `ReturnType<typeof createClient>` como tipo de cliente:** `createClient`
+  es genérico y `ReturnType` resuelve sus parámetros a `unknown`/`never`, así que
+  ningún cliente real es asignable a ese tipo. Usar `SupabaseClient` (import
+  `type`). Causó 5 de los 13 errores de ADR-027.
+- **`interface` no es asignable a `Json`:** una `interface` no tiene index
+  signature implícita, así que un array de ella no entra en una columna `Json`
+  aunque sus campos sean serializables. Una `type` alias idéntica sí. Si un tipo
+  se persiste en jsonb, declararlo con `type`.
