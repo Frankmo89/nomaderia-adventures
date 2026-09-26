@@ -14,6 +14,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@engine": path.resolve(__dirname, "./supabase/functions/_shared/engine"),
+      "@shared": path.resolve(__dirname, "./supabase/functions/_shared"),
     },
   },
 });

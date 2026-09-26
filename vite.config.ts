@@ -18,6 +18,8 @@ export default defineConfig(() => ({
       "@": path.resolve(__dirname, "./src"),
       // Vendored ranking engine, shared byte-for-byte with the Deno Edge Functions.
       "@engine": path.resolve(__dirname, "./supabase/functions/_shared/engine"),
+      // Hand-written helpers shared with the Edge Functions (e.g. engine-es.ts).
+      "@shared": path.resolve(__dirname, "./supabase/functions/_shared"),
     },
   },
   build: {
