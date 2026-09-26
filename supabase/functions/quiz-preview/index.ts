@@ -5,11 +5,25 @@
 //   OPENAI_API_KEY + gpt-4o-mini + park_live_data (NPS) + optional RAG chunks.
 // Does NOT invent live alert counts — if alerts are missing, says so.
 //
-// Input:  { park_code, destination_slug?, destination_title?, fitness_level?, lodging?, trip_duration? }
-// Output: { day1_plan, entry_cost, alerts_summary, alerts_available, synced_at }
+// Ranking facts come from the vendored engine (../_shared/engine, synced from
+// Frankmo89/us-parks-recommender — see engine.lock.json). When the client sends
+// its TripProfile + candidate park codes, this function re-runs the same engine
+// and only cites engine facts for a park the engine actually returned (contract §6.1).
+//
+// Input:  { park_code, destination_slug?, destination_title?, fitness_level?, lodging?, trip_duration?,
+//           profile?: TripProfile, engine_version?: string, candidate_park_codes?: string[], k?: number }
+// Output: { day1_plan, entry_cost, alerts_summary, alerts_available, synced_at, park_code, park_title,
+//           engine_version, engine_mismatch, engine_verified }
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  InvalidProfileError,
+  recommend,
+  type RankedPark,
+  type TripProfile,
+} from "../_shared/engine/engine.ts";
+import { ENGINE_DATA } from "../_shared/engine/engine-data.generated.ts";
 
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const SUPA_URL = Deno.env.get("SUPABASE_URL")!;
@@ -53,6 +67,62 @@ interface PreviewRequest {
   fitness_level?: string;
   lodging?: string;
   trip_duration?: string;
+  /** Engine TripProfile the client ranked with (contract §1). */
+  profile?: TripProfile | null;
+  /** engine_version the client's bundle carries — mismatch = deploy skew. */
+  engine_version?: string | null;
+  /** Park codes the client ranked over (published destinations). */
+  candidate_park_codes?: string[] | null;
+  k?: number;
+}
+
+const DEFAULT_K = 3;
+
+/**
+ * Re-run the engine over the client's candidates and return the chosen park's
+ * engine facts, or null if the engine did not return that park (§6.1: never
+ * cite ranking facts for a park the engine did not recommend).
+ */
+function verifyWithEngine(
+  parkCode: string,
+  profile: TripProfile,
+  candidates: string[] | null | undefined,
+  k: number,
+): RankedPark | null {
+  const data =
+    candidates && candidates.length > 0
+      ? (() => {
+          const wanted = new Set(candidates.map((c) => c.toLowerCase()));
+          return { ...ENGINE_DATA, catalog: ENGINE_DATA.catalog.filter((p) => wanted.has(p.park_code)) };
+        })()
+      : ENGINE_DATA;
+  const result = recommend(data, profile, k);
+  return result.parks.find((p) => p.facts.park_code === parkCode) ?? null;
+}
+
+/** Plain-language engine facts for the prompt (§6.2). English tokens are catalog codes; the model writes Spanish. */
+function describeEngineFacts(park: RankedPark): string {
+  const w = park.breakdown.weighted;
+  const parts = [
+    `terreno/actividades ${w.content.toFixed(2)}`,
+    `días ${w.days.toFixed(2)}`,
+    `esfuerzo ${w.difficulty.toFixed(2)}`,
+    `presupuesto de viaje ${w.budget.toFixed(2)}`,
+    `penalización multitudes ${w.crowd_penalty.toFixed(2)}`,
+    `penalización temporada ${w.month_penalty.toFixed(2)}`,
+  ];
+  return [
+    `- Motor de ranking v${ENGINE_DATA.engine_version}: puesto #${park.rank}, compatibilidad ${park.match_percent}% (puntaje de ajuste, no probabilidad)${park.tied_with_neighbors ? " — EMPATE TÉCNICO con otra opción; no lo vendas como claro ganador" : ""}.`,
+    `- Por qué encaja (códigos del catálogo): ${park.facts.why}`,
+    `- Terrenos: ${park.facts.biomes.join(", ")} · Actividades: ${park.facts.tags.join(", ")}`,
+    `- Dificultad del parque: ${park.facts.difficulty} · Días sugeridos: ${park.facts.days_needed} · Multitudes: ${park.facts.crowd} · Costo de viaje: ${park.facts.budget_tier} (no es la tarifa de entrada)`,
+    `- Mejores meses: ${park.facts.best_months.join(", ")} · Remoto: ${park.facts.remote ? "sí" : "no"} · Suele requerir permiso: ${park.facts.permit_likely ? "sí (dato aproximado, puede estar desactualizado)" : "no"}`,
+    park.facts.drive_hours != null
+      ? `- Manejo estimado: ~${park.facts.drive_hours.toFixed(1)} h por carretera (estimación, no Google Maps)`
+      : "- Manejo: sin estimación (sin origen)",
+    `- Contribuciones al puntaje: ${parts.join(" · ")}`,
+    `- Fuente oficial: ${park.facts.nps_url}`,
+  ].join("\n");
 }
 
 const corsHeaders = {
@@ -139,6 +209,32 @@ serve(async (req) => {
       );
     }
 
+    // Engine verification (only when the client ranked with a profile).
+    const engineMismatch = body.engine_version != null && body.engine_version !== ENGINE_DATA.engine_version;
+    if (engineMismatch) {
+      console.warn(
+        `quiz-preview engine_version skew: client=${body.engine_version} server=${ENGINE_DATA.engine_version}`,
+      );
+    }
+    let enginePark: RankedPark | null = null;
+    if (body.profile) {
+      try {
+        const k = Number.isInteger(body.k) && (body.k as number) > 0 ? (body.k as number) : DEFAULT_K;
+        enginePark = verifyWithEngine(parkCode, body.profile, body.candidate_park_codes, k);
+        if (!enginePark) {
+          console.warn(`quiz-preview: engine did not return ${parkCode} for the given profile; omitting engine facts`);
+        }
+      } catch (engineErr) {
+        if (engineErr instanceof InvalidProfileError) {
+          return new Response(
+            JSON.stringify({ error: `Perfil inválido: ${engineErr.message}`, engine_version: ENGINE_DATA.engine_version }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        throw engineErr;
+      }
+    }
+
     const supabase = createClient(SUPA_URL, SUPA_ANON);
     const liveCode = LIVE_DATA_PARK_ALIAS[parkCode] ?? parkCode;
 
@@ -221,7 +317,8 @@ REGLAS ESTRICTAS:
 3. El día 1 debe ser realista para principiantes (fitness: ${fitness}, lodging: ${lodging}, duración del viaje: ${duration}).
 4. Máximo 120 palabras para el plan del día 1. Sin listas interminables.
 5. Si el contexto es insuficiente, di qué harías de forma genérica y honesta sin inventar nombres de senderos específicos.
-6. NUNCA inventes el número de alertas ni costos de entrada — esos campos los provee el sistema por separado.`;
+6. NUNCA inventes el número de alertas ni costos de entrada — esos campos los provee el sistema por separado.
+7. Si hay un bloque MOTOR DE RANKING, puedes explicar en una frase por qué este parque encaja usando esas partes (terreno/actividades, días, esfuerzo, presupuesto, multitudes, temporada) en lenguaje llano — nunca cites los números crudos ni inventes motivos que no estén ahí. Si dice EMPATE TÉCNICO, no lo presentes como claro ganador. Cierres, tarifas, clima, permisos y estado de caminos cambian a diario: remite a nps.gov.`;
 
     const userPrompt = `Parque: ${parkTitle} (código ${parkCode}${slug ? `, /destinos/${slug}` : ""})
 
@@ -229,6 +326,9 @@ DATOS EN VIVO (ya formateados — no los reescribas en tu respuesta de day1):
 - ${entryCost}
 - ${alertsSummary}
 ${syncedAt ? `- Verificado: ${syncedAt}` : "- Sin timestamp de sync"}
+
+MOTOR DE RANKING:
+${enginePark ? describeEngineFacts(enginePark) : "(sin verificación del motor para este parque — no menciones ranking ni compatibilidad)"}
 
 CONTEXTO RAG:
 ${contextBlock || "(sin chunks — usa solo conocimiento genérico honesto de principiante)"}
@@ -278,6 +378,9 @@ Devuelve ÚNICAMENTE un JSON con esta forma exacta:
         synced_at: syncedAt,
         park_code: parkCode,
         park_title: parkTitle,
+        engine_version: ENGINE_DATA.engine_version,
+        engine_mismatch: engineMismatch,
+        engine_verified: enginePark !== null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
