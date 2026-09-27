@@ -70,17 +70,17 @@ diseño cuando llegue el momento.
 - **Modelo elegido: `text-embedding-3-small` de OpenAI.** Barato, rápido, suficiente
   para español editorial. **No Cohere** (argumento cross-lingual solo aplica si ya
   existe un corpus oficial en inglés — no existe y no se va a scrapear).
-- **Qué vectorizar (solo capa editorial propia) — IMPLEMENTADO en `ingest-knowledge`:**
-  - `destinations`: **ficha de conocimiento completa** por parque — 13 secciones en
-    markdown español (`Cómo llegar`, `Costos`, `Mejor temporada`, `Permisos`,
-    `Senderos destacados`, `Dónde dormir`, `Seguridad`, `Guía completa`,
-    `Itinerario sugerido`, `Equipo recomendado`, `Preparación`, `Dudas comunes`).
-    Chunking por sección con `## ` como separador; cada chunk lleva el label
-    `# {title} — {region}` al inicio para ser autónomo. `source_field: "ficha"`.
-    Metadata por chunk: `slug`, `title`, `section`, `park_code`, `park_title`,
-    `section_title`, `is_published`, `last_verified_at`.
-  - `gear_articles`: campo `content_markdown` (por sección Markdown) + `products` jsonb (1 chunk por producto).
-  - FAQ por destino → cubierto por el campo `common_fears` dentro de la ficha.
+- **Qué vectorizar (solo capa editorial propia) — estado real verificado 2026-09-26:**
+  - `destinations` — **IMPLEMENTADO.** Chunking por sección (no la "ficha" monolítica
+    original): un chunk por campo editorial, 30 valores de `source_field` (`why_visit`,
+    `hikes`, `faqs`, `common_fears`, `budget`, `campgrounds`, etc.). La tabla curada
+    `campgrounds` se pliega en la sección `campgrounds` del parque. Metadata por chunk:
+    `park_code`, `title`, `section`, `content_version`. Estado en DB: 1,768 chunks,
+    63/63 parques, todos de la corrida del 2026-07-14.
+  - `gear_articles` — **NO IMPLEMENTADO.** `ingest-knowledge` responde 400 a cualquier
+    `source` distinto de `"destinations"`; ningún chunk de gear existe en la DB. Queda
+    como trabajo futuro, no como "falta correrlo".
+  - FAQ por destino → cubierto por los campos `faqs` y `common_fears` (secciones propias).
 - **Decisión de publicación (2026-06-05):** se indexan **todos** los rows de
   `destinations` independientemente de `is_published`. El campo `is_published` se
   almacena en `metadata` para que el concierge pueda desclamer contenido no revisado

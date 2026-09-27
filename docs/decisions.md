@@ -405,6 +405,37 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   si algún día se hace, es un proyecto aparte. Ver lecciones técnicas sobre
   `.returns<T>()` y `ReturnType<typeof createClient>`.
 
+### ADR-028 — Ingesta RAG dirigida por contenido: triggers de `content_version` + webhook por parque
+- **Fecha:** 2026-09-26
+- **Estado:** Vigente (pendiente de aplicar en prod — ver `pending-tasks.md`)
+- **Contexto:** Nada subía `destinations.content_version`, así que una edición
+  real de un parque nunca se re-embebía salvo que alguien lo recordara. En
+  paralelo, dos webhooks del dashboard (`auto-ingest-destinations`,
+  `auto-ingest-gear_articles`) posteaban el payload fijo de
+  `supabase_functions.http_request` en **cada** insert/update; `ingest-knowledge`
+  ignora ese shape y escaneaba los 63 parques por fila (~1,800 llamadas desde
+  junio). El de gear solo disparaba escaneos de destinos: gear no se ingesta.
+  Ambos tenían la service key en texto plano en la definición del trigger.
+- **Decisión:** Migración `20260926120000_knowledge_ingest_content_triggers.sql`:
+  (1) `BEFORE UPDATE` en `destinations` sube `content_version` si cambia alguna
+  columna que lee `ingest-knowledge` (si el mismo UPDATE fija la versión a mano,
+  gana el valor manual); (2) insert/update/delete en `campgrounds` sube la
+  versión del parque padre; (3) trigger propio con `pg_net` que postea
+  `{source:"destinations", park_codes:[park_code]}` en INSERT y cuando cambia
+  `content_version`, con el JWT leído de Vault (`ingest_knowledge_jwt`); si falta
+  el secret, WARNING y sigue — nunca rompe un guardado; (4) se borran los dos
+  webhooks del dashboard. Cuando exista ingesta de gear, se le agrega su propio
+  trigger con este mismo patrón.
+- **Consecuencias:** Las listas de columnas viven en dos lugares (migración y
+  `baseSelect`); `src/lib/knowledge-ingest-columns.test.ts` falla CI si divergen
+  o si las filas OLD/NEW cambian de orden. El comportamiento (6 escenarios de
+  bump + campgrounds + body del webhook + secret faltante) se prueba en el job
+  `sql-tests` de CI contra un Postgres 17 desechable con `pg_net`/Vault
+  simulados (`scripts/test-sql.sh`). Agregar un campo a la ingesta = agregarlo
+  también a la migración (nueva migración `CREATE OR REPLACE`). Re-embeber los
+  63 parques completos cuesta menos de 1 centavo (~250k tokens con
+  `text-embedding-3-small`), así que el alcance por parque es por higiene, no por costo.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)
@@ -412,6 +443,12 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
 > error ya pagado.
 
+- **Triggers `UPDATE OF col` ignoran cambios hechos por triggers `BEFORE`:**
+  un trigger con lista de columnas solo dispara si la columna está en el `SET`
+  del UPDATE. Si un `BEFORE` trigger cambia la columna (p. ej. sube
+  `content_version`), el `AFTER UPDATE OF content_version` **no** dispara. Usar
+  `AFTER UPDATE ... WHEN (OLD.col IS DISTINCT FROM NEW.col)`, que ve el NEW final.
+  El test SQL de ADR-028 lo cubre.
 - **RLS de `sentinel_leads`:** la tabla tenía solo `INSERT` para `anon` y faltaba
   política `SELECT` para admin, por lo que el contador del dashboard siempre
   mostraba 0. Fix: política `FOR SELECT TO authenticated USING has_role`. Lección:
