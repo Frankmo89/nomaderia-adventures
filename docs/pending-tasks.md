@@ -17,6 +17,23 @@
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
 
+- [ ] **Activar la ingesta RAG por parque (ADR-028) — dos pasos, en este orden.**
+      1. **Paso manual en el Dashboard, NO es SQL de la migración:** Supabase
+         Dashboard → Vault → nuevo secret con nombre exacto `ingest_knowledge_jwt`
+         y como valor un **JWT legacy de service_role** (empieza con `eyJ...`).
+         `ingest-knowledge` corre con `verify_jwt = true` y las keys nuevas
+         `sb_secret_` no son JWT. Sin este secret los triggers solo dejan un
+         WARNING y no re-ingestan nada (los guardados siguen funcionando).
+      2. Pegar el SQL completo de
+         `supabase/migrations/20260926120000_knowledge_ingest_content_triggers.sql`
+         en el SQL Editor (idempotente; nunca `db push`). Borra los webhooks
+         `auto-ingest-destinations` y `auto-ingest-gear_articles`.
+      Verificar: editar un campo de texto de un parque en `/admin` → su
+      `content_version` sube en 1 y en `net._http_response` aparece un 200 de
+      `ingest-knowledge`. No hace falta re-ingestar nada hoy: los 63 parques
+      están al día. Opcional aparte: rotar la service key que estuvo en texto
+      plano en la definición del webhook viejo.
+
 - [ ] **T01 — Revisar `⚠️ VERIFICAR` en `/privacidad` (PrivacyPolicy.tsx).** Claims
       legales marcados por IA: (1) si Nomaderia califica como «business» bajo
       CCPA/CPRA y qué derechos exactos listar; (2) plazos de respuesta a
@@ -382,6 +399,16 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-09-26] **Ingesta RAG dirigida por contenido (ADR-028).** Migración
+  `20260926120000_knowledge_ingest_content_triggers.sql`: `content_version` sube
+  solo cuando cambia un campo que ingesta `ingest-knowledge` (o una campground
+  del parque); el webhook nuevo manda solo ese `park_code` y lee el JWT de Vault;
+  se retiran los webhooks del dashboard (destinos y gear) que escaneaban los 63
+  parques por fila. Tests: `src/lib/knowledge-ingest-columns.test.ts` (drift de
+  columnas) + `supabase/tests/sql/knowledge_ingest_triggers.test.sql` (job CI
+  `sql-tests`, Postgres 17 desechable). Pendiente Frank: Vault secret + pegar SQL
+  (ver Pendientes Humanos).
 
 - [2026-09-26] **Auditoría read-only de `knowledge_chunks` + docs corregidos.**
   Estado real en DB: 1,768 chunks, 63/63 parques, 30 `source_field`, todos del
