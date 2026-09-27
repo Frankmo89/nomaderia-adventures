@@ -740,7 +740,12 @@ serve(async (req) => {
       }
     }
 
-    const sources = deduplicateSources(chunks, slugByCode);
+    // Sources cite RAG chunks — misleading under an answer that isn't
+    // actually grounded in them: the out_of_scope sentence (fixed template,
+    // park mode) and the fallback answer (built straight from the engine
+    // result, not from chunks). noInfoResponse() already returns sources: [].
+    const showSources = !outOfScope && answerCheck !== "fallback";
+    const sources = showSources ? deduplicateSources(chunks, slugByCode) : [];
     const run = engineRun;
     const recommendations: ConciergeRecommendation[] | undefined = run
       ? run.result.parks.map((p) => toRecommendationEs(p, run.profile, displayByCode, SITE_URL))
