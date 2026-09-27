@@ -105,27 +105,30 @@ function EscalationCTA({ quizUrl, source }: { quizUrl: string; source: string })
       {status === "done" ? (
         <p className="text-xs text-green-dark px-1">¡Gracias! Te escribimos con ideas para tu próxima aventura 🏔️</p>
       ) : (
-        <form onSubmit={handleEmailSubmit} className="flex gap-1.5">
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
-            disabled={status === "loading"}
-            aria-label="Correo para seguir ayudándote"
-            className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-green focus:ring-1 focus:ring-green/30 disabled:opacity-50 transition"
-          />
-          <Button
-            type="submit"
-            disabled={!email || status === "loading"}
-            size="sm"
-            variant="outline"
-            className="text-xs h-auto px-2.5 py-1.5 border-green/30 text-green-dark hover:bg-green-wash shrink-0"
-          >
-            {status === "loading" ? "..." : "O déjanos tu correo"}
-          </Button>
-        </form>
+        <div className="flex flex-col gap-1">
+          <p className="text-xs text-sage px-1">¿Prefieres que te escribamos por correo?</p>
+          <form onSubmit={handleEmailSubmit} className="flex gap-1.5">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              disabled={status === "loading"}
+              aria-label="Correo para seguir ayudándote"
+              className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-green focus:ring-1 focus:ring-green/30 disabled:opacity-50 transition"
+            />
+            <Button
+              type="submit"
+              disabled={!email || status === "loading"}
+              size="sm"
+              variant="outline"
+              className="text-xs h-auto px-2.5 py-1.5 border-green/30 text-green-dark hover:bg-green-wash shrink-0"
+            >
+              {status === "loading" ? "..." : "Enviar"}
+            </Button>
+          </form>
+        </div>
       )}
     </div>
   );
