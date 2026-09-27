@@ -8,6 +8,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logEvent } from "@/lib/events";
 
 export interface ConciergeSource {
   title:   string;
@@ -54,6 +55,16 @@ export function useConcierge() {
       );
       if (error) throw new Error(error.message);
       if (!data)  throw new Error("Respuesta vacía del concierge");
+
+      // Mismo patrón que quiz_results_ranked / park_selected (src/hooks/use-quiz.ts):
+      // logEvent es fire-and-forget, nunca bloquea ni rompe la respuesta al usuario.
+      logEvent("concierge_answer_check", {
+        answer_check:  data.answer_check ?? "ok",
+        escalate:      data.escalate,
+        park_mode:     Boolean(destination_slug),
+        engine_version: data.engine_version ?? null,
+      });
+
       return data;
     },
   });
