@@ -436,9 +436,93 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   63 parques completos cuesta menos de 1 centavo (~250k tokens con
   `text-embedding-3-small`), así que el alcance por parque es por higiene, no por costo.
 
----
+### ADR-029 — Concierge recomienda parques solo vía el motor (tool `recommend_parks`) + revisión de la respuesta
+- **Fecha:** 2026-09-26
+- **Estado:** Vigente (cumple el contrato upstream `docs/engine-contract.md` §6)
+- **Contexto:** El concierge es global (`ConciergeLauncher` en todas las rutas) y
+  su bienvenida ofrece ayuda con "los 63 parques". En modo global, "¿qué parque me
+  recomiendas…?" se respondía con los 6 chunks RAG más parecidos: el modelo
+  elegía y justificaba parques sin el motor (viola §6.1/§6.2). Además los chunks
+  `nearby_parks` sugieren otros parques, las tarifas/alertas en caché se daban
+  como actuales, y los chunks de cierres/clima de la guía podían citarse como
+  datos vivos (§6.4). Todo dependía solo del prompt.
+- **Decisión:**
+  1. **Herramienta `recommend_parks`** (un solo agente con tool-calling, como fijó
+     seccion-9): schema = contrato §1 con enums exactos de `ENGINE_DATA`; el
+     modelo llena el perfil, nunca elige parques. El servidor corre `recommend()`
+     sobre los destinos publicados (`engineDataForParkCodes`, IDF upstream intacto).
+     `InvalidProfileError` → el modelo corrige y reintenta una vez. Resultado
+     vacío → el modelo pregunta qué filtro aflojar (§3); **no** se relaja el
+     radio de manejo en silencio (a diferencia del quiz).
+  2. **Salida del motor en español, sin floats** (`_shared/engine-es.ts`): niveles
+     cualitativos del breakdown, `EMPATE TÉCNICO` explícito para `tie_groups`,
+     link a la guía y a nps.gov. No hay número crudo que el modelo pueda citar mal.
+  3. **Revisión de la respuesta (la garantía real, no el prompt):** el modelo
+     devuelve `{answer, parks_mentioned}`; `_shared/park-mentions.ts` además
+     escanea el texto (nombres del catálogo + títulos en español, sin acentos,
+     alias largos primero; nombres cortos que son palabras comunes — "gran cañón",
+     "saguaro", "Montañas Rocosas"… — solo cuentan con el nombre completo).
+     Permitidos: parques del motor, la guía abierta (+ parque conjunto seki/kica),
+     los que nombró el usuario, y en modo parque los de `nearby_parks`. Si hay
+     otro → una regeneración; si persiste → respuesta fija desde el resultado del
+     motor (o escalación al quiz — ADR-030 — si no hubo motor). Cuesta ~1 llamada
+     extra a OpenAI solo cuando falla la revisión; se aceptó por ser la garantía.
+  4. **Datos vivos:** tarifas/alertas en caché se conservan (igual que
+     quiz-preview) pero siempre con fecha de verificación + liga de nps.gov;
+     "0 alertas" = "NPS no reportaba alertas al {fecha}". Chunks de
+     `seasonal_closures`/`zone_closures`/`special_dates`/`weather` van marcados
+     como GUÍA EDITORIAL.
+  5. **Modo parque** conserva su regla de alcance ("Me enfoco solo en este
+     parque") y no recibe la herramienta.
+- **Consecuencias:** La respuesta suma `engine_version`, `recommendations[]` y
+  `answer_check` (`ok`/`regenerated`/`fallback`, para monitoreo). **Single-turn:**
+  el cliente no manda historial, así que "¿y el segundo?" no funciona todavía;
+  cuando se agregue historial, re-correr el motor en el servidor, nunca confiar
+  en un ranking mandado por el cliente. NO reintroducir recomendaciones desde
+  chunks ni quitar la revisión "porque el prompt ya lo dice". Si el motor sube de
+  versión, revisar `engine-es.ts` junto con `SUPPORTED_ENGINE_VERSION`.
 
-## Lecciones técnicas (bugs no obvios)
+### ADR-030 — WhatsApp solo para clientes que ya pagaron: el concierge escala al quiz + captura de correo
+- **Fecha:** 2026-09-27
+- **Estado:** Vigente
+- **Contexto:** Decisión de producto: WhatsApp es el canal de cierre para
+  clientes que ya pagaron (botón propio en `/i/:token`, ver `ClientItineraryLayout.tsx`),
+  no un canal de soporte abierto a cualquier visitante anónimo. El concierge
+  (`ConciergeLauncher`, global en todas las rutas excepto `/admin` y `/i/:token`,
+  o sea usado **solo** por visitantes) devolvía `whatsapp_url` en tres casos:
+  el guardrail de escalación por palabra clave, el fallback sin contexto, y —
+  frontend-only, sin pasar por el backend — cualquier mensaje con intención de
+  compra (`PURCHASE_INTENT_PATTERN` en `ConciergeChat.tsx`). El caso (A) SCOPE de
+  modo parque ("¿qué otro parque me recomiendas?") ni siquiera ofrecía eso: la
+  respuesta fija "Me enfoco solo en este parque. Para otras preguntas, Frank
+  puede ayudarte." no traía ningún link — un callejón sin salida real.
+- **Decisión:** `concierge-agent` ya no construye ni devuelve `whatsapp_url` en
+  ningún caso. `escalate: true` ahora viaja con `quiz_url: "/#quiz"` en su lugar
+  (guardrail sin contexto, fallback, y el caso SCOPE de modo parque, que el
+  modelo ahora marca con un campo nuevo `out_of_scope` en su salida JSON — más
+  robusto que comparar el string literal). El frontend (`ConciergeChat.tsx`)
+  quita el link persistente "Hablar por WhatsApp" del footer, el CTA de
+  WhatsApp por burbuja, y el `PURCHASE_INTENT_PATTERN` que lo forzaba client-side
+  (esas palabras — "$49", "itinerario completo" — se suben a la lista de
+  `shouldEscalate` del backend, una sola fuente de verdad). En su lugar,
+  `EscalationCTA` ofrece un link al quiz (`react-router` `Link`, mismo patrón que
+  `BlogPostDetail.tsx`/`GearArticleDetail.tsx`) + un mini-form de captura de
+  correo que inserta en `newsletter_subscribers` (`source: "concierge_escalation"`,
+  mismo patrón 23505-es-éxito de `NewsletterSignup.tsx`, dispara
+  `send-welcome-email` igual). El prompt del sistema deja de prometer "Frank
+  puede ayudarte" (regla 3, caso B de modo parque) y suma una prohibición
+  explícita: nunca prometer conectar por WhatsApp desde este chat.
+- **Consecuencias:** El botón de WhatsApp real para comprar sigue en `/servicios`,
+  Navbar, `StickyMobileCTA`, etc. — **sin tocar**, es el funnel de conversión
+  vigente (`docs/content-strategy.md`); esta ADR es específica al chat del
+  concierge. Si el concierge alguna vez se monta dentro de un contexto
+  autenticado (p. ej. una futura cuenta de cliente), decidir ahí si
+  `whatsapp_url` reaparece condicionado a esa sesión — hoy no existe tal sesión,
+  así que no se construyó ningún chequeo de auth especulativo. `answer_check`
+  ahora también se loguea a `public.events` (`concierge_answer_check`, desde
+  `use-concierge.ts`, mismo patrón fire-and-forget que `quiz_results_ranked`)
+  para monitorear la tasa `ok`/`regenerated`/`fallback` — antes solo viajaba en
+  la respuesta HTTP, sin quedar registrado.
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
 > error ya pagado.
@@ -506,3 +590,10 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   signature implícita, así que un array de ella no entra en una columna `Json`
   aunque sus campos sean serializables. Una `type` alias idéntica sí. Si un tipo
   se persiste en jsonb, declararlo con `type`.
+- **`knowledge_chunks.metadata` no trae `slug`:** `ingest-knowledge` guarda
+  `{park_code, title, section, content_version}` (0 de 1,768 chunks con `slug`),
+  aunque seccion-9 documentaba lo contrario. `concierge-agent` descartaba todo
+  chunk sin slug al armar `sources`, así que respondió siempre con `sources: []`
+  sin que nada fallara. Fix: resolver el slug desde `destinations` por
+  `park_code` (ADR-029). Lección: un campo vacío que "nunca falla" puede ser un
+  bug silencioso — contrastar el contrato documentado contra la DB real.

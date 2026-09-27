@@ -3,20 +3,23 @@
 // Diseño: light theme editorial — Trail Green primario (docs/design-system.md).
 // Mobile: sheet de altura completa. Desktop: tarjeta flotante sobre el launcher.
 // No reconstruye el wiring de RAG (useConcierge) ni el contrato de concierge-agent.
+//
+// Producto: WhatsApp es solo para clientes que ya pagaron (botón propio en
+// /i/:token) — este chat es de visitantes anónimos y NUNCA lo ofrece. Cuando
+// escala (backend: escalate + quiz_url), se ofrece el quiz gratuito + captura
+// de correo (mismo patrón de inserción que NewsletterSignup.tsx).
 
 import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, MessageCircle, ExternalLink } from "lucide-react";
+import { Send, MessageCircle, ExternalLink, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
 import { useConcierge, type ConciergeMessage } from "@/hooks/use-concierge";
 
-// ─── Escalación contextual por intención de compra (frontend-only, sin tocar concierge-agent) ──
-
-const PURCHASE_INTENT_PATTERN =
-  /\$49|itinerario completo|precio|cu[aá]nto cuesta|contratar|comprar/i;
+const NEWSLETTER_UNIQUE_VIOLATION = "23505";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +62,78 @@ function SourcePill({ title, section, url }: { title: string; section: string; u
   );
 }
 
+/**
+ * Escalación de visitante: quiz gratuito + captura de correo. Nunca WhatsApp
+ * (producto: WhatsApp es solo para clientes que ya pagaron, vía /i/:token).
+ * Inserta en newsletter_subscribers con el mismo patrón que NewsletterSignup.tsx
+ * (23505 = ya suscrito, se trata como éxito silencioso).
+ */
+function EscalationCTA({ quizUrl, source }: { quizUrl: string; source: string }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+
+  async function handleEmailSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || status === "loading") return;
+    setStatus("loading");
+    try {
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .insert({ email, source: "concierge_escalation" });
+      if (error && error.code !== NEWSLETTER_UNIQUE_VIOLATION) throw error;
+      setStatus("done");
+      trackEvent("concierge_email_capture_submit", { source });
+      if (!error) {
+        supabase.functions.invoke("send-welcome-email", { body: { email } }).catch(() => undefined);
+      }
+    } catch {
+      setStatus("idle");
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 max-w-[85%]">
+      <Link
+        to={quizUrl}
+        onClick={() => trackEvent("concierge_escalate_quiz_click", { source })}
+        className="inline-flex items-center gap-2 bg-green hover:bg-green-dark text-white text-sm font-medium rounded-xl px-4 py-2 transition-colors w-fit"
+      >
+        <Compass className="w-4 h-4" />
+        Descubre tu aventura ideal (quiz gratis)
+      </Link>
+
+      {status === "done" ? (
+        <p className="text-xs text-green-dark px-1">¡Gracias! Te escribimos con ideas para tu próxima aventura 🏔️</p>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <p className="text-xs text-sage px-1">¿Prefieres que te escribamos por correo?</p>
+          <form onSubmit={handleEmailSubmit} className="flex gap-1.5">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              disabled={status === "loading"}
+              aria-label="Correo para seguir ayudándote"
+              className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-green focus:ring-1 focus:ring-green/30 disabled:opacity-50 transition"
+            />
+            <Button
+              type="submit"
+              disabled={!email || status === "loading"}
+              size="sm"
+              variant="outline"
+              className="text-xs h-auto px-2.5 py-1.5 border-green/30 text-green-dark hover:bg-green-wash shrink-0"
+            >
+              {status === "loading" ? "..." : "Enviar"}
+            </Button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MessageBubble({ message }: { message: ConciergeMessage }) {
   const isUser = message.role === "user";
 
@@ -95,20 +170,9 @@ function MessageBubble({ message }: { message: ConciergeMessage }) {
         </div>
       )}
 
-      {/* CTA WhatsApp cuando escala (backend) o hay intención de compra (frontend) */}
-      {!isUser && message.escalate && message.whatsapp_url && (
-        <a
-          href={message.whatsapp_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackEvent("concierge_escalate_whatsapp_click", { source: "chat_thread" })}
-          className="inline-flex items-center gap-2 bg-green hover:bg-green-dark text-white text-sm font-medium rounded-xl px-4 py-2 transition-colors"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-          </svg>
-          Hablar con Frank
-        </a>
+      {/* Escalación: quiz + captura de correo (nunca WhatsApp — ver header del archivo) */}
+      {!isUser && message.escalate && message.quiz_url && (
+        <EscalationCTA quizUrl={message.quiz_url} source="chat_thread" />
       )}
     </motion.div>
   );
@@ -149,8 +213,6 @@ export function ConciergeChat({
     const question = input.trim();
     if (!question || isPending) return;
 
-    const purchaseIntent = PURCHASE_INTENT_PATTERN.test(question);
-
     const userMsg: ConciergeMessage = {
       id:      crypto.randomUUID(),
       role:    "user",
@@ -164,26 +226,13 @@ export function ConciergeChat({
       { question, destination_slug: destinationSlug },
       {
         onSuccess(data) {
-          // Intención de compra detectada en el mensaje del usuario: si el backend
-          // no escaló, forzamos el CTA de WhatsApp igual (sin tocar concierge-agent).
-          const escalate = data.escalate || purchaseIntent;
-          const whatsappUrl =
-            data.whatsapp_url ??
-            (purchaseIntent
-              ? buildWhatsAppLink(
-                  destinationTitle
-                    ? `Hola Frank, quiero el itinerario completo para ${destinationTitle}`
-                    : "Hola Frank, quiero el itinerario completo de Nomaderia"
-                )
-              : undefined);
-
           const assistantMsg: ConciergeMessage = {
-            id:           crypto.randomUUID(),
-            role:         "assistant",
-            content:      data.answer,
-            sources:      data.sources,
-            escalate,
-            whatsapp_url: whatsappUrl,
+            id:        crypto.randomUUID(),
+            role:      "assistant",
+            content:   data.answer,
+            sources:   data.sources,
+            escalate:  data.escalate,
+            quiz_url:  data.quiz_url,
           };
           setMessages((prev) => [...prev, assistantMsg]);
         },
@@ -200,16 +249,13 @@ export function ConciergeChat({
   }
 
   // Saludo de dos capas (patrón Deel): explica desde el primer mensaje que la IA
-  // resuelve dudas 24/7 y que WhatsApp queda reservado para cerrar con Frank.
+  // resuelve dudas 24/7. El itinerario completo ($49) se cierra por WhatsApp desde
+  // /servicios o /i/:token — no desde este chat, así que el saludo ya no lo promete.
   const greeting = destinationTitle
-    ? `Soy el concierge de Nomaderia. Puedo ayudarte con cualquier duda sobre ${destinationTitle} — rutas, campamentos, presupuesto. Y cuando quieras tu itinerario completo, te conecto con un experto de Nomaderia por WhatsApp.`
-    : "Soy el concierge de Nomaderia. Puedo ayudarte con cualquier duda de los 63 parques — rutas, campamentos, presupuestos. Y cuando quieras tu itinerario completo, te conecto con un experto de Nomaderia por WhatsApp.";
+    ? `Soy el concierge de Nomaderia. Puedo ayudarte con cualquier duda sobre ${destinationTitle} — rutas, campamentos, presupuesto.`
+    : "Soy el concierge de Nomaderia. Puedo ayudarte con cualquier duda de los 63 parques — rutas, campamentos, presupuestos. Y si buscas tu destino ideal, prueba nuestro quiz gratuito 🧭";
 
-  const footerWhatsappUrl = buildWhatsAppLink(
-    destinationTitle
-      ? `Hola Frank, tengo una pregunta sobre ${destinationTitle}.`
-      : "Hola Frank, tengo una pregunta sobre mi próxima aventura."
-  );
+  const quizFooterUrl = "/#quiz";
 
   return (
     <AnimatePresence>
@@ -273,7 +319,7 @@ export function ConciergeChat({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input + escalación secundaria persistente (patrón Zendesk) */}
+          {/* Input + nudge secundario persistente al quiz (patrón Zendesk, antes apuntaba a WhatsApp) */}
           <div className="border-t border-stone-100 shrink-0 pb-[calc(env(safe-area-inset-bottom,0px))] sm:pb-0">
             <div className="flex gap-2 p-3">
               <input
@@ -295,15 +341,13 @@ export function ConciergeChat({
                 <Send className="w-4 h-4" />
               </Button>
             </div>
-            <a
-              href={footerWhatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackEvent("concierge_escalate_whatsapp_click", { source: "chat_footer_link" })}
+            <Link
+              to={quizFooterUrl}
+              onClick={() => trackEvent("concierge_escalate_quiz_click", { source: "chat_footer_link" })}
               className="block text-center text-xs text-sage hover:text-green pb-3 transition-colors"
             >
-              Hablar por WhatsApp →
-            </a>
+              Descubre tu aventura ideal (quiz gratis) →
+            </Link>
           </div>
         </motion.div>
       )}

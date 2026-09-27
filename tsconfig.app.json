@@ -26,7 +26,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@engine/*": ["./supabase/functions/_shared/engine/*"]
+      "@engine/*": ["./supabase/functions/_shared/engine/*"],
+      "@shared/*": ["./supabase/functions/_shared/*"]
     }
   },
   "include": ["src"]

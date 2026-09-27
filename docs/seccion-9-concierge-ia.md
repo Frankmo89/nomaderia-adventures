@@ -75,8 +75,9 @@ diseño cuando llegue el momento.
     original): un chunk por campo editorial, 30 valores de `source_field` (`why_visit`,
     `hikes`, `faqs`, `common_fears`, `budget`, `campgrounds`, etc.). La tabla curada
     `campgrounds` se pliega en la sección `campgrounds` del parque. Metadata por chunk:
-    `park_code`, `title`, `section`, `content_version`. Estado en DB: 1,768 chunks,
-    63/63 parques, todos de la corrida del 2026-07-14.
+    `park_code`, `title`, `section`, `content_version` — **sin `slug`**; `concierge-agent`
+    lo resuelve por `park_code` contra `destinations` (ADR-029). Estado en DB: 1,768
+    chunks, 63/63 parques, todos de la corrida del 2026-07-14.
   - `gear_articles` — **NO IMPLEMENTADO.** `ingest-knowledge` responde 400 a cualquier
     `source` distinto de `"destinations"`; ningún chunk de gear existe en la DB. Queda
     como trabajo futuro, no como "falta correrlo".

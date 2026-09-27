@@ -16,7 +16,7 @@
 //           engine_version, engine_mismatch, engine_verified }
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import {
   InvalidProfileError,
   recommend,
@@ -24,6 +24,7 @@ import {
   type TripProfile,
 } from "../_shared/engine/engine.ts";
 import { ENGINE_DATA } from "../_shared/engine/engine-data.generated.ts";
+import { engineDataForParkCodes } from "../_shared/engine-es.ts";
 
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const SUPA_URL = Deno.env.get("SUPABASE_URL")!;
@@ -89,13 +90,7 @@ function verifyWithEngine(
   candidates: string[] | null | undefined,
   k: number,
 ): RankedPark | null {
-  const data =
-    candidates && candidates.length > 0
-      ? (() => {
-          const wanted = new Set(candidates.map((c) => c.toLowerCase()));
-          return { ...ENGINE_DATA, catalog: ENGINE_DATA.catalog.filter((p) => wanted.has(p.park_code)) };
-        })()
-      : ENGINE_DATA;
+  const data = candidates && candidates.length > 0 ? engineDataForParkCodes(candidates) : ENGINE_DATA;
   const result = recommend(data, profile, k);
   return result.parks.find((p) => p.facts.park_code === parkCode) ?? null;
 }
