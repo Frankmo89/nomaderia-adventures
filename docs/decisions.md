@@ -465,8 +465,8 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
      Permitidos: parques del motor, la guía abierta (+ parque conjunto seki/kica),
      los que nombró el usuario, y en modo parque los de `nearby_parks`. Si hay
      otro → una regeneración; si persiste → respuesta fija desde el resultado del
-     motor (o escalación a WhatsApp si no hubo motor). Cuesta ~1 llamada extra
-     a OpenAI solo cuando falla la revisión; se aceptó por ser la garantía.
+     motor (o escalación al quiz — ADR-030 — si no hubo motor). Cuesta ~1 llamada
+     extra a OpenAI solo cuando falla la revisión; se aceptó por ser la garantía.
   4. **Datos vivos:** tarifas/alertas en caché se conservan (igual que
      quiz-preview) pero siempre con fecha de verificación + liga de nps.gov;
      "0 alertas" = "NPS no reportaba alertas al {fecha}". Chunks de
@@ -482,9 +482,47 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   chunks ni quitar la revisión "porque el prompt ya lo dice". Si el motor sube de
   versión, revisar `engine-es.ts` junto con `SUPPORTED_ENGINE_VERSION`.
 
----
-
-## Lecciones técnicas (bugs no obvios)
+### ADR-030 — WhatsApp solo para clientes que ya pagaron: el concierge escala al quiz + captura de correo
+- **Fecha:** 2026-09-27
+- **Estado:** Vigente
+- **Contexto:** Decisión de producto: WhatsApp es el canal de cierre para
+  clientes que ya pagaron (botón propio en `/i/:token`, ver `ClientItineraryLayout.tsx`),
+  no un canal de soporte abierto a cualquier visitante anónimo. El concierge
+  (`ConciergeLauncher`, global en todas las rutas excepto `/admin` y `/i/:token`,
+  o sea usado **solo** por visitantes) devolvía `whatsapp_url` en tres casos:
+  el guardrail de escalación por palabra clave, el fallback sin contexto, y —
+  frontend-only, sin pasar por el backend — cualquier mensaje con intención de
+  compra (`PURCHASE_INTENT_PATTERN` en `ConciergeChat.tsx`). El caso (A) SCOPE de
+  modo parque ("¿qué otro parque me recomiendas?") ni siquiera ofrecía eso: la
+  respuesta fija "Me enfoco solo en este parque. Para otras preguntas, Frank
+  puede ayudarte." no traía ningún link — un callejón sin salida real.
+- **Decisión:** `concierge-agent` ya no construye ni devuelve `whatsapp_url` en
+  ningún caso. `escalate: true` ahora viaja con `quiz_url: "/#quiz"` en su lugar
+  (guardrail sin contexto, fallback, y el caso SCOPE de modo parque, que el
+  modelo ahora marca con un campo nuevo `out_of_scope` en su salida JSON — más
+  robusto que comparar el string literal). El frontend (`ConciergeChat.tsx`)
+  quita el link persistente "Hablar por WhatsApp" del footer, el CTA de
+  WhatsApp por burbuja, y el `PURCHASE_INTENT_PATTERN` que lo forzaba client-side
+  (esas palabras — "$49", "itinerario completo" — se suben a la lista de
+  `shouldEscalate` del backend, una sola fuente de verdad). En su lugar,
+  `EscalationCTA` ofrece un link al quiz (`react-router` `Link`, mismo patrón que
+  `BlogPostDetail.tsx`/`GearArticleDetail.tsx`) + un mini-form de captura de
+  correo que inserta en `newsletter_subscribers` (`source: "concierge_escalation"`,
+  mismo patrón 23505-es-éxito de `NewsletterSignup.tsx`, dispara
+  `send-welcome-email` igual). El prompt del sistema deja de prometer "Frank
+  puede ayudarte" (regla 3, caso B de modo parque) y suma una prohibición
+  explícita: nunca prometer conectar por WhatsApp desde este chat.
+- **Consecuencias:** El botón de WhatsApp real para comprar sigue en `/servicios`,
+  Navbar, `StickyMobileCTA`, etc. — **sin tocar**, es el funnel de conversión
+  vigente (`docs/content-strategy.md`); esta ADR es específica al chat del
+  concierge. Si el concierge alguna vez se monta dentro de un contexto
+  autenticado (p. ej. una futura cuenta de cliente), decidir ahí si
+  `whatsapp_url` reaparece condicionado a esa sesión — hoy no existe tal sesión,
+  así que no se construyó ningún chequeo de auth especulativo. `answer_check`
+  ahora también se loguea a `public.events` (`concierge_answer_check`, desde
+  `use-concierge.ts`, mismo patrón fire-and-forget que `quiz_results_ranked`)
+  para monitorear la tasa `ok`/`regenerated`/`fallback` — antes solo viajaba en
+  la respuesta HTTP, sin quedar registrado.
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
 > error ya pagado.

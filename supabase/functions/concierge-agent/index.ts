@@ -12,10 +12,14 @@
 //   6. Revisión de la respuesta: solo puede nombrar parques que devolvió el
 //      motor, el de la guía abierta o los que nombró el usuario. Si no, se
 //      regenera una vez; si sigue fallando, respuesta fija desde el motor.
-//   7. Escala a WhatsApp si no hubo contexto ni motor
+//   7. Escala al quiz gratuito (+ captura de correo) si no hubo contexto ni motor
+//
+// Producto: WhatsApp es solo para clientes que ya pagaron (botón propio en
+// /i/:token). Este chat lo usan visitantes anónimos — nunca ofrece whatsapp_url;
+// toda escalación apunta al quiz (/#quiz), con captura de correo en el frontend.
 //
 // Input:  { question: string, destination_slug?: string }   (single-turn: sin historial)
-// Output: { answer, sources, escalate, whatsapp_url?, engine_version, recommendations? }
+// Output: { answer, sources, escalate, quiz_url?, engine_version, recommendations? }
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
@@ -42,8 +46,11 @@ import { buildParkNameIndex, findParkMentions, findUnbackedParks, type ParkNameI
 const OPENAI_KEY   = Deno.env.get("OPENAI_API_KEY")!;
 const SUPA_URL     = Deno.env.get("SUPABASE_URL")!;
 const SUPA_ANON    = Deno.env.get("SUPABASE_ANON_KEY")!;
-const WHATSAPP_NUM = "18588996802";
 const SITE_URL     = "https://nomaderia.com";
+// Producto: WhatsApp es solo para clientes que ya pagaron (botón propio en
+// /i/:token) — este chat nunca lo ofrece. Toda escalación de visitante apunta
+// aquí; el frontend añade captura de correo junto a este link.
+const QUIZ_URL     = "/#quiz";
 const EMBED_MODEL  = "text-embedding-3-small";
 const CHAT_MODEL   = "gpt-4o-mini";
 const MAX_CHUNKS     = 6;   // chunks de contexto que se pasan al agente
@@ -131,22 +138,14 @@ interface EngineRun {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Construye URL de WhatsApp con mensaje prellenado */
-function buildWhatsAppUrl(question: string, context?: string): string {
-  const msg = context
-    ? `Hola Frank, vengo del asistente de Nomaderia. ${context}\n\nMi pregunta: ${question}`
-    : `Hola Frank, tengo una pregunta sobre Nomaderia: ${question}`;
-  return `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`;
-}
-
-/** Detecta si la pregunta requiere intervención humana */
+/** Detecta si la pregunta requiere intervención humana (quiz + captura de correo, nunca WhatsApp) */
 function shouldEscalate(question: string): boolean {
   const triggers = [
     "reservar", "reserva", "pagar", "pago", "precio", "costo", "cuánto cuesta",
     "permiso", "permit", "disponibilidad", "fecha", "disponible",
     "visa", "frontera", "cruzar",
     "médico", "salud", "condición", "enfermedad", "embarazada",
-    "comprar", "contratar", "itinerario personalizado",
+    "comprar", "contratar", "itinerario personalizado", "itinerario completo", "$49",
   ];
   const lower = question.toLowerCase();
   return triggers.some((t) => lower.includes(t));
@@ -388,7 +387,7 @@ const SYSTEM_PROMPT_BASE = `Eres el asistente de aventuras de Nomaderia, un serv
 REGLAS ESTRICTAS:
 1. Responde SIEMPRE en español, tono amigable y directo, como un amigo experto.
 2. Usa ÚNICAMENTE la información del CONTEXTO, de los DATOS EN VIVO y del resultado de la herramienta. No inventes nada.
-3. Si no tienes suficiente información para responder bien, dilo honestamente: "No tengo esa información específica, pero Frank puede ayudarte."
+3. Si no tienes suficiente información para responder bien, dilo honestamente: "No tengo esa información específica."
 4. Sé concreto: da datos reales del contexto (distancias, alturas, días, precios de equipo, etc.).
 5. Al final de tu respuesta incluye las fuentes relevantes en formato: [Fuente: título - sección].
 6. Máximo 3 párrafos. Respuestas claras y útiles, no largas.
@@ -406,7 +405,8 @@ NUNCA:
 - Inventes requisitos de visa, permisos, precios o disponibilidades específicas.
 - Recomiendes marcas o productos que no estén en el contexto.
 - Digas que puedes hacer reservas o procesar pagos.
-- Recomiendes senderos específicos como si fueran una recomendación del motor: el motor recomienda parques, no senderos.`;
+- Recomiendes senderos específicos como si fueran una recomendación del motor: el motor recomienda parques, no senderos.
+- Prometas conectar al usuario con Frank o con un humano por WhatsApp desde este chat — eso ya no existe aquí; el sistema ofrece el quiz y la captura de correo por su cuenta cuando corresponde.`;
 
 const ENGINE_RULES = `MOTOR DE RANKING (herramienta recommend_parks) — REGLAS DURAS:
 - Si el usuario pide que le recomiendes, compares o elijas parques ("¿a dónde voy?", "¿qué parque para…?"), llama a recommend_parks. Nunca recomiendes parques por tu cuenta ni a partir del CONTEXTO.
@@ -419,8 +419,9 @@ const ENGINE_RULES = `MOTOR DE RANKING (herramienta recommend_parks) — REGLAS 
 - Si la herramienta responde ERROR DE PERFIL, corrige el campo y vuelve a llamarla.`;
 
 const OUTPUT_FORMAT = `FORMATO DE SALIDA: responde SOLO con un objeto JSON:
-{"answer": "<tu respuesta en español, con las fuentes al final>", "parks_mentioned": ["<park_code de cada parque que nombras>"]}
-Los park_code vienen del resultado de la herramienta o de la guía abierta. Si no nombras parques, usa [].`;
+{"answer": "<tu respuesta en español, con las fuentes al final>", "parks_mentioned": ["<park_code de cada parque que nombras>"], "out_of_scope": true|false}
+Los park_code vienen del resultado de la herramienta o de la guía abierta. Si no nombras parques, usa [].
+out_of_scope: true SOLO en modo parque específico, únicamente en el caso (A) SCOPE descrito abajo. En cualquier otro caso, false.`;
 
 function buildSystemPrompt(opts: {
   destinationSlug?: string;
@@ -435,11 +436,11 @@ function buildSystemPrompt(opts: {
     prompt += `\n\nIMPORTANTE — MODO PARQUE ESPECÍFICO:
 El usuario está leyendo la guía de ${parkLabel}${opts.parkCode ? ` (park_code: ${opts.parkCode})` : ""}. Distingue DOS casos y NO los confundas:
 
-(A) SCOPE — la pregunta es claramente de OTRO parque/destino o totalmente fuera de tema (p. ej. "¿qué tan lejos está Yosemite?", otro parque por nombre, o "¿qué otro parque me recomiendas?"). SOLO en ese caso responde exactamente:
-"Me enfoco solo en este parque. Para otras preguntas, Frank puede ayudarte."
+(A) SCOPE — la pregunta es claramente de OTRO parque/destino o totalmente fuera de tema (p. ej. "¿qué tan lejos está Yosemite?", otro parque por nombre, o "¿qué otro parque me recomiendas?"). SOLO en ese caso responde exactamente (y pon "out_of_scope": true):
+"Me enfoco solo en este parque. Si buscas otro destino, descubre el tuyo con nuestro quiz gratuito de Nomaderia — toma menos de un minuto."
 
-(B) SIN DATOS — la pregunta SÍ es sobre ${parkLabel} pero ni el CONTEXTO ni los DATOS EN VIVO la cubren (p. ej. uso horario, tours, un detalle que falta). Responde:
-"No tengo esa información específica sobre ${parkLabel}, pero Frank puede ayudarte."
+(B) SIN DATOS — la pregunta SÍ es sobre ${parkLabel} pero ni el CONTEXTO ni los DATOS EN VIVO la cubren (p. ej. uso horario, tours, un detalle que falta). Responde ("out_of_scope": false):
+"No tengo esa información específica sobre ${parkLabel}."
 
 REGLAS:
 - Una pregunta sobre ${parkLabel} de la que simplemente no tienes datos es el caso (B), NUNCA el (A).
@@ -481,18 +482,19 @@ async function chat(messages: ChatMessage[], withTools: boolean, toolChoice: "au
   return data.choices[0].message as ChatMessage;
 }
 
-/** Final model output → { answer, parks_mentioned }. Tolerates a non-JSON reply. */
-function parseAnswer(content: string | null): { answer: string; parksMentioned: string[] } {
+/** Final model output → { answer, parks_mentioned, out_of_scope }. Tolerates a non-JSON reply. */
+function parseAnswer(content: string | null): { answer: string; parksMentioned: string[]; outOfScope: boolean } {
   const raw = (content ?? "").trim();
   try {
-    const parsed = JSON.parse(raw) as { answer?: unknown; parks_mentioned?: unknown };
+    const parsed = JSON.parse(raw) as { answer?: unknown; parks_mentioned?: unknown; out_of_scope?: unknown };
     const answer = typeof parsed.answer === "string" ? parsed.answer.trim() : "";
     const parksMentioned = Array.isArray(parsed.parks_mentioned)
       ? parsed.parks_mentioned.filter((c): c is string => typeof c === "string")
       : [];
-    return { answer, parksMentioned };
+    const outOfScope = parsed.out_of_scope === true;
+    return { answer, parksMentioned, outOfScope };
   } catch {
-    return { answer: raw, parksMentioned: [] };
+    return { answer: raw, parksMentioned: [], outOfScope: false };
   }
 }
 
@@ -527,10 +529,10 @@ serve(async (req) => {
 
     const noInfoResponse = () =>
       jsonResponse({
-        answer:         "No tengo información específica sobre eso en mi base de conocimiento. Frank puede ayudarte con los detalles.",
+        answer:         "No tengo información específica sobre eso en mi base de conocimiento. Descubre el destino ideal para ti con nuestro quiz gratuito, o déjanos tu correo y seguimos ayudándote.",
         sources:        [],
         escalate:       true,
-        whatsapp_url:   buildWhatsAppUrl(question),
+        quiz_url:       QUIZ_URL,
         engine_version: ENGINE_DATA.engine_version,
       }, corsHeaders);
 
@@ -711,7 +713,7 @@ serve(async (req) => {
       }
     }
 
-    let { answer, parksMentioned } = parseAnswer(reply.content);
+    let { answer, parksMentioned, outOfScope } = parseAnswer(reply.content);
     let unbacked = findUnbackedParks(answer, parksMentioned, allowed, nameIndex);
     let answerCheck: "ok" | "regenerated" | "fallback" = "ok";
 
@@ -726,7 +728,7 @@ serve(async (req) => {
           : `CORRECCIÓN: tu respuesta quedó vacía. Responde la pregunta del usuario. Mismo formato JSON.`,
       });
       reply = await chat(messages, withTools, "none");
-      ({ answer, parksMentioned } = parseAnswer(reply.content));
+      ({ answer, parksMentioned, outOfScope } = parseAnswer(reply.content));
       unbacked = findUnbackedParks(answer, parksMentioned, allowed, nameIndex);
       answerCheck = "regenerated";
 
@@ -744,14 +746,19 @@ serve(async (req) => {
       ? run.result.parks.map((p) => toRecommendationEs(p, run.profile, displayByCode, SITE_URL))
       : undefined;
 
+    // Escalación (§ producto): keyword match sobre la pregunta original, o el
+    // modelo marcó out_of_scope (caso A en modo parque — "¿qué otro parque me
+    // recomiendas?", antes un callejón sin salida). Nunca whatsapp_url — este
+    // chat es de visitantes anónimos; el botón de WhatsApp vive en /i/:token
+    // para clientes que ya pagaron.
+    const escalate = needsEscalation || outOfScope;
+
     // ── 10. Responder ─────────────────────────────────────────────────────────
     return jsonResponse({
       answer,
       sources,
-      escalate:       needsEscalation,
-      whatsapp_url:   needsEscalation
-        ? buildWhatsAppUrl(question, `Pregunté sobre: "${question}"`)
-        : undefined,
+      escalate,
+      quiz_url:       escalate ? QUIZ_URL : undefined,
       engine_version: ENGINE_DATA.engine_version,
       recommendations,
       answer_check:   answerCheck,

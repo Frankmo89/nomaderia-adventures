@@ -341,7 +341,7 @@ Pendiente real:
 - [ ] **Logo final** — subir a Supabase y actualizar `src/config/assets.ts`
       (resolver el `TODO` de la línea 7).
 
-### Concierge + motor (seguimiento de ADR-029)
+### Concierge + motor (seguimiento de ADR-029/ADR-030)
 - [ ] **Frontend: tarjetas de recomendación en `ConciergeChat`.** `concierge-agent` ya devuelve `recommendations[]` (`title`, `url`, `nps_url`, `match_percent`, `tied`, `reasons_es`); `use-concierge.ts` aún no tipa ni muestra esos campos. `match_percent` siempre con caption de "compatibilidad", nunca como probabilidad.
 - [ ] **Concierge multi-turn.** Hoy es single-turn (`{question, destination_slug}`): "¿y el segundo?" no funciona. Agregar historial acotado desde el cliente; el servidor **re-corre el motor** con el perfil, nunca confía en un ranking que mande el cliente.
 - [ ] **Quiz: `INTEREST_TO_PROFILE.deserts.tags` incluye `"desert"`** (bioma, no tag del vocab — contrato §1 dice no mandarlo). El motor lo ignora, así que no cambia scores; quitarlo en un PR aparte.
@@ -404,6 +404,20 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-09-27] **Concierge: WhatsApp solo para clientes que ya pagaron (ADR-030).**
+  `concierge-agent` ya no devuelve `whatsapp_url` en ningún caso (guardrail sin
+  contexto, fallback, ni el `PURCHASE_INTENT_PATTERN` frontend-only que se
+  eliminó de `ConciergeChat.tsx`). Escalación ahora manda `quiz_url: "/#quiz"`;
+  el frontend ofrece el quiz + una captura de correo inline (inserta en
+  `newsletter_subscribers`, mismo patrón que `NewsletterSignup.tsx`). El caso
+  SCOPE de modo parque ("¿qué otro parque me recomiendas?") era un callejón sin
+  salida — no traía ningún link — y ahora el modelo lo marca con un campo nuevo
+  `out_of_scope` que dispara el mismo CTA de quiz. `answer_check` se loguea a
+  `public.events` desde `use-concierge.ts` (`concierge_answer_check`, mismo
+  patrón que `quiz_results_ranked`), no solo se devuelve en la respuesta HTTP.
+  Los CTAs de WhatsApp del resto del sitio (`/servicios`, Navbar, etc.) no se
+  tocaron — siguen siendo el canal de cierre vigente para conversión.
 
 - [2026-09-26] **Concierge recomienda parques solo vía el motor (ADR-029).**
   En modo global, `concierge-agent` elegía parques a partir de los chunks RAG más
