@@ -72,3 +72,27 @@ jobs:
         # vars and hard-fails under CI=true. Cloudflare Pages owns the sitemap;
         # here we only prove the bundle compiles.
         run: npx tsx scripts/build-soul.ts && npx vite build
+
+  sql-tests:
+    # Trigger behaviour for the content-driven knowledge ingest, proven against
+    # a throwaway Postgres 17 (prod version) with stubbed pg_net/Vault. Never
+    # touches Supabase: the stub schema refuses to load into a Supabase DB.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SQL trigger tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: scripts/test-sql.sh
