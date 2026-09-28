@@ -3,18 +3,22 @@ import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motio
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass,
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
-  Mail, Loader2, Calendar, HeartPulse, Backpack, Tent, MapPin,
-  Users, BedDouble, Baby, UserRound, Globe2, Hotel, Home,
+  Mail, Loader2, HeartPulse, Backpack, Tent, MapPin,
+  Users, BedDouble, Baby, UserRound, Hotel, Home, Car, Plane, HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { Link } from "react-router-dom";
 import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizPreview, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
+import { isIslandZip, isValidZipFormat, lookupZip, preloadZipTable } from "@/lib/zip-centroids";
+import {
+  DRIVE_HOUR_OPTIONS,
+  MONTH_UNKNOWN,
+  originAnswerFields,
+  type TravelMode,
+} from "@/lib/quiz-ranking";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import Reveal from "@/components/editorial/Reveal";
 
@@ -40,32 +44,33 @@ const countryFlag: Record<string, string> = {
   México: "🇲🇽", "Estados Unidos": "🇺🇸", España: "🇪🇸", Argentina: "🇦🇷", Nepal: "🇳🇵",
 };
 
-const seasonOptions = [
-  { label: "El próximo mes", value: "next_month" },
-  { label: "En 3 meses", value: "three_months" },
-  { label: "En 6 meses", value: "six_months" },
-  { label: "Soy flexible", value: "flexible" },
-];
+const MONTH_OPTIONS = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+].map((label, i) => ({ label, value: String(i + 1) }));
 
 const iconCls = "h-6 w-6 sm:h-7 sm:w-7";
 
+const TRAVEL_MODE_OPTIONS: { value: TravelMode; label: string; description: string; icon: React.ReactNode }[] = [
+  { value: "drive", label: "Manejando", description: "Road trip desde tu casa", icon: <Car className={iconCls} /> },
+  { value: "fly", label: "Volando", description: "Tomo un vuelo y rento auto", icon: <Plane className={iconCls} /> },
+  { value: "unsure", label: "Todavía no sé", description: "Te mostramos de todo", icon: <HelpCircle className={iconCls} /> },
+];
+
+// 10 screens. ZIP + travel mode share one screen (with the 3/6/10 h chips shown
+// only for "Manejando") so the quiz stays at 10 — don't split them into two steps.
 const steps: QuizStep[] = [
   {
-    question: "¿Desde qué ciudad sales?",
+    question: "¿Desde dónde sales?",
     subtitle: "Así calculamos distancias y tiempos de manejo",
-    key: "start_city",
-    options: [
-      { label: "San Diego / Sur de California", value: "sandiego_socal", icon: <MapPin className={iconCls} />, description: "Mercado primario Nomaderia" },
-      { label: "Los Ángeles", value: "los_angeles", icon: <MapPin className={iconCls} />, description: "Área metropolitana de LA" },
-      { label: "Resto de Estados Unidos", value: "resto_usa", icon: <Globe2 className={iconCls} />, description: "Otra ciudad en EE. UU." },
-      { label: "Otro lugar", value: "otro", icon: <Compass className={iconCls} />, description: "Fuera de EE. UU. o no listado" },
-    ],
+    key: "origin",
+    type: "origin",
   },
   {
-    question: "¿Qué fechas tienes en mente?",
-    subtitle: "Puedes ajustarlas después; nos ayudan a afinar temporada",
-    key: "dates",
-    type: "dates",
+    question: "¿En qué mes piensas ir?",
+    subtitle: "Así evitamos parques fuera de temporada. Las fechas exactas las vemos después.",
+    key: "month",
+    type: "month",
   },
   {
     question: "¿Con quién viajas?",
@@ -139,7 +144,7 @@ const steps: QuizStep[] = [
     ],
   },
   {
-    question: "Últimos detalles",
+    question: "Último detalle",
     subtitle: "Para afinar tus recomendaciones",
     key: "combined",
     type: "combined",
@@ -655,10 +660,12 @@ const QuizSection = () => {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const [combinedSeason, setCombinedSeason] = useState("");
   const [isUsResident, setIsUsResident] = useState<boolean | null>(null);
-  const [tripStartDate, setTripStartDate] = useState("");
-  const [tripEndDate, setTripEndDate] = useState("");
+  const [zip, setZip] = useState("");
+  const [zipError, setZipError] = useState<string | null>(null);
+  const [zipChecking, setZipChecking] = useState(false);
+  const [travelMode, setTravelMode] = useState<TravelMode | null>(null);
+  const [driveHours, setDriveHours] = useState<(typeof DRIVE_HOUR_OPTIONS)[number] | null>(null);
   const [groupKids, setGroupKids] = useState(false);
   const [groupOlderAdults, setGroupOlderAdults] = useState(false);
   const [groupVisitorsAbroad, setGroupVisitorsAbroad] = useState(false);
@@ -675,7 +682,7 @@ const QuizSection = () => {
 
   const currentStep = steps[Math.min(step, steps.length - 1)];
   const stepType = currentStep?.type ?? "options";
-  const isCustomStep = stepType === "combined" || stepType === "dates" || stepType === "group";
+  const isCustomStep = stepType !== "options";
 
   const dragProps = isCustomStep ? {} : {
     drag: "x" as const,
@@ -685,17 +692,35 @@ const QuizSection = () => {
   };
 
   const onCombinedSubmit = () => {
-    if (!combinedSeason || isUsResident === null) return;
-    handleCombinedSubmit({ season: combinedSeason, is_us_resident: String(isUsResident) });
+    if (isUsResident === null) return;
+    handleCombinedSubmit({ is_us_resident: String(isUsResident) });
   };
 
-  const onDatesSubmit = () => {
-    if (!tripStartDate || !tripEndDate) return;
-    if (tripEndDate < tripStartDate) return;
-    handleFieldsSubmit({
-      trip_start_date: tripStartDate,
-      trip_end_date: tripEndDate,
-    });
+  const originReady =
+    isValidZipFormat(zip) && travelMode !== null && (travelMode !== "drive" || driveHours !== null);
+
+  const onOriginSubmit = async () => {
+    if (!originReady || zipChecking) return;
+    setZipChecking(true);
+    setZipError(null);
+    try {
+      const centroid = await lookupZip(zip);
+      if (!centroid) {
+        setZipError("No encontramos ese código postal. Revisa que sean los 5 dígitos de tu código en EE. UU.");
+        return;
+      }
+      const { answers: fields, logFields } = originAnswerFields({
+        zip,
+        centroid,
+        travelMode: travelMode!,
+        maxDriveHours: travelMode === "drive" ? driveHours ?? undefined : undefined,
+      });
+      handleFieldsSubmit(fields, logFields);
+    } catch {
+      setZipError("No pudimos validar tu código postal. Revisa tu conexión e intenta de nuevo.");
+    } finally {
+      setZipChecking(false);
+    }
   };
 
   const onGroupSubmit = () => {
@@ -705,8 +730,6 @@ const QuizSection = () => {
       group_visitors_abroad: String(groupVisitorsAbroad),
     });
   };
-
-  const datesValid = Boolean(tripStartDate && tripEndDate && tripEndDate >= tripStartDate);
 
   if (loading && !showResults) return (
     <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
@@ -807,45 +830,148 @@ const QuizSection = () => {
                 </p>
               )}
 
-              {stepType === "dates" ? (
-                <div className="space-y-5 mt-5">
+              {stepType === "origin" ? (
+                <form
+                  className="space-y-6 mt-5"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void onOriginSubmit();
+                  }}
+                >
                   <div className="space-y-2">
-                    <label htmlFor="quiz-trip-start" className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      Fecha de inicio
+                    <label htmlFor="quiz-zip" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      ¿Cuál es tu código postal?
                     </label>
                     <Input
-                      id="quiz-trip-start"
-                      type="date"
-                      value={tripStartDate}
-                      onChange={(e) => setTripStartDate(e.target.value)}
-                      className="bg-muted border-border text-foreground h-11"
+                      id="quiz-zip"
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      maxLength={5}
+                      placeholder="Ej. 92101"
+                      value={zip}
+                      onFocus={preloadZipTable}
+                      onChange={(e) => {
+                        setZip(e.target.value.replace(/\D/g, "").slice(0, 5));
+                        setZipError(null);
+                      }}
+                      aria-invalid={zipError !== null}
+                      aria-describedby={zipError ? "quiz-zip-error" : undefined}
+                      className="bg-muted border-border text-foreground h-11 text-base tracking-widest max-w-[10rem]"
                     />
+                    <p id="quiz-zip-error" aria-live="polite" className="text-sm text-destructive min-h-[1.25rem]">
+                      {zipError}
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <label htmlFor="quiz-trip-end" className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      Fecha de regreso
-                    </label>
-                    <Input
-                      id="quiz-trip-end"
-                      type="date"
-                      value={tripEndDate}
-                      min={tripStartDate || undefined}
-                      onChange={(e) => setTripEndDate(e.target.value)}
-                      className="bg-muted border-border text-foreground h-11"
-                    />
+
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-foreground">¿Cómo piensas llegar?</p>
+                    {TRAVEL_MODE_OPTIONS.map((opt) => {
+                      const selected = travelMode === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => {
+                            setTravelMode(opt.value);
+                            if (opt.value !== "drive") setDriveHours(null);
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-4 px-4 py-4 rounded-2xl border transition-colors duration-200 text-left",
+                            selected
+                              ? "bg-green-wash border-green/50"
+                              : cn("bg-white border-stone/20", canHover && "hover:border-stone/40"),
+                          )}
+                        >
+                          <div className={cn(
+                            "w-11 h-11 rounded-xl flex items-center justify-center shrink-0",
+                            selected ? "bg-green-wash" : "bg-muted",
+                          )}>
+                            {opt.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm sm:text-base font-medium text-foreground leading-snug">{opt.label}</p>
+                            <p className="text-sm text-stone-500 mt-0.5 leading-snug">{opt.description}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                  {tripStartDate && tripEndDate && tripEndDate < tripStartDate && (
-                    <p className="text-sm text-destructive">La fecha de regreso debe ser igual o posterior al inicio.</p>
+
+                  {travelMode === "drive" && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-foreground">¿Cuántas horas máximo manejarías?</p>
+                      <div className="grid grid-cols-3 gap-3">
+                        {DRIVE_HOUR_OPTIONS.map((h) => (
+                          <button
+                            key={h}
+                            type="button"
+                            aria-pressed={driveHours === h}
+                            onClick={() => setDriveHours(h)}
+                            className={cn(
+                              "h-11 rounded-xl border text-sm font-medium transition-colors duration-200",
+                              driveHours === h
+                                ? "bg-green-wash border-green/50 text-foreground"
+                                : cn("bg-white border-stone/20 text-foreground", canHover && "hover:border-stone/40"),
+                            )}
+                          >
+                            {h} h
+                          </button>
+                        ))}
+                      </div>
+                      {isIslandZip(zip) && (
+                        <p className="text-xs text-stone-500">
+                          Desde islas no aplicamos límite de manejo — te mostramos parques a los que puedes volar.
+                        </p>
+                      )}
+                    </div>
                   )}
+
                   <Button
-                    onClick={onDatesSubmit}
-                    disabled={!datesValid}
-                    className="w-full bg-green text-white shadow-lg shadow-green/20 h-11 mt-2"
+                    type="submit"
+                    disabled={!originReady || zipChecking}
+                    className="w-full bg-green text-white shadow-lg shadow-green/20 h-11"
                   >
-                    Continuar <ArrowRight className="h-4 w-4 ml-2" />
+                    {zipChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Continuar <ArrowRight className="h-4 w-4 ml-2" /></>}
                   </Button>
+                </form>
+              ) : stepType === "month" ? (
+                <div className="mt-5 space-y-3">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    {MONTH_OPTIONS.map((m) => {
+                      const selected = answers.month === m.value;
+                      return (
+                        <button
+                          key={m.value}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => handleSelect("month", m.value)}
+                          className={cn(
+                            "h-12 rounded-xl border text-sm font-medium transition-colors duration-200",
+                            selected
+                              ? "bg-green-wash border-green/50 text-foreground"
+                              : cn("bg-white border-stone/20 text-foreground", canHover && "hover:border-stone/40"),
+                          )}
+                        >
+                          {m.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    aria-pressed={answers.month === MONTH_UNKNOWN}
+                    onClick={() => handleSelect("month", MONTH_UNKNOWN)}
+                    className={cn(
+                      "w-full h-12 rounded-xl border text-sm font-medium transition-colors duration-200",
+                      answers.month === MONTH_UNKNOWN
+                        ? "bg-green-wash border-green/50 text-foreground"
+                        : cn("bg-white border-stone/20 text-foreground", canHover && "hover:border-stone/40"),
+                    )}
+                  >
+                    Aún no sé
+                  </button>
                 </div>
               ) : stepType === "group" ? (
                 <div className="space-y-3 mt-5">
@@ -889,25 +1015,6 @@ const QuizSection = () => {
               ) : stepType === "combined" ? (
                 <div className="space-y-5 mt-5">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      ¿Cuándo te gustaría ir?
-                    </label>
-                    <Select value={combinedSeason} onValueChange={setCombinedSeason}>
-                      <SelectTrigger className="bg-muted border-border text-foreground h-11">
-                        <SelectValue placeholder="Selecciona temporada" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {seasonOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">
                       ¿Eres ciudadano o residente de EE. UU.?
                     </label>
@@ -932,7 +1039,7 @@ const QuizSection = () => {
 
                   <Button
                     onClick={onCombinedSubmit}
-                    disabled={!combinedSeason || isUsResident === null}
+                    disabled={isUsResident === null}
                     className="w-full bg-green text-white shadow-lg shadow-green/20 h-11 mt-2"
                   >
                     Ver Mis Resultados <ArrowRight className="h-4 w-4 ml-2" />

@@ -5,16 +5,32 @@
 import { describe, expect, it } from "vitest";
 import { recommend } from "@engine/engine";
 import { ENGINE_DATA } from "@engine/engine-data.generated";
+import { lookupZipIn } from "@/lib/zip-centroids";
+import { realZipTable } from "@/test/zcta-table";
 import {
+  DRIVE_HOUR_OPTIONS,
   InvalidProfileError,
+  MONTH_UNKNOWN,
   SUPPORTED_ENGINE_VERSION,
+  TRAVEL_MODES,
   answersToRankingProfile,
   buildSpanishReasons,
   engineDataForParkCodes,
+  originAnswerFields,
   rankQuizDestinations,
   resolveProfileMonth,
   type QuizDestinationRow,
+  type TravelMode,
 } from "./quiz-ranking";
+
+const zipTable = realZipTable();
+
+/** Origin answers exactly as the quiz's origin screen would store them. */
+function originFor(zip: string, travelMode: TravelMode, maxDriveHours?: "3" | "6" | "10"): Record<string, string> {
+  const centroid = lookupZipIn(zipTable, zip);
+  if (!centroid) throw new Error(`test ZIP ${zip} not in table`);
+  return originAnswerFields({ zip, centroid, travelMode, maxDriveHours }).answers;
+}
 
 function makeRow(overrides: Partial<QuizDestinationRow> = {}): QuizDestinationRow {
   return {
@@ -39,13 +55,13 @@ function makeRow(overrides: Partial<QuizDestinationRow> = {}): QuizDestinationRo
   };
 }
 
-const desertWeekendFromSD = {
+const desertWeekendFromSD: Record<string, string> = {
   interest: "deserts",
   fitness_level: "light_activity",
   trip_duration: "weekend",
   budget_range: "low",
-  start_city: "sandiego_socal",
-  trip_start_date: "2026-11-10",
+  ...originFor("92101", "drive", "10"),
+  month: "11",
 };
 
 describe("engine version guard", () => {
@@ -62,7 +78,10 @@ describe("engine version guard", () => {
       desertWeekendFromSD,
       { interest: "mountains", fitness_level: "active", trip_duration: "two_weeks", budget_range: "unlimited" },
       { interest: "cultural", fitness_level: "sedentary", trip_duration: "one_week", budget: "medium", group_kids: "true" },
-      { interest: "nope", fitness_level: "nope", trip_duration: "nope", budget_range: "nope", start_city: "otro" },
+      { interest: "nope", fitness_level: "nope", trip_duration: "nope", budget_range: "nope", travel_mode: "nope", month: "nope" },
+      { ...originFor("99501", "drive", "3"), month: MONTH_UNKNOWN },
+      { ...originFor("96813", "drive", "6"), month: "1" },
+      { ...originFor("10001", "fly"), month: "12" },
     ];
     for (const answers of answerSets) {
       expect(() => recommend(ENGINE_DATA, answersToRankingProfile(answers), 3)).not.toThrow(InvalidProfileError);
@@ -71,47 +90,145 @@ describe("engine version guard", () => {
 });
 
 describe("resolveProfileMonth", () => {
-  it("reads month from trip_start_date", () => {
-    expect(resolveProfileMonth({ trip_start_date: "2026-10-15" })).toBe(10);
+  it("reads the month answer (1–12)", () => {
+    expect(resolveProfileMonth({ month: "1" })).toBe(1);
+    expect(resolveProfileMonth({ month: "10" })).toBe(10);
+    expect(resolveProfileMonth({ month: "12" })).toBe(12);
   });
 
-  it("returns null for flexible season without dates", () => {
-    expect(resolveProfileMonth({ season: "flexible" })).toBeNull();
+  it("returns null for 'Aún no sé', a missing answer, or anything malformed", () => {
+    for (const month of [MONTH_UNKNOWN, "", "0", "13", "abc", "1.5", "-3"]) {
+      expect(resolveProfileMonth({ month }), month).toBeNull();
+    }
+    expect(resolveProfileMonth({})).toBeNull();
+  });
+
+  it("ignores the retired date and season answers", () => {
+    expect(resolveProfileMonth({ trip_start_date: "2026-10-15" })).toBeNull();
+    expect(resolveProfileMonth({ season: "next_month" })).toBeNull();
   });
 });
 
-describe("answersToRankingProfile", () => {
-  it("maps deserts interest + San Diego origin", () => {
+describe("answersToRankingProfile — origin", () => {
+  it("a San Diego driver gets a drive filter from their ZIP", () => {
     const profile = answersToRankingProfile(desertWeekendFromSD);
     expect(profile.biomes).toContain("desert");
     expect(profile.difficulty).toBe("easy");
     expect(profile.days_needed).toBe("2-3");
     expect(profile.budget_tier).toBe("low");
     expect(profile.month).toBe(11);
-    expect(profile.origin_lat).toBeCloseTo(32.72, 1);
-    expect(profile.max_drive_hours).toBe(12);
-    expect(profile.allow_remote).toBe(false);
+    expect(profile.origin_lat).toBeCloseTo(32.7, 1);
+    expect(profile.origin_lon).toBeCloseTo(-117.2, 1);
+    expect(profile.max_drive_hours).toBe(10);
+    expect(profile.allow_remote).toBe(true);
   });
 
-  it("maps active fitness to challenging and leaves origin null for 'otro'", () => {
+  it.each(DRIVE_HOUR_OPTIONS)("driving with a %s h limit sets exactly that limit", (hours) => {
+    expect(answersToRankingProfile(originFor("80202", "drive", hours)).max_drive_hours).toBe(Number(hours));
+  });
+
+  it.each(["fly", "unsure"] as const)("'%s' sets no drive filter", (mode) => {
+    const profile = answersToRankingProfile(originFor("92101", mode));
+    expect(profile.origin_lat).toBeNull();
+    expect(profile.origin_lon).toBeNull();
+    expect(profile.max_drive_hours).toBeNull();
+    expect(profile.allow_remote).toBe(true);
+  });
+
+  it("a driver without a valid hour bucket or coordinates gets no drive filter", () => {
+    const base = originFor("92101", "drive", "6");
+    expect(answersToRankingProfile({ ...base, max_drive_hours: "7" }).max_drive_hours).toBeNull();
+    expect(answersToRankingProfile({ ...base, origin_lat: "" }).max_drive_hours).toBeNull();
+    expect(answersToRankingProfile({ ...base, origin_lon: "nope" }).max_drive_hours).toBeNull();
+  });
+
+  it("driving from Hawaii or a territory means no drive filter (straight-line distance ignores the ocean)", () => {
+    for (const zip of ["96813", "96720", "00901"]) {
+      const profile = answersToRankingProfile(originFor(zip, "drive", "6"));
+      expect(profile.max_drive_hours, zip).toBeNull();
+      expect(profile.origin_lat, zip).toBeNull();
+    }
+  });
+
+  it("driving from Alaska keeps the drive filter", () => {
+    const profile = answersToRankingProfile(originFor("99501", "drive", "6"));
+    expect(profile.origin_lat).toBeCloseTo(61.2, 1);
+    expect(profile.max_drive_hours).toBe(6);
+  });
+
+  it("the retired city answers no longer influence the profile", () => {
+    const answers = originFor("92101", "fly");
+    for (const start_city of ["sandiego_socal", "los_angeles", "resto_usa", "otro"]) {
+      expect(answersToRankingProfile({ ...answers, start_city, origin: start_city })).toEqual(answersToRankingProfile(answers));
+    }
+  });
+
+  it("maps active fitness to challenging and two weeks to 7+", () => {
     const profile = answersToRankingProfile({
       interest: "mountains",
       fitness_level: "active",
       trip_duration: "two_weeks",
       budget_range: "high",
-      start_city: "otro",
     });
     expect(profile.difficulty).toBe("challenging");
     expect(profile.days_needed).toBe("7+");
-    expect(profile.origin_lat).toBeNull();
-    expect(profile.max_drive_hours).toBeNull();
-    expect(profile.allow_remote).toBe(true);
   });
 
   it("adds family + easy_walk tags when kids or older adults travel", () => {
     const profile = answersToRankingProfile({ interest: "mountains", group_kids: "true" });
     expect(profile.tags).toContain("family");
     expect(profile.tags).toContain("easy_walk");
+  });
+});
+
+describe("allow_remote never depends on where the user lives", () => {
+  // Mainland west/east/south/north, Alaska (road-connected and not), Hawaii,
+  // American Samoa, Puerto Rico, a PO-box-only ZIP, and a rural ZIP.
+  const zips = ["92101", "90009", "10001", "33101", "60601", "59901", "99501", "99801", "96813", "96799", "00901", "82190"];
+
+  it("is true for every ZIP × travel mode × hour bucket, and every profile is valid for the engine", () => {
+    for (const zip of zips) {
+      for (const mode of TRAVEL_MODES) {
+        const hourSets = mode === "drive" ? DRIVE_HOUR_OPTIONS : [undefined];
+        for (const hours of hourSets) {
+          const profile = answersToRankingProfile(originFor(zip, mode, hours));
+          expect(profile.allow_remote, `${zip}/${mode}/${hours}`).toBe(true);
+          expect(() => recommend(ENGINE_DATA, profile, 3), `${zip}/${mode}/${hours}`).not.toThrow();
+        }
+      }
+    }
+  });
+});
+
+describe("originAnswerFields — what is stored vs. what is logged", () => {
+  const centroid = lookupZipIn(zipTable, "92101")!;
+
+  it("stores the full ZIP and coordinates in the answers", () => {
+    const { answers } = originAnswerFields({ zip: "92101", centroid, travelMode: "drive", maxDriveHours: "6" });
+    expect(answers).toEqual({
+      zip: "92101",
+      zip_match: "exact",
+      origin_lat: String(centroid.lat),
+      origin_lon: String(centroid.lon),
+      travel_mode: "drive",
+      max_drive_hours: "6",
+    });
+  });
+
+  it("logs only the 3-digit prefix — never the full ZIP or coordinates", () => {
+    for (const travelMode of TRAVEL_MODES) {
+      const { logFields } = originAnswerFields({ zip: "92101", centroid, travelMode, maxDriveHours: "6" });
+      expect(logFields.zip3).toBe("921");
+      expect(Object.keys(logFields)).not.toContain("zip");
+      expect(Object.keys(logFields)).not.toContain("origin_lat");
+      expect(Object.keys(logFields)).not.toContain("origin_lon");
+      expect(Object.values(logFields)).not.toContain("92101");
+    }
+  });
+
+  it("records the hour limit only for drivers", () => {
+    expect(originAnswerFields({ zip: "92101", centroid, travelMode: "fly", maxDriveHours: "6" }).answers).not.toHaveProperty("max_drive_hours");
+    expect(originAnswerFields({ zip: "92101", centroid, travelMode: "drive", maxDriveHours: "3" }).logFields.max_drive_hours).toBe("3");
   });
 });
 
@@ -175,8 +292,20 @@ describe("rankQuizDestinations", () => {
     expect(outcome.results.map((r) => r.destination.park_code)).toEqual(["jotr"]);
   });
 
+  it("driving vs flying from the same ZIP: the hour limit decides reach", () => {
+    const pair = [makeRow(), makeRow({ id: "dest-acad", park_code: "acad", title: "Acadia" })];
+    // Joshua Tree is ~2–3 h from San Diego by the engine's estimate; Acadia is across the country.
+    const driver = rankQuizDestinations(pair, { ...desertWeekendFromSD, ...originFor("92101", "drive", "3") }, 3);
+    expect(driver.relaxed_drive_filter).toBe(false);
+    expect(driver.results.map((r) => r.destination.park_code)).toEqual(["jotr"]);
+
+    const flyer = rankQuizDestinations(pair, { ...desertWeekendFromSD, ...originFor("92101", "fly") }, 3);
+    expect(flyer.results.map((r) => r.destination.park_code).sort()).toEqual(["acad", "jotr"]);
+    expect(flyer.results.every((r) => r.ranked.facts.drive_hours === null)).toBe(true);
+  });
+
   it("relaxes the drive radius when it empties the catalog, and says so", () => {
-    // Acadia (Maine) is far beyond 12 h from San Diego.
+    // Acadia (Maine) is far beyond 10 h from San Diego.
     const outcome = rankQuizDestinations([makeRow({ id: "dest-acad", park_code: "acad", title: "Acadia" })], desertWeekendFromSD, 3);
     expect(outcome.relaxed_drive_filter).toBe(true);
     expect(outcome.results).toHaveLength(1);

@@ -38,7 +38,11 @@ const durationLabels: Record<string, string> = {
 const budgetLabels: Record<string, string> = {
   low: "🎒 Mochilero", medium: "💰 Balanceado", high: "✨ Cómodo", unlimited: "🚀 Sin límite",
 };
+// travel_style: since the ZIP quiz (ADR-031) it holds the travel mode; the
+// city/region keys below are kept so older responses still render.
 const originLabels: Record<string, string> = {
+  drive: "🚗 Manejando", fly: "✈️ Volando", unsure: "🤔 Aún no sabe",
+  los_angeles: "🇺🇸 Los Ángeles",
   tijuana_baja: "🇲🇽 Tijuana/Baja", sandiego_socal: "🇺🇸 San Diego/SoCal", cdmx: "🇲🇽 CDMX",
   resto_mx: "🇲🇽 Resto MX", resto_usa: "🇺🇸 Resto USA", otro: "🌎 Otro",
   mx_border: "🇲🇽 Frontera MX", mx_center: "🇲🇽 Centro MX",

@@ -23,6 +23,7 @@ import {
 } from "@engine/engine";
 import { ENGINE_DATA } from "@engine/engine-data.generated";
 import { buildSpanishReasons, engineDataForParkCodes } from "@shared/engine-es";
+import { isIslandZip, type ZipCentroid } from "@/lib/zip-centroids";
 
 /**
  * The engine_version this adapter was written and reviewed against. The Vitest
@@ -54,12 +55,6 @@ export interface QuizDestinationRow {
   requires_permit: boolean | null;
 }
 
-/** Quiz city choices → coordinates (same values as upstream `src/origins.py`). */
-export const QUIZ_ORIGINS: Record<string, { lat: number; lon: number }> = {
-  san_diego: { lat: 32.72, lon: -117.16 },
-  los_angeles: { lat: 34.05, lon: -118.24 },
-};
-
 const INTEREST_TO_PROFILE: Record<string, { biomes: string[]; tags: string[] }> = {
   mountains: { biomes: ["alpine", "forest"], tags: ["hiking", "scenic_drive", "photography", "backpacking"] },
   forests: { biomes: ["forest", "rainforest"], tags: ["hiking", "giant_trees", "wildlife", "family"] },
@@ -87,34 +82,88 @@ const BUDGET_TO_TIER: Record<string, string> = {
   unlimited: "high",
 };
 
-const START_CITY_TO_ORIGIN: Record<string, keyof typeof QUIZ_ORIGINS | null> = {
-  sandiego_socal: "san_diego",
-  los_angeles: "los_angeles",
-  resto_usa: null,
-  otro: null,
-  // Legacy origin value still accepted if present
-  tijuana_baja: "san_diego",
-};
+// ─── Origin (ZIP + travel mode) and month answers ────────────────────────────
+//
+// Answer keys written by the quiz's origin screen (see originAnswerFields):
+//   zip, zip_match ("exact" | "nearby"), origin_lat, origin_lon,
+//   travel_mode ("drive" | "fly" | "unsure"), max_drive_hours ("3" | "6" | "10", drive only)
+// and by the month screen:
+//   month ("1".."12" | "unknown")
+// The ZIP is resolved to coordinates when the user submits the origin screen,
+// so this mapping stays synchronous and never touches the ZIP table.
 
-/** Soft drive radius for SoCal starts (hours). Relaxed automatically if it empties the catalog. */
-export const SOCAL_MAX_DRIVE_HOURS = 12;
+export type TravelMode = "drive" | "fly" | "unsure";
+export const TRAVEL_MODES: readonly TravelMode[] = ["drive", "fly", "unsure"];
+export const DRIVE_HOUR_OPTIONS = ["3", "6", "10"] as const;
+export const MONTH_UNKNOWN = "unknown";
 
-/** Parse month (1–12) from ISO date string or season quiz answer. */
+/** Month answer → engine month (1–12), or null = "Aún no sé" / missing / malformed. */
 export function resolveProfileMonth(answers: Record<string, string>): number | null {
-  const start = answers.trip_start_date;
-  if (start && /^\d{4}-\d{2}-\d{2}$/.test(start)) {
-    const month = Number(start.slice(5, 7));
-    if (month >= 1 && month <= 12) return month;
+  const raw = answers.month;
+  if (!raw || !/^\d{1,2}$/.test(raw)) return null;
+  const month = Number(raw);
+  return month >= 1 && month <= 12 ? month : null;
+}
+
+function parseCoord(value: string | undefined, min: number, max: number): number | null {
+  if (value == null || value.trim() === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+
+/**
+ * Drive filter from the origin answers, or null for "no drive filter".
+ * Only a driver with a placeable ZIP, a known hour bucket, and a ZIP where
+ * driving means a road trip (not Hawaii or a territory — the engine's drive
+ * estimate is straight-line and would call Maui a two-hour drive from
+ * Honolulu) gets one.
+ */
+function driveFilter(answers: Record<string, string>): { lat: number; lon: number; hours: number } | null {
+  if (answers.travel_mode !== "drive") return null;
+  if (!(DRIVE_HOUR_OPTIONS as readonly string[]).includes(answers.max_drive_hours ?? "")) return null;
+  if (answers.zip && isIslandZip(answers.zip)) return null;
+  const lat = parseCoord(answers.origin_lat, -90, 90);
+  const lon = parseCoord(answers.origin_lon, -180, 180);
+  if (lat === null || lon === null) return null;
+  return { lat, lon, hours: Number(answers.max_drive_hours) };
+}
+
+export interface OriginInput {
+  zip: string;
+  centroid: ZipCentroid;
+  travelMode: TravelMode;
+  /** Required when travelMode is "drive". */
+  maxDriveHours?: (typeof DRIVE_HOUR_OPTIONS)[number];
+}
+
+/**
+ * What the origin screen stores vs. what it logs. The full ZIP and its
+ * coordinates go into the answers (they reach `leads.quiz_answers`, which the
+ * post-payment itinerary needs). `events` accepts anonymous inserts and is
+ * tied to a session, so it only gets the 3-digit prefix — never the full ZIP
+ * or the coordinates (ADR-031).
+ */
+export function originAnswerFields(input: OriginInput): {
+  answers: Record<string, string>;
+  logFields: Record<string, string>;
+} {
+  const answers: Record<string, string> = {
+    zip: input.zip,
+    zip_match: input.centroid.match,
+    origin_lat: String(input.centroid.lat),
+    origin_lon: String(input.centroid.lon),
+    travel_mode: input.travelMode,
+  };
+  const logFields: Record<string, string> = {
+    zip3: input.zip.slice(0, 3),
+    zip_match: input.centroid.match,
+    travel_mode: input.travelMode,
+  };
+  if (input.travelMode === "drive" && input.maxDriveHours) {
+    answers.max_drive_hours = input.maxDriveHours;
+    logFields.max_drive_hours = input.maxDriveHours;
   }
-
-  const season = answers.season;
-  if (!season || season === "flexible") return null;
-
-  const now = new Date();
-  if (season === "next_month") return ((now.getMonth() + 1) % 12) + 1;
-  if (season === "three_months") return ((now.getMonth() + 3) % 12) + 1;
-  if (season === "six_months") return ((now.getMonth() + 6) % 12) + 1;
-  return null;
+  return { answers, logFields };
 }
 
 export function answersToRankingProfile(answers: Record<string, string>): TripProfile {
@@ -122,10 +171,6 @@ export function answersToRankingProfile(answers: Record<string, string>): TripPr
     biomes: ["forest", "desert", "canyon"],
     tags: ["hiking", "family", "scenic_drive"],
   };
-
-  const startKey = answers.start_city || answers.origin || "";
-  const originKey = START_CITY_TO_ORIGIN[startKey] ?? null;
-  const origin = originKey ? QUIZ_ORIGINS[originKey] : null;
 
   const hasKids = answers.group_kids === "true";
   const hasOlder = answers.group_older_adults === "true";
@@ -146,14 +191,19 @@ export function answersToRankingProfile(answers: Record<string, string>): TripPr
     origin_lat: null,
     origin_lon: null,
     max_drive_hours: null,
-    allow_remote: startKey === "resto_usa" || startKey === "otro",
+    // Never derived from where the user lives (ADR-031): the drive-hour limit
+    // decides reach for drivers, and remote parks (AK, HI, ferry) stay
+    // eligible for everyone. Frank's itinerary review catches the rare odd
+    // pick (e.g. Lake Clark for an Anchorage driver).
+    allow_remote: true,
     allow_permits: true,
   };
 
-  if (origin) {
-    profile.origin_lat = origin.lat;
-    profile.origin_lon = origin.lon;
-    profile.max_drive_hours = SOCAL_MAX_DRIVE_HOURS;
+  const drive = driveFilter(answers);
+  if (drive) {
+    profile.origin_lat = drive.lat;
+    profile.origin_lon = drive.lon;
+    profile.max_drive_hours = drive.hours;
   }
 
   return profile;
