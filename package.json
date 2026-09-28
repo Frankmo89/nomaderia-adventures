@@ -13,6 +13,7 @@
     "sync:engine": "tsx scripts/sync-engine.ts",
     "verify:engine": "tsx scripts/sync-engine.ts --verify",
     "check:engine-upstream": "tsx scripts/sync-engine.ts --check-upstream",
+    "build:zip-centroids": "tsx scripts/build-zip-centroids.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "typecheck:functions": "deno check --no-lock supabase/functions",
