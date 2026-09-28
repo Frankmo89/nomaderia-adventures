@@ -22,17 +22,6 @@ const comfortOptions: { value: ComfortLevel; label: string; icon: LucideIcon }[]
   { value: "premium", label: "Premium", icon: Star },
 ];
 
-// Zonas de origen para EE. UU. (mercado MXN/legacy retirado, ver ADR-012).
-// "Punto de partida" es solo una etiqueta mostrada en el resumen — no alimenta
-// calculateBudget() (el costo de vuelos siempre viene del input manual de
-// flightCost), así que no hay valores de costo por zona que remapear.
-const originZones = [
-  "San Diego / Sur de California",
-  "Los Ángeles",
-  "Resto de Estados Unidos",
-  "Otro lugar",
-];
-
 const HeroSlider = ({ images }: { images: string[] }) => {
   const [index, setIndex] = useState(0);
 
@@ -75,7 +64,6 @@ const BudgetCalculator = () => {
   });
   const { data: destinations = [] } = useDestinations();
   const [selectedSlug, setSelectedSlug] = useState("");
-  const [origin, setOrigin] = useState(originZones[0]);
   const [days, setDays] = useState(5);
   const [comfort, setComfort] = useState<ComfortLevel>("mid");
   // Texto crudo del input controlado — permite vaciarlo mientras se escribe
@@ -233,23 +221,6 @@ const BudgetCalculator = () => {
                   </Select>
                 </div>
 
-                {/* Origin */}
-                <div className="space-y-2">
-                  <label htmlFor="origin-select" className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <Plane className="w-4 h-4 text-green" /> Punto de partida
-                  </label>
-                  <Select value={origin} onValueChange={setOrigin}>
-                    <SelectTrigger id="origin-select" aria-label="Seleccionar punto de partida" className="bg-background border-border shadow-sm h-11">
-                      <SelectValue placeholder="Selecciona tu zona" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border z-50">
-                      {originZones.map((z) => (
-                        <SelectItem key={z} value={z}>{z}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Days */}
                 <div className="space-y-2">
                   <label htmlFor="days-input" className="text-sm font-medium text-foreground">Duración (días)</label>
@@ -379,7 +350,6 @@ const BudgetCalculator = () => {
                           <h3 className="text-xl font-bold text-foreground">
                             {selectedDest?.title}, {selectedDest?.country}
                           </h3>
-                          {origin && <p className="text-sm text-muted-foreground mt-1">Desde: {origin}</p>}
                         </div>
                         <div className="text-right">
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-wash text-green text-xs font-semibold">

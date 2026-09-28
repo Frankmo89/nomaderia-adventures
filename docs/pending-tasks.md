@@ -405,6 +405,12 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-09-27] **Calculadora: se quita "Punto de partida".** Era una etiqueta
+  (SoCal / LA / resto de EE. UU. / "Otro lugar") que solo se mostraba como
+  "Desde: …" en el resumen; nunca alimentó `calculateBudget()` (el costo de
+  vuelos es un input manual). Si algún día se estiman vuelos por origen,
+  reusar `lookupZip` del quiz (ADR-031) en vez de reintroducir la lista.
+
 - [2026-09-27] **Concierge: WhatsApp solo para clientes que ya pagaron (ADR-030).**
   `concierge-agent` ya no devuelve `whatsapp_url` en ningún caso (guardrail sin
   contexto, fallback, ni el `PURCHASE_INTENT_PATTERN` frontend-only que se
