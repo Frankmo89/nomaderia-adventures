@@ -524,6 +524,10 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   para monitorear la tasa `ok`/`regenerated`/`fallback` — antes solo viajaba en
   la respuesta HTTP, sin quedar registrado.
 
+---
+
+## Lecciones técnicas (bugs no obvios)
+
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
 > error ya pagado.
 
