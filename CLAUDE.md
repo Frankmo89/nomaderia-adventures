@@ -243,6 +243,7 @@ npm run typecheck:functions  # deno check de supabase/functions (requiere Deno 2
 npm run sync:engine -- --to <sha>   # Mover el pin del motor de ranking (ADR-026)
 npm run verify:engine               # Re-descarga en el pin y falla si algo derivó
 npm run check:engine-upstream       # ¿Upstream main va adelante del pin? (exit 2 = sí)
+npm run build:zip-centroids         # Regenera la tabla ZIP→lat/lon del quiz desde el gazetteer ZCTA del Census (ADR-031)
 DATABASE_URL=<postgres desechable> scripts/test-sql.sh  # Tests SQL de triggers (job CI sql-tests; NUNCA contra Supabase)
 ```
 

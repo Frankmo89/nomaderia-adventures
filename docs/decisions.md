@@ -524,6 +524,58 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   para monitorear la tasa `ok`/`regenerated`/`fallback` — antes solo viajaba en
   la respuesta HTTP, sin quedar registrado.
 
+### ADR-031 — Quiz: origen por código postal + modo de viaje; mes en vez de fechas; `allow_remote` nunca depende de la ciudad
+- **Fecha:** 2026-09-27
+- **Estado:** Vigente
+- **Contexto:** Nomaderia vende solo a quien vive en EE. UU. El quiz preguntaba
+  "¿Desde qué ciudad sales?" con 4 opciones (SoCal "mercado primario", LA,
+  resto de EE. UU., "Otro lugar — fuera de EE. UU."): solo SoCal/LA tenían
+  coordenadas, con un radio fijo de 12 h, y `allow_remote` salía de la ciudad
+  (SoCal → `false`, así que un sandieguino nunca veía Channel Islands ni
+  parques de Alaska/Hawái aunque volara). Además pedía fechas exactas y una
+  temporada relativa ("en 3 meses") que se convertía a mes con la fecha de hoy.
+- **Decisión:**
+  1. **Código postal → lat/lon** con la tabla de centroides ZCTA del Census
+     (dominio público), en el repo como archivo estático
+     `public/data/zcta-centroids-2025.txt` (una línea por ZIP), generada por
+     `npm run build:zip-centroids` (nunca a mano; 1 decimal ≈ 11 km). Sin API
+     externa: se sirve desde nuestro propio dominio. `src/lib/zip-centroids.ts`
+     la pide con `fetch` solo cuando alguien enfoca el campo de ZIP (~570 KB,
+     comprimible; `_headers` le da `/data/*` con caché de 1 día). No es un
+     módulo JS a propósito: como string literal de 530 KB, `vite build` pasó
+     de ~15 s a 6+ minutos (ver lecciones técnicas). ZIP sin ZCTA (apartados postales, p. ej. 90009) → el ZCTA
+     numéricamente más cercano del mismo prefijo de 3 dígitos, nunca un
+     promedio del prefijo (967xx mezcla Hawái y Samoa Americana). Prefijo sin
+     ningún ZCTA (00000, 00501) → error inline, no avanza. Territorios (PR, VI,
+     GU, AS) cuentan como EE. UU.
+  2. **Modo de viaje** en la misma pantalla que el ZIP (el quiz se queda en 10
+     pasos): Manejando (chips 3/6/10 h) → origen + `max_drive_hours`;
+     Volando / Todavía no sé → sin filtro de manejo. Manejando desde Hawái o un
+     territorio → sin filtro (el motor estima manejo en línea recta e ignoraría
+     el océano). Alaska sí conserva el filtro.
+  3. **`allow_remote: true` siempre.** El límite de horas decide el alcance, no
+     la bandera de remoto. Costo aceptado: un conductor de Anchorage puede ver
+     Lake Clark (sin carretera); la revisión de itinerario de Frank lo detecta.
+  4. **Mes** ("¿En qué mes piensas ir?", 12 meses + "Aún no sé" = `null`)
+     reemplaza fechas y temporada. Las fechas exactas pasan al intake
+     post-pago, no al quiz.
+  5. **Privacidad:** el ZIP completo y sus coordenadas viven en las respuestas
+     (llegan a `leads.quiz_answers`, que el itinerario necesita). `events`
+     acepta inserts anónimos ligados a una sesión, así que solo recibe el
+     prefijo de 3 dígitos (`zip3`) + `zip_match` — nunca el ZIP completo ni
+     las coordenadas (`originAnswerFields`, con test). La política de
+     privacidad lista ahora el código postal y su propósito.
+  6. `quiz_responses.travel_style` pasa a guardar el modo de viaje
+     (`drive`/`fly`/`unsure`); los labels viejos de ciudad se conservan en el
+     admin para filas históricas.
+- **Consecuencias:** NO volver a derivar `allow_remote` de la ubicación (hay un
+  test que recorre ZIPs × modos × horas). NO convertir la tabla en un módulo
+  `.ts`/`.json` importado. Para refrescarla: subir `ZCTA_GAZETTEER_YEAR` en
+  `src/lib/zip-centroids.ts` (el script y la app leen esa constante; el año va
+  en el nombre del archivo) y correr `npm run build:zip-centroids`. La calculadora de presupuesto tenía
+  la misma lista de ciudades pero era solo una etiqueta — se elimina aparte, no
+  se migra a ZIP.
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)
@@ -594,6 +646,12 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   signature implícita, así que un array de ella no entra en una columna `Json`
   aunque sus campos sean serializables. Una `type` alias idéntica sí. Si un tipo
   se persiste en jsonb, declararlo con `type`.
+- **Datos grandes como string literal en un módulo TS rompen el build:** la
+  tabla ZIP (530 KB en una sola línea `export const X = "..."`) hizo que
+  `vite build` pasara de ~15 s a más de 6 minutos a CPU completa, aun
+  importándola con `import()` dinámico (con un stub diminuto: 14 s). Datos que no
+  son código van en `public/` y se piden con `fetch` (ADR-031): no pasan por el
+  bundler ni cuestan un parse de JS en el navegador.
 - **`knowledge_chunks.metadata` no trae `slug`:** `ingest-knowledge` guarda
   `{park_code, title, section, content_version}` (0 de 1,768 chunks con `slug`),
   aunque seccion-9 documentaba lo contrario. `concierge-agent` descartaba todo

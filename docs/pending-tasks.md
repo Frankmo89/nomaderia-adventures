@@ -346,6 +346,10 @@ Pendiente real:
 - [ ] **Concierge multi-turn.** Hoy es single-turn (`{question, destination_slug}`): "¿y el segundo?" no funciona. Agregar historial acotado desde el cliente; el servidor **re-corre el motor** con el perfil, nunca confía en un ranking que mande el cliente.
 - [ ] **Quiz: `INTEREST_TO_PROFILE.deserts.tags` incluye `"desert"`** (bioma, no tag del vocab — contrato §1 dice no mandarlo). El motor lo ignora, así que no cambia scores; quitarlo en un PR aparte.
 
+### Quiz por código postal (seguimiento de ADR-031)
+- [ ] **Fechas exactas del viaje en el intake post-pago.** El quiz ya no las pide (solo mes o "Aún no sé"). El formulario/intake que se llena después del pago de $49 debe pedirlas para armar el itinerario.
+- [ ] **Refrescar la tabla ZCTA cuando salga un gazetteer nuevo** (subir `ZCTA_GAZETTEER_YEAR` en `src/lib/zip-centroids.ts` y correr `npm run build:zip-centroids`). No urge: los ZCTA casi no cambian entre años.
+
 ### Calidad / mantenimiento (tareas separadas)
 - [ ] **Mapa interactivo real en /destinos — sigue diferido (research Mobbin, reconfirmado 2026-07):** el tinte decorativo por estado ya se implementó ([2026-07] `USStateTintMap`, ver changelog) en el slot `children` de `PageHeader` — sin pines, sin coordenadas, plano. `useDestinationsMapData()` en `src/hooks/use-destinations.ts` sigue **sin usarse**, expuesto tal cual (`{id, title, slug, region, difficulty_level, latitude, longitude}`, 63/63 destinos con `latitude`/`longitude` pobladas) para el día que se justifique un mapa interactivo real tipo Airbnb (tiles + lista sincronizada). Research de Mobbin reconfirmado: ningún competidor premium usa mapa ilustrado estático con 60+ pines individuales a este nivel de densidad — no construir esa variante. Si el mapa interactivo se justifica por datos de conversión, ir directo a esa implementación (Mapbox/Leaflet + `useDestinationsMapData()`) en vez de una capa intermedia de pines. `parseNpsLatLong()` en `src/lib/parse-nps-lat-long.ts` (con tests) queda como utilidad documentada/fallback para ese trabajo futuro, sin usarse hoy.
 - [ ] **Drift de esquema sin reconciliar (`docs/supabase-schema.md`):** el doc no lista `destinations.latitude`/`longitude` (entre otras columnas reales: `access_difficulty`, `designation`, `nps_url`, `min_days`/`max_days`, etc.). Estas columnas ya existen en `src/integrations/supabase/types.ts` (tipos regenerados) sin migración committeada que las agregue. Reconciliar la sección de `destinations` con el estado real de la DB en una tarea separada. **La parte de `park_live_data` se reconcilió 2026-07-16** (ver changelog: sección del doc reescrita contra `information_schema` — PK real `park_code`, sin columna `id`, columnas `entrance_fee_usd`/`nps_images`/`coordinates`/`permits`/`weather` documentadas); nota: los tipos generados siguen sin `weather` en `park_live_data` — se corrige al regenerar tipos (tarea de Frank).
@@ -404,6 +408,18 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-09-27] **Quiz: código postal + modo de viaje, mes en vez de fechas (ADR-031).**
+  "¿Desde qué ciudad sales?" (SoCal/LA/resto/fuera de EE. UU.) se reemplaza por
+  código postal (tabla ZCTA del Census en `public/data/`, se pide solo al
+  llegar al campo, sin API externa) y
+  "¿Cómo piensas llegar?" en la misma pantalla — el quiz sigue en 10 pasos.
+  Manejando fija origen + 3/6/10 h; Volando/No sé no filtra. `allow_remote` ya
+  no sale de la ciudad (era `false` para SoCal). Fechas y temporada → "¿En qué
+  mes piensas ir?". `events` recibe solo el prefijo del ZIP. Se quitaron
+  "Mercado primario Nomaderia" y la opción fuera de EE. UU. Tests: lookup de ZIP
+  (AK, HI, Samoa, apartado postal, inválidos), manejo vs. vuelo, mes, y guard de
+  `allow_remote` sobre ZIPs × modos. Política de privacidad actualizada.
 
 - [2026-09-27] **Calculadora: se quita "Punto de partida".** Era una etiqueta
   (SoCal / LA / resto de EE. UU. / "Otro lugar") que solo se mostraba como
