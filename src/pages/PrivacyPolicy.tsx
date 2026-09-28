@@ -37,7 +37,7 @@ const PrivacyPolicy = () => {
             <p>Recopilamos únicamente los datos que tú nos proporcionas de forma voluntaria:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li><strong className="text-foreground">Newsletter:</strong> dirección de correo electrónico.</li>
-              <li><strong className="text-foreground">Quiz de destinos:</strong> preferencias de viaje (nivel físico, tipo de experiencia, duración, estilo) y, opcionalmente, correo electrónico.</li>
+              <li><strong className="text-foreground">Quiz de destinos:</strong> preferencias de viaje (nivel físico, tipo de experiencia, duración, estilo, mes del viaje, cómo piensas llegar), código postal (para calcular distancias y tiempos de manejo) y, opcionalmente, correo electrónico.</li>
               <li><strong className="text-foreground">Solicitud de itinerario personalizado:</strong> nombre, correo electrónico, destino de interés, presupuesto estimado y mensaje opcional.</li>
             </ul>
             <p className="mt-2">

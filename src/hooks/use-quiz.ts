@@ -17,7 +17,7 @@ export interface QuizOption {
   description?: string;
 }
 
-export type QuizStepType = "options" | "combined" | "dates" | "group";
+export type QuizStepType = "options" | "combined" | "origin" | "month" | "group";
 
 export interface QuizStep {
   question: string;
@@ -114,11 +114,7 @@ export function useQuiz(totalSteps: number) {
   };
 
   const handleSelect = (key: string, value: string) => {
-    setAnswers((prev) => {
-      const next = { ...prev, [key]: value };
-      if (key === "start_city") next.origin = value;
-      return next;
-    });
+    setAnswers((prev) => ({ ...prev, [key]: value }));
     logEvent("quiz_answer", { key, value });
     advanceAfterAnswer();
   };
@@ -324,7 +320,10 @@ export function useQuiz(totalSteps: number) {
         fitness_level: answers.fitness_level,
         interest: answers.interest,
         trip_duration: answers.trip_duration,
-        travel_style: answers.start_city || answers.origin || null,
+        // Column predates the ZIP quiz and used to hold the city choice; it now
+        // holds the travel mode (drive / fly / unsure). The ZIP itself lives in
+        // leads.quiz_answers only (ADR-031).
+        travel_style: answers.travel_mode || null,
         budget_range: answers.budget_range ?? answers.budget ?? null,
         main_barrier: answers.main_barrier || null,
         recommended_destinations: results.map((d) => d.id),
@@ -335,9 +334,12 @@ export function useQuiz(totalSteps: number) {
         {
           email_captured: true,
           lead_id: newLeadId,
-          start_city: answers.start_city ?? null,
-          trip_start_date: answers.trip_start_date ?? null,
-          trip_end_date: answers.trip_end_date ?? null,
+          // Prefix only — events never get the full ZIP or coordinates (ADR-031).
+          zip3: answers.zip ? answers.zip.slice(0, 3) : null,
+          zip_match: answers.zip_match ?? null,
+          travel_mode: answers.travel_mode ?? null,
+          max_drive_hours: answers.max_drive_hours ?? null,
+          month: answers.month ?? null,
           group_kids: answers.group_kids ?? null,
           group_older_adults: answers.group_older_adults ?? null,
           group_visitors_abroad: answers.group_visitors_abroad ?? null,
@@ -394,10 +396,19 @@ export function useQuiz(totalSteps: number) {
     setStep(totalSteps);
   };
 
-  /** Advance from multi-field steps (dates, group) without breaking single-select flow. */
-  const handleFieldsSubmit = (fields: Record<string, string>) => {
-    setAnswers((prev) => ({ ...prev, ...fields }));
-    for (const [key, value] of Object.entries(fields)) {
+  /**
+   * Advance from multi-field steps (origin, group) without breaking single-select flow.
+   * `logFields` overrides what reaches `events` — the origin screen stores the
+   * full ZIP but logs only its prefix (ADR-031).
+   */
+  const handleFieldsSubmit = (fields: Record<string, string>, logFields: Record<string, string> = fields) => {
+    setAnswers((prev) => {
+      const next = { ...prev, ...fields };
+      // Switching from "Manejando" to flying/unsure must not leave a stale hour limit.
+      if ("travel_mode" in fields && !("max_drive_hours" in fields)) delete next.max_drive_hours;
+      return next;
+    });
+    for (const [key, value] of Object.entries(logFields)) {
       logEvent("quiz_answer", { key, value });
     }
     advanceAfterAnswer();

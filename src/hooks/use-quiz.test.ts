@@ -35,7 +35,13 @@ describe("use-quiz ranking wire", () => {
       fitness_level: "sedentary",
       trip_duration: "weekend",
       budget_range: "low",
-      start_city: "sandiego_socal",
+      zip: "92101",
+      zip_match: "exact",
+      origin_lat: "32.7",
+      origin_lon: "-117.2",
+      travel_mode: "drive",
+      max_drive_hours: "6",
+      month: "11",
     };
     const outcome = rankQuizDestinations(rows, answers, 3);
     const direct = recommend(engineDataForParkCodes(["jotr"]), outcome.profile, 3);

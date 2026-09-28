@@ -12,3 +12,8 @@
 
 /hero-mask.svg
   Cache-Control: public, max-age=86400
+
+# Quiz ZIP→lat/lon table (ADR-031). The year is in the file name, but a
+# same-year regeneration keeps it, so a day — not immutable.
+/data/*
+  Cache-Control: public, max-age=86400

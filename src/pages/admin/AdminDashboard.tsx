@@ -77,7 +77,11 @@ function timeAgo(dateStr: string): string {
 const interestLabels: Record<string, string> = {
   mountains: "🏔️ Montañas", forests: "🌲 Bosques", deserts: "🏜️ Desiertos", cultural: "🏛️ Cultural",
 };
+// quiz_responses.travel_style: travel mode since the ZIP quiz (ADR-031); older
+// rows hold a city/region key.
 const originLabels: Record<string, string> = {
+  drive: "🚗 Manejando", fly: "✈️ Volando", unsure: "🤔 Aún no sabe",
+  sandiego_socal: "🇺🇸 San Diego/SoCal", los_angeles: "🇺🇸 Los Ángeles", resto_usa: "🇺🇸 Resto USA", otro: "🌎 Otro",
   mexico: "🇲🇽 México", usa: "🇺🇸 USA", spain: "🇪🇸 España", colombia: "🇨🇴 Colombia", other: "🌎 Otro",
 };
 const budgetLabels: Record<string, string> = {
@@ -709,7 +713,7 @@ const AdminDashboard = () => {
                 <MiniBar data={quizAnalytics.interests} labels={interestLabels} />
               </div>
               <div className="bg-white border border-[#E7E2D9] rounded-xl p-3.5">
-                <p className="text-sm font-medium text-card-foreground/70 mb-3">Origen de Audiencia</p>
+                <p className="text-sm font-medium text-card-foreground/70 mb-3">Cómo planean llegar</p>
                 <MiniBar data={quizAnalytics.origins} labels={originLabels} />
               </div>
               <div className="bg-white border border-[#E7E2D9] rounded-xl p-3.5">
