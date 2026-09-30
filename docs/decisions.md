@@ -659,3 +659,35 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   sin que nada fallara. Fix: resolver el slug desde `destinations` por
   `park_code` (ADR-029). Lección: un campo vacío que "nunca falla" puede ser un
   bug silencioso — contrastar el contrato documentado contra la DB real.
+
+### ADR-032 — Remotion vertical reel renderer in isolated `video/` package
+
+- **Fecha:** 2026-09-30
+- **Estado:** Vigente
+- **Contexto:** Necesitamos reels verticales (Reels/TikTok/Shorts) con la marca
+  Nomaderia, sin acoplar Remotion al build Vite del sitio ni tocar `src/`,
+  rutas, auth o Supabase. El funnel de contenido (reports → RAG → posts/reels)
+  es planned (`docs/ai-roadmap.md`); el renderer es el primer paso ejecutable.
+- **Decisión:**
+  1. Paquete **aislado** en `video/` con su propio `package.json` (Remotion 4 +
+     TypeScript). Root `tsc` / `npm run build` del sitio **no** incluyen este
+     árbol.
+  2. Formato fijo **1080×1920 @ 30 fps**, sin pista de audio. Input =
+     `video/scripts/<id>.json` (escenas `clip|image|card|data` + `data`/`credit`/`cta`).
+  3. Tipografías vía `@remotion/google-fonts`: Oswald (titulares caps), Permanent
+     Marker (acentos / palabra `highlight`), Inter (cuerpo). Colores de marca:
+     `#FBFAF7`, `#13211A`, `#1F6F43`, `#14201A`; `#D97706` **solo** en la palabra
+     `highlight`. Safe zones: fuera de top 250px / bottom 350px / right 150px.
+  4. Cada reel termina en una card CTA de 2 s. Comando:
+     `cd video && npm run render -- <id>` → `video/out/<id>.mp4`.
+  5. Clips NPS se cachean en `video/public/clips/` (gitignored; `npm run download-clips`).
+- **Licencia Remotion (empresa de 1 persona):** Free License — Remotion es gratis
+  para individuos y organizaciones for-profit con **hasta 3 empleados**, incluso
+  uso comercial de videos. Company License solo si el umbral de personal que
+  opera el mismo proyecto Remotion llega a 4+. Fuente:
+  https://www.remotion.dev/docs/license y `LICENSE.md` del repo remotion-dev.
+  Revisar si el equipo crece o si se construye automatización cobrada por render
+  (Remotion for Automators).
+- **Consecuencias:** No instalar Remotion en el `package.json` raíz. Docs de uso
+  en `docs/video-pipeline.md`; inventario de features live en
+  `docs/live-features.md`. Outputs MP4 no se commitean (`video/out/`).

@@ -147,8 +147,22 @@ referenciar esta lista primero.
       de Instagram (no vive en este repo). En el código solo hay perfiles sociales
       (`Footer.tsx`, `sameAs` en `Index.tsx`); no hay URL de "link in bio".
 - [ ] **Fase 4c — Subir PNG del patrón de fondo de `QuizSection`** (último pendiente de la Fase 4, sistema de diseño). Bloqueado en Frank: requiere el asset final (no hay placeholder aceptable a producción). Con esto, Fase 4 queda cerrada.
+- [ ] **Carpeta de clips en Google Drive — compartir "Anyone with the link" (Viewer).**
+      ID `1gmFEeA1qxxibtFcJL3Xejkejl7YdUM1f`
+      (https://drive.google.com/drive/folders/1gmFEeA1qxxibtFcJL3Xejkejl7YdUM1f).
+      `gdown` baja por nombre de archivo y no usa la cuenta de Frank; con el folder
+      privado el listado anónimo responde HTTP 401 (verificado 2026-09-30).
+      Override opcional: env o secret de Actions `DRIVE_CLIPS_FOLDER` (ID o URL).
+      El B-roll de NPS sigue por URL pública y no depende de este share. Los clips
+      no se commitean.
 - [ ] **Facebook Pixel:** crear cuenta en Business Manager, obtener el Pixel ID y
-      reemplazar `TU_PIXEL_ID_AQUI` en `index.html`.
+      reemplazar `TU_PIXEL_ID_AQUI` en `index.html` (el snippet ya hace `PageView`).
+      **No añadir `InitiateCheckout` (`fbq('track', 'InitiateCheckout')`) hasta que
+      exista checkout de Stripe.** Hoy el CTA de pago es WhatsApp y
+      `STRIPE_LINK_ITINERARIO_49` sigue en placeholder (`docs/live-features.md`);
+      disparar InitiateCheckout sin un checkout real inflaría el funnel de Meta.
+      El pixel vive en `index.html` (raíz del sitio, no bajo `src/`). No editar ese
+      archivo hasta tener el Pixel ID — este pendiente es solo la nota.
 - [ ] **Iconos PWA:** subir `192x192` y `512x512` a `/public` (hoy el manifest usa
       fallback con `favicon.ico` + `placeholder.svg`).
 - [ ] **Desactivar signup público** en Supabase → Authentication → Settings →
@@ -278,6 +292,12 @@ referenciar esta lista primero.
 ---
 
 ## 🛠️ Pendientes de Código (un agente puede ejecutarlos)
+
+### Video / reels (ADR-032)
+
+- [x] ~~Scaffold Remotion vertical renderer in isolated `video/`~~ **HECHO 2026-09-30** — ver changelog.
+- [x] ~~Opcional: job CI de `video/` sin Chromium~~ **HECHO 2026-09-30** — workflow **Render reel** (`.github/workflows/render-reel.yml`) instala Google Chrome, corre `download-clips` + `npm run render`, y sube el MP4. En PRs que tocan `video/**` renderiza `C01-09`; `workflow_dispatch` toma input `id`. Drive por filename ya está en el script; el share del folder es pendiente humano (arriba).
+- [ ] **Contenido:** reemplazar placeholders de `video/scripts/C01-09.json` con copy final de campaña; subir MP4 a la herramienta social (outputs gitignored).
 
 - [ ] **Acotar `public/_redirects` para que assets borrados devuelvan 404 real (ver ADR-022).** El catch-all `/* /index.html 200` intercepta también requests a `/assets/*.js` que ya no existen tras un deploy (chunk viejo referenciado por un HTML cacheado), devolviendo `index.html` con 200/`text/html` en vez de un 404 — el disparador exacto del error de MIME type en el navegador. Propuesta: agregar una regla explícita para `/assets/*` con status 404 **antes** del catch-all, para que Cloudflare corte ahí en vez de caer al fallback SPA. PR separado del fix de `_headers` de esta entrada; diseñado para proponerse en la descripción del PR antes de aplicarse, dada la ambigüedad de la doc de Cloudflare sobre precedencia assets-vs-redirects.
 
@@ -966,6 +986,16 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
 ---
 
 ## 📜 Changelog reciente
+
+- [2026-09-30] **Video follow-up:** workflow Actions "Render reel" (Chrome en CI, artifact MP4), descarga de clips de Frank por filename con gdown (`DRIVE_CLIPS_FOLDER`, default folder `1gmFEeA1qxxibtFcJL3Xejkejl7YdUM1f`, hay que compartir el link — anónimo da 401), rechazo explícito de imágenes `.heic`/`.HEIC`. Nota de Pixel: no `InitiateCheckout` hasta Stripe. Sin cambios en `src/`.
+- [2026-09-30] **Remotion vertical reel renderer + docs (ADR-032).** Paquete aislado
+  `video/` (propio `package.json`, 1080×1920 @ 30 fps, sin audio). Scripts JSON en
+  `video/scripts/`; `npm run render -- <id>` → `video/out/<id>.mp4`. Sample
+  `C01-09` + cache NPS Badwater Basin B-roll (`npm run download-clips`, MP4
+  gitignored). Docs: `docs/video-pipeline.md`, `docs/live-features.md` (quiz /
+  top-3 live; preview IA partial; Stripe not built; `/i/:token` live). No toca
+  `src/` ni el build Vite del sitio.
+
 
 > Histórico condensado por temas. El detalle commit-a-commit anterior a Mayo 2026
 > vive en el historial de git. Entradas recientes primero.
