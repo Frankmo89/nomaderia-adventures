@@ -1,0 +1,87 @@
+name: Render reel
+
+# Renders a vertical Remotion reel and uploads the MP4 as an artifact.
+# - workflow_dispatch: input `id` (script id, e.g. C01-09)
+# - pull_request: when video/** changes, renders the sample C01-09
+#
+# Chrome: Remotion needs a browser. This job installs Google Chrome stable
+# so video/scripts/render.ts picks up /usr/bin/google-chrome
+# (override with REMOTION_BROWSER). Do not rely on the runner image having Chrome.
+#
+# Clips are not in git. download-clips fetches the NPS sample by URL.
+# Frank's other clips come from Google Drive by filename (gdown) when a script
+# references them. Set repo secret DRIVE_CLIPS_FOLDER to override the default
+# folder id documented in docs/video-pipeline.md. The folder must be shared
+# "Anyone with the link" or gdown returns 401. The sample reel does not need Drive.
+
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: Reel script id (file video/scripts/<id>.json)
+        required: true
+        default: C01-09
+        type: string
+  pull_request:
+    paths:
+      - "video/**"
+      - ".github/workflows/render-reel.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-reel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      REEL_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.id || 'C01-09' }}
+      # Empty secret is ignored by download-clips (falls back to the documented folder).
+      DRIVE_CLIPS_FOLDER: ${{ secrets.DRIVE_CLIPS_FOLDER }}
+      REMOTION_BROWSER: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: video/package-lock.json
+
+      - name: Install Google Chrome
+        run: |
+          wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get update
+          sudo apt-get install -y /tmp/chrome.deb
+          google-chrome --version
+
+      - name: Install gdown
+        # venv so Ubuntu's PEP 668 "externally managed" Python does not block pip.
+        # Prepend the venv so `python3` in download-clips sees the gdown module.
+        run: |
+          python3 -m venv "$HOME/gdown-venv"
+          "$HOME/gdown-venv/bin/pip" install -r video/requirements-clips.txt
+          echo "$HOME/gdown-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Install video dependencies
+        working-directory: video
+        run: npm ci
+
+      - name: Download clips
+        working-directory: video
+        run: npm run download-clips
+
+      - name: Render reel
+        working-directory: video
+        run: npm run render -- "$REEL_ID"
+
+      - name: Upload MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: reel-${{ env.REEL_ID }}
+          path: video/out/${{ env.REEL_ID }}.mp4
+          if-no-files-found: error
