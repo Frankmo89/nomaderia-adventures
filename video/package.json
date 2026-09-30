@@ -1,0 +1,26 @@
+{
+  "name": "nomaderia-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion vertical reel renderer for Nomaderia (1080x1920 @ 30fps)",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "tsx scripts/render.ts",
+    "download-clips": "tsx scripts/download-clips.ts",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.531",
+    "@remotion/google-fonts": "4.0.531",
+    "@remotion/media-utils": "4.0.531",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.531"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "tsx": "4.19.2",
+    "typescript": "5.8.2"
+  }
+}

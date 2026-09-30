@@ -1,0 +1,39 @@
+{
+  "id": "C01-09",
+  "scenes": [
+    {
+      "type": "card",
+      "seconds": 2.5,
+      "text": "¿Listo para tu primer parque?",
+      "highlight": "parque"
+    },
+    {
+      "type": "clip",
+      "src": "clips/deva-BadwaterBasinBRoll_1280x720.mp4",
+      "seconds": 4,
+      "text": "Death Valley te espera",
+      "highlight": "Valley"
+    },
+    {
+      "type": "data",
+      "seconds": 4,
+      "text": "Ficha rápida",
+      "highlight": "rápida"
+    },
+    {
+      "type": "card",
+      "seconds": 3,
+      "text": "Empieza con el quiz gratis",
+      "highlight": "gratis"
+    }
+  ],
+  "data": {
+    "park": "Death Valley National Park",
+    "driveFromSD": "~5 h en auto",
+    "level": "Principiantes OK",
+    "fee": "$30 / vehículo (7 días)",
+    "bestSeason": "Nov – Mar"
+  },
+  "credit": "Video: NPS",
+  "cta": "Haz el quiz gratis en nomaderia.com"
+}
