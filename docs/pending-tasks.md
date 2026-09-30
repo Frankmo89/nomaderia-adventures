@@ -279,6 +279,12 @@ referenciar esta lista primero.
 
 ## 🛠️ Pendientes de Código (un agente puede ejecutarlos)
 
+### Video / reels (ADR-032)
+
+- [x] ~~Scaffold Remotion vertical renderer in isolated `video/`~~ **HECHO 2026-09-30** — ver changelog.
+- [ ] **Opcional:** añadir job CI que solo haga `cd video && npm ci` (sin render Chromium) para no romper PRs en runners sin Chrome.
+- [ ] **Contenido:** reemplazar placeholders de `video/scripts/C01-09.json` con copy final de campaña; subir MP4 a la herramienta social (outputs gitignored).
+
 - [ ] **Acotar `public/_redirects` para que assets borrados devuelvan 404 real (ver ADR-022).** El catch-all `/* /index.html 200` intercepta también requests a `/assets/*.js` que ya no existen tras un deploy (chunk viejo referenciado por un HTML cacheado), devolviendo `index.html` con 200/`text/html` en vez de un 404 — el disparador exacto del error de MIME type en el navegador. Propuesta: agregar una regla explícita para `/assets/*` con status 404 **antes** del catch-all, para que Cloudflare corte ahí en vez de caer al fallback SPA. PR separado del fix de `_headers` de esta entrada; diseñado para proponerse en la descripción del PR antes de aplicarse, dada la ambigüedad de la doc de Cloudflare sobre precedencia assets-vs-redirects.
 
 ### Itinerary builder — fase 2 (UI-only sobre el contrato v1; ver ADR-018/ADR-019)
@@ -966,6 +972,15 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
 ---
 
 ## 📜 Changelog reciente
+
+- [2026-09-30] **Remotion vertical reel renderer + docs (ADR-032).** Paquete aislado
+  `video/` (propio `package.json`, 1080×1920 @ 30 fps, sin audio). Scripts JSON en
+  `video/scripts/`; `npm run render -- <id>` → `video/out/<id>.mp4`. Sample
+  `C01-09` + cache NPS Badwater Basin B-roll (`npm run download-clips`, MP4
+  gitignored). Docs: `docs/video-pipeline.md`, `docs/live-features.md` (quiz /
+  top-3 live; preview IA partial; Stripe not built; `/i/:token` live). No toca
+  `src/` ni el build Vite del sitio.
+
 
 > Histórico condensado por temas. El detalle commit-a-commit anterior a Mayo 2026
 > vive en el historial de git. Entradas recientes primero.

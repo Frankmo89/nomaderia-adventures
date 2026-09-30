@@ -278,4 +278,6 @@ Facebook: Nomaderia · WhatsApp: 18588996802
 | `docs/content-strategy.md` | Monetización, affiliate, SEO, blog, quiz |
 | `docs/admin-patterns.md` | Patrones del panel admin, CRUD, convenciones |
 | `docs/design-system.md` | Tokens, tipografía, reglas UI (light theme) |
+| `docs/video-pipeline.md` | Remotion reels en `video/` — cómo añadir script y render (ADR-032) |
+| `docs/live-features.md` | Inventario live/partial/not-built vs nomaderia.com |
 | `.cursor/rules/nomaderia.mdc` | Reglas alwaysApply para agentes (audit-first, migraciones, Stripe, etc.) |
