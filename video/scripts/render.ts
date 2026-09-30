@@ -5,6 +5,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { assertImageScenes } from "../src/imageFormat";
 
 const id = process.argv[2];
 if (!id) {
@@ -20,27 +21,31 @@ if (!existsSync(scriptPath)) {
   process.exit(1);
 }
 
-// Ensure sample NPS clip is cached when referenced by relative path.
 const script = JSON.parse(readFileSync(scriptPath, "utf8")) as {
   scenes?: { type?: string; src?: string }[];
 };
-const needsClip = (script.scenes ?? []).some(
-  (s) =>
-    s.type === "clip" &&
-    typeof s.src === "string" &&
-    s.src.includes("deva-BadwaterBasinBRoll"),
-);
-if (needsClip) {
-  const clip = join(root, "public", "clips", "deva-BadwaterBasinBRoll_1280x720.mp4");
-  if (!existsSync(clip)) {
-    console.log("Sample NPS clip missing — running download-clips…");
-    const dl = spawnSync("npx", ["tsx", "scripts/download-clips.ts"], {
-      cwd: root,
-      stdio: "inherit",
-      shell: process.platform === "win32",
-    });
-    if (dl.status !== 0) process.exit(dl.status ?? 1);
-  }
+
+try {
+  assertImageScenes(script.scenes ?? []);
+} catch (err) {
+  console.error(err instanceof Error ? err.message : err);
+  process.exit(1);
+}
+
+const missingLocal = (script.scenes ?? []).some((s) => {
+  if ((s.type !== "clip" && s.type !== "image") || typeof s.src !== "string") return false;
+  if (/^https?:\/\//i.test(s.src)) return false;
+  const rel = s.src.replace(/^\.?\//, "").split("?")[0]?.split("#")[0] ?? s.src;
+  return !existsSync(join(root, "public", rel));
+});
+if (missingLocal) {
+  console.log("Local media missing — running download-clips…");
+  const dl = spawnSync("npx", ["tsx", "scripts/download-clips.ts", id], {
+    cwd: root,
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
+  if (dl.status !== 0) process.exit(dl.status ?? 1);
 }
 
 mkdirSync(join(root, "out"), { recursive: true });

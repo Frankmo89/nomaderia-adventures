@@ -1,6 +1,7 @@
 node_modules/
 out/
 .cache/
-public/clips/*.mp4
+public/clips/*
 !public/clips/.gitkeep
 *.log
+__pycache__/

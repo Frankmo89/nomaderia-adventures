@@ -1,0 +1,2 @@
+# Clip download only (not the Remotion render). Pin matches the helper in scripts/gdown_by_name.py.
+gdown==6.4.1
