@@ -69,7 +69,7 @@ export const products: Product[] = [
       "Logística del camino",
       "Checklist de equipo para tu nivel",
       "Presupuesto desglosado",
-      "Soporte por WhatsApp durante tu viaje",
+      "WhatsApp durante tu viaje (respuesta en el día; no somos emergencias — en emergencia llama al 911)",
     ],
     ctaUrl: STRIPE_LINK_ITINERARIO_49,
   },

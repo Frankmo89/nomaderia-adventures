@@ -12,13 +12,29 @@
 
 ---
 
+## Changelog 2026-10-02 — Copy audit fixes (customer-facing)
+
+Producto único + SLAs + AI surfaces + SocialProof, **encima de Phase 1 (PR #198)**.
+
+**Hecho (texto; sin auth, routing extra, queries ni layout estructural):**
+- Compra alineada con el Payment Link: pagas **$49 con tarjeta en nomaderia.com (Stripe)**; después de pagar recibes nuestro WhatsApp y el itinerario en **24 a 48 horas**; WhatsApp antes de comprar es **solo para dudas**. Privacy §2, Terms §6, FAQ home, FAQ `/servicios`, PainContrast, quiz, email del quiz.
+- NOMADA10 / $44 retirado (`send-quiz-email`). Sin “paquetes” plural.
+- Entrega 24–48h tras pago; respuesta ≤24h; WhatsApp en viaje de día + “No somos emergencias / llama al 911”.
+- Quitado “24/7” (TravelInsurance). Quitado “Desde 2024” / SocialProof desmontado de `Index.tsx` (archivo intacto).
+- ConciergeLauncher desmontado de `App.tsx`. Preview IA del quiz oculto; ranking + “% compatible” intactos.
+- “100% Personalizado” → personalizado / “100% en español” donde aplica. TAP se mantiene.
+- Legal CA / San Diego intacto; ⚠️ VERIFICAR Privacy intacto (T01).
+- SQL draft México: `docs/sql/draft-mexico-blog-posts.sql` (4 slugs) — **Frank ejecuta**.
+
+**Verificación:** `npx tsc --noEmit` + `npm run build`.
+
 ## Changelog 2026-10-02 — LCP follow-up: hero text + lazy below-fold
 
 Tras PR #194 el LCP quedó en ~12s porque el **H1** esperaba JS/Framer (`opacity: 0` + delay). Cambios:
 
 - `HeroSection`: H1 + subtítulo + badge + CTAs **sin Framer** (cero entrance animation / opacity 0).
 - `Index`: secciones under-hero vía `lazyWithRetry` + `DeferUntilVisible` (IntersectionObserver) + `Suspense` — Navbar + Hero eager.
-- `ConciergeLauncher` lazy (fuera del critical path del home).
+- `ConciergeLauncher` quedó fuera del critical path; el copy audit lo desmonta por completo (ver changelog siguiente).
 - Imágenes below-fold: `loading="lazy"`, `width`/`height`, y `resizedImageUrl()` (Supabase Image Transform + Unsplash) donde aplica.
 - Google Fonts del hero pasan a non-render-blocking (`display=swap` ya estaba).
 - No se tocó auth, routing ni queries de Supabase.
@@ -28,19 +44,19 @@ Tras PR #194 el LCP quedó en ~12s porque el **H1** esperaba JS/Framer (`opacity
 **Verificación:** `npx tsc --noEmit` + `npm run typecheck` + `npm run build` + vitest `resized-image`.
 ## Changelog 2026-10-02 — Phase 1: Stripe Payment Link + `/gracias`
 
-Compra en el sitio (sin backend nuevo):
+Compra en el sitio (sin backend nuevo) — commit de PR #198, esta rama está rebased encima:
 
 - `STRIPE_LINK_ITINERARIO_49` = Payment Link live `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.
 - CTAs de compra → `Comprar mi itinerario – $49` abren Stripe; si hay quiz lead en `localStorage`, se añaden `client_reference_id` + `prefilled_email`.
 - WhatsApp público solo como **¿Dudas? Escríbenos** (nunca el path de compra).
 - `/gracias` deja de redirigir a `/servicios`: página de gracias (ES, mobile-first, noindex); Meta Pixel `Purchase` ($49 USD) una vez por visita si `fbq` existe.
-- Copy how-to-buy alineado (Servicios pasos/FAQ, FaqSection, Terms §6, PainContrast, Hero).
 - **No** se tocó auth, queries Supabase existentes, ni config de precio/producto en Stripe Dashboard.
-- T06 completo (webhook `orders`) sigue pendiente — este PR solo cablea el Payment Link en frontend.
+- T06 completo (webhook `orders`) sigue pendiente.
 
-**FRANK (Stripe Dashboard):** en el Payment Link $49, pon **Success URL** = `https://nomaderia.com/gracias` (o `https://nomaderia.com/gracias?session_id={CHECKOUT_SESSION_ID}` si Stripe lo ofrece). Sin eso el comprador no aterriza en `/gracias`.
+**FRANK (Stripe Dashboard):** Success URL del Payment Link $49 = `https://nomaderia.com/gracias`.
 
-**Verificación:** `npm run typecheck` + `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` + `npm run build` + vitest `Servicios.test.ts`.
+**Verificación (en #198):** `npm run typecheck` + `tsc --noEmit` + `npm run build` + vitest `Servicios.test.ts`.
+
 
 ## 🙋 Pendientes Humanos (solo Frank puede hacerlos)
 
@@ -385,12 +401,12 @@ Pendiente real:
 
 ### Copy / share previews (auditoría 2026-10-02 — ver [`docs/copy-audit.md`](./copy-audit.md))
 - [ ] **OG/share previews sin JS.** Facebook (y crawlers sin JS) solo ven los meta de `index.html` en **todas** las URLs (home + `/blog/:slug`). Cada share de blog muestra og:title/description/image genéricos de home. Follow-up: prerender/SSR o edge HTML por ruta con `og:title`/`og:description`/`og:image` por post (CMS: `blog_posts.title`, `short_description`, `hero_image_url`). No basta `usePageMeta` (client-only).
-- [x] **Contradicción pago Stripe vs WhatsApp.** Resuelto 2026-10-02: Terms/FAQ/Servicios alineados a pago con tarjeta (Stripe) en sitio; WhatsApp = dudas + entrega. Privacy §2 ya coincidía.
-- [ ] **Precio distinto de $49 en email de quiz.** `send-quiz-email` ofrece **NOMADA10 → $44**. Confirmar si el descuento sigue vigente o retirar/actualizar (ADR-012 producto único $49).
-- [ ] **Copy “paquetes” (plural).** Quiz WA: “¿Qué paquetes tienen?”; FAQ `/servicios`: “todos los paquetes”. Alinear a producto único.
-- [ ] **Promesas de tiempo / soporte.** Hero “Respuesta en < 24h”; SocialProof “24h” entrega máxima; Pain/FAQ/Servicios “24-48h”; TravelInsurance “Cobertura 24/7”. Decidir SLA real y unificar (o acotar a seguro de terceros).
-- [ ] **Claims AI / números.** Concierge global + “Preview gratis” / “% compatible” en quiz; “63 parques” en meta y UI; SocialProof counts + “Desde 2024”. Revisar si se quieren en landing o solo en producto.
-- [ ] **Mercado México en CMS.** Posts publicados con framing MX/CDMX (`5-rutas-secretas-mexico-locales`, etc.) vs mercado primario SoCal/EE. UU. Revisar en `/admin` si se archivan, se reescriben, o se mantienen como contenido secundario. Orphan `DidYouKnowSection` aún tiene copy México/CDMX si se remonta.
+- [x] **Contradicción pago Stripe vs WhatsApp.** Alineado 2026-10-02 (encima de #198): Privacy / Terms / FAQ home / FAQ Servicios — pagas $49 con tarjeta en nomaderia.com (Stripe); después de pagar recibes nuestro WhatsApp y el itinerario en 24 a 48 horas; WhatsApp antes de comprar solo para dudas.
+- [x] **Precio distinto de $49 en email de quiz.** NOMADA10 / $44 retirado de `send-quiz-email` (producto único $49). El CTA del correo abre el Payment Link, no WhatsApp.
+- [x] **Copy “paquetes” (plural).** Quiz + FAQ `/servicios` alineados a Itinerario Completo Nomaderia (único).
+- [x] **Promesas de tiempo / soporte.** Unificado: entrega 24–48h tras pago; respuesta ≤24h; WhatsApp en viaje = durante el día + disclaimer 911. Quitado “24/7” (TravelInsurance). SocialProof desmontado del home.
+- [x] **Claims AI / números.** ConciergeLauncher desmontado de `App.tsx`; Preview IA oculto en quiz (se conserva ranking top-3 + “% compatible”). “63 parques” se mantiene. SocialProof oculto (sin clientes reales aún). “100%” solo donde dice “100% en español”. TAP / The Travel Institute se mantiene.
+- [ ] **Mercado México en CMS (humano).** SQL listo en `docs/sql/draft-mexico-blog-posts.sql` (4 posts → `is_published=false`). Frank debe correrlo en SQL Editor. Orphan `DidYouKnowSection` aún tiene copy México/CDMX si se remonta.
 - [ ] **Handle redes `@nomaderia.mx`.** Footer/JSON-LD apuntan Instagram/TikTok `.mx` mientras el producto es EE. UU. — confirmar branding intencional.
 
 ### Calidad / mantenimiento (tareas separadas)

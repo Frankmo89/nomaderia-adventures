@@ -103,7 +103,7 @@ const PremiumItinerarySection = () => {
           {/* Badge */}
           <Reveal className="text-center mb-6">
             <span className="block text-xs font-medium uppercase tracking-[0.2em] text-green">
-              ✦ Diseño 100% Personalizado
+              ✦ Diseño personalizado a tu medida
             </span>
           </Reveal>
 

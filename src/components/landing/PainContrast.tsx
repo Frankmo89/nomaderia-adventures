@@ -49,7 +49,7 @@ const nomaderiaItems: ContrastItem[] = [
     number: "01",
     title: "Pagas $49 con tarjeta",
     description:
-      "Checkout seguro con Stripe en el sitio. WhatsApp queda solo para dudas o para entregarte el plan.",
+      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
   },
   {
     number: "02",
@@ -59,15 +59,15 @@ const nomaderiaItems: ContrastItem[] = [
   },
   {
     number: "03",
-    title: "Itinerario completo en 24-48h",
+    title: "Itinerario completo en 24 a 48h",
     description:
-      "Rutas para principiantes, permisos explicados, qué empacar y plan B si algo falla.",
+      "Tras el pago: rutas para principiantes, permisos explicados, qué empacar y plan B si algo falla.",
   },
   {
     number: "04",
     title: "Vas con confianza",
     description:
-      "Soporte por WhatsApp durante tu viaje. Nunca estás solo en el parque.",
+      "Escríbenos por WhatsApp durante tu viaje; respondemos durante el día. No somos un servicio de emergencias. En una emergencia, llama al 911.",
   },
 ];
 

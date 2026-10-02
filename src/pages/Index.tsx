@@ -19,7 +19,6 @@ const PainContrast = lazyWithRetry(() => import("@/components/landing/PainContra
 const FaqSection = lazyWithRetry(() => import("@/components/landing/FaqSection"));
 const GearPreview = lazyWithRetry(() => import("@/components/landing/GearPreview"));
 const BlogPreview = lazyWithRetry(() => import("@/components/landing/BlogPreview"));
-const SocialProof = lazyWithRetry(() => import("@/components/landing/SocialProof"));
 const TravelInsuranceSection = lazyWithRetry(() => import("@/components/landing/TravelInsuranceSection"));
 const PremiumItinerarySection = lazyWithRetry(() => import("@/components/landing/PremiumItinerarySection"));
 const NewsletterSignup = lazyWithRetry(() => import("@/components/landing/NewsletterSignup"));
@@ -110,7 +109,6 @@ const Index = () => {
       <LazyBlock>
         <PromiseSection />
         <SectionDivider variant="simple" fill="#1C1917" />
-        <SocialProof />
       </LazyBlock>
       <LazyBlock>
         <SectionDivider variant="layered" fill="#FBFAF7" />

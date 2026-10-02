@@ -325,7 +325,7 @@ const PreviewPanel = ({
       <div className="rounded-2xl border border-stone/20 bg-white/80 p-5 sm:p-6 flex items-center gap-3">
         <Loader2 className="h-5 w-5 animate-spin text-green shrink-0" />
         <p className="text-sm text-muted-foreground">
-          Generando preview gratuito de {parkTitle}…
+          Preparando detalles de {parkTitle}…
         </p>
       </div>
     );
@@ -335,7 +335,7 @@ const PreviewPanel = ({
   return (
     <div className="rounded-2xl border border-green/20 bg-green-wash/40 p-5 sm:p-6 space-y-4">
       <div>
-        <p className="text-eyebrow text-green mb-1">Preview gratis</p>
+        <p className="text-eyebrow text-green mb-1">Vista previa</p>
         <h3 className="font-serif text-xl font-semibold text-foreground">
           Día 1 en {preview.park_title}
         </h3>
@@ -508,8 +508,8 @@ const QuizResults = ({
   isUsResident: _isUsResident,
   selectedDestinationId,
   onSelectPark,
-  preview,
-  previewLoading,
+  preview: _preview,
+  previewLoading: _previewLoading,
   leadId,
 }: {
   results: QuizDestination[];
@@ -525,11 +525,11 @@ const QuizResults = ({
   previewLoading: boolean;
   leadId: string | null;
 }) => {
+  void _preview;
+  void _previewLoading;
   const reduceMotion = useReducedMotion();
   const topDestination = results[0];
   const alternatives = results.slice(1);
-  const selected =
-    results.find((d) => d.id === selectedDestinationId) ?? topDestination;
   return (
     <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
       <CelebrationParticles />
@@ -552,21 +552,7 @@ const QuizResults = ({
           </motion.div>
         )}
 
-        {/* Free AI preview for selected park */}
-        {selected && (
-          <motion.div
-            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduceMotion ? 0 : 0.25, duration: 0.45 }}
-            className="mt-8"
-          >
-            <PreviewPanel
-              preview={preview}
-              loading={previewLoading}
-              parkTitle={selected.title}
-            />
-          </motion.div>
-        )}
+        {/* Preview IA (PreviewPanel) oculto hasta que el flujo E2E esté listo — ver docs/copy-audit.md */}
 
         {/* Alternatives — stagger 120ms after hero */}
         {alternatives.length > 0 && (
@@ -626,7 +612,7 @@ const QuizResults = ({
             {QUESTIONS_WHATSAPP_LABEL}
           </a>
           <p className="text-xs text-stone-500 text-center max-w-md">
-            Pagas con tarjeta (Stripe). Después te escribimos por WhatsApp y entregamos el itinerario en 24–48 h.
+            Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.
           </p>
         </motion.div>
 

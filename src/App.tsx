@@ -54,7 +54,6 @@ const AdminClientItineraryDetail = lazyWithRetry(() => import("./pages/admin/Adm
 const AdminClientItineraryPreview = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryPreview"));
 const ClientItineraryView = lazyWithRetry(() => import("./pages/ClientItineraryView"));
 const ClientItineraryPrintView = lazyWithRetry(() => import("./pages/ClientItineraryPrintView"));
-const ConciergeLauncher = lazyWithRetry(() => import("@/components/ConciergeLauncher"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -135,9 +134,6 @@ const App = () => (
           </ErrorBoundary>
           <ScrollProgressBar />
           <AnalyticsRouteTracker />
-          <Suspense fallback={null}>
-            <ConciergeLauncher />
-          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

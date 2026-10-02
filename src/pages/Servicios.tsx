@@ -30,19 +30,19 @@ const steps = [
     icon: CreditCard,
     title: "1. Paga con tarjeta aquí",
     description:
-      "Checkout seguro con Stripe ($49 USD). Si ya hiciste el quiz, usamos tus respuestas para armar el plan.",
+      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
   },
   {
     icon: Route,
     title: "2. Te contactamos por WhatsApp",
     description:
-      "Tras el pago te escribimos por WhatsApp. Revisamos detalles y en 24–48 horas entregamos tu itinerario.",
+      "Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas: rutas, equipo, presupuesto y tips de preparación física.",
   },
   {
     icon: Palmtree,
-    title: "3. Viaja sin estrés",
+    title: "3. Viaja con respaldo",
     description:
-      "Llega a tu aventura preparado y seguro. Te acompañamos por WhatsApp durante todo el recorrido.",
+      "Escríbenos por WhatsApp durante tu viaje; respondemos durante el día. No somos un servicio de emergencias. En una emergencia, llama al 911.",
   },
 ];
 
@@ -83,8 +83,9 @@ const whatYouGet = [
       "Entradas, gasolina, comida, hospedaje. Sabes cuánto vas a gastar antes de salir.",
   },
   {
-    title: "Soporte por WhatsApp durante tu viaje",
-    description: "Si algo cambia en el camino, nos escribes y lo resolvemos juntos.",
+    title: "WhatsApp durante tu viaje",
+    description:
+      "Si algo cambia en el camino, escríbenos; respondemos durante el día. No somos un servicio de emergencias. En una emergencia, llama al 911.",
   },
 ];
 
@@ -92,17 +93,17 @@ const faqs = [
   {
     question: "¿Cómo funciona el pago?",
     answer:
-      "Pagas con tarjeta aquí en el sitio a través de Stripe (checkout seguro, $49 USD). Después del pago te contactamos por WhatsApp y te entregamos el itinerario en 24–48 horas. WhatsApp antes de comprar es solo para dudas.",
+      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
   },
   {
     question: "¿Qué incluye exactamente un itinerario?",
     answer:
-      "Recibes tu itinerario día a día en PDF, enlaces listos en Google Maps para cada ruta, un plan B diario por si cambia el clima o te cansas, los permisos y reservas que necesitas, la logística del trayecto (gasolina, comida, paradas), un checklist de equipo para tu nivel, tu presupuesto desglosado y soporte por WhatsApp durante todo tu viaje.",
+      "Recibes tu itinerario día a día en PDF, enlaces listos en Google Maps para cada ruta, un plan B diario por si cambia el clima o te cansas, los permisos y reservas que necesitas, la logística del trayecto (gasolina, comida, paradas), un checklist de equipo para tu nivel, tu presupuesto desglosado y acompañamiento por WhatsApp durante tu viaje (respondemos durante el día). No somos un servicio de emergencias: en una emergencia, llama al 911.",
   },
   {
     question: "¿Qué tan personalizado es?",
     answer:
-      "100%. No usamos plantillas. Cada itinerario se diseña desde cero basado en tu nivel de experiencia, presupuesto, fechas y grupo.",
+      "No usamos plantillas. Cada itinerario se diseña desde cero según tu nivel de experiencia, presupuesto, fechas y grupo — 100% en español.",
   },
   {
     question: "¿Qué pasa si nunca he hecho hiking?",
@@ -112,7 +113,7 @@ const faqs = [
   {
     question: "¿Puedo pedir cambios al itinerario?",
     answer:
-      "Sí, una ronda de ajustes está incluida en todos los paquetes. Queremos que tu plan quede perfecto.",
+      "Sí, una ronda de ajustes está incluida en el Itinerario Completo Nomaderia. Queremos que tu plan quede perfecto.",
   },
 ];
 
@@ -134,7 +135,7 @@ const Servicios = () => {
   useCanonical();
   usePageMeta({
     title: `Servicios — Itinerario Completo $${PRICING.itinerarioCompleto} USD | Nomaderia`,
-    description: `Itinerario completo personalizado a $${PRICING.itinerarioCompleto} USD: ruta día a día, permisos, equipo, alojamiento y soporte por WhatsApp. Para hispanos en EE. UU.`,
+    description: `Itinerario completo personalizado a $${PRICING.itinerarioCompleto} USD: ruta día a día, permisos, equipo, alojamiento y acompañamiento por WhatsApp. Para hispanos en EE. UU. (Sur de California).`,
   });
   const { data: mediaItems } = useMediaSlider();
 
