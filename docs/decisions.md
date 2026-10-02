@@ -576,6 +576,35 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   la misma lista de ciudades pero era solo una etiqueta — se elimina aparte, no
   se migra a ZIP.
 
+### ADR-032 — OG / share previews en el edge (Pages Function), no SSR
+- **Fecha:** 2026-10
+- **Estado:** Vigente
+- **Contexto:** El sitio es un Vite SPA en Cloudflare Pages. Crawlers sin JS
+  (Facebook `facebookexternalhit`, iMessage, etc.) solo ven los meta de
+  `index.html`, así que cada `/blog/:slug` y `/destinos/:slug` compartía los
+  mismos og:title/description/image genéricos. `usePageMeta` es client-only y
+  no alcanza a esos bots. Cambiar a Next.js/SSR contradice ADR-001.
+- **Decisión:** Una Cloudflare Pages Function en `functions/_middleware.ts`
+  intercepta GET de `/blog/:slug` y `/destinos/:slug`, pide a Supabase REST
+  (anon/publishable key, `is_published = true` only) `title`,
+  `short_description`, `hero_image_url`, y reescribe con `HTMLRewriter`
+  title + description + og:* + twitter:*. Si la fila no existe, faltan env
+  vars o Supabase falla/timeout (1.5 s), se sirve el HTML original sin
+  bloquear. Resultado cacheado en el edge 1 h. `og:image` se fuerza a URL
+  absoluta; se añaden `og:image:width=1200` y `og:image:height=630` cuando hay
+  imagen de CMS.
+- **Consecuencias:** NO proponer Next.js/prerender framework para este
+  problema. NO meter service_role en Pages. Un `_middleware.ts` en la raíz de
+  `functions/` correría en cada request (incluidos assets). `public/_routes.json`
+  (copiado a `dist/` en el build) incluye solo `/blog/*` y `/destinos/*`;
+  `exclude` gana sobre `include`, y aquí va vacío. Env leídas en runtime:
+  `SUPABASE_URL`, `SUPABASE_ANON_KEY`, fallback
+  `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`, y opcional
+  `VITE_SITE_URL` (origen absoluto; default `https://nomaderia.com`). No tocar
+  routing de la SPA, auth ni queries de `src/`. Tras deploy, verificar con
+  `curl -sL -A 'facebookexternalhit/1.1'`.
+
+
 ---
 
 ## Lecciones técnicas (bugs no obvios)
