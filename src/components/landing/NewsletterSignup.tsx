@@ -9,6 +9,7 @@ import {
   useNewsletterSliderImages,
   type NewsletterSliderImage,
 } from "@/hooks/use-newsletter-slider-images";
+import { resizedImageUrl } from "@/lib/resized-image";
 
 const UNIQUE_VIOLATION = "23505";
 const SLIDE_DURATION = 5000;
@@ -37,7 +38,10 @@ const NewsletterSignup = () => {
   } = useNewsletterSliderImages();
 
   const imageUrls = useMemo(
-    () => newsletterImages.map((item) => item.public_url).filter(Boolean),
+    () =>
+      newsletterImages
+        .map((item) => resizedImageUrl(item.public_url, 1080))
+        .filter(Boolean),
     [newsletterImages]
   );
   const hasPhotoBackground = !imagesLoading && !imagesError && imageUrls.length > 0;

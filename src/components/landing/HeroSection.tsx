@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -170,65 +169,42 @@ const HeroSection = () => {
         style={{ zIndex: 3 }}
       >
         {/* TAP badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="inline-flex items-center gap-2 bg-black/20 border border-white/20 backdrop-blur-sm rounded-full px-5 py-2.5 mb-5 text-xs sm:text-sm text-white/80 font-sans shadow-editorial"
-        >
+        <div className="inline-flex items-center gap-2 bg-black/20 border border-white/20 backdrop-blur-sm rounded-full px-5 py-2.5 mb-5 text-xs sm:text-sm text-white/80 font-sans shadow-editorial">
           <ShieldCheck className="h-4 w-4 text-hero-accent shrink-0" />
           <span>Agente de Viajes Certificado (TAP) · Respuesta en {"<"} 24h</span>
-        </motion.div>
+        </div>
 
-        {/* H1 */}
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
-          className="font-serif font-bold text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-shadow-hero"
-        >
+        {/* H1 + subtitle: no entrance animation / no opacity 0 — LCP text must
+            paint as soon as React commits (PR #194 left LCP on the H1 waiting
+            ~96% render-delay for Framer). */}
+        <h1 className="font-serif font-bold text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-shadow-hero">
           Tu Primera <em style={{ color: "#FCD34D" }}>Aventura</em>
-        </motion.h1>
+        </h1>
 
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.6 }}
-          className="mt-4 text-lg md:text-xl text-white/90 max-w-xl font-sans text-shadow-card"
-        >
+        <p className="mt-4 text-lg md:text-xl text-white/90 max-w-xl font-sans text-shadow-card">
           Te armo tu viaje completo —itinerario, equipo y presupuesto— adaptado
           a tu nivel.{" "}
           <em style={{ color: "#FCD34D" }}>Todo en español.</em>
-        </motion.p>
+        </p>
 
         {/* CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.8 }}
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8"
-        >
-          <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }}>
-            <Button
-              asChild
-              className="rounded-full bg-hero-accent text-white h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
-            >
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                Plática Conmigo
-              </a>
-            </Button>
-          </motion.div>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8">
+          <Button
+            asChild
+            className="rounded-full bg-hero-accent text-white h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
+          >
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+              Plática Conmigo
+            </a>
+          </Button>
 
-          <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }}>
-            <Link
-              to="/destinos"
-              className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 backdrop-blur-sm text-white px-8 py-4 text-base font-medium hover:bg-white/20 transition-colors"
-            >
-              Explorar Destinos →
-            </Link>
-          </motion.div>
-        </motion.div>
+          <Link
+            to="/destinos"
+            className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 backdrop-blur-sm text-white px-8 py-4 text-base font-medium hover:bg-white/20 transition-colors"
+          >
+            Explorar Destinos →
+          </Link>
+        </div>
       </div>
     </section>
   );

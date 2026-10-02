@@ -31,7 +31,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://vrixiuvnhvqafmxlcyex.supabase.co" />
     <!-- Hero-critical fonts only (Playfair 700 + italic 400, Inter 400/500/600). display=swap. Oswald deferred below for non-hero labels. -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" /></noscript>
     <!-- LCP hero photo (01) — AVIF preferred; imagesrcset for responsive preload -->
     <link
       rel="preload"

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import Reveal from "@/components/editorial/Reveal";
 import { useFeaturedGearArticles } from "@/hooks/use-gear-articles";
+import { resizedImageUrl } from "@/lib/resized-image";
 
 const categoryLabel: Record<string, string> = {
   boots: "Botas", poles: "Bastones", cameras: "Fotografía",
@@ -13,9 +14,9 @@ const categoryLabel: Record<string, string> = {
 };
 
 const categoryImage: Record<string, string> = {
-  boots: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&q=80",
-  poles: "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?w=800&q=80",
-  cameras: "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=800&q=80",
+  boots: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256",
+  poles: "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7",
+  cameras: "https://images.unsplash.com/photo-1452587925148-ce544e77e70d",
 };
 
 const GearPreview = () => {
@@ -68,10 +69,12 @@ const GearPreview = () => {
                 >
                   <div className="h-48 sm:h-48 overflow-hidden relative">
                     <motion.img
-                      src={categoryImage[a.category] || categoryImage.boots}
+                      src={resizedImageUrl(categoryImage[a.category] || categoryImage.boots, 640)}
                       alt={a.title}
                       loading="lazy"
                       decoding="async"
+                      width={640}
+                      height={384}
                       className="w-full h-full object-cover object-center img-warm"
                       variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                       transition={{ duration: 0.7, ease: "easeOut" }}
