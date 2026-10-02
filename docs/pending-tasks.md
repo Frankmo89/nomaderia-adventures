@@ -15,7 +15,7 @@
 
 ## Changelog 2026-10-02 — OG tags vía Cloudflare Pages Function
 
-Facebook/crawlers sin JS solo leían `index.html` en todas las URLs. Se añade `functions/_middleware.ts` (HTMLRewriter) que, para `/blog/:slug` y `/destinos/:slug`, lee la fila publicada en Supabase (anon key) y reescribe `<title>`, description, og:title/description/image/url y twitter:card/title/description/image. Fallback silencioso a los tags actuales; cache edge 1 h (`s-maxage=3600` + Cache API). No toca `src/` routing/auth/queries. ADR-032. Env en Pages: `SUPABASE_URL` / `SUPABASE_ANON_KEY` (fallback a `VITE_*`).
+Facebook/crawlers sin JS solo leían `index.html` en todas las URLs. Se añade `functions/_middleware.ts` (HTMLRewriter) que, para `/blog/:slug` y `/destinos/:slug`, lee la fila publicada en Supabase (anon key) y reescribe `<title>`, description, og:title/description/image/url y twitter:card/title/description/image. `public/_routes.json` (sale en `dist/`) limita la Function a `/blog/*` y `/destinos/*`; el resto del sitio, incluidos assets, sigue estático. Fallback silencioso a los tags actuales; cache edge 1 h (`s-maxage=3600` + Cache API). No toca `src/` routing/auth/queries. ADR-032. Env en runtime: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, fallback `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`, opcional `VITE_SITE_URL`.
 
 **Verificación:** `npm run typecheck` + `npm run build`. Curl before documentado en el PR; after requiere deploy + env.
 
@@ -375,7 +375,7 @@ Pendiente real:
 
 
 ### Copy / share previews (auditoría 2026-10-02 — ver [`docs/copy-audit.md`](./copy-audit.md))
-- [x] **OG/share previews sin JS.** Resuelto con Cloudflare Pages Function `functions/_middleware.ts` (ADR-032): reescribe title/description/og:*/twitter:* para `/blog/:slug` y `/destinos/:slug` desde filas publicadas de Supabase (anon, read-only). Fallback a tags de `index.html` si falta la fila o falla Supabase. Cache edge 1 h. **Frank:** setear en Pages `SUPABASE_URL` + `SUPABASE_ANON_KEY` (o reutilizar `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` ya presentes en el build) y verificar con curl post-deploy.
+- [x] **OG/share previews sin JS.** Resuelto con Cloudflare Pages Function `functions/_middleware.ts` (ADR-032): reescribe title/description/og:*/twitter:* para `/blog/:slug` y `/destinos/:slug` desde filas publicadas de Supabase (anon, read-only). `public/_routes.json` incluye solo `/blog/*` y `/destinos/*` para que assets y el resto de rutas no invoquen la Function. Fallback a tags de `index.html` si falta la fila o falla Supabase. Cache edge 1 h. **Frank:** setear en Pages `SUPABASE_URL` + `SUPABASE_ANON_KEY` (fallback `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`). Opcional: `VITE_SITE_URL`. Verificar con curl post-deploy.
 - [ ] **Contradicción pago Stripe vs WhatsApp.** `/privacidad` dice checkout Stripe + tarjeta; `/terminos` §6 + FAQ home dicen cobro manual por WhatsApp sin pagos automáticos en el sitio. Alinear copy con el canal real (hoy WhatsApp; Payment Link en `pricing.ts` sigue placeholder). Relacionado T01/T06.
 - [ ] **Precio distinto de $49 en email de quiz.** `send-quiz-email` ofrece **NOMADA10 → $44**. Confirmar si el descuento sigue vigente o retirar/actualizar (ADR-012 producto único $49).
 - [ ] **Copy “paquetes” (plural).** Quiz WA: “¿Qué paquetes tienen?”; FAQ `/servicios`: “todos los paquetes”. Alinear a producto único.

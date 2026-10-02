@@ -9,9 +9,17 @@
  * Failures (missing row, missing env, Supabase error/timeout) fall through to
  * the existing index.html tags. Never blocks the page.
  *
- * Env (Cloudflare Pages → Settings → Environment variables):
- *   SUPABASE_URL          (or VITE_SUPABASE_URL)
- *   SUPABASE_ANON_KEY     (or VITE_SUPABASE_PUBLISHABLE_KEY) — anon/publishable, read-only
+ * Invocation is limited by public/_routes.json (copied to dist/ on build):
+ *   include /blog/* and /destinos/* only. Everything else, including assets,
+ *   stays a static Pages request and does not run this Function.
+ *
+ * Env read at runtime (Cloudflare Pages → Settings → Environment variables):
+ *   SUPABASE_URL                     primary Supabase REST origin
+ *   SUPABASE_ANON_KEY                primary anon/publishable key (read-only)
+ *   VITE_SUPABASE_URL                fallback if SUPABASE_URL is unset
+ *   VITE_SUPABASE_PUBLISHABLE_KEY    fallback if SUPABASE_ANON_KEY is unset
+ *   VITE_SITE_URL                    optional absolute site origin (no trailing
+ *                                    slash needed). Default https://nomaderia.com
  *
  * See ADR-032.
  */

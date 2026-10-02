@@ -594,10 +594,14 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   absoluta; se añaden `og:image:width=1200` y `og:image:height=630` cuando hay
   imagen de CMS.
 - **Consecuencias:** NO proponer Next.js/prerender framework para este
-  problema. NO meter service_role en Pages. Env en Cloudflare Pages:
-  `SUPABASE_URL` + `SUPABASE_ANON_KEY` (acepta fallback a
-  `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`). No tocar routing,
-  auth ni queries de `src/`. Tras deploy, verificar con
+  problema. NO meter service_role en Pages. Un `_middleware.ts` en la raíz de
+  `functions/` correría en cada request (incluidos assets). `public/_routes.json`
+  (copiado a `dist/` en el build) incluye solo `/blog/*` y `/destinos/*`;
+  `exclude` gana sobre `include`, y aquí va vacío. Env leídas en runtime:
+  `SUPABASE_URL`, `SUPABASE_ANON_KEY`, fallback
+  `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`, y opcional
+  `VITE_SITE_URL` (origen absoluto; default `https://nomaderia.com`). No tocar
+  routing de la SPA, auth ni queries de `src/`. Tras deploy, verificar con
   `curl -sL -A 'facebookexternalhit/1.1'`.
 
 
