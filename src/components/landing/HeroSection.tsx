@@ -1,44 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+// Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
 const WHATSAPP_URL = buildWhatsAppLink(
   "Hola Frank, quiero planear mi primera aventura"
 );
 
-const SUPABASE_URL =
-  "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/media_gallery";
-
-const ALL_PHOTOS = [
-  `${SUPABASE_URL}/00f4bec5-78fa-4416-91fd-12c8319e9d49.jpeg`,
-  `${SUPABASE_URL}/0971bffa-5cc8-4d0e-8c81-27f6cd4aef7a.jpeg`,
-  `${SUPABASE_URL}/2171f956-08ac-4156-9644-178aa01e241e.jpeg`,
-  `${SUPABASE_URL}/349defac-d3ac-474c-a03a-ab262fb49b8f.jpeg`,
-  `${SUPABASE_URL}/391bde98-0b99-4773-ad0d-f5c7e50107e4.jpeg`,
-  `${SUPABASE_URL}/3a72e5c0-b2a1-485b-b3fb-bf958b815579.jpeg`,
-  `${SUPABASE_URL}/3bd94287-e5c1-46f9-9e5c-1bad3b82068b.jpeg`,
-  `${SUPABASE_URL}/3fdc4c24-45ab-42e8-abae-a45d4bff242a.jpeg`,
-  `${SUPABASE_URL}/59e22d4c-75d0-4ab7-86b4-54774328a333.jpeg`,
-  `${SUPABASE_URL}/78ca25d9-466c-4580-92ad-3d1f56d57ad2.jpeg`,
-  `${SUPABASE_URL}/947b0c74-2096-46f5-b91b-62aa68f8142e.jpeg`,
-  `${SUPABASE_URL}/b4a7fef0-0082-4e60-98cc-37cadf3ad004.jpeg`,
-  `${SUPABASE_URL}/bfa161c7-c696-4d19-a1a9-4c8a8b31acc6.jpeg`,
-  `${SUPABASE_URL}/c29ff6ac-f25b-4011-9ac7-1d31121e9e71.jpeg`,
-  `${SUPABASE_URL}/feeb5de1-333e-48bc-9bbd-caff00902fcc.jpeg`,
-];
-
-function shuffled<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+/** Curated local hero set (public/hero/). Frank can replace sources later. */
+const HERO_IDS = ["01", "02", "03", "04", "05", "06"] as const;
+const HERO_WIDTHS = [640, 1080, 1600] as const;
+const HERO_SIZES = "100vw";
+const SLIDE_DURATION = 5000;
 
 const KEN_BURNS_CSS = `
 @keyframes hero-ken-burns {
@@ -47,36 +24,100 @@ const KEN_BURNS_CSS = `
 }
 `;
 
-const SLIDE_DURATION = 5000;
+function heroSrcSet(id: string, ext: "avif" | "webp"): string {
+  return HERO_WIDTHS.map((w) => `/hero/${id}-${w}.${ext} ${w}w`).join(", ");
+}
+
+type HeroSlideProps = {
+  id: string;
+  active: boolean;
+  /** LCP slide: eager + high priority, no opacity fade on first paint */
+  priority: boolean;
+  index: number;
+};
+
+function HeroSlide({ id, active, priority, index }: HeroSlideProps) {
+  return (
+    <div
+      aria-hidden={!active}
+      style={{
+        position: "absolute",
+        inset: 0,
+        opacity: active ? 1 : 0,
+        // First paint of the LCP slide must not wait on a fade-in.
+        transition: priority ? undefined : "opacity 1.2s ease",
+      }}
+    >
+      <picture>
+        <source
+          type="image/avif"
+          srcSet={heroSrcSet(id, "avif")}
+          sizes={HERO_SIZES}
+        />
+        <source
+          type="image/webp"
+          srcSet={heroSrcSet(id, "webp")}
+          sizes={HERO_SIZES}
+        />
+        <img
+          src={`/hero/${id}-1080.webp`}
+          alt=""
+          width={1600}
+          height={900}
+          decoding={priority ? "sync" : "async"}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "low"}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
+            animation: "hero-ken-burns 8s ease-in-out infinite alternate",
+            animationDelay: `${index * -2}s`,
+          }}
+        />
+      </picture>
+    </div>
+  );
+}
 
 const HeroSection = () => {
-  const { data: heroParkData } = useFeaturedHeroPark();
+  // Intentionally unused for display — leave the Supabase query in place.
+  useFeaturedHeroPark();
 
-  const dynamicPhotos = useMemo(() => {
-    const urls = (heroParkData ?? [])
-      .map((p) => p.hero_image_url)
-      .filter((u): u is string => !!u);
-    return urls.length > 0 ? urls : null;
-  }, [heroParkData]);
-
-  const [slides, setSlides] = useState<string[]>(() =>
-    shuffled(ALL_PHOTOS).slice(0, 4)
-  );
   const [active, setActive] = useState(0);
+  const [restReady, setRestReady] = useState(false);
 
+  // Defer slides 02–06 until the main thread is idle (or ~1.5s fallback).
   useEffect(() => {
-    if (dynamicPhotos !== null) {
-      setSlides(shuffled(dynamicPhotos));
-      setActive(0);
+    let cancelled = false;
+    const enableRest = () => {
+      if (!cancelled) setRestReady(true);
+    };
+    const ric = window.requestIdleCallback?.bind(window);
+    if (ric) {
+      const idleId = ric(enableRest, { timeout: 1500 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback?.(idleId);
+      };
     }
-  }, [dynamicPhotos]);
+    const t = window.setTimeout(enableRest, 1);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, []);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setActive((prev) => (prev + 1) % slides.length);
+    if (!restReady) return;
+    const id = window.setInterval(() => {
+      setActive((prev) => (prev + 1) % HERO_IDS.length);
     }, SLIDE_DURATION);
-    return () => clearInterval(id);
-  }, [slides.length]);
+    return () => window.clearInterval(id);
+  }, [restReady]);
 
   return (
     <section className="relative min-h-screen overflow-hidden">
@@ -96,31 +137,20 @@ const HeroSection = () => {
           maskRepeat: "no-repeat",
         }}
       >
-        {/* Photo slides — 4 stacked, crossfade via opacity */}
-        {slides.map((photo, i) => (
-          <div
-            key={photo}
-            aria-hidden={i !== active}
-            style={{
-              position: "absolute",
-              inset: 0,
-              opacity: i === active ? 1 : 0,
-              transition: "opacity 1.2s ease",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                backgroundImage: `url(${photo})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                animation: "hero-ken-burns 8s ease-in-out infinite alternate",
-                animationDelay: `${i * -2}s`,
-              }}
+        {/* LCP slide — always mounted, eager, no fade delay */}
+        <HeroSlide id="01" active={active === 0} priority index={0} />
+
+        {/* Remaining curated slides — mounted only after idle */}
+        {restReady &&
+          HERO_IDS.slice(1).map((id, i) => (
+            <HeroSlide
+              key={id}
+              id={id}
+              active={active === i + 1}
+              priority={false}
+              index={i + 1}
             />
-          </div>
-        ))}
+          ))}
 
         {/* Gradient scrim — sky stays clean, bottom text zone is readable */}
         <div
