@@ -5,7 +5,7 @@
 > actualiza este archivo (mueve la tarea de "Pendiente" a "Changelog").
 >
 > Sitio en producción: **https://nomaderia.com** · Hosting: Cloudflare Pages ·
-> Producto único a **$49 USD** vía WhatsApp · Primer lead real capturado vía `/sentinel`.
+> Producto único a **$49 USD** vía **Stripe Payment Link** en el sitio · WhatsApp solo para dudas / post-pago · Primer lead real capturado vía `/sentinel`.
 >
 > **Cola Phase 1 (cloud agents):** [`docs/agent-queue.md`](./agent-queue.md) ·
 > roadmap: [`docs/ai-roadmap.md`](./ai-roadmap.md) · ADR-024.
@@ -26,12 +26,28 @@ Tras PR #194 el LCP quedó en ~12s porque el **H1** esperaba JS/Framer (`opacity
 **Lighthouse mobile (simulate):** BEFORE (baseline PR #194 local) LCP **12.2s** / perf 0.50 → AFTER (vite preview) LCP **3.3s** / perf 0.56 (meta &lt;4s ✅; goal 2.5s aún abierto).
 
 **Verificación:** `npx tsc --noEmit` + `npm run typecheck` + `npm run build` + vitest `resized-image`.
+## Changelog 2026-10-02 — Phase 1: Stripe Payment Link + `/gracias`
+
+Compra en el sitio (sin backend nuevo):
+
+- `STRIPE_LINK_ITINERARIO_49` = Payment Link live `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.
+- CTAs de compra → `Comprar mi itinerario – $49` abren Stripe; si hay quiz lead en `localStorage`, se añaden `client_reference_id` + `prefilled_email`.
+- WhatsApp público solo como **¿Dudas? Escríbenos** (nunca el path de compra).
+- `/gracias` deja de redirigir a `/servicios`: página de gracias (ES, mobile-first, noindex); Meta Pixel `Purchase` ($49 USD) una vez por visita si `fbq` existe.
+- Copy how-to-buy alineado (Servicios pasos/FAQ, FaqSection, Terms §6, PainContrast, Hero).
+- **No** se tocó auth, queries Supabase existentes, ni config de precio/producto en Stripe Dashboard.
+- T06 completo (webhook `orders`) sigue pendiente — este PR solo cablea el Payment Link en frontend.
+
+**FRANK (Stripe Dashboard):** en el Payment Link $49, pon **Success URL** = `https://nomaderia.com/gracias` (o `https://nomaderia.com/gracias?session_id={CHECKOUT_SESSION_ID}` si Stripe lo ofrece). Sin eso el comprador no aterriza en `/gracias`.
+
+**Verificación:** `npm run typecheck` + `node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json` + `npm run build` + vitest `Servicios.test.ts`.
 
 ## 🙋 Pendientes Humanos (solo Frank puede hacerlos)
 
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
 
+- [ ] **Stripe Dashboard — Success URL del Payment Link $49 → `https://nomaderia.com/gracias`.** El frontend ya tiene `/gracias`. Sin configurar Success URL en el Dashboard, Stripe no redirige tras pagar. No cambiar price/product. Webhook + `orders` (resto de T06) sigue aparte.
 - [ ] **Home hero — reemplazar las 6 fotos placeholder** en `public/hero/sources/01.jpeg`…`06.jpeg` con las tomas finales de Frank, luego `npm run generate:hero` y commit de los AVIF/WebP regenerados. Hasta entonces el hero usa 6 fotos curadas bajadas una vez del bucket Supabase `media_gallery` (no hotlink nps.gov).
 - [ ] **Activar la ingesta RAG por parque (ADR-028) — dos pasos, en este orden.**
       1. **Paso manual en el Dashboard, NO es SQL de la migración:** Supabase
@@ -153,7 +169,7 @@ referenciar esta lista primero.
       siga corriendo bien. Opcional: regenerar tipos después. *(Resuelto el
       ítem previo "sync-park-weather nunca ha poblado datos" — primer run
       exitoso el 2026-07-19, cron diario activo; ver changelog.)*
-- [ ] **Crear Payment Link de $49 USD en Stripe Dashboard** y reemplazar `"REEMPLAZAR_CON_LINK_DE_49_USD"` en `src/config/pricing.ts` (`STRIPE_LINK_ITINERARIO_49`). Actualmente este link no está conectado al CTA (el CTA principal es WhatsApp), pero queda listo para uso futuro.
+- [x] **Crear Payment Link de $49 USD en Stripe Dashboard** — DONE (link live cableado en `pricing.ts` 2026-10-02). Pendiente solo Success URL → `/gracias` (ver ítem arriba) y resto T06 webhook.
 - [ ] **Subir `public/diploma.jpg`** — foto del certificado TAP (credencial en
       `SobreNosotros.tsx`).
 - [ ] **Configurar WhatsApp Business** en el número `18588996802` y guardar las 4
@@ -369,7 +385,7 @@ Pendiente real:
 
 ### Copy / share previews (auditoría 2026-10-02 — ver [`docs/copy-audit.md`](./copy-audit.md))
 - [ ] **OG/share previews sin JS.** Facebook (y crawlers sin JS) solo ven los meta de `index.html` en **todas** las URLs (home + `/blog/:slug`). Cada share de blog muestra og:title/description/image genéricos de home. Follow-up: prerender/SSR o edge HTML por ruta con `og:title`/`og:description`/`og:image` por post (CMS: `blog_posts.title`, `short_description`, `hero_image_url`). No basta `usePageMeta` (client-only).
-- [ ] **Contradicción pago Stripe vs WhatsApp.** `/privacidad` dice checkout Stripe + tarjeta; `/terminos` §6 + FAQ home dicen cobro manual por WhatsApp sin pagos automáticos en el sitio. Alinear copy con el canal real (hoy WhatsApp; Payment Link en `pricing.ts` sigue placeholder). Relacionado T01/T06.
+- [x] **Contradicción pago Stripe vs WhatsApp.** Resuelto 2026-10-02: Terms/FAQ/Servicios alineados a pago con tarjeta (Stripe) en sitio; WhatsApp = dudas + entrega. Privacy §2 ya coincidía.
 - [ ] **Precio distinto de $49 en email de quiz.** `send-quiz-email` ofrece **NOMADA10 → $44**. Confirmar si el descuento sigue vigente o retirar/actualizar (ADR-012 producto único $49).
 - [ ] **Copy “paquetes” (plural).** Quiz WA: “¿Qué paquetes tienen?”; FAQ `/servicios`: “todos los paquetes”. Alinear a producto único.
 - [ ] **Promesas de tiempo / soporte.** Hero “Respuesta en < 24h”; SocialProof “24h” entrega máxima; Pain/FAQ/Servicios “24-48h”; TravelInsurance “Cobertura 24/7”. Decidir SLA real y unificar (o acotar a seguro de terceros).

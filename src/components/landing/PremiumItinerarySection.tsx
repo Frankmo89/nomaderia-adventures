@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Gauge, Ticket, Footprints, Globe, Check } from "lucide-react";
+import { Gauge, Ticket, Footprints, Globe, Check, CreditCard, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Reveal from "@/components/editorial/Reveal";
-import { products } from "@/config/pricing";
+import {
+  products,
+  BUY_CTA_LABEL,
+  QUESTIONS_WHATSAPP_LABEL,
+  QUESTIONS_WHATSAPP_URL,
+  buildStripePaymentLink,
+} from "@/config/pricing";
+import { trackEvent } from "@/lib/analytics";
 import { resizedImageUrl } from "@/lib/resized-image";
 
 const benefits = [
@@ -207,19 +214,39 @@ const PremiumItinerarySection = () => {
                       ))}
                     </ul>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex flex-col gap-3">
                     <Button
                       asChild
                       className="w-full bg-green hover:bg-green-dark text-white"
                     >
                       <a
-                        href={product.ctaUrl}
+                        href={buildStripePaymentLink()}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() =>
+                          trackEvent("cta_itinerario_stripe_click", {
+                            source: `premium_${product.id}`,
+                          })
+                        }
                       >
-                        Diseña mi aventura por WhatsApp
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        {BUY_CTA_LABEL}
                       </a>
                     </Button>
+                    <a
+                      href={QUESTIONS_WHATSAPP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-center text-green hover:text-green-dark font-medium"
+                      onClick={() =>
+                        trackEvent("cta_itinerario_whatsapp_click", {
+                          source: `premium_${product.id}_dudas`,
+                        })
+                      }
+                    >
+                      <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
+                      {QUESTIONS_WHATSAPP_LABEL}
+                    </a>
                   </CardFooter>
                 </Card>
               </motion.div>

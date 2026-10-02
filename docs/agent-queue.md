@@ -90,12 +90,12 @@ Status válidos: `TODO` | `DONE` | `BLOCKED`.
 
 | | |
 |---|---|
-| **Status** | `TODO` |
+| **Status** | `TODO` (frontend Payment Link **DONE** 2026-10-02; falta webhook/`orders`) |
 | **Depends on** | T05 |
 | **Scope** | Botón "Pagar $49" abre el Payment Link existente con `?client_reference_id=<lead_id>`. Nueva EF `stripe-webhook`: verificar firma; en `checkout.session.completed` crear fila `orders` (`lead_id`, status `paid`, `stripe_session_id`) y loguear purchase event. **No** cambiar price/product config de Stripe. |
-| **Done when** | CTA con `client_reference_id`; EF + migración `orders`; SQL en el PR. |
-| **Audit** | `STRIPE_LINK_ITINERARIO_49` sigue en placeholder `"REEMPLAZAR_CON_LINK_DE_49_USD"`. No hay `stripe-webhook` ni tabla `orders`. CTA actual es WhatsApp. |
-| **FRANK** | Crear Payment Link $49 y pegarlo en `pricing.ts`; configurar webhook en Stripe; set `STRIPE_WEBHOOK_SECRET`; deploy EF. |
+| **Done when** | CTA con `client_reference_id` ✅; EF + migración `orders` ❌; SQL en el PR ❌. |
+| **Audit** | Payment Link live cableado; buy CTAs + `/gracias` + copy how-to-buy. Aún no hay `stripe-webhook` ni tabla `orders`. |
+| **FRANK** | Success URL del Payment Link → `https://nomaderia.com/gracias`; configurar webhook + `STRIPE_WEBHOOK_SECRET` + deploy EF cuando se haga la mitad backend. |
 
 ---
 
