@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import useEmblaCarousel from "embla-carousel-react";
-import { DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Sparkles, Mountain, MessageSquare, ExternalLink, AlertTriangle, Share2 } from "lucide-react";
+import { DollarSign, Plane, Hotel, Shield, Compass, Ticket, Car, Bus, X, ChevronLeft, ChevronRight, Sparkles, Mountain, MessageSquare, ExternalLink, AlertTriangle, Share2, CreditCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,11 +18,16 @@ import ArticleWhatsAppCTA from "@/components/ArticleWhatsAppCTA";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import SEO from "@/components/SEO";
 import JsonLd from "@/components/JsonLd";
-import { PRICING } from "@/config/pricing";
 import ShareButtons from "@/components/ShareButtons";
 import PermitScarcity from "@/components/PermitScarcity";
 import { SITE_URL, usePageMeta } from "@/hooks/use-seo";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import {
+  PRICING,
+  BUY_CTA_LABEL,
+  QUESTIONS_WHATSAPP_LABEL,
+  QUESTIONS_WHATSAPP_URL,
+  buildStripePaymentLink,
+} from "@/config/pricing";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 import type { Tables } from "@/integrations/supabase/types";
 import QuickFactsRow from "@/components/destinations/QuickFactsRow";
@@ -334,7 +339,6 @@ const DestinationDetail = () => {
   const affiliateLinks = (dest.affiliate_links as Record<string, string>) || {};
   const bookingOutlineBtn = "w-full bg-transparent border-card-foreground/25 text-card-foreground hover:bg-card-foreground/10 hover:text-card-foreground";
   const permitAlertUrl = affiliateLinks.permit_alert_url || null;
-  const whatsappMessage = `Hola Nomaderia 👋 Me interesa el itinerario personalizado de ${dest.title}. ¿Me ayudas a planearlo?`;
 
   return (
     <main className="bg-background min-h-screen pb-32 md:pb-0">
@@ -945,12 +949,21 @@ const DestinationDetail = () => {
                   )}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                  {/* WhatsApp — canal de cierre principal */}
-                  <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full font-semibold text-sm whitespace-normal h-auto py-2">
-                    <a href={buildWhatsAppLink(whatsappMessage)} target="_blank" rel="noopener noreferrer">
-                      <MessageSquare className="mr-2 h-4 w-4 shrink-0" /> ¿Listo para ir? Te armamos el itinerario completo →
+                  {/* Stripe — compra; WhatsApp solo dudas */}
+                  <Button asChild className="bg-green hover:bg-green-dark text-white w-full font-semibold text-sm whitespace-normal h-auto py-2">
+                    <a href={buildStripePaymentLink()} target="_blank" rel="noopener noreferrer">
+                      <CreditCard className="mr-2 h-4 w-4 shrink-0" /> {BUY_CTA_LABEL}
                     </a>
                   </Button>
+                  <a
+                    href={QUESTIONS_WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-center text-green hover:text-green-dark font-medium"
+                  >
+                    <MessageSquare className="inline h-4 w-4 mr-1 align-text-bottom" />
+                    {QUESTIONS_WHATSAPP_LABEL}
+                  </a>
                   {affiliateLinks.flights_url && (
                     <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full">
                       <a href={affiliateLinks.flights_url} target="_blank" rel="noopener noreferrer">
@@ -1165,14 +1178,14 @@ const DestinationDetail = () => {
       </div>
 
       {/* WhatsApp CTA */}
-      <ArticleWhatsAppCTA title={dest.title} whatsappMessage={whatsappMessage} />
+      <ArticleWhatsAppCTA title={dest.title} />
 
       <PremiumItinerarySection />
 
       <div className="container mx-auto px-4 py-8 text-center">
         <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>↑ Volver arriba</Button>
       </div>
-      <StickyMobileCTA whatsappMessage={whatsappMessage} permitAlertUrl={permitAlertUrl} estimatedBudgetUsd={dest.estimated_budget_usd ?? null} />
+      <StickyMobileCTA whatsappMessage="" permitAlertUrl={permitAlertUrl} estimatedBudgetUsd={dest.estimated_budget_usd ?? null} />
       <Footer />
     </main>
   );

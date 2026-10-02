@@ -1,18 +1,21 @@
 import { motion } from "framer-motion";
-import { MessageCircle } from "lucide-react";
+import { CreditCard, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import {
+  BUY_CTA_LABEL,
+  QUESTIONS_WHATSAPP_LABEL,
+  QUESTIONS_WHATSAPP_URL,
+  buildStripePaymentLink,
+} from "@/config/pricing";
 
 interface ArticleWhatsAppCTAProps {
   title: string;
+  /** @deprecated Buy path is Stripe; prop kept so call sites compile. */
   whatsappMessage?: string;
 }
 
-const ArticleWhatsAppCTA = ({ title, whatsappMessage }: ArticleWhatsAppCTAProps) => {
-  const message = whatsappMessage ?? `Hola Nomaderia 👋 Me interesa el itinerario personalizado de ${title}. ¿Me ayudas a planearlo?`;
-  const url = buildWhatsAppLink(message);
-
+const ArticleWhatsAppCTA = ({ title }: ArticleWhatsAppCTAProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -22,10 +25,11 @@ const ArticleWhatsAppCTA = ({ title, whatsappMessage }: ArticleWhatsAppCTAProps)
     >
       <div className="rounded-xl border border-border bg-[#F5F0EB] py-10 px-6 text-center">
         <h3 className="font-serif text-2xl md:text-3xl text-foreground mb-3">
-          &iquest;Listo para vivir esta aventura?
+          ¿Listo para vivir esta aventura?
         </h3>
         <p className="text-muted-foreground text-lg mb-6">
-          Deja de planear y empieza a empacar.
+          Paga con tarjeta aquí (Stripe). Después te entregamos el itinerario de{" "}
+          {title} por WhatsApp en 24–48 horas.
         </p>
         <Button
           asChild
@@ -33,15 +37,27 @@ const ArticleWhatsAppCTA = ({ title, whatsappMessage }: ArticleWhatsAppCTAProps)
           className="bg-green hover:bg-green-dark text-white"
         >
           <a
-            href={url}
+            href={buildStripePaymentLink()}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => trackEvent("cta_itinerario_whatsapp_click", { source: "destination_detail" })}
+            onClick={() => trackEvent("cta_itinerario_stripe_click", { source: "destination_detail" })}
           >
-            <MessageCircle className="mr-2 h-5 w-5" />
-            Dise&ntilde;a mi viaje a medida
+            <CreditCard className="mr-2 h-5 w-5" />
+            {BUY_CTA_LABEL}
           </a>
         </Button>
+        <p className="mt-4">
+          <a
+            href={QUESTIONS_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-green hover:text-green-dark font-medium"
+            onClick={() => trackEvent("cta_itinerario_whatsapp_click", { source: "destination_detail_dudas" })}
+          >
+            <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
+            {QUESTIONS_WHATSAPP_LABEL}
+          </a>
+        </p>
       </div>
     </motion.div>
   );

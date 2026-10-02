@@ -43,7 +43,7 @@ opcionales.
 
 - **Sitio en producción:** https://nomaderia.com — Hosting: **Cloudflare Pages**.
 - **Producto activo en sitio:** **Itinerario Completo Nomaderia** — **$49 USD**.
-- **Canal de cierre vigente:** CTA por **WhatsApp** ("Diseña mi aventura por WhatsApp").
+- **Canal de cobro vigente:** **Stripe Payment Link** en el sitio (`Comprar mi itinerario – $49`). WhatsApp = dudas («¿Dudas? Escríbenos») + entrega post-pago. Success URL → `/gracias` (Frank en Dashboard).
 - **Primer lead real capturado** vía `/sentinel` (SentinelLanding). El funnel de
   conversión ya produjo señal real → priorizar lo que reduce fricción a la venta.
 - **Modelo de negocio congelado** en **un solo producto**, **USD únicamente**
@@ -61,19 +61,19 @@ servicios de pago. Compite contra AllTrails/Chimani en un solo eje:
 **idioma + audiencia + honestidad con principiantes**.
 
 **Funnel principal:** SEO / Ads → Landing → Quiz (captura email) → Destino →
-Affiliate links / Servicio de pago. Canal de cierre: **WhatsApp**, no el sitio.
+pago Stripe ($49) → `/gracias` → entrega por WhatsApp en 24–48h. WhatsApp antes de comprar solo para dudas.
 
 ## Productos y Precios (USD únicamente)
 
 | Producto | Precio | Canal de cobro |
 |----------|--------|----------------|
-| Itinerario Completo Nomaderia | $49 USD | WhatsApp |
+| Itinerario Completo Nomaderia | $49 USD | Stripe Payment Link (sitio) |
 
 Fuente de verdad en código: `src/config/pricing.ts`.
 
 ## Monetización (4 vías)
 
-1. **Servicio directo por WhatsApp** — Itinerario Completo Nomaderia — $49 USD.
+1. **Itinerario Completo** — $49 USD vía Stripe Payment Link en el sitio; entrega y soporte por WhatsApp.
 2. **Viator 8%** — habilitado por certificación TAP (The Travel Institute).
 3. **Amazon Associates** — tag `nomaderia-20` (en product cards de gear).
 4. **Travelpayouts** — Klook, Tiqets, Localrent, Welcome Pickups.
@@ -117,7 +117,7 @@ src/
 │   ├── SobreNosotros.tsx     # /sobre-nosotros (about + credencial TAP)
 │   ├── PrivacyPolicy.tsx     # /privacidad
 │   ├── TermsAndConditions.tsx # /terminos
-│   ├── Gracias.tsx           # /gracias (ruta legacy/redirección)
+│   ├── Gracias.tsx           # /gracias (post-pago Stripe; noindex)
 │   └── admin/                # Panel protegido (Supabase Auth + rol admin, DARK)
 ├── components/
 │   ├── landing/              # Secciones de homepage (Navbar, Hero, Quiz, Footer, etc.)
@@ -125,7 +125,7 @@ src/
 │   ├── ConciergeLauncher.tsx # Launcher global del Concierge IA (montado en App.tsx, persiste entre rutas)
 │   └── ui/                   # shadcn/ui — NO editar manualmente
 ├── config/
-│   ├── pricing.ts            # Producto único ($49 USD, CTA por WhatsApp)
+│   ├── pricing.ts            # Producto único ($49 USD, Stripe Payment Link + buildStripePaymentLink)
 │   └── assets.ts             # Brand assets URLs
 ├── hooks/                    # Custom hooks con TanStack Query
 │   ├── use-destinations.ts   # useDestinations(), useDestinationBySlug(), useRelatedDestinations()
@@ -170,7 +170,7 @@ src/
 /blog                → BlogListing.tsx     /blog/:slug      → BlogPostDetail.tsx
 /calculadora         → BudgetCalculator    /servicios       → Servicios.tsx
 /sobre-nosotros      → SobreNosotros.tsx   /privacidad      → PrivacyPolicy.tsx
-/terminos            → TermsAndConditions  /gracias         → Gracias.tsx (redirect → /servicios)
+/terminos            → TermsAndConditions  /gracias         → Gracias.tsx (post-pago; noindex)
 /sentinel            → SentinelLanding.tsx (redirect → /servicios)
 /admin/*             → AdminLayout (protegido, dark)
 ```

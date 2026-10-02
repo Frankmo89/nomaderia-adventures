@@ -8,7 +8,7 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
 const WHATSAPP_URL = buildWhatsAppLink(
-  "Hola Frank, quiero planear mi primera aventura"
+  "Hola Nomaderia 👋 Tengo una duda antes de comprar el Itinerario Completo."
 );
 
 /** Curated local hero set (public/hero/). Frank can replace sources later. */
@@ -215,7 +215,7 @@ const HeroSection = () => {
               className="rounded-full bg-hero-accent text-white h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
             >
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                Plática Conmigo
+                ¿Dudas? Escríbenos
               </a>
             </Button>
           </motion.div>

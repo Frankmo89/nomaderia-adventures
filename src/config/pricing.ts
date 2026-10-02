@@ -1,5 +1,6 @@
 export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { getStoredQuizEmail, getStoredQuizLeadId } from "@/lib/quiz-lead";
 
 export interface Product {
   id: string;
@@ -8,6 +9,7 @@ export interface Product {
   currency: "USD";
   ctaType: "whatsapp" | "stripe";
   features: string[];
+  /** Base buy URL (Stripe Payment Link). Prefer buildStripePaymentLink() at click time. */
   ctaUrl: string;
 }
 
@@ -15,8 +17,42 @@ export const PRICING = {
   itinerarioCompleto: 49,
 } as const;
 
-// TODO: Frank — pega aquí el nuevo Payment Link desde Stripe Dashboard
-export const STRIPE_LINK_ITINERARIO_49 = "REEMPLAZAR_CON_LINK_DE_49_USD";
+/** Live Stripe Payment Link for Itinerario Completo ($49 USD). Do not change price/product in Stripe Dashboard from agents. */
+export const STRIPE_LINK_ITINERARIO_49 =
+  "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
+
+export const BUY_CTA_LABEL = `Comprar mi itinerario – $${PRICING.itinerarioCompleto}`;
+
+/**
+ * Payment Link URL with optional Stripe query params.
+ * - client_reference_id ← quiz lead UUID (if visitor finished quiz + email capture)
+ * - prefilled_email ← known email
+ * Reads localStorage when opts omitted so any buy button stays consistent.
+ */
+export function buildStripePaymentLink(opts?: {
+  clientReferenceId?: string | null;
+  prefilledEmail?: string | null;
+}): string {
+  const url = new URL(STRIPE_LINK_ITINERARIO_49);
+  const leadId =
+    opts?.clientReferenceId !== undefined
+      ? opts.clientReferenceId
+      : getStoredQuizLeadId();
+  const email =
+    opts?.prefilledEmail !== undefined
+      ? opts.prefilledEmail
+      : getStoredQuizEmail();
+  if (leadId) url.searchParams.set("client_reference_id", leadId);
+  if (email) url.searchParams.set("prefilled_email", email);
+  return url.toString();
+}
+
+/** WhatsApp for questions only — never the buy path. */
+export const QUESTIONS_WHATSAPP_URL = buildWhatsAppLink(
+  "Hola Nomaderia 👋 Tengo una duda antes de comprar el Itinerario Completo.",
+);
+
+export const QUESTIONS_WHATSAPP_LABEL = "¿Dudas? Escríbenos";
 
 export const products: Product[] = [
   {
@@ -24,7 +60,7 @@ export const products: Product[] = [
     name: "Itinerario Completo Nomaderia",
     priceUSD: PRICING.itinerarioCompleto,
     currency: "USD",
-    ctaType: "whatsapp",
+    ctaType: "stripe",
     features: [
       "Itinerario día a día en PDF",
       "Rutas listas en Google Maps",
@@ -35,8 +71,6 @@ export const products: Product[] = [
       "Presupuesto desglosado",
       "Soporte por WhatsApp durante tu viaje",
     ],
-    ctaUrl: buildWhatsAppLink(
-      `Hola Nomaderia 👋 Quiero contratar el Itinerario Completo ($${PRICING.itinerarioCompleto} USD).`
-    ),
+    ctaUrl: STRIPE_LINK_ITINERARIO_49,
   },
 ];

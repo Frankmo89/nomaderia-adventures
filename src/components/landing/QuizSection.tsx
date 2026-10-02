@@ -5,6 +5,7 @@ import {
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
   Mail, Loader2, HeartPulse, Backpack, Tent, MapPin,
   Users, BedDouble, Baby, UserRound, Hotel, Home, Car, Plane, HelpCircle,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,13 @@ import {
   originAnswerFields,
   type TravelMode,
 } from "@/lib/quiz-ranking";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import {
+  BUY_CTA_LABEL,
+  QUESTIONS_WHATSAPP_LABEL,
+  QUESTIONS_WHATSAPP_URL,
+  buildStripePaymentLink,
+} from "@/config/pricing";
+import { trackEvent } from "@/lib/analytics";
 import Reveal from "@/components/editorial/Reveal";
 
 const WhatsAppIcon = () => (
@@ -493,11 +500,12 @@ const QuizResults = ({
   loading,
   emailSubmitted,
   onEmailSubmit,
-  isUsResident,
+  isUsResident: _isUsResident,
   selectedDestinationId,
   onSelectPark,
   preview,
   previewLoading,
+  leadId,
 }: {
   results: QuizDestination[];
   email: string;
@@ -510,21 +518,13 @@ const QuizResults = ({
   onSelectPark: (id: string) => void;
   preview: QuizPreview | null;
   previewLoading: boolean;
+  leadId: string | null;
 }) => {
   const reduceMotion = useReducedMotion();
   const topDestination = results[0];
   const alternatives = results.slice(1);
   const selected =
     results.find((d) => d.id === selectedDestinationId) ?? topDestination;
-  const residentLine = isUsResident !== null
-    ? `\nResidencia en EE. UU.: ${isUsResident ? "Sí" : "No"}`
-    : "";
-  const whatsAppUrl = selected
-    ? buildWhatsAppLink(
-        `Hola equipo de Nomaderia, acabo de hacer el Quiz, mi destino ideal es ${selected.title} y quiero que planifiquen mi itinerario personalizado. ¿Qué paquetes tienen?${residentLine}`,
-      )
-    : undefined;
-
   return (
     <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
       <CelebrationParticles />
@@ -586,25 +586,44 @@ const QuizResults = ({
           </div>
         )}
 
-        {/* WhatsApp CTA — primary conversion action */}
-        {whatsAppUrl && (
-          <motion.div
-            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduceMotion ? 0 : 0.5, duration: 0.5, ease: "easeOut" }}
-            className="mt-10 sm:mt-12 flex justify-center"
+        {/* Stripe buy — primary; WhatsApp only for questions */}
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: reduceMotion ? 0 : 0.5, duration: 0.5, ease: "easeOut" }}
+          className="mt-10 sm:mt-12 flex flex-col items-center gap-3"
+        >
+          <a
+            href={buildStripePaymentLink({
+              clientReferenceId: leadId,
+              prefilledEmail: emailSubmitted && email ? email : null,
+            })}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() =>
+              trackEvent("cta_itinerario_stripe_click", { source: "quiz_results" })
+            }
+            className="inline-flex items-center justify-center gap-3 bg-green hover:bg-green-dark active:bg-green-dark text-white font-bold text-lg sm:text-xl px-8 py-5 rounded-2xl shadow-2xl shadow-green/40 transition-all duration-200 active:scale-[0.97] sm:hover:scale-[1.03] w-full max-w-md"
           >
-            <a
-              href={whatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-3 bg-green hover:bg-green-dark active:bg-green-dark text-white font-bold text-lg sm:text-xl px-8 py-5 rounded-2xl shadow-2xl shadow-green/40 transition-all duration-200 active:scale-[0.97] sm:hover:scale-[1.03] w-full max-w-md"
-            >
-              <WhatsAppIcon />
-              Planifica mi itinerario 🗺️
-            </a>
-          </motion.div>
-        )}
+            <CreditCard className="h-6 w-6 shrink-0" aria-hidden="true" />
+            {BUY_CTA_LABEL}
+          </a>
+          <a
+            href={QUESTIONS_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() =>
+              trackEvent("cta_itinerario_whatsapp_click", { source: "quiz_results_dudas" })
+            }
+            className="inline-flex items-center gap-2 text-sm font-medium text-green hover:text-green-dark"
+          >
+            <WhatsAppIcon />
+            {QUESTIONS_WHATSAPP_LABEL}
+          </a>
+          <p className="text-xs text-stone-500 text-center max-w-md">
+            Pagas con tarjeta (Stripe). Después te escribimos por WhatsApp y entregamos el itinerario en 24–48 h.
+          </p>
+        </motion.div>
 
         {/* Email capture → creates Phase 1 lead (client UUID) */}
         <motion.div
@@ -646,6 +665,7 @@ const QuizSection = () => {
     isQuizDone,
     selectedDestinationId, selectPark,
     preview, previewLoading,
+    leadId,
     handleSelect, handleBack, handleSwipe,
     fetchResults, handleEmailSubmit,
     handleCombinedSubmit, handleFieldsSubmit,
@@ -756,6 +776,7 @@ const QuizSection = () => {
       onSelectPark={selectPark}
       preview={preview}
       previewLoading={previewLoading}
+      leadId={leadId}
     />
   );
 

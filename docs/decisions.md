@@ -75,7 +75,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-005 — WhatsApp es el canal de cierre, no el sitio
 - **Fecha:** 2026-02
-- **Estado:** Vigente
+- **Estado:** Vigente (acotada por ADR-032: compra = Stripe Payment Link; WhatsApp = dudas + entrega/post-pago)
 - **Contexto:** Intentar cerrar la venta dentro del sitio (carritos, checkout
   complejo) añade fricción que esta audiencia (principiantes) no tolera.
 - **Decisión:** El sitio califica y educa; la venta se cierra por WhatsApp.
@@ -577,6 +577,14 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   se migra a ZIP.
 
 ---
+
+### ADR-032 — Phase 1: cobro en sitio vía Stripe Payment Link (WhatsApp = dudas / post-pago)
+- **Fecha:** 2026-10
+- **Estado:** Vigente (acota ADR-005 / ADR-030 para el path de compra público)
+- **Contexto:** El Payment Link $49 ya existía en producción; el sitio seguía cerrando por WhatsApp y `STRIPE_LINK_ITINERARIO_49` era placeholder. Hacía falta vender sin backend nuevo.
+- **Decisión:** Todo CTA de **compra** abre el Payment Link live con label `Comprar mi itinerario – $49`. Si el visitante terminó el quiz (lead en `localStorage`), se añaden `client_reference_id` y `prefilled_email`. WhatsApp en superficies públicas es **solo** «¿Dudas? Escríbenos». Tras pagar, `/gracias` (noindex) + Success URL en Dashboard. Sin webhook/`orders` en este paso (resto de T06).
+- **Consecuencias:** NO volver a poner WhatsApp como botón primario de compra en home/servicios/destinos/quiz. NO tocar price/product Stripe ni auth/queries. Frank debe setear Success URL → `/gracias`. Webhook sigue en T06.
+
 
 ## Lecciones técnicas (bugs no obvios)
 

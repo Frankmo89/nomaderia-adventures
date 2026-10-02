@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logEvent } from "@/lib/events";
+import { persistQuizLead } from "@/lib/quiz-lead";
 import {
   InvalidProfileError,
   rankQuizDestinations,
@@ -299,8 +300,10 @@ export function useQuiz(totalSteps: number) {
       });
       if (leadError) {
         console.warn("[leads] insert failed:", leadError.message);
+        persistQuizLead(null, email); // email known even if lead insert failed
       } else {
         setLeadId(newLeadId);
+        persistQuizLead(newLeadId, email);
         logEvent(
           "lead_created",
           {

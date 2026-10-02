@@ -1,4 +1,4 @@
-import { MessageCircle, Check, BadgeCheck, ClipboardList, Route, Palmtree } from "lucide-react";
+import { MessageCircle, Check, BadgeCheck, Route, Palmtree, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -15,22 +15,28 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { trackEvent } from "@/lib/analytics";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
-import { products, PRICING } from "@/config/pricing";
+import {
+  products,
+  PRICING,
+  BUY_CTA_LABEL,
+  QUESTIONS_WHATSAPP_LABEL,
+  QUESTIONS_WHATSAPP_URL,
+  buildStripePaymentLink,
+} from "@/config/pricing";
 import JsonLd from "@/components/JsonLd";
 
 const steps = [
   {
-    icon: ClipboardList,
-    title: "1. Cuéntanos tu plan",
+    icon: CreditCard,
+    title: "1. Paga con tarjeta aquí",
     description:
-      "Escríbenos por WhatsApp: ¿a dónde quieres ir? ¿cuántos van? ¿cuántos días? ¿cuál es tu presupuesto?",
+      "Checkout seguro con Stripe ($49 USD). Si ya hiciste el quiz, usamos tus respuestas para armar el plan.",
   },
   {
     icon: Route,
-    title: "2. Diseñamos tu ruta",
+    title: "2. Te contactamos por WhatsApp",
     description:
-      "En 24-48 horas recibes tu itinerario personalizado con rutas, equipo, presupuesto y tips de preparación física.",
+      "Tras el pago te escribimos por WhatsApp. Revisamos detalles y en 24–48 horas entregamos tu itinerario.",
   },
   {
     icon: Palmtree,
@@ -83,6 +89,11 @@ const whatYouGet = [
 ];
 
 const faqs = [
+  {
+    question: "¿Cómo funciona el pago?",
+    answer:
+      "Pagas con tarjeta aquí en el sitio a través de Stripe (checkout seguro, $49 USD). Después del pago te contactamos por WhatsApp y te entregamos el itinerario en 24–48 horas. WhatsApp antes de comprar es solo para dudas.",
+  },
   {
     question: "¿Qué incluye exactamente un itinerario?",
     answer:
@@ -193,13 +204,13 @@ const Servicios = () => {
             </p>
             <Button asChild size="lg" className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground">
               <a
-                href={buildWhatsAppLink("Hola Nomaderia 👋 Tengo una pregunta sobre mis próximas aventuras.")}
+                href={QUESTIONS_WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackEvent("cta_itinerario_whatsapp_click", { source: "servicios_hero" })}
               >
                 <MessageCircle className="h-5 w-5 mr-2" />
-                Escríbenos por WhatsApp
+                {QUESTIONS_WHATSAPP_LABEL}
               </a>
             </Button>
           </motion.div>
@@ -304,23 +315,35 @@ const Servicios = () => {
                     ))}
                   </ul>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col gap-3">
                   <Button
                     asChild
                     className="w-full h-12 text-base bg-green hover:bg-green-dark text-white"
                   >
                     <a
-                      href={product.ctaUrl}
+                      href={buildStripePaymentLink()}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() =>
-                        trackEvent("cta_itinerario_whatsapp_click", { source: `servicios_${product.id}` })
+                        trackEvent("cta_itinerario_stripe_click", { source: `servicios_${product.id}` })
                       }
                     >
-                      <MessageCircle className="h-5 w-5 mr-2" />
-                      Diseña mi aventura por WhatsApp
+                      <CreditCard className="h-5 w-5 mr-2" />
+                      {BUY_CTA_LABEL}
                     </a>
                   </Button>
+                  <a
+                    href={QUESTIONS_WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-center text-green hover:text-green-dark font-medium"
+                    onClick={() =>
+                      trackEvent("cta_itinerario_whatsapp_click", { source: `servicios_${product.id}_dudas` })
+                    }
+                  >
+                    <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
+                    {QUESTIONS_WHATSAPP_LABEL}
+                  </a>
                 </CardFooter>
               </Card>
             </motion.div>

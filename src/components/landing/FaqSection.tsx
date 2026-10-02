@@ -29,7 +29,7 @@ const faqItems: FaqItem[] = [
   {
     question: "¿Cómo funciona el pago?",
     answer:
-      "Todo empieza por WhatsApp: nos cuentas tu viaje, te confirmamos el precio ($49 USD) y coordinamos el pago antes de entregarte tu itinerario en 24-48 horas.",
+      "Pagas con tarjeta aquí en el sitio a través de Stripe (checkout seguro, $49 USD). Después del pago te contactamos por WhatsApp y te entregamos el itinerario en 24–48 horas. Antes de comprar, WhatsApp es solo para dudas.",
   },
   {
     question: "Nunca he hecho senderismo, ¿es para mí?",
@@ -69,7 +69,7 @@ const FaqSection = () => {
             Preguntas frecuentes
           </Eyebrow>
           <h2 className="font-serif text-3xl font-bold leading-tight text-ink sm:text-4xl md:text-5xl">
-            Antes de escribirnos, resolvamos tus dudas
+            Antes de comprar, resolvamos tus dudas
           </h2>
         </Reveal>
 
