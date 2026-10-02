@@ -17,6 +17,7 @@
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
 
+- [ ] **Home hero — reemplazar las 6 fotos placeholder** en `public/hero/sources/01.jpeg`…`06.jpeg` con las tomas finales de Frank, luego `npm run generate:hero` y commit de los AVIF/WebP regenerados. Hasta entonces el hero usa 6 fotos curadas bajadas una vez del bucket Supabase `media_gallery` (no hotlink nps.gov).
 - [ ] **Activar la ingesta RAG por parque (ADR-028) — dos pasos, en este orden.**
       1. **Paso manual en el Dashboard, NO es SQL de la migración:** Supabase
          Dashboard → Vault → nuevo secret con nombre exacto `ingest_knowledge_jwt`
@@ -1282,6 +1283,18 @@ NO se tocó: auth, `has_role`, routing, `vite.config.ts`, `ui/*`, Hero, sync fun
   `itinerary_requests`, `AdminItineraryRequests`, hooks SEO
   (`useCanonical`/`useJsonLd`/`usePageMeta`), LoadingSkeletons, ErrorBoundary,
   auditoría Radix (12 paquetes no usados eliminados).
+
+
+## Changelog 2026-10-02 — Home hero mobile LCP (curated local assets)
+
+- **Medición BEFORE (Lighthouse mobile, https://nomaderia.com/):** perf score 0.27 · LCP **45.2 s** · image transfer **~58.3 MB** · JS transfer **~581 KB**. Causa: `useFeaturedHeroPark` alimentaba el slideshow con ~21 `hero_image_url` (casi todos full-size nps.gov) + fallback `media_gallery` vía CSS `background-image` (sin preload / srcset).
+- **Cambio (solo hero):** `HeroSection.tsx` deja de rotar fotos remotas para *display*; muestra 6 fotos curadas en `public/hero/` (AVIF+WebP a 640/1080/1600 vía `srcset`+`sizes`). Slide `01` = LCP: preload en `index.html` con `fetchpriority="high"`, eager, sin fade-in. Slides 02–06 montan tras `requestIdleCallback`. `useFeaturedHeroPark()` se sigue llamando (query intacta; unused OK).
+- **Fonts:** Google Fonts crítico recortado a pesos del hero (Playfair 700 + italic 400, Inter 400/500/600, `display=swap`); Oswald 500/600 diferido no-bloqueante.
+- **Tooling:** `scripts/generate-hero-images.mjs` + `npm run generate:hero` (`sharp` devDependency). `public/hero/sources/` gitignored. Cache `/hero/*` immutable en `_headers`.
+- **Assets generados:** 36 (6×3 anchos × AVIF+WebP).
+- **Medición AFTER (Lighthouse mobile, `vite preview` local del branch):** perf score 0.50 · LCP **12.2 s** (elemento = H1 “Tu Primera Aventura”, 96% render-delay por JS/hidratación; la foto ya no es el LCP) · image transfer total página **~11.9 MB** (otras secciones siguen trayendo nps.gov / media_gallery — fuera de scope) · hero local transfer **~518 KB** (6× AVIF; LCP candidate `01-1080.avif` ≈ **105 KB**) · JS transfer **~373 KB**.
+- **Delta vs prod before:** LCP 45.2s → 12.2s · images 58.3 MB → 11.9 MB (página) / hero path de multi-MB remotos → ~105 KB AVIF · JS 581 → 373 KB · perf 0.27 → 0.50.
+- `npx tsc --noEmit` (vía `npm run typecheck`) + `npm run build` deben pasar en este PR.
 
 ## Changelog 2026-07-02 — Tarjetas destino: muestra solo estado tras bandera (sin "Estados Unidos")
 

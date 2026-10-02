@@ -40,3 +40,6 @@ yarn.lock
 # Claude Code temp files
 tmpclaude-*
 nul
+
+# Hero source masters (regenerate with npm run generate:hero)
+public/hero/sources/

@@ -17,3 +17,6 @@
 # same-year regeneration keeps it, so a day — not immutable.
 /data/*
   Cache-Control: public, max-age=86400
+
+/hero/*
+  Cache-Control: public, max-age=31536000, immutable
