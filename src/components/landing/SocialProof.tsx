@@ -14,7 +14,7 @@ const SocialProof = () => {
   const STAT_CARDS: { icon: LucideIcon; value: string; label: string }[] = [
     { icon: MapPin,   value: String(destCount),              label: "Destinos cubiertos con guía completa" },
     { icon: BookOpen, value: String(guideCount),             label: "Guías escritas en español de verdad" },
-    { icon: Clock,    value: "24h",                          label: "Tiempo máximo de entrega del itinerario" },
+    { icon: Clock,    value: "24-48h",                       label: "Entrega del itinerario tras el pago" },
     { icon: Tag,      value: `$${PRICING.itinerarioCompleto}`, label: "Precio único, todo incluido, sin sorpresas" },
   ];
 
@@ -31,7 +31,7 @@ const SocialProof = () => {
 
         {/* Narrative */}
         <p className="text-center max-w-2xl mx-auto mb-14 leading-relaxed font-serif text-xl text-ink">
-          Desde 2024, llevamos a{" "}
+          Llevamos a{" "}
           <em className="text-green">
             la comunidad hispana
           </em>{" "}

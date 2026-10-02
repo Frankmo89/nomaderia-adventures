@@ -1,9 +1,14 @@
-import { MessageCircle } from "lucide-react";
+import { CreditCard, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Section from "@/components/editorial/Section";
 import Eyebrow from "@/components/editorial/Eyebrow";
 import Reveal, { RevealGroup } from "@/components/editorial/Reveal";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import {
+  BUY_CTA_LABEL,
+  QUESTIONS_WHATSAPP_LABEL,
+  QUESTIONS_WHATSAPP_URL,
+  buildStripePaymentLink,
+} from "@/config/pricing";
 import { trackEvent } from "@/lib/analytics";
 
 interface ContrastItem {
@@ -42,9 +47,9 @@ const soloItems: ContrastItem[] = [
 const nomaderiaItems: ContrastItem[] = [
   {
     number: "01",
-    title: "Un mensaje de WhatsApp",
+    title: "Pagas $49 con tarjeta",
     description:
-      "Nos cuentas tu fecha, presupuesto y con quién viajas. En español, sin formularios.",
+      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
   },
   {
     number: "02",
@@ -54,20 +59,19 @@ const nomaderiaItems: ContrastItem[] = [
   },
   {
     number: "03",
-    title: "Itinerario completo en 24-48h",
+    title: "Itinerario completo en 24 a 48h",
     description:
-      "Rutas para principiantes, permisos explicados, qué empacar y plan B si algo falla.",
+      "Tras el pago: rutas para principiantes, permisos explicados, qué empacar y plan B si algo falla.",
   },
   {
     number: "04",
     title: "Vas con confianza",
     description:
-      "Soporte por WhatsApp durante tu viaje. Nunca estás solo en el parque.",
+      "Escríbenos por WhatsApp durante tu viaje; respondemos durante el día. No somos un servicio de emergencias. En una emergencia, llama al 911.",
   },
 ];
 
 const PainContrast = () => {
-  const whatsappUrl = buildWhatsAppLink("Hola, quiero mi Itinerario Completo Nomaderia");
 
   return (
     <Section className="relative overflow-hidden bg-cloud py-16 sm:py-24">
@@ -130,19 +134,33 @@ const PainContrast = () => {
         </div>
 
         <Reveal className="mt-10 text-center sm:mt-14" delay={0.1}>
-          <Button asChild size="lg">
+          <div className="flex flex-col items-center gap-3">
+            <Button asChild size="lg" className="bg-green hover:bg-green-dark text-white">
+              <a
+                href={buildStripePaymentLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  trackEvent("cta_itinerario_stripe_click", { source: "pain_contrast" })
+                }
+              >
+                <CreditCard className="mr-2 h-5 w-5" aria-hidden="true" />
+                {BUY_CTA_LABEL}
+              </a>
+            </Button>
             <a
-              href={whatsappUrl}
+              href={QUESTIONS_WHATSAPP_URL}
               target="_blank"
               rel="noopener noreferrer"
+              className="text-sm text-green hover:text-green-dark font-medium"
               onClick={() =>
-                trackEvent("cta_itinerario_whatsapp_click", { source: "pain_contrast" })
+                trackEvent("cta_itinerario_whatsapp_click", { source: "pain_contrast_dudas" })
               }
             >
-              <MessageCircle className="mr-2 h-5 w-5" aria-hidden="true" />
-              Diseña mi aventura por WhatsApp
+              <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" aria-hidden="true" />
+              {QUESTIONS_WHATSAPP_LABEL}
             </a>
-          </Button>
+          </div>
         </Reveal>
       </div>
     </Section>

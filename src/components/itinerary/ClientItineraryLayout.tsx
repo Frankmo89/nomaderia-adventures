@@ -697,7 +697,7 @@ export default function ClientItineraryLayout({ itinerary, banner, token, varian
             </svg>
             <p className="m-0" style={{ color: "#E1F5EE", fontSize: "14px", lineHeight: 1.5 }}>
               ¿Dudas durante el viaje?{" "}
-              <strong>Escríbenos</strong> — tu concierge sigue contigo.
+              <strong>Escríbenos</strong> — seguimos contigo por WhatsApp.
             </p>
           </a>
 

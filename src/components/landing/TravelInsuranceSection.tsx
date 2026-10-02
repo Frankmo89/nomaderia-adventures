@@ -15,8 +15,8 @@ const benefits = [
   },
   {
     icon: Shield,
-    title: "Cobertura 24/7",
-    desc: "Asistencia en español las 24 horas, sin importar la zona horaria o lo remoto del destino.",
+    title: "Asistencia en viaje",
+    desc: "Ayuda cuando la necesitas durante tu aventura, incluso en destinos remotos — según la póliza que elijas.",
   },
 ];
 

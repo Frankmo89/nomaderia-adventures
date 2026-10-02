@@ -58,7 +58,7 @@ const TermsAndConditions = () => {
           <section>
             <h2 className="font-serif text-xl text-foreground mb-3">6. Itinerario Completo Nomaderia</h2>
             <p>
-              El único servicio de pago que ofrecemos es el <strong className="text-foreground">Itinerario Completo Nomaderia</strong>, con un costo de $49 USD. Es elaborado por un agente de viajes certificado y se entrega por WhatsApp. El cobro se coordina de forma manual directamente por WhatsApp; Nomaderia no procesa pagos automáticos en el sitio. El seguro de viaje no está incluido, pero te ayudamos a conseguir el adecuado para tu viaje.
+              El único servicio de pago que ofrecemos es el <strong className="text-foreground">Itinerario Completo Nomaderia</strong>, con un costo de $49 USD. Es elaborado por un agente de viajes certificado. Pagas $49 con tarjeta en nomaderia.com (<strong className="text-foreground">Stripe</strong>). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas. Nomaderia no almacena números de tarjeta. El seguro de viaje no está incluido, pero te ayudamos a conseguir el adecuado para tu viaje.
             </p>
           </section>
 

@@ -24,12 +24,12 @@ const faqItems: FaqItem[] = [
   {
     question: "¿Qué incluye exactamente el Itinerario Completo?",
     answer:
-      "Ruta día por día según tu nivel y fechas, permisos y reservas explicados, lista de equipo específica para el parque, y soporte por WhatsApp durante tu viaje.",
+      "Ruta día por día según tu nivel y fechas, permisos y reservas explicados, lista de equipo específica para el parque, y acompañamiento por WhatsApp durante tu viaje (respondemos durante el día). No somos un servicio de emergencias: en una emergencia, llama al 911.",
   },
   {
     question: "¿Cómo funciona el pago?",
     answer:
-      "Todo empieza por WhatsApp: nos cuentas tu viaje, te confirmamos el precio ($49 USD) y coordinamos el pago antes de entregarte tu itinerario en 24-48 horas.",
+      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
   },
   {
     question: "Nunca he hecho senderismo, ¿es para mí?",
@@ -69,7 +69,7 @@ const FaqSection = () => {
             Preguntas frecuentes
           </Eyebrow>
           <h2 className="font-serif text-3xl font-bold leading-tight text-ink sm:text-4xl md:text-5xl">
-            Antes de escribirnos, resolvamos tus dudas
+            Antes de comprar, resolvamos tus dudas
           </h2>
         </Reveal>
 

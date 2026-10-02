@@ -83,8 +83,9 @@ serve(async (req) => {
       : "Un destino increíble que encaja perfectamente con tu perfil.";
     const safeDifficulty = escapeHtml(difficultyLabel[topDest.difficulty_level] || topDest.difficulty_level);
 
-    // Discount honored manually via WhatsApp billing — do not remove without checking with Frank.
-    const whatsappMessage = `Hola equipo de Nomaderia, tengo mi código NOMADA10 y quiero que planifiquen mi itinerario para ${topDest.title}.`;
+    // Must match STRIPE_LINK_ITINERARIO_49 in src/config/pricing.ts
+    const stripePaymentUrl = "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
+    const whatsappMessage = `Hola equipo de Nomaderia, tengo una duda antes de comprar el Itinerario Completo ($49 USD) para ${topDest.title}.`;
     const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
 
     const htmlEmail = `
@@ -164,17 +165,14 @@ serve(async (req) => {
     </div>
     ` : ""}
 
-    <!-- CTA: Descuento + Servicios + WhatsApp -->
+    <!-- CTA: Itinerario Completo + WhatsApp -->
     <div style="background-color:#292524;border-radius:12px;padding:24px;margin:20px 0;text-align:center;">
       <h3 style="font-family:'Georgia',serif;font-size:18px;color:#F5F0EB;margin:0 0 8px;">
-        🎁 Regalo por completar tu quiz
+        🗺️ Itinerario Completo Nomaderia — $49 USD
       </h3>
       <p style="color:#D6D3D1;font-size:14px;line-height:1.5;margin:0 0 16px;">
-        Usa este código al escribirnos por WhatsApp y obtén un <strong style="color:#F5F0EB;">10% de descuento</strong> en tu Itinerario Completo Nomaderia ($44 en vez de $49 USD):
+        Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.
       </p>
-      <div style="background-color:#44403C;border-radius:8px;padding:16px;margin:0 0 20px;">
-        <span style="font-family:'Georgia',serif;font-size:28px;font-weight:700;color:#E86C3A;letter-spacing:4px;">NOMADA10</span>
-      </div>
       <p style="color:#D6D3D1;font-size:14px;line-height:1.5;margin:0 0 4px;text-align:left;">
         Con tu Itinerario Completo recibirás:
       </p>
@@ -183,10 +181,15 @@ serve(async (req) => {
         <li>✅ Recomendaciones secretas de comida.</li>
         <li>✅ Enlaces directos de reserva.</li>
       </ul>
-      <a href="${whatsappUrl}" 
+      <a href="${stripePaymentUrl}" 
          style="display:inline-block;background-color:#16a34a;color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:14px;font-weight:600;">
-        💬 Escríbenos a WhatsApp para planificar tu itinerario
+        Pagar $49 con tarjeta
       </a>
+      <p style="margin:14px 0 0;">
+        <a href="${whatsappUrl}" style="color:#86efac;font-size:13px;text-decoration:underline;">
+          ¿Dudas antes de comprar? Escríbenos por WhatsApp
+        </a>
+      </p>
     </div>
 
     <!-- Helpful Links -->
