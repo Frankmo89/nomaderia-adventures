@@ -350,6 +350,17 @@ Pendiente real:
 - [ ] **Fechas exactas del viaje en el intake post-pago.** El quiz ya no las pide (solo mes o "Aún no sé"). El formulario/intake que se llena después del pago de $49 debe pedirlas para armar el itinerario.
 - [ ] **Refrescar la tabla ZCTA cuando salga un gazetteer nuevo** (subir `ZCTA_GAZETTEER_YEAR` en `src/lib/zip-centroids.ts` y correr `npm run build:zip-centroids`). No urge: los ZCTA casi no cambian entre años.
 
+
+### Copy / share previews (auditoría 2026-10-02 — ver [`docs/copy-audit.md`](./copy-audit.md))
+- [ ] **OG/share previews sin JS.** Facebook (y crawlers sin JS) solo ven los meta de `index.html` en **todas** las URLs (home + `/blog/:slug`). Cada share de blog muestra og:title/description/image genéricos de home. Follow-up: prerender/SSR o edge HTML por ruta con `og:title`/`og:description`/`og:image` por post (CMS: `blog_posts.title`, `short_description`, `hero_image_url`). No basta `usePageMeta` (client-only).
+- [ ] **Contradicción pago Stripe vs WhatsApp.** `/privacidad` dice checkout Stripe + tarjeta; `/terminos` §6 + FAQ home dicen cobro manual por WhatsApp sin pagos automáticos en el sitio. Alinear copy con el canal real (hoy WhatsApp; Payment Link en `pricing.ts` sigue placeholder). Relacionado T01/T06.
+- [ ] **Precio distinto de $49 en email de quiz.** `send-quiz-email` ofrece **NOMADA10 → $44**. Confirmar si el descuento sigue vigente o retirar/actualizar (ADR-012 producto único $49).
+- [ ] **Copy “paquetes” (plural).** Quiz WA: “¿Qué paquetes tienen?”; FAQ `/servicios`: “todos los paquetes”. Alinear a producto único.
+- [ ] **Promesas de tiempo / soporte.** Hero “Respuesta en < 24h”; SocialProof “24h” entrega máxima; Pain/FAQ/Servicios “24-48h”; TravelInsurance “Cobertura 24/7”. Decidir SLA real y unificar (o acotar a seguro de terceros).
+- [ ] **Claims AI / números.** Concierge global + “Preview gratis” / “% compatible” en quiz; “63 parques” en meta y UI; SocialProof counts + “Desde 2024”. Revisar si se quieren en landing o solo en producto.
+- [ ] **Mercado México en CMS.** Posts publicados con framing MX/CDMX (`5-rutas-secretas-mexico-locales`, etc.) vs mercado primario SoCal/EE. UU. Revisar en `/admin` si se archivan, se reescriben, o se mantienen como contenido secundario. Orphan `DidYouKnowSection` aún tiene copy México/CDMX si se remonta.
+- [ ] **Handle redes `@nomaderia.mx`.** Footer/JSON-LD apuntan Instagram/TikTok `.mx` mientras el producto es EE. UU. — confirmar branding intencional.
+
 ### Calidad / mantenimiento (tareas separadas)
 - [ ] **Mapa interactivo real en /destinos — sigue diferido (research Mobbin, reconfirmado 2026-07):** el tinte decorativo por estado ya se implementó ([2026-07] `USStateTintMap`, ver changelog) en el slot `children` de `PageHeader` — sin pines, sin coordenadas, plano. `useDestinationsMapData()` en `src/hooks/use-destinations.ts` sigue **sin usarse**, expuesto tal cual (`{id, title, slug, region, difficulty_level, latitude, longitude}`, 63/63 destinos con `latitude`/`longitude` pobladas) para el día que se justifique un mapa interactivo real tipo Airbnb (tiles + lista sincronizada). Research de Mobbin reconfirmado: ningún competidor premium usa mapa ilustrado estático con 60+ pines individuales a este nivel de densidad — no construir esa variante. Si el mapa interactivo se justifica por datos de conversión, ir directo a esa implementación (Mapbox/Leaflet + `useDestinationsMapData()`) en vez de una capa intermedia de pines. `parseNpsLatLong()` en `src/lib/parse-nps-lat-long.ts` (con tests) queda como utilidad documentada/fallback para ese trabajo futuro, sin usarse hoy.
 - [ ] **Drift de esquema sin reconciliar (`docs/supabase-schema.md`):** el doc no lista `destinations.latitude`/`longitude` (entre otras columnas reales: `access_difficulty`, `designation`, `nps_url`, `min_days`/`max_days`, etc.). Estas columnas ya existen en `src/integrations/supabase/types.ts` (tipos regenerados) sin migración committeada que las agregue. Reconciliar la sección de `destinations` con el estado real de la DB en una tarea separada. **La parte de `park_live_data` se reconcilió 2026-07-16** (ver changelog: sección del doc reescrita contra `information_schema` — PK real `park_code`, sin columna `id`, columnas `entrance_fee_usd`/`nps_images`/`coordinates`/`permits`/`weather` documentadas); nota: los tipos generados siguen sin `weather` en `park_live_data` — se corrige al regenerar tipos (tarea de Frank).
@@ -966,6 +977,12 @@ PR3 tokens /destinos → PR4 remap `--primary` → PR5 performance → PR6 email
 ---
 
 ## 📜 Changelog reciente
+
+### 2026-10-02 — Copy audit + share previews (docs-only)
+- Añadido [`docs/copy-audit.md`](./copy-audit.md): inventario de copy customer-facing (páginas, FAQ, legal, emails, meta) con flags (precio≠$49, MX, Stripe/tarjeta, delivery, 24/7, AI, números, certs, ley).
+- Share previews: curl facebookexternalhit — home + 3 posts de blog (`10-cosas-…`, `cuanto-cuesta-…`, `5-rutas-secretas-mexico-…`) todos reciben los mismos og:* de `index.html` (SPA).
+- Pendientes de follow-up listados arriba (sección Copy / share previews).
+
 
 > Histórico condensado por temas. El detalle commit-a-commit anterior a Mayo 2026
 > vive en el historial de git. Entradas recientes primero.
