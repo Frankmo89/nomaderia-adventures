@@ -92,7 +92,7 @@ Formularios: React Hook Form + Zod
 Email:       Resend (Edge Functions)
 Pagos:       Stripe Payment Links
 Testing:     Vitest + Testing Library
-Hosting:     Cloudflare Pages
+Hosting:     Cloudflare Pages (+ `functions/_middleware.ts` OG rewrite, ADR-032)
 ```
 
 > **Prohibido:** Next.js, Vue, Redux o cualquier cambio de framework/state mgmt.

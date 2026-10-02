@@ -1,0 +1,11 @@
+    <title>10 Cosas que Nadie Te Dice Antes de Tu Primer Hike (La #7 Me Hubiera Ahorrado una Vergüenza) — Nomaderia</title>
+    <meta name="description" content="Todos te dicen &quot;lleva agua y bloqueador&quot;. Nadie te dice que vas a querer rendirte a los 20 minutos. Aquí van las verdades incómodas." />
+    <meta property="og:title" content="10 Cosas que Nadie Te Dice Antes de Tu Primer Hike (La #7 Me Hubiera Ahorrado una Vergüenza) — Nomaderia" />
+    <meta property="og:description" content="Todos te dicen &quot;lleva agua y bloqueador&quot;. Nadie te dice que vas a querer rendirte a los 20 minutos. Aquí van las verdades incómodas." />
+    <meta property="og:url" content="https://nomaderia.com/blog/10-cosas-nadie-te-dice-primer-hike" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1551632811-561732d1e306?w=1200" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="10 Cosas que Nadie Te Dice Antes de Tu Primer Hike (La #7 Me Hubiera Ahorrado una Vergüenza) — Nomaderia" />
+    <meta name="twitter:description" content="Todos te dicen &quot;lleva agua y bloqueador&quot;. Nadie te dice que vas a querer rendirte a los 20 minutos. Aquí van las verdades incómodas." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1551632811-561732d1e306?w=1200" />
