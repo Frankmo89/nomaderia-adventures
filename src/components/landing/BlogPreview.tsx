@@ -7,6 +7,7 @@ import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import Reveal from "@/components/editorial/Reveal";
 import { useBlogPosts } from "@/hooks/use-blog-posts";
 import { CardImage, ImageFallback } from "@/components/shared/CardImage";
+import { resizedImageUrl } from "@/lib/resized-image";
 
 /**
  * Fisher-Yates shuffle — returns a new shuffled copy of the array.
@@ -98,9 +99,12 @@ const BlogPreview = () => {
               <div className="relative h-56 overflow-hidden sm:h-80">
                 {feature.hero_image_url && !featureImgFailed ? (
                   <motion.img
-                    src={feature.hero_image_url}
+                    src={resizedImageUrl(feature.hero_image_url, 960)}
                     alt={feature.title}
                     loading="lazy"
+                    decoding="async"
+                    width={960}
+                    height={540}
                     className="h-full w-full object-cover object-center img-warm"
                     variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                     transition={{ duration: 0.7, ease: "easeOut" }}
@@ -158,9 +162,12 @@ const BlogPreview = () => {
                   {post.hero_image_url && (
                     <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-36">
                       <CardImage
-                        src={post.hero_image_url}
+                        src={resizedImageUrl(post.hero_image_url, 360)}
                         alt={post.title}
                         loading="lazy"
+                        decoding="async"
+                        width={360}
+                        height={240}
                         className="h-full w-full object-cover object-center img-warm"
                       />
                     </div>

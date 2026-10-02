@@ -12,6 +12,21 @@
 
 ---
 
+## Changelog 2026-10-02 — LCP follow-up: hero text + lazy below-fold
+
+Tras PR #194 el LCP quedó en ~12s porque el **H1** esperaba JS/Framer (`opacity: 0` + delay). Cambios:
+
+- `HeroSection`: H1 + subtítulo + badge + CTAs **sin Framer** (cero entrance animation / opacity 0).
+- `Index`: secciones under-hero vía `lazyWithRetry` + `DeferUntilVisible` (IntersectionObserver) + `Suspense` — Navbar + Hero eager.
+- `ConciergeLauncher` lazy (fuera del critical path del home).
+- Imágenes below-fold: `loading="lazy"`, `width`/`height`, y `resizedImageUrl()` (Supabase Image Transform + Unsplash) donde aplica.
+- Google Fonts del hero pasan a non-render-blocking (`display=swap` ya estaba).
+- No se tocó auth, routing ni queries de Supabase.
+
+**Lighthouse mobile (simulate):** BEFORE (baseline PR #194 local) LCP **12.2s** / perf 0.50 → AFTER (vite preview) LCP **3.3s** / perf 0.56 (meta &lt;4s ✅; goal 2.5s aún abierto).
+
+**Verificación:** `npx tsc --noEmit` + `npm run typecheck` + `npm run build` + vitest `resized-image`.
+
 ## 🙋 Pendientes Humanos (solo Frank puede hacerlos)
 
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,

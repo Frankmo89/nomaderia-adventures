@@ -21,6 +21,7 @@ import {
 } from "@/lib/quiz-ranking";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import Reveal from "@/components/editorial/Reveal";
+import { resizedImageUrl } from "@/lib/resized-image";
 
 const WhatsAppIcon = () => (
   <svg
@@ -379,10 +380,12 @@ const HeroResultCard = ({
     >
       {d.hero_image_url ? (
         <img
-          src={d.hero_image_url}
+          src={resizedImageUrl(d.hero_image_url, 720)}
           alt={`Vista de ${d.title}`}
           loading="lazy"
           decoding="async"
+          width={720}
+          height={400}
           className="w-full h-full object-cover img-warm"
         />
       ) : (
@@ -447,10 +450,12 @@ const AlternativeCard = ({
       <div className="relative h-40 overflow-hidden">
         {d.hero_image_url ? (
           <img
-            src={d.hero_image_url}
+            src={resizedImageUrl(d.hero_image_url, 640)}
             alt={`Vista de ${d.title}`}
             loading="lazy"
             decoding="async"
+            width={640}
+            height={320}
             className="w-full h-full object-cover img-warm transition-transform duration-700 group-hover:scale-105"
           />
         ) : (

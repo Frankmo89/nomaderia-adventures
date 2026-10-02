@@ -8,7 +8,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
-import ConciergeLauncher from "@/components/ConciergeLauncher";
 import AnalyticsRouteTracker from "@/components/AnalyticsRouteTracker";
 import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 
@@ -55,6 +54,7 @@ const AdminClientItineraryDetail = lazyWithRetry(() => import("./pages/admin/Adm
 const AdminClientItineraryPreview = lazyWithRetry(() => import("./pages/admin/AdminClientItineraryPreview"));
 const ClientItineraryView = lazyWithRetry(() => import("./pages/ClientItineraryView"));
 const ClientItineraryPrintView = lazyWithRetry(() => import("./pages/ClientItineraryPrintView"));
+const ConciergeLauncher = lazyWithRetry(() => import("@/components/ConciergeLauncher"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -135,7 +135,9 @@ const App = () => (
           </ErrorBoundary>
           <ScrollProgressBar />
           <AnalyticsRouteTracker />
-          <ConciergeLauncher />
+          <Suspense fallback={null}>
+            <ConciergeLauncher />
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

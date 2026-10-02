@@ -6,6 +6,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import Reveal from "@/components/editorial/Reveal";
 import { products } from "@/config/pricing";
+import { resizedImageUrl } from "@/lib/resized-image";
 
 const benefits = [
   {
@@ -58,7 +59,7 @@ const photos = [
   `${SUPABASE_URL}/bfa161c7-c696-4d19-a1a9-4c8a8b31acc6.jpeg`,
   `${SUPABASE_URL}/c29ff6ac-f25b-4011-9ac7-1d31121e9e71.jpeg`,
   `${SUPABASE_URL}/feeb5de1-333e-48bc-9bbd-caff00902fcc.jpeg`,
-];
+].map((url) => resizedImageUrl(url, 320, { height: 320 }));
 
 const PremiumItinerarySection = () => {
   const [cardPhotos, setCardPhotos] = useState<string[]>(() =>
@@ -139,20 +140,27 @@ const PremiumItinerarySection = () => {
                   </p>
                 </div>
 
-                {/* Right: rotating photo panel */}
+                {/* Right: rotating photo panel — <img loading=lazy> so below-fold
+                    full-size gallery JPEGs are not requested as CSS backgrounds. */}
                 <div
-                  className="shrink-0 bg-accent"
+                  className="relative min-h-[160px] w-[130px] shrink-0 self-stretch overflow-hidden bg-accent"
                   style={{
-                    width: 130,
-                    backgroundImage: cardPhotos[i]
-                      ? `url(${cardPhotos[i]})`
-                      : undefined,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
                     opacity: panelVisible ? 1 : 0,
                     transition: "opacity 0.6s ease",
                   }}
-                />
+                >
+                  {cardPhotos[i] ? (
+                    <img
+                      src={cardPhotos[i]}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width={130}
+                      height={160}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : null}
+                </div>
               </motion.div>
             ))}
           </div>

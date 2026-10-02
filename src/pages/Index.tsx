@@ -1,25 +1,38 @@
+import { Suspense, useEffect, useMemo, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
-import PromiseSection from "@/components/landing/PromiseSection";
-import QuizSection from "@/components/landing/QuizSection";
-import DestinationsCatalog from "@/components/landing/DestinationsCatalog";
-import PainContrast from "@/components/landing/PainContrast";
-import FaqSection from "@/components/landing/FaqSection";
-import GearPreview from "@/components/landing/GearPreview";
-import BlogPreview from "@/components/landing/BlogPreview";
-import SocialProof from "@/components/landing/SocialProof";
-import TravelInsuranceSection from "@/components/landing/TravelInsuranceSection";
-import PremiumItinerarySection from "@/components/landing/PremiumItinerarySection";
-import NewsletterSignup from "@/components/landing/NewsletterSignup";
-import Footer from "@/components/landing/Footer";
+import JsonLd from "@/components/JsonLd";
+import DeferUntilVisible from "@/components/DeferUntilVisible";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { PRICING } from "@/config/pricing";
 import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import { BRAND_ASSETS } from "@/config/assets";
-import { useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
-import JsonLd from "@/components/JsonLd";
-import SectionDivider from "@/components/landing/SectionDivider";
+import { lazyWithRetry } from "@/lib/lazy-with-retry";
+
+// Below-the-fold homepage sections — deferred so hero H1 can become LCP
+// without waiting on Framer/heavy section chunks.
+const PromiseSection = lazyWithRetry(() => import("@/components/landing/PromiseSection"));
+const QuizSection = lazyWithRetry(() => import("@/components/landing/QuizSection"));
+const DestinationsCatalog = lazyWithRetry(() => import("@/components/landing/DestinationsCatalog"));
+const PainContrast = lazyWithRetry(() => import("@/components/landing/PainContrast"));
+const FaqSection = lazyWithRetry(() => import("@/components/landing/FaqSection"));
+const GearPreview = lazyWithRetry(() => import("@/components/landing/GearPreview"));
+const BlogPreview = lazyWithRetry(() => import("@/components/landing/BlogPreview"));
+const SocialProof = lazyWithRetry(() => import("@/components/landing/SocialProof"));
+const TravelInsuranceSection = lazyWithRetry(() => import("@/components/landing/TravelInsuranceSection"));
+const PremiumItinerarySection = lazyWithRetry(() => import("@/components/landing/PremiumItinerarySection"));
+const NewsletterSignup = lazyWithRetry(() => import("@/components/landing/NewsletterSignup"));
+const Footer = lazyWithRetry(() => import("@/components/landing/Footer"));
+const SectionDivider = lazyWithRetry(() => import("@/components/landing/SectionDivider"));
+
+function LazyBlock({ children }: { children: ReactNode }) {
+  return (
+    <DeferUntilVisible rootMargin="300px 0px">
+      <Suspense fallback={null}>{children}</Suspense>
+    </DeferUntilVisible>
+  );
+}
 
 const Index = () => {
   useCanonical();
@@ -32,8 +45,17 @@ const Index = () => {
   useEffect(() => {
     if (!hash) return;
     const id = hash.slice(1);
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    // Hash targets live in deferred sections — retry briefly until mounted.
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+      if (attempts++ < 60) window.setTimeout(tryScroll, 50);
+    };
+    tryScroll();
   }, [hash]);
 
   const jsonLdData = useMemo(
@@ -85,25 +107,35 @@ const Index = () => {
       <JsonLd data={jsonLdData} />
       <JsonLd data={organizationLd} />
       <HeroSection />
-      <PromiseSection />
-      <SectionDivider variant="simple" fill="#1C1917" />
-      <SocialProof />
-      <SectionDivider variant="layered" fill="#FBFAF7" />
-      <DestinationsCatalog limit={3} />
-      <SectionDivider variant="layered" fill="#14201A" />
-      <PainContrast />
-      <QuizSection />
-      <TravelInsuranceSection />
-      <SectionDivider variant="layered" fill="#E8F1EA" />
-      <FaqSection />
-      <SectionDivider variant="layered" fill="#F4EFE7" />
-      <PremiumItinerarySection />
-      <SectionDivider variant="simple" fill="#1C1917" />
-      <GearPreview />
-      <BlogPreview />
-      <NewsletterSignup />
-      <SectionDivider variant="simple" fill="#14201A" />
-      <Footer />
+      <LazyBlock>
+        <PromiseSection />
+        <SectionDivider variant="simple" fill="#1C1917" />
+        <SocialProof />
+      </LazyBlock>
+      <LazyBlock>
+        <SectionDivider variant="layered" fill="#FBFAF7" />
+        <DestinationsCatalog limit={3} />
+        <SectionDivider variant="layered" fill="#14201A" />
+      </LazyBlock>
+      <LazyBlock>
+        <PainContrast />
+        <QuizSection />
+        <TravelInsuranceSection />
+      </LazyBlock>
+      <LazyBlock>
+        <SectionDivider variant="layered" fill="#E8F1EA" />
+        <FaqSection />
+        <SectionDivider variant="layered" fill="#F4EFE7" />
+        <PremiumItinerarySection />
+      </LazyBlock>
+      <LazyBlock>
+        <SectionDivider variant="simple" fill="#1C1917" />
+        <GearPreview />
+        <BlogPreview />
+        <NewsletterSignup />
+        <SectionDivider variant="simple" fill="#14201A" />
+        <Footer />
+      </LazyBlock>
     </main>
   );
 };

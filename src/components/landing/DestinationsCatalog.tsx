@@ -10,6 +10,7 @@ import Reveal from "@/components/editorial/Reveal";
 import { useDestinations } from "@/hooks/use-destinations";
 import { formatRegionDisplay } from "@/lib/regions";
 import { ImageFallback } from "@/components/shared/CardImage";
+import { resizedImageUrl } from "@/lib/resized-image";
 
 // Dificultad: badge calmado green-wash para todos los niveles (Design System
 // §4.1). Se diferencia por el texto, no por color de semáforo.
@@ -81,10 +82,12 @@ const DestinationsCatalog = ({ limit }: DestinationsCatalogProps) => {
             <div className="relative h-56 overflow-hidden sm:h-52">
               {d.hero_image_url && !imgFailed ? (
                 <motion.img
-                  src={d.hero_image_url}
+                  src={resizedImageUrl(d.hero_image_url, 720)}
                   alt={d.title}
                   loading="lazy"
                   decoding="async"
+                  width={720}
+                  height={448}
                   className="h-full w-full object-cover object-top img-warm"
                   variants={{ rest: { scale: 1 }, hover: { scale: 1.04 } }}
                   transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
