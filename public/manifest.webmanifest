@@ -4,20 +4,26 @@
   "description": "Tu concierge de aventuras en español para parques nacionales.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFAFA",
-  "theme_color": "#D97706",
+  "background_color": "#FBFAF7",
+  "theme_color": "#1F6F43",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "256x256",
-      "type": "image/x-icon",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/placeholder.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
