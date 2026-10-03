@@ -21,6 +21,12 @@ describe("Servicios / pricing buy path", () => {
     expect(url).toBe(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola`);
   });
 
+  it("live Payment Link is the $49 Itinerario Completo link", () => {
+    expect(STRIPE_LINK_ITINERARIO_49).toBe(
+      "https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01",
+    );
+  });
+
   it("products should use Stripe Payment Link as buy CTA", () => {
     expect(products.length).toBeGreaterThan(0);
     for (const product of products) {

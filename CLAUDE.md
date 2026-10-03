@@ -44,6 +44,7 @@ opcionales.
 - **Sitio en producción:** https://nomaderia.com — Hosting: **Cloudflare Pages**.
 - **Producto activo en sitio:** **Itinerario Completo Nomaderia** — **$49 USD**.
 - **Canal de cobro vigente:** **Stripe Payment Link** en el sitio (`Comprar mi itinerario – $49`). WhatsApp = dudas («¿Dudas? Escríbenos») + entrega post-pago. Success URL → `/gracias` (Frank en Dashboard).
+- **Único Payment Link vivo:** `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` (Itinerario Completo, $49). Constante `STRIPE_LINK_ITINERARIO_49` en `supabase/functions/_shared/stripe-link.ts` (re-export en `src/config/pricing.ts`). El Payment Link de **$29** ("Acceso de Fundador" / alerta Yosemite) está **retirado** — no volver a cablearlo en CTAs, emails ni Edge Functions.
 - **Primer lead real capturado** vía `/sentinel` (SentinelLanding). El funnel de
   conversión ya produjo señal real → priorizar lo que reduce fricción a la venta.
 - **Modelo de negocio congelado** en **un solo producto**, **USD únicamente**
@@ -125,7 +126,7 @@ src/
 │   ├── ConciergeLauncher.tsx # Launcher global del Concierge IA (montado en App.tsx, persiste entre rutas)
 │   └── ui/                   # shadcn/ui — NO editar manualmente
 ├── config/
-│   ├── pricing.ts            # Producto único ($49 USD, Stripe Payment Link + buildStripePaymentLink)
+│   ├── pricing.ts            # Producto único ($49 USD). Re-exporta STRIPE_LINK_ITINERARIO_49 + buildStripePaymentLink
 │   └── assets.ts             # Brand assets URLs
 ├── hooks/                    # Custom hooks con TanStack Query
 │   ├── use-destinations.ts   # useDestinations(), useDestinationBySlug(), useRelatedDestinations()

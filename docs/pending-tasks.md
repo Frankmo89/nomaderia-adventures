@@ -12,6 +12,22 @@
 
 ---
 
+## Changelog 2026-10-03 — Fix: botones $49 abrían el Payment Link $29 (Draft PR #200)
+
+Los CTAs `Comprar mi itinerario – $49` abrían el link retirado de **$29** ("Acceso de Fundador" / alerta Yosemite): `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.
+
+**Hecho:**
+- Única constante viva: `STRIPE_LINK_ITINERARIO_49` en `supabase/functions/_shared/stripe-link.ts` = `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` (Itinerario Completo $49). Re-export en `src/config/pricing.ts`. Quiz, home, `/servicios`, destinos, sticky mobile y artículos leen de ahí.
+- `send-quiz-email` y el CTA de compra de `send-drip-emails` importan la misma constante. El drip dejó de mandar la compra a WhatsApp.
+- Docs (`CLAUDE.md`, `docs/claude-context.md`, `docs/stripe-payment-link.md`, `.cursor/rules/nomaderia.mdc`): $49 es el único link vivo; $29 está retirado.
+- No se tocó Stripe Dashboard, auth, queries ni routing.
+
+**Verificación:** `npx tsc --noEmit`, `npm run build`, vitest `Servicios.test.ts`. Preview de Cloudflare del quiz no corrido en el agente.
+
+**FRANK:** desactivar el Payment Link $29 después del deploy; Success URL en el link $49; branding de Stripe con El Pin. Edge Functions: al mergear, confirmar `deploy-edge-functions.yml` (redeploy de `send-quiz-email` y `send-drip-emails`).
+
+---
+
 ## Changelog 2026-10-03 — Logo El Pin (Draft PR #199)
 
 Instala el logo aprobado (pin + wordmark) en el sitio. Rama `pin-logo`.
@@ -85,7 +101,9 @@ referenciar esta lista primero.
 - [ ] **El Pin — fotos de perfil.** Cambiar la foto en Instagram, Facebook, TikTok y WhatsApp Business (los PNG están en el kit, carpeta `redes/` / `logos/`, no en el repo).
 - [ ] **Copy follow-up (PR aparte, no este).** El Hero "Tu Concierge de Aventuras en Español" y otros taglines con "primer/primera" y "en español" chocan con `docs/brand.md` (no usar "tu primer parque" ni "en español" en titulares). No se tocó en #199.
 
-- [ ] **Stripe Dashboard — Success URL del Payment Link $49 → `https://nomaderia.com/gracias`.** El frontend ya tiene `/gracias`. Sin configurar Success URL en el Dashboard, Stripe no redirige tras pagar. No cambiar price/product. Webhook + `orders` (resto de T06) sigue aparte.
+- [ ] **Stripe Dashboard — Success URL del Payment Link $49 vivo → `https://nomaderia.com/gracias`.** Link: `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` (no el link retirado de $29). El frontend ya tiene `/gracias`. Sin Success URL, Stripe no redirige tras pagar. No cambiar price/product. Webhook + `orders` (resto de T06) sigue aparte.
+- [ ] **Stripe — desactivar el Payment Link $29 retirado** después del deploy del fix de botones. URL: `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00` ("Acceso de Fundador", alerta Yosemite). El único link vivo es Itinerario Completo $49.
+- [ ] **Stripe branding — El Pin.** Actualizar el logo / marca del checkout de Stripe con El Pin.
 - [ ] **Home hero — reemplazar las 6 fotos placeholder** en `public/hero/sources/01.jpeg`…`06.jpeg` con las tomas finales de Frank, luego `npm run generate:hero` y commit de los AVIF/WebP regenerados. Hasta entonces el hero usa 6 fotos curadas bajadas una vez del bucket Supabase `media_gallery` (no hotlink nps.gov).
 - [ ] **Activar la ingesta RAG por parque (ADR-028) — dos pasos, en este orden.**
       1. **Paso manual en el Dashboard, NO es SQL de la migración:** Supabase

@@ -1,6 +1,9 @@
 export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { getStoredQuizEmail, getStoredQuizLeadId } from "@/lib/quiz-lead";
+import { STRIPE_LINK_ITINERARIO_49 } from "@shared/stripe-link";
+
+export { STRIPE_LINK_ITINERARIO_49 };
 
 export interface Product {
   id: string;
@@ -16,10 +19,6 @@ export interface Product {
 export const PRICING = {
   itinerarioCompleto: 49,
 } as const;
-
-/** Live Stripe Payment Link for Itinerario Completo ($49 USD). Do not change price/product in Stripe Dashboard from agents. */
-export const STRIPE_LINK_ITINERARIO_49 =
-  "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
 
 export const BUY_CTA_LABEL = `Comprar mi itinerario – $${PRICING.itinerarioCompleto}`;
 

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { buildUnsubscribeUrl, unsubscribeHeaders } from "../_shared/unsubscribe.ts";
+import { STRIPE_LINK_ITINERARIO_49 } from "../_shared/stripe-link.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "https://nomaderia.com";
@@ -193,9 +194,9 @@ function buildItineraryCtaEmail(unsubscribeUrl: string): string {
     </div>
 
     <div style="text-align:center;margin:28px 0 16px;">
-      <a href="https://wa.me/18588996802?text=Hola%20Nomaderia%20%F0%9F%91%8B%20Quiero%20mi%20Itinerario%20Completo%20(%2449%20USD)."
-         style="display:inline-block;background-color:#25D366;color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
-        💬 Solicitar mi itinerario por WhatsApp →
+      <a href="${STRIPE_LINK_ITINERARIO_49}"
+         style="display:inline-block;background-color:#16a34a;color:#FFFFFF;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
+        Pagar $49 con tarjeta
       </a>
     </div>
     <div style="text-align:center;margin-bottom:28px;">

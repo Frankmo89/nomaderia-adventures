@@ -24,6 +24,7 @@ alwaysApply: true
 ## Product / UI
 
 - All visible text in Spanish.
+- The only live Stripe Payment Link is Itinerario Completo **$49** (`STRIPE_LINK_ITINERARIO_49` in `supabase/functions/_shared/stripe-link.ts`). The **$29** link ("Acceso de Fundador" / Yosemite alert) is retired — do not put it back on buy buttons, emails, or Edge Functions.
 - Mobile-first, light theme per `docs/design-system.md`.
 - Orange `#D97706` only in the Hero (legacy amber). Everywhere else: Trail Green and the design-system tokens.
 
