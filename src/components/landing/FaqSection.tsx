@@ -29,7 +29,7 @@ const faqItems: FaqItem[] = [
   {
     question: "¿Cómo funciona el pago?",
     answer:
-      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
+      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. Antes de comprar, el concierge responde tus dudas.",
   },
   {
     question: "Nunca he hecho senderismo, ¿es para mí?",

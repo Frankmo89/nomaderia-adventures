@@ -1,5 +1,4 @@
 export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { getStoredQuizEmail, getStoredQuizLeadId } from "@/lib/quiz-lead";
 import { STRIPE_LINK_ITINERARIO_49 } from "@shared/stripe-link";
 
@@ -46,12 +45,8 @@ export function buildStripePaymentLink(opts?: {
   return url.toString();
 }
 
-/** WhatsApp for questions only — never the buy path. */
-export const QUESTIONS_WHATSAPP_URL = buildWhatsAppLink(
-  "Hola Nomaderia 👋 Tengo una duda antes de comprar el Itinerario Completo.",
-);
-
-export const QUESTIONS_WHATSAPP_LABEL = "¿Dudas? Escríbenos";
+/** Pre-purchase questions open the concierge. WhatsApp stays for people who already paid. */
+export const CONCIERGE_QUESTION_LABEL = "¿Dudas? Pregúntame";
 
 export const products: Product[] = [
   {

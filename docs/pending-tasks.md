@@ -12,6 +12,26 @@
 
 ---
 
+## Changelog 2026-10-03 — Concierge pre-compra anclado al RAG
+
+Draft PR (no merge). Auditoría en `docs/concierge-audit.md`.
+
+**Hecho:**
+- `ConciergeLauncher` montado en `App.tsx`. «¿Dudas? Escríbenos» (hero, servicios, quiz, sticky, artículos, alertas) abre el concierge. WhatsApp de dudas pre-compra retirado de esos CTA. Post-pago (`/gracias`, `/i/:token`) no se tocó.
+- `concierge-agent`: `match_count` 8, umbral 0.4, DATOS EN VIVO, frase «Eso no lo tengo confirmado» si no hay chunk, candado de cifras, aviso 911, rechazo fuera de alcance, log `concierge_turn`, tope 40/hora por sesión. Correo solo desde la 3.ª respuesta, guardado en `leads`.
+- Eval offline: `docs/concierge-eval.md` + `scripts/concierge-eval.ts`.
+
+**Verificación:** `npm run typecheck`, `npm run typecheck:functions`, `npm run build`, vitest del guard. Eval en vivo del LLM no corrido (no hay función desplegada ni `OPENAI_API_KEY` en el agente).
+
+**FRANK:** `supabase functions deploy concierge-agent` después del merge. No hay migración nueva.
+
+**Seguimiento abierto:**
+- [ ] Eval en vivo de las 30 preguntas contra el modelo desplegado (pass rate + cifras fuera de chunk).
+- [ ] Tope por IP además del `session_id` (hoy un id nuevo reinicia el cupo).
+- [ ] Revisar si alguna tarifa debe contestarse solo con DATOS EN VIVO cuando el embedding no recupera chunk (hoy se dice «no confirmado» a propósito).
+
+---
+
 ## Changelog 2026-10-03 — Fix: botones $49 abrían el Payment Link $29 (Draft PR #200)
 
 Los CTAs `Comprar mi itinerario – $49` abrían el link retirado de **$29** ("Acceso de Fundador" / alerta Yosemite): `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.

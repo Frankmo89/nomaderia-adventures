@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { openConcierge } from "@/lib/open-concierge";
 import { motion } from "framer-motion";
 import { Gauge, Ticket, Footprints, Globe, Check, CreditCard, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -8,9 +9,8 @@ import Reveal from "@/components/editorial/Reveal";
 import {
   products,
   BUY_CTA_LABEL,
-  QUESTIONS_WHATSAPP_LABEL,
-  QUESTIONS_WHATSAPP_URL,
-  buildStripePaymentLink,
+  CONCIERGE_QUESTION_LABEL,
+    buildStripePaymentLink,
 } from "@/config/pricing";
 import { trackEvent } from "@/lib/analytics";
 import { resizedImageUrl } from "@/lib/resized-image";
@@ -233,20 +233,14 @@ const PremiumItinerarySection = () => {
                         {BUY_CTA_LABEL}
                       </a>
                     </Button>
-                    <a
-                      href={QUESTIONS_WHATSAPP_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
                       className="text-sm text-center text-green hover:text-green-dark font-medium"
-                      onClick={() =>
-                        trackEvent("cta_itinerario_whatsapp_click", {
-                          source: `premium_${product.id}_dudas`,
-                        })
-                      }
+                      onClick={() => openConcierge(`premium_${product.id}_dudas`)}
                     >
                       <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
-                      {QUESTIONS_WHATSAPP_LABEL}
-                    </a>
+                      {CONCIERGE_QUESTION_LABEL}
+                    </button>
                   </CardFooter>
                 </Card>
               </motion.div>

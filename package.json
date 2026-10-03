@@ -19,6 +19,7 @@
     "typecheck:functions": "deno check --no-lock supabase/functions",
     "preview": "vite preview",
     "test": "vitest run",
+    "eval:concierge": "tsx scripts/concierge-eval.ts",
     "test:watch": "vitest",
     "generate-sitemap": "npx tsx scripts/generate-sitemap.ts",
     "audit-images": "npx tsx scripts/audit-images.ts",

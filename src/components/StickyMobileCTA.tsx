@@ -1,11 +1,11 @@
 import { CreditCard, MessageCircle } from "lucide-react";
+import { openConcierge } from "@/lib/open-concierge";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
 import {
   BUY_CTA_LABEL,
-  QUESTIONS_WHATSAPP_LABEL,
-  QUESTIONS_WHATSAPP_URL,
-  buildStripePaymentLink,
+  CONCIERGE_QUESTION_LABEL,
+    buildStripePaymentLink,
 } from "@/config/pricing";
 import { cn } from "@/lib/utils";
 
@@ -43,19 +43,17 @@ const StickyMobileCTA = ({ whatsappMessage: _whatsappMessage, estimatedBudgetUsd
               {BUY_CTA_LABEL}
             </a>
           </Button>
-          <a
-            href={QUESTIONS_WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             className={cn(
               "text-center text-sm font-medium",
               hasBudget ? "text-white/80 hover:text-white" : "text-green hover:text-green-dark",
             )}
-            onClick={() => trackEvent("cta_itinerario_whatsapp_click", { source: "destination_detail_sticky_mobile_dudas" })}
+            onClick={() => openConcierge("destination_detail_sticky_mobile_dudas")}
           >
             <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
-            {QUESTIONS_WHATSAPP_LABEL}
-          </a>
+            {CONCIERGE_QUESTION_LABEL}
+          </button>
         </div>
       </div>
     </div>

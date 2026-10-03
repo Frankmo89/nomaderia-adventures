@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DestinationDetailSkeleton } from "@/components/LoadingSkeletons";
 import { lazyWithRetry } from "@/lib/lazy-with-retry";
 import AnalyticsRouteTracker from "@/components/AnalyticsRouteTracker";
+import ConciergeLauncher from "@/components/ConciergeLauncher";
 import { ScrollProgressBar } from "@/components/ScrollProgressBar";
 
 // Rutas públicas críticas — carga inmediata
@@ -134,6 +135,7 @@ const App = () => (
           </ErrorBoundary>
           <ScrollProgressBar />
           <AnalyticsRouteTracker />
+          <ConciergeLauncher />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

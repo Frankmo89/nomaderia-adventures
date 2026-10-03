@@ -52,6 +52,17 @@ const ConciergeLauncher = () => {
     if (isOpen) setShowTeaser(false);
   }, [isOpen]);
 
+  useEffect(() => {
+    function onOpen(ev: Event) {
+      const source = (ev as CustomEvent<{ source?: string }>).detail?.source ?? "event";
+      setIsOpen(true);
+      setShowTeaser(false);
+      trackEvent("concierge_launcher_open", { source });
+    }
+    window.addEventListener("nomaderia:open-concierge", onOpen);
+    return () => window.removeEventListener("nomaderia:open-concierge", onOpen);
+  }, []);
+
   function openPanel(source: string) {
     setIsOpen(true);
     trackEvent("concierge_launcher_open", { source });

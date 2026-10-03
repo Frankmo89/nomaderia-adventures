@@ -14,6 +14,10 @@ import type { Json } from "@/integrations/supabase/types";
 
 const SESSION_KEY = "nomaderia_session_id";
 
+export function getAnalyticsSessionId(): string {
+  return getOrCreateSessionId();
+}
+
 function getOrCreateSessionId(): string {
   try {
     if (typeof window === "undefined" || !window.sessionStorage) {

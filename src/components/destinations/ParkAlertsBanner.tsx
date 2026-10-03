@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { openConcierge } from "@/lib/open-concierge";
 import type { ParkAlert } from "@/hooks/use-park-live-data";
 
 interface ParkAlertsBannerProps {
@@ -89,16 +89,14 @@ export default function ParkAlertsBanner({ alerts, parkName }: ParkAlertsBannerP
           <div className="pb-4 space-y-4">
             {/* Marco en español — los cuerpos de alerta vienen de NPS en inglés */}
             <p className="font-sans text-slate" style={{ fontSize: 13 }}>
-              Alertas oficiales del parque — NPS las publica en inglés. ¿Dudas
-              sobre alguna?{" "}
-              <a
-                href={buildWhatsAppLink(`Hola! Tengo una duda sobre una alerta de ${parkName}`)}
-                target="_blank"
-                rel="noopener noreferrer"
+              Alertas oficiales del parque — NPS las publica en inglés. ¿Dudas sobre {parkName}?{" "}
+              <button
+                type="button"
+                onClick={() => openConcierge("park_alert_dudas")}
                 className="text-green hover:text-green-dark hover:underline"
               >
-                Pregúntame por WhatsApp
-              </a>
+                Pregúntame
+              </button>
               .
             </p>
             {sorted.map((alert, i) => {

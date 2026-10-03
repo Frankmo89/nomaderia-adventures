@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
+import { openConcierge } from "@/lib/open-concierge";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -24,9 +25,8 @@ import { SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import {
   PRICING,
   BUY_CTA_LABEL,
-  QUESTIONS_WHATSAPP_LABEL,
-  QUESTIONS_WHATSAPP_URL,
-  buildStripePaymentLink,
+  CONCIERGE_QUESTION_LABEL,
+    buildStripePaymentLink,
 } from "@/config/pricing";
 import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destinations";
 import type { Tables } from "@/integrations/supabase/types";
@@ -955,15 +955,14 @@ const DestinationDetail = () => {
                       <CreditCard className="mr-2 h-4 w-4 shrink-0" /> {BUY_CTA_LABEL}
                     </a>
                   </Button>
-                  <a
-                    href={QUESTIONS_WHATSAPP_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     className="text-sm text-center text-green hover:text-green-dark font-medium"
+                    onClick={() => openConcierge("destination_detail_dudas")}
                   >
                     <MessageSquare className="inline h-4 w-4 mr-1 align-text-bottom" />
-                    {QUESTIONS_WHATSAPP_LABEL}
-                  </a>
+                    {CONCIERGE_QUESTION_LABEL}
+                  </button>
                   {affiliateLinks.flights_url && (
                     <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full">
                       <a href={affiliateLinks.flights_url} target="_blank" rel="noopener noreferrer">

@@ -586,6 +586,20 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Consecuencias:** NO volver a poner WhatsApp como botón primario de compra en home/servicios/destinos/quiz. NO tocar price/product Stripe ni auth/queries. Frank debe setear Success URL → `/gracias`. Webhook sigue en T06.
 
 
+
+### ADR-034 — Concierge pre-compra: RAG con candado de cifras, correo después de 2 respuestas
+- **Fecha:** 2026-10-03
+- **Estado:** Vigente (acota ADR-016, ADR-029, ADR-030 y ADR-032 en el chat de visitantes)
+- **Contexto:** El concierge ya respondía con RAG + DATOS EN VIVO + motor, pero el launcher no estaba montado y «¿Dudas? Escríbenos» seguía abriendo WhatsApp. No había candado de cifras, ni la frase fija cuando el retrieval queda vacío, ni tope por visitante.
+- **Decisión:**
+  1. `match_count` 8 y `min_similarity` 0.4 se mantienen en la llamada. Si ningún chunk pasa el umbral, la respuesta es exactamente «Eso no lo tengo confirmado.» — no se llama al modelo y no se contestan tarifas solo con datos en vivo.
+  2. Toda cifra de la respuesta del modelo tiene que aparecer en los chunks, en el bloque DATOS EN VIVO o en el texto de la herramienta del motor. Si tras un reintento sigue habiendo una cifra suelta, se sustituye la respuesta por la frase fija. La fuente, la fecha y el «llama al 911» se agregan después, en código.
+  3. Calor, agua, fauna, clima y emergencias llevan la orientación del NPS y «En una emergencia, llama al 911».
+  4. El correo se pide a partir de la tercera respuesta (`prior_answers >= 2`) y se inserta en `leads` (`quiz_answers.source = concierge`). No va a `newsletter_subscribers` desde el chat.
+  5. Cada turno se inserta en `events` (`type = concierge_turn`, pregunta, respuesta, `chunk_ids`) con la service role. Tope: 40 turnos por `session_id` por hora. Si no hay service role, no se bloquea y el navegador registra el turno.
+  6. Los CTA «¿Dudas?» de visitantes abren el concierge. WhatsApp queda para quien ya pagó (`/gracias`, `/i/:token`).
+- **Consecuencias:** Hay que desplegar `concierge-agent` (no hay migración nueva). Un `session_id` nuevo salta el tope; un límite por IP queda pendiente. El eval en vivo contra el LLM no corre sin la función desplegada y `OPENAI_API_KEY`.
+
 ### ADR-033 — Logo: El Pin
 - **Fecha:** 2026-10-03
 - **Estado:** Vigente

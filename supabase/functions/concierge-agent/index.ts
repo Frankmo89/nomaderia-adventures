@@ -41,11 +41,26 @@ import {
   type ParkDisplay,
 } from "../_shared/engine-es.ts";
 import { buildParkNameIndex, findParkMentions, findUnbackedParks, type ParkNameIndex } from "../_shared/park-mentions.ts";
+import {
+  composeVisibleAnswer,
+  CONCIERGE_MAX_PER_HOUR,
+  formatAnswerDate,
+  greetingAnswer,
+  isClearlyOutOfScope,
+  isGreetingOnly,
+  isSafetyTopic,
+  outOfScopeAnswer,
+  rateLimitAnswer,
+  shouldAskEmail,
+  unconfirmedAnswer,
+  ungroundedNumbers,
+} from "../_shared/concierge-guard.ts";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const OPENAI_KEY   = Deno.env.get("OPENAI_API_KEY")!;
 const SUPA_URL     = Deno.env.get("SUPABASE_URL")!;
 const SUPA_ANON    = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPA_SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const SITE_URL     = "https://nomaderia.com";
 // Producto: WhatsApp es solo para clientes que ya pagaron (botón propio en
 // /i/:token) — este chat nunca lo ofrece. Toda escalación de visitante apunta
@@ -53,7 +68,7 @@ const SITE_URL     = "https://nomaderia.com";
 const QUIZ_URL     = "/#quiz";
 const EMBED_MODEL  = "text-embedding-3-small";
 const CHAT_MODEL   = "gpt-4o-mini";
-const MAX_CHUNKS     = 6;   // chunks de contexto que se pasan al agente
+const MAX_CHUNKS     = 8;   // chunks de contexto que se pasan al agente
 const MIN_SIMILARITY = 0.4; // umbral mínimo de relevancia
 const MAX_TOOL_ROUNDS = 2;  // 1 llamada + 1 reintento si el perfil fue inválido
 const DEFAULT_K = 3;
@@ -387,10 +402,12 @@ const SYSTEM_PROMPT_BASE = `Eres el asistente de aventuras de Nomaderia, un serv
 REGLAS ESTRICTAS:
 1. Responde SIEMPRE en español, tono amigable y directo, como un amigo experto.
 2. Usa ÚNICAMENTE la información del CONTEXTO, de los DATOS EN VIVO y del resultado de la herramienta. No inventes nada.
-3. Si no tienes suficiente información para responder bien, dilo honestamente: "No tengo esa información específica."
-4. Sé concreto: da datos reales del contexto (distancias, alturas, días, precios de equipo, etc.).
-5. Al final de tu respuesta incluye las fuentes relevantes en formato: [Fuente: título - sección].
+3. Si el CONTEXTO y los DATOS EN VIVO no contienen el dato, responde exactamente: "Eso no lo tengo confirmado." No lo completes con conocimiento general.
+4. Sé concreto solo con datos que estén en el contexto. No completes cifras de memoria.
+5. No cierres tú la fuente: el sistema agrega "Fuente:" y la fecha al final.
 6. Máximo 3 párrafos. Respuestas claras y útiles, no largas.
+7. Cualquier cifra (precio, distancia, hora, fecha, edad, dosis) tiene que aparecer en el CONTEXTO, en DATOS EN VIVO o en el resultado del motor. Si no está, no la escribas.
+8. En calor, agua, fauna, clima o emergencias no inventes cantidades. El sistema agrega el aviso de llamar al 911.
 
 DATOS VIVOS — REGLAS IMPORTANTES:
 - Para precios de entrada, alertas y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO (si está disponible).
@@ -505,6 +522,64 @@ function jsonResponse(body: unknown, corsHeaders: Record<string, string>, status
   });
 }
 
+
+function visitorSession(raw: unknown): string {
+  if (typeof raw === "string" && /^[A-Za-z0-9-]{8,80}$/.test(raw.trim())) return raw.trim();
+  return crypto.randomUUID();
+}
+
+function priorCount(raw: unknown): number {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return 0;
+  return Math.max(0, Math.min(20, Math.floor(raw)));
+}
+
+interface EventsWriter {
+  from(table: "events"): {
+    select(columns: string, options: { count: "exact"; head: true }): {
+      eq(column: string, value: string): {
+        eq(column: string, value: string): {
+          gte(column: string, value: string): Promise<{ count: number | null; error: { message: string } | null }>;
+        };
+      };
+    };
+    insert(row: { session_id: string; type: string; payload: Record<string, unknown> }): Promise<{ error: { message: string } | null }>;
+  };
+}
+
+async function countTurns(service: EventsWriter | null, sessionId: string): Promise<number | null> {
+  if (!service) return null;
+  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count, error } = await service
+    .from("events")
+    .select("id", { count: "exact", head: true })
+    .eq("type", "concierge_turn")
+    .eq("session_id", sessionId)
+    .gte("created_at", since);
+  if (error) {
+    console.warn("concierge rate-limit count failed:", error.message);
+    return null;
+  }
+  return count ?? 0;
+}
+
+async function logTurn(
+  service: EventsWriter | null,
+  sessionId: string,
+  payload: Record<string, unknown>,
+): Promise<boolean> {
+  if (!service) return false;
+  const { error } = await service.from("events").insert({
+    session_id: sessionId,
+    type: "concierge_turn",
+    payload,
+  });
+  if (error) {
+    console.warn("concierge event insert failed:", error.message);
+    return false;
+  }
+  return true;
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -518,23 +593,79 @@ serve(async (req) => {
   }
 
   try {
-    const { question, destination_slug } = await req.json() as {
+    const body = await req.json() as {
       question:          string;
       destination_slug?: string;
+      session_id?:       string;
+      prior_answers?:    number;
     };
+    const { question, destination_slug } = body;
+    const sessionId = visitorSession(body.session_id);
+    const priorAnswers = priorCount(body.prior_answers);
+    const askEmail = shouldAskEmail(priorAnswers);
+    const safety = isSafetyTopic(question ?? "");
+    const service: EventsWriter | null = SUPA_SERVICE
+      ? createClient(SUPA_URL, SUPA_SERVICE) as unknown as EventsWriter
+      : null;
 
     if (!question?.trim()) {
       return jsonResponse({ error: "Se requiere el campo 'question'" }, corsHeaders, 400);
     }
 
-    const noInfoResponse = () =>
-      jsonResponse({
-        answer:         "No tengo información específica sobre eso en mi base de conocimiento. Descubre el destino ideal para ti con nuestro quiz gratuito, o déjanos tu correo y seguimos ayudándote.",
-        sources:        [],
-        escalate:       true,
-        quiz_url:       QUIZ_URL,
+    async function deliver(opts: {
+      answer: string;
+      sources?: Source[];
+      chunkIds?: string[];
+      escalate?: boolean;
+      askEmail?: boolean;
+      answerCheck: string;
+      unconfirmed?: boolean;
+      recommendations?: ConciergeRecommendation[];
+      dateLabel?: string;
+    }): Promise<Response> {
+      const sources = opts.sources ?? [];
+      const text = composeVisibleAnswer(opts.answer, safety, sources, opts.dateLabel ?? formatAnswerDate());
+      const logged = await logTurn(service, sessionId, {
+        question: question.slice(0, 4000),
+        answer: text.slice(0, 4000),
+        chunk_ids: opts.chunkIds ?? [],
+        destination_slug: destination_slug ?? null,
+        answer_check: opts.answerCheck,
+      });
+      return jsonResponse({
+        answer: text,
+        sources,
+        escalate: Boolean(opts.escalate),
+        quiz_url: opts.escalate ? QUIZ_URL : undefined,
+        ask_email: Boolean(opts.askEmail),
+        unconfirmed: Boolean(opts.unconfirmed),
+        chunk_ids: opts.chunkIds ?? [],
+        logged,
+        session_id: sessionId,
         engine_version: ENGINE_DATA.engine_version,
+        recommendations: opts.recommendations,
+        answer_check: opts.answerCheck,
       }, corsHeaders);
+    }
+
+    const recentTurns = await countTurns(service, sessionId);
+    if (recentTurns !== null && recentTurns >= CONCIERGE_MAX_PER_HOUR) {
+      return deliver({ answer: rateLimitAnswer(), answerCheck: "rate_limited", askEmail: false });
+    }
+    if (isClearlyOutOfScope(question)) {
+      return deliver({ answer: outOfScopeAnswer(), answerCheck: "out_of_scope", askEmail });
+    }
+    if (isGreetingOnly(question)) {
+      return deliver({ answer: greetingAnswer(), answerCheck: "greeting", askEmail: false });
+    }
+
+    const noInfoResponse = () =>
+      deliver({
+        answer: unconfirmedAnswer(askEmail),
+        answerCheck: "unconfirmed",
+        askEmail,
+        unconfirmed: true,
+      });
 
     // ── 1. Detectar si requiere handoff inmediato ─────────────────────────────
     const needsEscalation = shouldEscalate(question);
@@ -615,6 +746,7 @@ serve(async (req) => {
     }
 
     let liveDataBlock = "";
+    let liveSyncedAt: string | null = null;
     if (parkCodeMap.size > 0) {
       // FIX 1: mapea cada park_code editorial al código que NPS usa para datos
       // en vivo (p. ej. kica → seki). El título de display se conserva.
@@ -633,12 +765,13 @@ serve(async (req) => {
       // informational and must not crash the concierge.
       if (!liveErr && liveRows?.length) {
         liveDataBlock = buildLiveDataBlock(liveRows as ParkLiveRow[], queryCodeToTitle);
+        if (liveRows.length === 1 && liveRows[0].synced_at) liveSyncedAt = liveRows[0].synced_at;
       }
     }
 
-    // En modo parque no hay herramienta: sin chunks ni datos en vivo no hay nada
-    // que responder, así que se escala sin gastar una llamada al modelo.
-    if (parkMode && !chunks.length && !liveDataBlock) {
+    // Sin chunk por encima del umbral no hay respuesta: ni el modelo ni los
+    // datos en vivo solos. La frase es fija (no se adivina).
+    if (!chunks.length) {
       return noInfoResponse();
     }
 
@@ -674,6 +807,7 @@ serve(async (req) => {
     const scoped = engineDataForParkCodes(displayByCode.keys());
     let engineRun: EngineRun | null = null;
     let toolRounds = 0;
+    const toolCorpus: string[] = [];
     let reply = await chat(messages, withTools, "auto");
     while (withTools && reply.tool_calls?.length && toolRounds < MAX_TOOL_ROUNDS) {
       toolRounds += 1;
@@ -683,16 +817,10 @@ serve(async (req) => {
           ? runRecommendTool(call.function.arguments, scoped, displayByCode)
           : { content: `Herramienta desconocida: ${call.function.name}`, run: null };
         if (out.run) engineRun = out.run;
+        toolCorpus.push(out.content);
         messages.push({ role: "tool", tool_call_id: call.id, content: out.content });
       }
       reply = await chat(messages, withTools, toolRounds < MAX_TOOL_ROUNDS ? "auto" : "none");
-    }
-
-    // ── 8. Guardrail de escalación ────────────────────────────────────────────
-    // Sin chunks, sin datos en vivo y sin motor, cualquier respuesta sería
-    // inventada: se escala a Frank.
-    if (!chunks.length && !liveDataBlock && toolRounds === 0) {
-      return noInfoResponse();
     }
 
     // ── 9. Revisión: solo parques respaldados (§6.1) ──────────────────────────
@@ -715,7 +843,7 @@ serve(async (req) => {
 
     let { answer, parksMentioned, outOfScope } = parseAnswer(reply.content);
     let unbacked = findUnbackedParks(answer, parksMentioned, allowed, nameIndex);
-    let answerCheck: "ok" | "regenerated" | "fallback" = "ok";
+    let answerCheck: "ok" | "regenerated" | "fallback" | "blocked_numbers" = "ok";
 
     if (unbacked.length > 0 || !answer) {
       console.warn(`concierge-agent answer check: unbacked parks [${unbacked.join(", ")}]${answer ? "" : " (empty answer)"}; regenerating`);
@@ -744,30 +872,55 @@ serve(async (req) => {
     // actually grounded in them: the out_of_scope sentence (fixed template,
     // park mode) and the fallback answer (built straight from the engine
     // result, not from chunks). noInfoResponse() already returns sources: [].
-    const showSources = !outOfScope && answerCheck !== "fallback";
+    const numberCorpus = [context, liveDataBlock, ...toolCorpus].join("\n");
+    const numberAllow = safety ? ["911"] : [];
+    let badNumbers = ungroundedNumbers(answer, numberCorpus, numberAllow);
+    if (badNumbers.length > 0 || !answer) {
+      console.warn(`concierge-agent number check: [${badNumbers.join(", ")}]`);
+      messages.push({ role: "assistant", content: reply.content ?? "" });
+      messages.push({
+        role: "user",
+        content: badNumbers.length
+          ? `CORRECCIÓN: tu respuesta usa estas cifras que NO están en el contexto ni en DATOS EN VIVO ni en el motor: ${badNumbers.join(", ")}. Reescribe sin ninguna cifra que no aparezca ahí. Si no puedes, responde exactamente "Eso no lo tengo confirmado." Mismo formato JSON.`
+          : `CORRECCIÓN: tu respuesta quedó vacía. Si no está en el contexto, responde exactamente "Eso no lo tengo confirmado." Mismo formato JSON.`,
+      });
+      reply = await chat(messages, withTools, "none");
+      ({ answer, parksMentioned, outOfScope } = parseAnswer(reply.content));
+      badNumbers = ungroundedNumbers(answer, numberCorpus, numberAllow);
+      if (badNumbers.length > 0 || !answer) {
+        console.warn(`concierge-agent number check: still [${badNumbers.join(", ")}]; blocking`);
+        answer = unconfirmedAnswer(askEmail);
+        answerCheck = "blocked_numbers";
+        outOfScope = false;
+      } else if (answerCheck === "ok") {
+        answerCheck = "regenerated";
+      }
+    }
+
+    const showSources = !outOfScope && answerCheck !== "fallback" && answerCheck !== "blocked_numbers";
     const sources = showSources ? deduplicateSources(chunks, slugByCode) : [];
     const run = engineRun;
-    const recommendations: ConciergeRecommendation[] | undefined = run
+    const recommendations: ConciergeRecommendation[] | undefined = run && answerCheck !== "blocked_numbers"
       ? run.result.parks.map((p) => toRecommendationEs(p, run.profile, displayByCode, SITE_URL))
       : undefined;
 
-    // Escalación (§ producto): keyword match sobre la pregunta original, o el
-    // modelo marcó out_of_scope (caso A en modo parque — "¿qué otro parque me
-    // recomiendas?", antes un callejón sin salida). Nunca whatsapp_url — este
-    // chat es de visitantes anónimos; el botón de WhatsApp vive en /i/:token
-    // para clientes que ya pagaron.
+    // Escalación al quiz (ADR-030). El correo se pide aparte, solo después de
+    // 2 respuestas previas (ask_email), y se guarda como lead — no aquí.
     const escalate = needsEscalation || outOfScope;
+    const dateLabel = liveSyncedAt ? `verificado ${formatDateEs(liveSyncedAt)}` : formatAnswerDate();
 
     // ── 10. Responder ─────────────────────────────────────────────────────────
-    return jsonResponse({
+    return deliver({
       answer,
       sources,
+      chunkIds: chunks.map((c) => c.id),
       escalate,
-      quiz_url:       escalate ? QUIZ_URL : undefined,
-      engine_version: ENGINE_DATA.engine_version,
+      askEmail,
+      answerCheck,
+      unconfirmed: answerCheck === "blocked_numbers" || answer.startsWith("Eso no lo tengo confirmado"),
       recommendations,
-      answer_check:   answerCheck,
-    }, corsHeaders);
+      dateLabel,
+    });
 
   } catch (err) {
     console.error("concierge-agent error:", err);

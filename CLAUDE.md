@@ -43,7 +43,7 @@ opcionales.
 
 - **Sitio en producción:** https://nomaderia.com — Hosting: **Cloudflare Pages**.
 - **Producto activo en sitio:** **Itinerario Completo Nomaderia** — **$49 USD**.
-- **Canal de cobro vigente:** **Stripe Payment Link** en el sitio (`Comprar mi itinerario – $49`). WhatsApp = dudas («¿Dudas? Escríbenos») + entrega post-pago. Success URL → `/gracias` (Frank en Dashboard).
+- **Canal de cobro vigente:** **Stripe Payment Link** en el sitio (`Comprar mi itinerario – $49`). Dudas antes de comprar: concierge («¿Dudas? Pregúntame»). WhatsApp = entrega post-pago. Success URL → `/gracias` (Frank en Dashboard).
 - **Único Payment Link vivo:** `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` (Itinerario Completo, $49). Constante `STRIPE_LINK_ITINERARIO_49` en `supabase/functions/_shared/stripe-link.ts` (re-export en `src/config/pricing.ts`). El Payment Link de **$29** ("Acceso de Fundador" / alerta Yosemite) está **retirado** — no volver a cablearlo en CTAs, emails ni Edge Functions.
 - **Primer lead real capturado** vía `/sentinel` (SentinelLanding). El funnel de
   conversión ya produjo señal real → priorizar lo que reduce fricción a la venta.
@@ -62,7 +62,7 @@ servicios de pago. Compite contra AllTrails/Chimani en un solo eje:
 **idioma + audiencia + honestidad con principiantes**.
 
 **Funnel principal:** SEO / Ads → Landing → Quiz (captura email) → Destino →
-pago Stripe ($49) → `/gracias` → entrega por WhatsApp en 24–48h. WhatsApp antes de comprar solo para dudas.
+pago Stripe ($49) → `/gracias` → entrega por WhatsApp en 24–48h. Antes de comprar, las dudas las responde el concierge.
 
 ## Productos y Precios (USD únicamente)
 
