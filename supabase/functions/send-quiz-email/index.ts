@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { STRIPE_LINK_ITINERARIO_49 } from "../_shared/stripe-link.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 // Keep URL configuration consistent with the frontend:
@@ -83,8 +84,7 @@ serve(async (req) => {
       : "Un destino increíble que encaja perfectamente con tu perfil.";
     const safeDifficulty = escapeHtml(difficultyLabel[topDest.difficulty_level] || topDest.difficulty_level);
 
-    // Must match STRIPE_LINK_ITINERARIO_49 in src/config/pricing.ts
-    const stripePaymentUrl = "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
+    const stripePaymentUrl = STRIPE_LINK_ITINERARIO_49;
     const whatsappMessage = `Hola equipo de Nomaderia, tengo una duda antes de comprar el Itinerario Completo ($49 USD) para ${topDest.title}.`;
     const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
 
