@@ -14,7 +14,7 @@
 
 ## Changelog 2026-10-03 — Concierge pre-compra anclado al RAG
 
-Draft PR (no merge). Auditoría en `docs/concierge-audit.md`.
+Draft PR (no merge): https://github.com/Frankmo89/nomaderia-adventures/pull/202. Auditoría en `docs/concierge-audit.md`.
 
 **Hecho:**
 - `ConciergeLauncher` montado en `App.tsx`. «¿Dudas? Escríbenos» (hero, servicios, quiz, sticky, artículos, alertas) abre el concierge. WhatsApp de dudas pre-compra retirado de esos CTA. Post-pago (`/gracias`, `/i/:token`) no se tocó.
