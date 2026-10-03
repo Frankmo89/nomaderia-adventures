@@ -12,6 +12,22 @@
 
 ---
 
+## Changelog 2026-10-03 — Fix: botones $49 abrían el Payment Link $29 (Draft PR #200)
+
+Los CTAs `Comprar mi itinerario – $49` abrían el link retirado de **$29** ("Acceso de Fundador" / alerta Yosemite): `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.
+
+**Hecho:**
+- Única constante viva: `STRIPE_LINK_ITINERARIO_49` en `supabase/functions/_shared/stripe-link.ts` = `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` (Itinerario Completo $49). Re-export en `src/config/pricing.ts`. Quiz, home, `/servicios`, destinos, sticky mobile y artículos leen de ahí.
+- `send-quiz-email` y el CTA de compra de `send-drip-emails` importan la misma constante. El drip dejó de mandar la compra a WhatsApp.
+- Docs (`CLAUDE.md`, `docs/claude-context.md`, `docs/stripe-payment-link.md`, `.cursor/rules/nomaderia.mdc`): $49 es el único link vivo; $29 está retirado.
+- No se tocó Stripe Dashboard, auth, queries ni routing.
+
+**Verificación:** `npx tsc --noEmit`, `npm run build`, vitest `Servicios.test.ts`. Preview de Cloudflare del quiz no corrido en el agente.
+
+**FRANK:** desactivar el Payment Link $29 después del deploy; Success URL en el link $49; branding de Stripe con El Pin. Edge Functions: al mergear, confirmar `deploy-edge-functions.yml` (redeploy de `send-quiz-email` y `send-drip-emails`).
+
+---
+
 ## Changelog 2026-10-03 — Logo El Pin (Draft PR #199)
 
 Instala el logo aprobado (pin + wordmark) en el sitio. Rama `pin-logo`.
