@@ -12,6 +12,10 @@
 
 ---
 
+## Changelog 2026-10-03 — Docs: launch readiness checklist
+
+Checklist de la primera venta de $49 en `docs/launch-readiness.md` (solo docs). Snapshot `origin/main` @ `5f1dd2e`. No cambia app, Stripe ni Supabase.
+
 ## Changelog 2026-10-03 — Fix: botones $49 abrían el Payment Link $29 (Draft PR #200)
 
 Los CTAs `Comprar mi itinerario – $49` abrían el link retirado de **$29** ("Acceso de Fundador" / alerta Yosemite): `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.
