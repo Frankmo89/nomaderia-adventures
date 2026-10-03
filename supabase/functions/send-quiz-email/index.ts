@@ -1,4 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  appendStripeCheckoutParams,
+  STRIPE_LINK_ITINERARIO_49,
+} from "../../../src/config/stripe-link.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 // Keep URL configuration consistent with the frontend:
@@ -29,6 +33,8 @@ interface EmailRequest {
   destinations: Destination[];
   fitness_level: string;
   interest: string;
+  /** Quiz lead UUID when the lead row was saved. Omitted when unknown. */
+  lead_id?: string | null;
 }
 
 const difficultyLabel: Record<string, string> = {
@@ -63,7 +69,7 @@ serve(async (req) => {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    const { email, destinations, fitness_level, interest }: EmailRequest = await req.json();
+    const { email, destinations, fitness_level, interest, lead_id }: EmailRequest = await req.json();
 
     if (!email || !destinations?.length) {
       return new Response(
@@ -83,8 +89,11 @@ serve(async (req) => {
       : "Un destino increíble que encaja perfectamente con tu perfil.";
     const safeDifficulty = escapeHtml(difficultyLabel[topDest.difficulty_level] || topDest.difficulty_level);
 
-    // Must match STRIPE_LINK_ITINERARIO_49 in src/config/pricing.ts
-    const stripePaymentUrl = "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
+    // Same constant as src/config/pricing.ts (src/config/stripe-link.ts).
+    const stripePaymentUrl = appendStripeCheckoutParams(STRIPE_LINK_ITINERARIO_49, {
+      clientReferenceId: typeof lead_id === "string" ? lead_id : null,
+      prefilledEmail: email,
+    });
     const whatsappMessage = `Hola equipo de Nomaderia, tengo una duda antes de comprar el Itinerario Completo ($49 USD) para ${topDest.title}.`;
     const whatsappUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(whatsappMessage)}`;
 

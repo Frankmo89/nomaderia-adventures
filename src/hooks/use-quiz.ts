@@ -298,10 +298,12 @@ export function useQuiz(totalSteps: number) {
         quiz_answers: answers,
         top_park_codes: results.map((d) => d.park_code).filter((c): c is string => Boolean(c)),
       });
+      let persistedLeadId: string | null = null;
       if (leadError) {
         console.warn("[leads] insert failed:", leadError.message);
         persistQuizLead(null, email); // email known even if lead insert failed
       } else {
+        persistedLeadId = newLeadId;
         setLeadId(newLeadId);
         persistQuizLead(newLeadId, email);
         logEvent(
@@ -361,6 +363,7 @@ export function useQuiz(totalSteps: number) {
           await supabase.functions.invoke("send-quiz-email", {
             body: {
               email,
+              lead_id: persistedLeadId,
               destinations: results.map((d) => ({
                 title: d.title,
                 slug: d.slug,

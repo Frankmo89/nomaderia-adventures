@@ -1,6 +1,12 @@
 export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { getStoredQuizEmail, getStoredQuizLeadId } from "@/lib/quiz-lead";
+import {
+  appendStripeCheckoutParams,
+  STRIPE_LINK_ITINERARIO_49,
+} from "./stripe-link";
+
+export { STRIPE_LINK_ITINERARIO_49 };
 
 export interface Product {
   id: string;
@@ -17,10 +23,6 @@ export const PRICING = {
   itinerarioCompleto: 49,
 } as const;
 
-/** Live Stripe Payment Link for Itinerario Completo ($49 USD). Do not change price/product in Stripe Dashboard from agents. */
-export const STRIPE_LINK_ITINERARIO_49 =
-  "https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00";
-
 export const BUY_CTA_LABEL = `Comprar mi itinerario – $${PRICING.itinerarioCompleto}`;
 
 /**
@@ -33,7 +35,6 @@ export function buildStripePaymentLink(opts?: {
   clientReferenceId?: string | null;
   prefilledEmail?: string | null;
 }): string {
-  const url = new URL(STRIPE_LINK_ITINERARIO_49);
   const leadId =
     opts?.clientReferenceId !== undefined
       ? opts.clientReferenceId
@@ -42,9 +43,10 @@ export function buildStripePaymentLink(opts?: {
     opts?.prefilledEmail !== undefined
       ? opts.prefilledEmail
       : getStoredQuizEmail();
-  if (leadId) url.searchParams.set("client_reference_id", leadId);
-  if (email) url.searchParams.set("prefilled_email", email);
-  return url.toString();
+  return appendStripeCheckoutParams(STRIPE_LINK_ITINERARIO_49, {
+    clientReferenceId: leadId,
+    prefilledEmail: email,
+  });
 }
 
 /** WhatsApp for questions only — never the buy path. */

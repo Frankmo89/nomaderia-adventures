@@ -4,10 +4,12 @@
 
 ## Link en código
 
-- Constante: `STRIPE_LINK_ITINERARIO_49` en `src/config/pricing.ts`
-- URL: `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`
-- Helper: `buildStripePaymentLink({ clientReferenceId?, prefilledEmail? })`
-  - Si el visitante terminó el quiz (lead persistido), añade `client_reference_id` y `prefilled_email`.
+- Único literal: `STRIPE_LINK_ITINERARIO_49` en `src/config/stripe-link.ts` (reexportado desde `src/config/pricing.ts`).
+- URL: `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` ($49; el link $29 anterior está retirado).
+- Helper frontend: `buildStripePaymentLink({ clientReferenceId?, prefilledEmail? })`
+  - Si el visitante terminó el quiz (lead persistido en `localStorage`, o opts), añade `client_reference_id` y `prefilled_email`.
+- Email del quiz: `send-quiz-email` importa el mismo literal y añade los mismos params cuando hay email / `lead_id`.
+- No va en `.env` / `.env.example`.
 
 ## FRANK — Success URL (Dashboard)
 

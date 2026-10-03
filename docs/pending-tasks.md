@@ -12,6 +12,18 @@
 
 ---
 
+## Changelog 2026-10-02 — Stripe Payment Link $49 (replace dead $29 link)
+
+El Payment Link viejo (`00w9AT…`) ya no se usa. La URL vive en **un** literal: `STRIPE_LINK_ITINERARIO_49` en `src/config/stripe-link.ts`, reexportada por `src/config/pricing.ts`.
+
+- Nuevo link: `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01`.
+- `buildStripePaymentLink()` sigue añadiendo `client_reference_id` y `prefilled_email` cuando hay lead/email del quiz (opts o `localStorage`).
+- El correo del quiz (`send-quiz-email`) importa el mismo literal y los mismos params (`lead_id` solo si el insert del lead guardó; `prefilled_email` = email del quiz).
+- Docs: `docs/stripe-payment-link.md`, `docs/claude-context.md`. `.env.example` no tenía el link (no es env var).
+- No se tocó auth, routing ni queries de Supabase.
+
+**Verificación:** `npx tsc --noEmit` + `npm run build`.
+
 ## Changelog 2026-10-02 — Copy audit fixes (customer-facing)
 
 Producto único + SLAs + AI surfaces + SocialProof, **encima de Phase 1 (PR #198)**.
@@ -46,7 +58,7 @@ Tras PR #194 el LCP quedó en ~12s porque el **H1** esperaba JS/Framer (`opacity
 
 Compra en el sitio (sin backend nuevo) — commit de PR #198, esta rama está rebased encima:
 
-- `STRIPE_LINK_ITINERARIO_49` = Payment Link live `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.
+- `STRIPE_LINK_ITINERARIO_49` = Payment Link live `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01`.
 - CTAs de compra → `Comprar mi itinerario – $49` abren Stripe; si hay quiz lead en `localStorage`, se añaden `client_reference_id` + `prefilled_email`.
 - WhatsApp público solo como **¿Dudas? Escríbenos** (nunca el path de compra).
 - `/gracias` deja de redirigir a `/servicios`: página de gracias (ES, mobile-first, noindex); Meta Pixel `Purchase` ($49 USD) una vez por visita si `fbq` existe.
@@ -616,7 +628,7 @@ Siempre que hagas cambios al código:
   no dice cobro manual por WhatsApp ni marca `⚠️ VERIFICAR` de «activar Stripe»;
   texto: Stripe procesa el pago en su checkout alojado; Nomaderia no almacena
   números de tarjeta. `docs/claude-context.md` §7.2 anota el Payment Link live
-  (`https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`). `tsc` + `build` pasan.
+  (`https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01`). `tsc` + `build` pasan.
 
 - [2026-09-25] **T01 — Política de privacidad: MX/LFPDPPP → EE. UU. / California.**
   `PrivacyPolicy.tsx`: eliminados LFPDPPP, México y derechos ARCO; §1 encuadre
