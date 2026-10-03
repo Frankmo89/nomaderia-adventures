@@ -12,6 +12,23 @@
 
 ---
 
+## Changelog 2026-10-03 — Logo El Pin (Draft PR #199)
+
+Instala el logo aprobado (pin + wordmark) en el sitio. Rama `pin-logo`.
+
+**Hecho:**
+- Assets del kit en `public/` (favicon, apple-touch, iconos PWA, OG, seis SVG de marca) y `docs/brand.md`. El zip no queda en el árbol.
+- Navbar (onDark sobre el hero, default al scrollear / menú móvil claro), footer oscuro y sidebar admin usan `src/components/brand/Logo.tsx`.
+- Favicons, manifest (`#1F6F43` / `#FBFAF7`) e imagen OG `https://nomaderia.com/og-image.png`.
+- JSON-LD `TravelAgency.logo` → `https://nomaderia.com/icons/icon-512.png`.
+- Footer: "Aquí nadie se pierde… nomás se encuentra."
+- ADR-033. No se tocó auth, routing, Stripe ni el copy del Hero.
+- `priceRange` "$29-$49 USD" no apareció (sigue el precio de `PRICING`).
+
+**Verificación:** `npx tsc --noEmit`, `npm run typecheck`, `npm run build`. `dist/` trae los assets de marca. Screenshots 390px locales, no adjuntos al PR.
+
+---
+
 ## Changelog 2026-10-02 — Copy audit fixes (customer-facing)
 
 Producto único + SLAs + AI surfaces + SocialProof, **encima de Phase 1 (PR #198)**.
@@ -62,6 +79,11 @@ Compra en el sitio (sin backend nuevo) — commit de PR #198, esta rama está re
 
 Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
+
+- [ ] **El Pin — Facebook Sharing Debugger (después del deploy de PR #199).** Volver a scrapear `https://nomaderia.com` para que WhatsApp, Facebook e iMessage tomen `og-image.png`.
+- [ ] **El Pin — iPhone Safari, pestaña privada (después del deploy).** Confirmar favicon y el logo del navbar (sobre el hero y ya scrolleado).
+- [ ] **El Pin — fotos de perfil.** Cambiar la foto en Instagram, Facebook, TikTok y WhatsApp Business (los PNG están en el kit, carpeta `redes/` / `logos/`, no en el repo).
+- [ ] **Copy follow-up (PR aparte, no este).** El Hero "Tu Concierge de Aventuras en Español" y otros taglines con "primer/primera" y "en español" chocan con `docs/brand.md` (no usar "tu primer parque" ni "en español" en titulares). No se tocó en #199.
 
 - [ ] **Stripe Dashboard — Success URL del Payment Link $49 → `https://nomaderia.com/gracias`.** El frontend ya tiene `/gracias`. Sin configurar Success URL en el Dashboard, Stripe no redirige tras pagar. No cambiar price/product. Webhook + `orders` (resto de T06) sigue aparte.
 - [ ] **Home hero — reemplazar las 6 fotos placeholder** en `public/hero/sources/01.jpeg`…`06.jpeg` con las tomas finales de Frank, luego `npm run generate:hero` y commit de los AVIF/WebP regenerados. Hasta entonces el hero usa 6 fotos curadas bajadas una vez del bucket Supabase `media_gallery` (no hotlink nps.gov).
@@ -197,8 +219,9 @@ referenciar esta lista primero.
 - [ ] **Fase 4c — Subir PNG del patrón de fondo de `QuizSection`** (último pendiente de la Fase 4, sistema de diseño). Bloqueado en Frank: requiere el asset final (no hay placeholder aceptable a producción). Con esto, Fase 4 queda cerrada.
 - [ ] **Facebook Pixel:** crear cuenta en Business Manager, obtener el Pixel ID y
       reemplazar `TU_PIXEL_ID_AQUI` en `index.html`.
-- [ ] **Iconos PWA:** subir `192x192` y `512x512` a `/public` (hoy el manifest usa
-      fallback con `favicon.ico` + `placeholder.svg`).
+- [x] **Iconos PWA / Replace PWA fallback icons (192/512):** DONE en Draft PR #199.
+      `public/icons/icon-192.png`, `icon-512.png` e `icon-maskable-512.png` (El Pin).
+      El manifest ya no usa el fallback viejo.
 - [ ] **Desactivar signup público** en Supabase → Authentication → Settings →
       desactivar "Enable email signups".
 - [ ] **Regenerar tipos de Supabase** (requiere `SUPABASE_ACCESS_TOKEN`):
