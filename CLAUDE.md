@@ -278,4 +278,5 @@ Facebook: Nomaderia · WhatsApp: 18588996802
 | `docs/content-strategy.md` | Monetización, affiliate, SEO, blog, quiz |
 | `docs/admin-patterns.md` | Patrones del panel admin, CRUD, convenciones |
 | `docs/design-system.md` | Tokens, tipografía, reglas UI (light theme) |
+| `docs/brand.md` | Logo El Pin: archivos, tamaños, colores y slogan |
 | `.cursor/rules/nomaderia.mdc` | Reglas alwaysApply para agentes (audit-first, migraciones, Stripe, etc.) |

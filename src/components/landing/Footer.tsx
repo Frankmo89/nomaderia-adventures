@@ -1,11 +1,9 @@
-import { forwardRef, useState } from "react";
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
-import { Mountain, Instagram, Facebook } from "lucide-react";
-import { BRAND_ASSETS } from "@/config/assets";
+import { Instagram, Facebook } from "lucide-react";
+import Logo from "@/components/brand/Logo";
 
 const Footer = forwardRef<HTMLElement>((_, ref) => {
-  const [logoError, setLogoError] = useState(false);
-
   return (
     <footer ref={ref} className="mt-10 rounded-t-[2.5rem] border-t border-mist/15 bg-forest-dark py-12 text-mist sm:mt-14">
       <div className="container mx-auto px-5 sm:px-6">
@@ -13,16 +11,9 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2 mb-3">
-              {BRAND_ASSETS.logo && !logoError ? (
-                <img src={BRAND_ASSETS.logo} alt="Nomaderia" loading="lazy" className="h-7 w-auto" onError={() => setLogoError(true)} />
-              ) : (
-                <>
-                  <Mountain className="h-5 w-5 text-green" />
-                  <span className="font-serif text-lg font-bold text-green">NOMADERIA</span>
-                </>
-              )}
+              <Logo variant="onDark" className="h-8 w-auto" />
             </Link>
-            <p className="text-sm text-mist/80">Tu primera aventura empieza aquí.</p>
+            <p className="text-sm text-mist/80">Aquí nadie se pierde… nomás se encuentra.</p>
           </div>
 
           {/* Links */}

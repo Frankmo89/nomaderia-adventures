@@ -92,6 +92,17 @@ Cuatro fuentes, cada una con un trabajo claro. **Nunca mezcles Anton y Playfair 
 
 ---
 
+## Logo
+
+El logo aprobado es **El Pin** (2026-10-03). Resumen; el detalle vive en [`docs/brand.md`](brand.md).
+
+- **Marca:** un pin de mapa. La ventana muestra la sierra del próximo parque y un punto naranja (la fogata). El wordmark es `nomader` + `IA` (Oswald, trazado en el SVG). `IA` y el punto van siempre en fogata `#D97706`.
+- **En el sitio:** `<Logo>` (`src/components/brand/Logo.tsx`) usa `/brand/nomaderia-horizontal.svg` en fondos claros y `/brand/nomaderia-horizontal-oscuro.svg` (`variant="onDark"`) sobre el hero, el footer y el sidebar admin. El alto lo pone el caller (`h-8` / `md:h-9`).
+- **Excepción de color:** el logo es la única excepción a la regla de "naranja solo en el Hero". No recolorear `IA` ni el punto para cumplir esa regla.
+- **No** estirar, rotar, redibujar el pin ni reescribir el wordmark como texto vivo. En una foto ocupada, primero un overlay forest.
+
+---
+
 ## 4. Componentes
 
 ### 4.1 Tarjeta de destino (estilo AllTrails) — componente clave

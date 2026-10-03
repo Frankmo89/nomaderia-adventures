@@ -586,6 +586,12 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Consecuencias:** NO volver a poner WhatsApp como botón primario de compra en home/servicios/destinos/quiz. NO tocar price/product Stripe ni auth/queries. Frank debe setear Success URL → `/gracias`. Webhook sigue en T06.
 
 
+### ADR-033 — Logo: El Pin
+- **Fecha:** 2026-10-03
+- **Estado:** Vigente
+- **Decisión:** El pin se lee como "te llevamos a un lugar", funciona a tamaño favicon y conserva nomaderIA con `IA` en fogata. Slogan: "Aquí nadie se pierde… nomás se encuentra." Archivos en `public/` y `docs/brand.md`.
+
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un

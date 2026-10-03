@@ -614,9 +614,9 @@ Via `useDestinationBySlug()` and `useRelatedDestinations()`:
 
 ### 9.1 Broken image references / missing assets
 - `src/pages/SobreNosotros.tsx` uses `src="/diploma.jpg"`
-  - `public/` currently does **not** contain `diploma.jpg` (only `CNAME`, `_redirects`, `favicon.ico`, `placeholder.svg`, `robots.txt`, `sitemap.xml`)
+  - `public/` currently does **not** contain `diploma.jpg` (still missing; the old SVG stand-in was removed when El Pin shipped)
   - Page has fallback placeholder block, so visual fallback exists but asset is missing
-- `src/config/assets.ts` has `BRAND_ASSETS.logo = ""` (logo not configured; components fall back to icon/text)
+- `src/config/assets.ts` logo is El Pin (`/brand/nomaderia-horizontal.svg`); see `docs/brand.md` and ADR-033. This bullet is historical.
 
 ### 9.2 Production placeholders / TODOs (requested search terms)
 - Meta Pixel placeholder still live in `index.html`:

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Mountain, Menu, ArrowUp, X } from "lucide-react";
+import { Menu, ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
+import Logo from "@/components/brand/Logo";
 
 const NAV_EASE = [0.22, 1, 0.36, 1] as const;
-import { BRAND_ASSETS } from "@/config/assets";
 
 // Scroll thresholds: homepage goes solid early (before hero CTAs enter the navbar zone);
 // other hero routes go solid sooner since their hero sections are shorter.
@@ -57,7 +57,6 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(!hasHero);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [open, setOpen] = useState(false);
-  const [logoError, setLogoError] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const { scrollY } = useScroll();
 
@@ -108,28 +107,10 @@ const Navbar = () => {
 
         <div className="container mx-auto flex items-center justify-between px-5 py-4">
           <Link to="/" className="relative z-10 flex items-center gap-2">
-            {BRAND_ASSETS.logo && !logoError ? (
-              <img
-                src={BRAND_ASSETS.logo}
-                alt="Nomaderia"
-                loading="lazy"
-                className="h-8 w-auto"
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <>
-                <Mountain className={cn(
-                  "h-6 w-6 transition-colors duration-300",
-                  scrolled ? "text-green" : "text-white"
-                )} />
-                <span className={cn(
-                  "font-serif text-xl font-bold tracking-wide transition-colors duration-300",
-                  scrolled ? "text-foreground" : "text-white"
-                )}>
-                  NOMADERIA
-                </span>
-              </>
-            )}
+            <Logo
+              variant={scrolled ? "default" : "onDark"}
+              className="h-8 w-auto md:h-9"
+            />
           </Link>
 
           {/* Desktop nav */}
@@ -212,16 +193,7 @@ const Navbar = () => {
             {/* Close bar */}
             <div className="flex items-center justify-between px-5 py-4">
               <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-                {BRAND_ASSETS.logo && !logoError ? (
-                  <img src={BRAND_ASSETS.logo} alt="Nomaderia" loading="lazy" className="h-8 w-auto" onError={() => setLogoError(true)} />
-                ) : (
-                  <>
-                    <Mountain className="h-6 w-6 text-green" />
-                    <span className="font-serif text-xl font-bold tracking-wide text-foreground">
-                      NOMADERIA
-                    </span>
-                  </>
-                )}
+                <Logo variant="default" className="h-8 w-auto md:h-9" />
               </Link>
               <Button
                 variant="ghost"

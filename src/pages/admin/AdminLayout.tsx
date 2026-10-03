@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
-  Mountain, LayoutDashboard, MapPin, BookOpen,
+  LayoutDashboard, MapPin, BookOpen,
   LogOut, FileText, Mail, ImageIcon, ShieldCheck, ChevronDown,
   BellRing, Menu, Inbox, Sparkles, LayoutList, ScrollText,
 } from "lucide-react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import Logo from "@/components/brand/Logo";
 
 type NavItem = {
   label: string;
@@ -218,14 +219,9 @@ const AdminLayout = () => {
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 hidden md:flex">
         <div className="p-4 border-b border-sidebar-border">
-          <Link to="/admin" className="flex items-center gap-3">
-            <div className="w-[30px] h-[30px] rounded-lg bg-primary flex items-center justify-center shrink-0">
-              <Mountain className="h-4 w-4 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-sm tracking-widest text-sidebar-foreground">NOMADERIA</span>
-              <span className="text-[10px] text-sidebar-foreground/55 tracking-[0.18em] uppercase">Admin</span>
-            </div>
+          <Link to="/admin" className="flex flex-col gap-1">
+            <Logo variant="onDark" className="h-8 w-auto" />
+            <span className="text-[10px] text-sidebar-foreground/55 tracking-[0.18em] uppercase">Admin</span>
           </Link>
         </div>
         <div className="flex items-center justify-between px-3 py-2 mx-3 mt-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
@@ -243,11 +239,8 @@ const AdminLayout = () => {
 
       {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar border-b border-sidebar-border p-3 flex items-center justify-between">
-        <Link to="/admin" className="flex items-center gap-2">
-          <div className="w-[26px] h-[26px] rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <Mountain className="h-3.5 w-3.5 text-white" />
-          </div>
-          <span className="font-bold text-sm tracking-widest text-sidebar-foreground">NOMADERIA</span>
+        <Link to="/admin" className="flex items-center">
+          <Logo variant="onDark" className="h-8 w-auto" />
         </Link>
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
@@ -268,16 +261,11 @@ const AdminLayout = () => {
             <div className="p-4 pr-10 border-b border-sidebar-border shrink-0">
               <Link
                 to="/admin"
-                className="flex items-center gap-3"
+                className="flex flex-col gap-1"
                 onClick={() => setMobileOpen(false)}
               >
-                <div className="w-[30px] h-[30px] rounded-lg bg-primary flex items-center justify-center shrink-0">
-                  <Mountain className="h-4 w-4 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-sm tracking-widest text-sidebar-foreground">NOMADERIA</span>
-                  <span className="text-[10px] text-sidebar-foreground/55 tracking-[0.18em] uppercase">Admin</span>
-                </div>
+                <Logo variant="onDark" className="h-8 w-auto" />
+                <span className="text-[10px] text-sidebar-foreground/55 tracking-[0.18em] uppercase">Admin</span>
               </Link>
             </div>
             <div className="flex-1 overflow-y-auto">

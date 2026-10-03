@@ -80,6 +80,7 @@ const Index = () => {
       "@type": "TravelAgency",
       name: "Nomaderia Adventures",
       url: SITE_URL,
+      logo: "https://nomaderia.com/icons/icon-512.png",
       description:
         "Itinerarios personalizados y alertas de permisos para hispanos en EE. UU. Planea tu aventura en Yosemite, Grand Canyon y más. En español.",
       email: "nomaderia.travel@gmail.com",

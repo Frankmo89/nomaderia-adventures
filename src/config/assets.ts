@@ -4,11 +4,18 @@
  * NOTE: index.html meta tags must be updated manually — see the sync comments there.
  */
 export const BRAND_ASSETS = {
-  // TODO: Pegar aquí la URL del logo final una vez subido a Supabase.
-  /** URL of the site logo asset. */
-  logo: "",
+  /** Horizontal logo for light grounds (cloud, white). */
+  logo: "/brand/nomaderia-horizontal.svg",
+
+  /** Horizontal logo for dark grounds and photos. */
+  logoOnDark: "/brand/nomaderia-horizontal-oscuro.svg",
+
+  /** Pin symbol for light grounds. */
+  symbol: "/brand/nomaderia-simbolo.svg",
+
+  /** Pin symbol for dark grounds. */
+  symbolOnDark: "/brand/nomaderia-simbolo-oscuro.svg",
 
   /** Default Open-Graph / Twitter Card image when a page-specific image is not provided. */
-  defaultOgImage:
-    "https://vrixiuvnhvqafmxlcyex.supabase.co/storage/v1/object/public/destinations/1772502898883-4w9ykr.jpeg",
+  defaultOgImage: "https://nomaderia.com/og-image.png",
 } as const;
