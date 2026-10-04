@@ -12,6 +12,14 @@
 
 ---
 
+## Changelog 2026-10-03 — Meta Pixel ID (Draft PR #203)
+
+- `index.html`: reemplazado `TU_PIXEL_ID_AQUI` por `1865887438163992` en la
+  inicialización `fbq` y el fallback noscript.
+- No se tocaron otros archivos de runtime.
+
+---
+
 ## Changelog 2026-10-03 — Fix: botones $49 abrían el Payment Link $29 (Draft PR #200)
 
 Los CTAs `Comprar mi itinerario – $49` abrían el link retirado de **$29** ("Acceso de Fundador" / alerta Yosemite): `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.
@@ -235,8 +243,8 @@ referenciar esta lista primero.
       de Instagram (no vive en este repo). En el código solo hay perfiles sociales
       (`Footer.tsx`, `sameAs` en `Index.tsx`); no hay URL de "link in bio".
 - [ ] **Fase 4c — Subir PNG del patrón de fondo de `QuizSection`** (último pendiente de la Fase 4, sistema de diseño). Bloqueado en Frank: requiere el asset final (no hay placeholder aceptable a producción). Con esto, Fase 4 queda cerrada.
-- [ ] **Facebook Pixel:** crear cuenta en Business Manager, obtener el Pixel ID y
-      reemplazar `TU_PIXEL_ID_AQUI` en `index.html`.
+- [x] **Facebook Pixel:** Pixel ID `1865887438163992` configurado en `index.html`
+      (Draft PR #203; inicialización `fbq` y fallback noscript).
 - [x] **Iconos PWA / Replace PWA fallback icons (192/512):** DONE en Draft PR #199.
       `public/icons/icon-192.png`, `icon-512.png` e `icon-maskable-512.png` (El Pin).
       El manifest ya no usa el fallback viejo.
