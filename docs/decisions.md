@@ -600,6 +600,14 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   6. Los CTA «¿Dudas?» de visitantes abren el concierge. WhatsApp queda para quien ya pagó (`/gracias`, `/i/:token`).
 - **Consecuencias:** Hay que desplegar `concierge-agent` (no hay migración nueva). Un `session_id` nuevo salta el tope; un límite por IP queda pendiente. El eval en vivo contra el LLM no corre sin la función desplegada y `OPENAI_API_KEY`.
 
+
+### ADR-035 — Concierge pre-compra detrás de flag; examen en vivo aparte del fixture
+- **Fecha:** 2026-10-03
+- **Estado:** Vigente (acota el punto 6 de ADR-034)
+- **Contexto:** El PR del concierge reemplazaba «¿Dudas? Escríbenos» por el chat antes de tener un examen en vivo contra el modelo desplegado. Mergearlo así dejaría el sitio sin el botón de WhatsApp de dudas.
+- **Decisión:** `VITE_CONCIERGE_ENABLED` solo es verdadero con el string `true`. Si no, los CTA de dudas siguen en WhatsApp y `ConciergeLauncher` no se monta. `npm run eval:concierge` sigue siendo el fixture de 30 preguntas, sin modelo. `npm run exam` llama a la función **desplegada**, guarda chunk ids y fuentes, y escribe `eval/report.md`. `eval/` no se sirve, no entra al bundle y está en la lista de ignore de la ingesta. El gold del examen no se edita; si choca con el sitio cuando el flag está on, se anota en «Gold conflicts».
+- **Consecuencias:** No encender el flag hasta que Frank acepte el reporte (cero críticos; accuracy 100% en C, E y G; D abstiene ≥90%; coverage ≥80% en A y B). Desplegar con `supabase functions deploy concierge-agent` y correr `npm run exam` con el flag todavía off. CI debe correr `npm run exam` si cambian la función, sus prompts o el harness (el workflow no se pudo pushear: el token no tiene scope `workflow`; el YAML quedó en pending-tasks).
+
 ### ADR-033 — Logo: El Pin
 - **Fecha:** 2026-10-03
 - **Estado:** Vigente

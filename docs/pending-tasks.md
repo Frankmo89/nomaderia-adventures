@@ -12,6 +12,70 @@
 
 ---
 
+## Changelog 2026-10-03 — Flag del concierge + examen en vivo
+
+Draft PR (no merge) encima de #202. El concierge queda **apagado** hasta que Frank acepte `eval/report.md`.
+
+**Hecho:**
+- `VITE_CONCIERGE_ENABLED` default off. Con el flag apagado, «¿Dudas? Escríbenos» sigue abriendo WhatsApp (hero, servicios, quiz, sticky, artículos, alertas, FAQ y legales). El launcher no se monta.
+- `eval/exam.jsonl` (139 filas, gold intacto). `eval/` en la lista de ignore de `ingest-knowledge`. No se bundlea.
+- `npm run exam` llama a `concierge-agent` desplegado (`include_evidence` pide chunks y DATOS EN VIVO). Checks deterministas de cifras, fechas, fuente, abstención D, inmigración y promesas de más de una ronda en G. El juez solo mira gold, tono y redacción de seguridad.
+- CI: el job `concierge-exam` está escrito abajo. **No entró al PR** porque el token de `gh` no tiene scope `workflow` y GitHub rechazó `.github/workflows/ci.yml`.
+
+**Verificación:** `npm run typecheck` y `npm run build` pasan. `npm run eval:concierge` 30/30. `npm run exam` sí corrió contra la función desplegada hoy (139 filas, 0 saltadas): ship rule **NO PASA** porque esa función todavía no devuelve chunks ni la frase de abstención. Detalle en `eval/report.md`.
+
+**FRANK:** no prender `VITE_CONCIERGE_ENABLED` hasta aceptar el reporte. Después del merge, con el flag **off**: `supabase functions deploy concierge-agent`, luego `npm run exam`, y leer `eval/report.md`.
+
+**Seguimiento abierto:**
+- [ ] Pegar el job `concierge-exam` en `.github/workflows/ci.yml` (el push lo bloqueó el scope `workflow`) y añadir secretos `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `OPENAI_API_KEY`. Sin secretos, `npm run exam` valida el jsonl y sale 0.
+
+```yaml
+  concierge-exam:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Concierge paths changed
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --name-only "$BASE" HEAD > /tmp/changed.txt || true
+          if grep -Eq '^(supabase/functions/concierge-agent/|supabase/functions/_shared/concierge-guard\.ts|supabase/functions/_shared/nomaderia-soul\.ts|supabase/functions/_shared/ingest-ignore\.ts|eval/|scripts/concierge-exam\.ts|src/lib/concierge-exam-score\.ts|src/lib/concierge-flag\.ts)' /tmp/changed.txt; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.changed.outputs.run == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        if: steps.changed.outputs.run == 'true'
+        run: npm ci
+      - name: Live concierge exam
+        if: steps.changed.outputs.run == 'true'
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CI: "true"
+        run: npm run exam
+```
+
+- [ ] La función que está en producción hoy no devuelve `chunk_ids` ni `evidence`. Sin el deploy nuevo el anclaje de cifras no se puede cerrar y la ship rule no pasa.
+
+---
+
 ## Changelog 2026-10-03 — Concierge pre-compra anclado al RAG
 
 Draft PR (no merge): https://github.com/Frankmo89/nomaderia-adventures/pull/202. Auditoría en `docs/concierge-audit.md`.

@@ -598,7 +598,9 @@ serve(async (req) => {
       destination_slug?: string;
       session_id?:       string;
       prior_answers?:    number;
+      include_evidence?: boolean;
     };
+    const includeEvidence = body.include_evidence === true;
     const { question, destination_slug } = body;
     const sessionId = visitorSession(body.session_id);
     const priorAnswers = priorCount(body.prior_answers);
@@ -622,6 +624,7 @@ serve(async (req) => {
       unconfirmed?: boolean;
       recommendations?: ConciergeRecommendation[];
       dateLabel?: string;
+      evidence?: { chunks: Array<{ id: string; content: string }>; live_data_block: string };
     }): Promise<Response> {
       const sources = opts.sources ?? [];
       const text = composeVisibleAnswer(opts.answer, safety, sources, opts.dateLabel ?? formatAnswerDate());
@@ -645,6 +648,9 @@ serve(async (req) => {
         engine_version: ENGINE_DATA.engine_version,
         recommendations: opts.recommendations,
         answer_check: opts.answerCheck,
+        ...(includeEvidence
+          ? { evidence: opts.evidence ?? { chunks: [], live_data_block: "" } }
+          : {}),
       }, corsHeaders);
     }
 
@@ -920,6 +926,12 @@ serve(async (req) => {
       unconfirmed: answerCheck === "blocked_numbers" || answer.startsWith("Eso no lo tengo confirmado"),
       recommendations,
       dateLabel,
+      evidence: includeEvidence
+        ? {
+            chunks: chunks.map((c) => ({ id: c.id, content: c.content })),
+            live_data_block: liveDataBlock,
+          }
+        : undefined,
     });
 
   } catch (err) {
