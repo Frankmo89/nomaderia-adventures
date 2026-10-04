@@ -1,12 +1,12 @@
-import { CreditCard, MessageCircle } from "lucide-react";
-import { openConcierge } from "@/lib/open-concierge";
+import { CreditCard } from "lucide-react";
+import { PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
+import { STRIPE_AND_DOUBT_COPY } from "@/lib/concierge-flag";
 import { Button } from "@/components/ui/button";
 import Section from "@/components/editorial/Section";
 import Eyebrow from "@/components/editorial/Eyebrow";
 import Reveal, { RevealGroup } from "@/components/editorial/Reveal";
 import {
   BUY_CTA_LABEL,
-  CONCIERGE_QUESTION_LABEL,
     buildStripePaymentLink,
 } from "@/config/pricing";
 import { trackEvent } from "@/lib/analytics";
@@ -49,7 +49,7 @@ const nomaderiaItems: ContrastItem[] = [
     number: "01",
     title: "Pagas $49 con tarjeta",
     description:
-      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. Antes de comprar, el concierge responde tus dudas.",
+      STRIPE_AND_DOUBT_COPY,
   },
   {
     number: "02",
@@ -148,14 +148,10 @@ const PainContrast = () => {
                 {BUY_CTA_LABEL}
               </a>
             </Button>
-            <button
-              type="button"
+            <PrePurchaseDoubtLink
+              source="pain_contrast_dudas"
               className="text-sm text-green hover:text-green-dark font-medium"
-              onClick={() => openConcierge("pain_contrast_dudas")}
-            >
-              <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" aria-hidden="true" />
-              {CONCIERGE_QUESTION_LABEL}
-            </button>
+            />
           </div>
         </Reveal>
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { openConcierge } from "@/lib/open-concierge";
+import { PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
 import { motion } from "framer-motion";
-import { Gauge, Ticket, Footprints, Globe, Check, CreditCard, MessageCircle } from "lucide-react";
+import { Gauge, Ticket, Footprints, Globe, Check, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import Reveal from "@/components/editorial/Reveal";
 import {
   products,
   BUY_CTA_LABEL,
-  CONCIERGE_QUESTION_LABEL,
     buildStripePaymentLink,
 } from "@/config/pricing";
 import { trackEvent } from "@/lib/analytics";
@@ -233,14 +232,10 @@ const PremiumItinerarySection = () => {
                         {BUY_CTA_LABEL}
                       </a>
                     </Button>
-                    <button
-                      type="button"
+                    <PrePurchaseDoubtLink
+                      source={`premium_${product.id}_dudas`}
                       className="text-sm text-center text-green hover:text-green-dark font-medium"
-                      onClick={() => openConcierge(`premium_${product.id}_dudas`)}
-                    >
-                      <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
-                      {CONCIERGE_QUESTION_LABEL}
-                    </button>
+                    />
                   </CardFooter>
                 </Card>
               </motion.div>
