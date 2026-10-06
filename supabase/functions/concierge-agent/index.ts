@@ -78,7 +78,11 @@ import {
   normalizeFeeRow,
   normalizePassRow,
   parseFeeInput,
+  nextFreeDayNote,
   reviewFeeInput,
+  statedToday,
+  todayLineEs,
+  todayPacific,
   type ParkFeeRow,
   type PassRuleRow,
 } from "../_shared/park-fees.ts";
@@ -644,7 +648,9 @@ REGLAS ESTRICTAS:
 13. PRODUCTO: si hay TARJETA DE PRODUCTO en el CONTEXTO, responde la pregunta sobre el Itinerario Completo Nomaderia solo con lo que dice esa tarjeta (precio, qué incluye, entrega, cambios, pago, WhatsApp). El sistema agrega la tarjeta completa y su fuente al final (no escribas tú "Fuente:"). No digas que este chat cobra o reserva: el pago es con tarjeta en nomaderia.com.
 14. Si el CONTEXTO trae una REGLA OFICIAL NPS (dormir en el carro, cierres, permisos, fuego) que aplica al plan del usuario, dila explícitamente aunque no la haya preguntado con esas palabras.
 15. Da tarifas o costos de entrada solo si la pregunta es de tarifas, pases, costos o dinero.
-16. Si preguntan por "el próximo" día, fecha o evento, compara cada fecha de la lista del CONTEXTO con la fecha de hoy que da el usuario y elige la primera posterior.
+16. Si preguntan por "el próximo" día, fecha o evento, compara cada fecha de la lista del CONTEXTO con HOY (o con la fecha de hoy que da el usuario) y elige la primera posterior; si el CONTEXTO trae PRÓXIMO DÍA DE ENTRADA GRATIS, usa ese.
+17. HOY viene al inicio del CONTEXTO. Si el usuario planea para fechas que ya pasaron, díselo primero y luego da lo que sigue aplicando.
+18. Para comparar pases, llama UNA vez a calculate_fees con todas las visitas y compare_passes: true, y repite su conclusión (CONVIENE EL PASE / CONVIENE PAGAR EN CASETA) con la diferencia.
 
 DATOS VIVOS — REGLAS IMPORTANTES:
 - Para precios de entrada, alertas y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO o las PÁGINAS OFICIALES NPS del CONTEXTO.
@@ -1356,7 +1362,13 @@ serve(async (req) => {
         return `[${i + 1}] ${c.metadata.title ?? ""} — ${c.metadata.section ?? c.source_field}${label}\n${c.content}`;
       })
       .join("\n\n---\n\n");
-    const context = [chunkContext, feeBlock, productBlock].filter(Boolean).join("\n\n---\n\n");
+    // ADR-037: fecha de hoy (para "ya pasó" / "el próximo") y, si preguntan por días
+    // gratis, el siguiente de la lista oficial calculado por código.
+    const today = todayPacific();
+    const freeDayNote = /gratis|free/i.test(question)
+      ? nextFreeDayNote(chunks.map((c) => c.content), statedToday(question) ?? { m: today.m, d: today.d })
+      : "";
+    const context = [todayLineEs(), chunkContext, feeBlock, freeDayNote, productBlock].filter(Boolean).join("\n\n---\n\n");
 
     const messages: ChatMessage[] = [
       {
