@@ -12,6 +12,48 @@
 
 ---
 
+## Changelog 2026-10-05 — Concierge: fuentes oficiales NPS, seguridad textual, fecha real (PR #204, draft)
+
+Rama `feat/concierge-flag-exam`. **No se mergeó nada.** `VITE_CONCIERGE_ENABLED` sigue apagado. No se tocó Stripe, auth, rutas ni las queries/RPC existentes (`match_knowledge_chunks` igual, 8 / 0.4). ADR-036.
+
+**Hecho:**
+- `eval/diagnosis.md`: clasificó las filas que fallaron en v25. Casi todo era (a), falta de datos.
+- Migración `20261005120000_knowledge_chunks_nps_sources.sql` (aditiva, aplicada por MCP). Agrega a `knowledge_chunks` las columnas `source_url`, `fetched_at`, `park_code` y `kind` (`evergreen|live|safety`). También agrega un trigger de relleno, `request_nps_pages_ingest()` y 2 jobs de pg_cron.
+- Edge Function nueva `ingest-nps-pages`: baja 36 páginas de nps.gov (jotr, deva, chis, pinn, seki, yose, grca y nps.gov general), las parte en chunks de 1500 caracteres con 250 de traslape y las embebe con `text-embedding-3-small`. Hoy hay 226 chunks de páginas NPS y **30 tarjetas de seguridad** textuales (`nps_safety_cards`), además de los 1,768 de `destinations`, que no se tocaron.
+- `concierge-agent` (v43):
+  - Búsqueda bilingüe: la pregunta se traduce ES→EN y se llama dos veces a la misma RPC; se fusionan los resultados.
+  - En preguntas de tarifas hay 3 lugares reservados para páginas generales de NPS.
+  - Las tarjetas de seguridad se adjuntan por tema y parque; si no hay tarjeta, va «En una emergencia, llama al 911» con la página de seguridad del parque.
+  - El footer lleva la fecha `fetched_at` de cada fuente, nunca la de hoy.
+  - Notas de residencia y de pase.
+  - `calculate` puede usarse en la ronda de corrección del candado.
+  - Las preguntas de inmigración reciben una respuesta fija sin llamar al modelo.
+- `scripts/concierge-exam.ts`:
+  - Ya no cuenta como inventadas las fechas iguales al `fetched_at` de la evidencia, las de `tool_outputs` ni las que el usuario escribió en la pregunta; lo mismo con las cifras de la pregunta.
+  - Reintenta los errores 429/5xx.
+  - Agrega `EXAM_CONCURRENCY`.
+
+**Refresh diario (pg_cron, no GitHub Actions: el token no tiene scope `workflow`):**
+- `nps-pages-refresh-daily` corre a las `15 11 * * *` UTC. Llama a `public.request_nps_pages_ingest()`, que hace un POST a `ingest-nps-pages` por cada parque con el JWT guardado en Vault (`ingest_knowledge_jwt`).
+- `nps-live-prune-daily` corre a las `50 11 * * *` UTC y borra los chunks `kind = live` con `fetched_at` de más de 7 días.
+
+**Examen** (`eval/report.md`, corrida 5 contra v43): **NO PASA**.
+- Coverage B 67% (se pide 80%).
+- 1 crítico: F10, una falla de retrieval.
+- A 83%, D se abstiene 100%, accuracy 100% en C/E/G.
+
+**Seguimiento abierto:**
+- [ ] Coverage B ≥80%. Las 5 filas son (c): gpt-4o-mini lee mal qué cubre un pase o cuál es la tarifa. Propuesta: hacer el cálculo de tarifas de forma determinista (quién paga, qué cubre el pase) y dejar al modelo solo la redacción. Otra opción, que decide Frank, es usar un modelo más fuerte solo para tarifas.
+- [ ] F10 y las filas (b) A03, A31, A38, A53, A56: poner un cupo por fuente en el top-8 (máximo 3 chunks de una URL) y hacer una consulta por sub-pregunta. Hoy 5 chunks de Half Dome sacan la página de camping de Yosemite.
+- [ ] A02: regla determinista «recargo solo en los parques de la lista oficial». Hoy dijo que JOTR lo cobra.
+- [ ] El contexto numera cada chunk como `[n]`, así que los dígitos del 1 al 8 pasan el candado de cifras. Es un problema anterior a este trabajo.
+- [ ] Bajar la temperatura de 0.3 a 0 para que el examen sea reproducible. Entre corridas cambian de 5 a 15 filas.
+- [ ] El job `concierge-exam` en CI sigue sin agregarse (ver la entrada del 2026-10-03).
+- [ ] B14 necesita el pronóstico del NWS y las filas G necesitan `nomaderia.com/servicios`; ninguna de las dos es fuente NPS.
+- Rollback: los snapshots de `concierge-agent` v25, v39, v41 y v42 están en `/workspace/rollback/` (en la box del agente).
+
+---
+
 ## Changelog 2026-10-03 — Flag del concierge + examen en vivo
 
 Draft PR (no merge) encima de #202. El concierge queda **apagado** hasta que Frank acepte `eval/report.md`.
