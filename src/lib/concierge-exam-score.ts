@@ -299,8 +299,8 @@ export function scoreRow(
   let badDates: string[] = [];
   if (grounding === "checked") {
     const corpus = evidenceCorpus(evidence);
-    badNumbers = ungroundedNumbers(claims, corpus, ["911"]);
-    // A date the user wrote in the question is not invented when the answer repeats it.
+    // A number or date the user wrote in the question is not invented when the answer repeats it.
+    badNumbers = ungroundedNumbers(claims, `${corpus}\n${row.question_es}`, ["911"]);
     badDates = ungroundedDates(claims, `${corpus}\n${row.question_es}`);
   }
 

@@ -243,4 +243,16 @@ describe("dates from the question", () => {
     );
     expect(scored.ungroundedDates).toEqual([]);
   });
+
+  it("does not flag a number the user wrote, but still flags a new one", () => {
+    const scored = scoreRow(
+      row({ id: "F97", question_es: "Voy con niños de 7 y 11 años, ¿qué llevo?", gold_answer: "Agua." }),
+      "Para tus niños de 7 y 11 años, lleva 9 litros.\n\nFuente: NPS — Safety · consultada 5 oct 2026",
+      [{ title: "NPS", url: "https://www.nps.gov/xxxx/", section: "safety" }],
+      { chunkTexts: ["Carry plenty of water."], liveDataBlock: "" },
+      judgeYes,
+      "2026-10-05",
+    );
+    expect(scored.ungroundedNumbers).toEqual(["9"]);
+  });
 });
