@@ -256,3 +256,81 @@ describe("dates from the question", () => {
     expect(scored.ungroundedNumbers).toEqual(["9"]);
   });
 });
+
+describe("strict rule: wrong facts are critical", () => {
+  const src = [{ title: "NPS", url: "https://www.nps.gov/xxxx/planyourvisit/fees.htm", section: "fees" }];
+  const ev = (text: string) => ({ chunkTexts: [text], liveDataBlock: "" });
+
+  it("flags a fee the park does not charge even though $100 is in a chunk", () => {
+    const scored = scoreRow(
+      row({ id: "A99", question_es: "¿El parque Xxxx cobra el recargo de $100 a quien vive en Perú?", gold_answer: "No. Xxxx no está en la lista." }),
+      "Sí, Xxxx cobra el recargo de $100 a los no residentes.\n\nFuente: NPS — fees · consultada 5 oct 2026",
+      src,
+      ev("Nonresidents pay a $100 fee at listed parks."),
+      judgeNo,
+      "2026-10-05",
+    );
+    expect(scored.ungroundedNumbers).toEqual([]);
+    expect(scored.critical).toContain("wrong_fee");
+    expect(scored.accurate).toBe(false);
+  });
+
+  it("flags a stated total that matches no amount in the gold formula", () => {
+    const scored = scoreRow(
+      row({ id: "B99", question_es: "Dos adultos de fuera entran en un carro a Xxxx. ¿Cuánto pagan?", gold_answer: "$240. Fórmula: $40 + $100 × 2 = $240." }),
+      "Pagan $280 en total: $40 por el carro y $120 por persona.\n\nFuente: NPS — fees",
+      src,
+      ev("Vehicle $40. Nonresident fee $100. Per person $120. Total 280"),
+      judgeNo,
+      "2026-10-05",
+    );
+    expect(scored.wrongFee?.some((r) => r.startsWith("total"))).toBe(true);
+    expect(scored.critical).toContain("wrong_fee");
+  });
+
+  it("accepts the right total and an honest abstention", () => {
+    const base = row({ id: "B98", question_es: "¿Cuánto pagan dos adultos de fuera en carro en Xxxx?", gold_answer: "$240. Fórmula: $40 + $100 × 2 = $240." });
+    const right = scoreRow(base, "En total pagan $240.\n\nFuente: NPS — fees", src, ev("Vehicle $40. Nonresident fee $100. 240"), judgeYes, "2026-10-05");
+    expect(right.critical).toEqual([]);
+    const abst = scoreRow(base, "Eso no lo tengo confirmado.\n\nFuente: NPS — fees", src, ev("x"), { ...judgeNo, contradictsGold: true }, "2026-10-05");
+    expect(abst.critical).not.toContain("wrong_fee");
+    expect(abst.critical).not.toContain("contradicts_gold");
+  });
+
+  it("turns a judge contradiction into wrong_fee on fee questions and contradicts_gold elsewhere", () => {
+    const fee = scoreRow(
+      row({ id: "A98", question_es: "¿Cuánto cuesta la entrada en carro a Xxxx?", gold_answer: "$40 por vehículo." }),
+      "La entrada en carro cuesta $30.\n\nFuente: NPS — fees",
+      src,
+      ev("Motorcycle $30. Vehicle $40."),
+      { ...judgeNo, contradictsGold: true },
+      "2026-10-05",
+    );
+    expect(fee.critical).toContain("wrong_fee");
+    const other = scoreRow(
+      row({ id: "F99", question_es: "¿Está abierto el camino Xxxx?", gold_answer: "No, está cerrado." }),
+      "Sí, el camino Xxxx está abierto.\n\nFuente: NPS — conditions",
+      src,
+      ev("Xxxx road closed."),
+      { ...judgeNo, contradictsGold: true },
+      "2026-10-05",
+    );
+    expect(other.critical).toContain("contradicts_gold");
+    expect(other.accurate).toBe(false);
+  });
+
+  it("requires coverage ≥80% in E and ≥90% in G", () => {
+    const ok = (id: string, covered: boolean) =>
+      scoreRow(row({ id, question_es: "q", gold_answer: "g" }), "Respuesta.\n\nFuente: Nomaderia", src, ev("g"), covered ? judgeYes : judgeNo, "2026-10-05");
+    const scores = [
+      ...["A1", "A2", "A3", "A4", "A5"].map((id) => ok(id, true)),
+      ...["B1", "B2", "B3", "B4", "B5"].map((id) => ok(id, true)),
+      ok("C1", true),
+      ok("E1", true), ok("E2", false),
+      ...["G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9"].map((id) => ok(id, true)), ok("G10", false),
+    ];
+    const rule = shipRule(scores);
+    expect(rule.reasons.some((r) => r.startsWith("Coverage E 50%"))).toBe(true);
+    expect(rule.reasons.some((r) => r.startsWith("Coverage G"))).toBe(false);
+  });
+});
