@@ -71,6 +71,26 @@ import {
 import { CALCULATE_TOOL, runCalculate } from "../_shared/concierge-calc.ts";
 import { NPS_PARKS, shortDateEs } from "../_shared/nps-pages.ts";
 import {
+  CALCULATE_FEES_TOOL,
+  computeFees,
+  FEE_PARKS,
+  feeFactsBlock,
+  normalizeFeeRow,
+  normalizePassRow,
+  parseFeeInput,
+  type ParkFeeRow,
+  type PassRuleRow,
+} from "../_shared/park-fees.ts";
+import { detectRuleIntents, diversifyChunks, pickRuleChunks } from "../_shared/retrieval-rules.ts";
+import {
+  isProductQuestion,
+  PRODUCT_CARD_DATE_ES,
+  PRODUCT_CARD_FETCHED_AT,
+  PRODUCT_CARD_TEXT,
+  PRODUCT_CARD_URL,
+  productContextBlock,
+} from "../_shared/product-card.ts";
+import {
   detectSafetyTopics,
   formatSafetyCards,
   safetyFallback,
@@ -94,6 +114,8 @@ const CHAT_MODEL   = "gpt-4o-mini";
 const MAX_CHUNKS     = 8;   // chunks de contexto que se pasan al agente
 const MIN_SIMILARITY = 0.4; // umbral mínimo de relevancia
 const MAX_TOOL_ROUNDS = 2;  // 1 llamada + 1 reintento si el perfil fue inválido
+const PER_SOURCE_MAX = 2;   // ADR-037: máx. 2 chunks por fuente (source_url) en el top-8
+const RULE_PARKS_MAX = 2;   // parques para los chunks de reglas (cierres, dormir, permisos)
 const DEFAULT_K = 3;
 const MAX_K     = 5;
 
@@ -617,6 +639,8 @@ REGLAS ESTRICTAS:
 9. Parte del CONTEXTO son PÁGINAS OFICIALES NPS en inglés: responde en español traduciendo fielmente, con las mismas cifras y unidades (no conviertas pies, millas, galones ni °F). Lee con cuidado a qué lugar exacto (isla, camino, sendero, alojamiento) se refiere cada alerta, cierre o fecha, y no la atribuyas a otro.
 10. Si la respuesta requiere una cuenta (tarifas × personas, agua por persona × personas, sumas o diferencias), usa la herramienta calculate con UNA expresión que tenga la fórmula completa (todas las personas y todos los cargos), p. ej. (a + b) * n. Nunca hagas cuentas de memoria; escribe el resultado que devuelve. Antes de calcular, decide con la PÁGINA OFICIAL quién paga y qué cubre cada tarifa o pase (titular, pasajeros del vehículo, adultos adicionales, menores de 16), y solo entonces arma la fórmula con esas personas. Al comparar dos totales, resta el mayor menos el menor y di cuál sale más barato.
 11. No uses listas numeradas; usa viñetas con «-».
+12. TARIFAS DE ENTRADA: si hay bloque TARIFAS OFICIALES y la herramienta calculate_fees, úsala para CUALQUIER total o monto que pague una persona o un grupo (entrada, Tarifa de NO-RESIDENTE, si conviene un pase). No sumes tarifas a mano ni con calculate. Escribe el TOTAL que devuelve, explica en pocas palabras qué paga cada quien, y cita la liga de la fuente y la fecha de consulta que vienen en FUENTES. Si un parque NO cobra la Tarifa de NO-RESIDENTE, dilo claramente. Si la herramienta devuelve ERROR, responde "Eso no lo tengo confirmado." y da la liga oficial.
+13. PRODUCTO: si hay TARJETA DE PRODUCTO en el CONTEXTO, responde la pregunta sobre el Itinerario Completo Nomaderia solo con lo que dice esa tarjeta (precio, qué incluye, entrega, cambios, pago, WhatsApp). El sistema agrega la tarjeta completa al final. No digas que este chat cobra o reserva: el pago es con tarjeta en nomaderia.com.
 
 DATOS VIVOS — REGLAS IMPORTANTES:
 - Para precios de entrada, alertas y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO o las PÁGINAS OFICIALES NPS del CONTEXTO.
@@ -633,7 +657,7 @@ NUNCA:
 - Recomiendes marcas o productos que no estén en el contexto.
 - Digas que puedes hacer reservas o procesar pagos.
 - Recomiendes senderos específicos como si fueran una recomendación del motor: el motor recomienda parques, no senderos.
-- Prometas conectar al usuario con Frank o con un humano por WhatsApp desde este chat — eso ya no existe aquí; el sistema ofrece el quiz y la captura de correo por su cuenta cuando corresponde.`;
+- Prometas conectar al usuario con Frank o con un humano por WhatsApp desde este chat — eso ya no existe aquí; el sistema ofrece el quiz y la captura de correo por su cuenta cuando corresponde. (Lo que sí puedes decir, si viene en la TARJETA DE PRODUCTO: después de pagar el itinerario se recibe el WhatsApp.)`;
 
 const ENGINE_RULES = `MOTOR DE RANKING (herramienta recommend_parks) — REGLAS DURAS:
 - Si el usuario pide que le recomiendes, compares o elijas parques ("¿a dónde voy?", "¿qué parque para…?"), llama a recommend_parks. Nunca recomiendes parques por tu cuenta ni a partir del CONTEXTO.
@@ -686,7 +710,7 @@ REGLAS:
 
 // ─── OpenAI chat ──────────────────────────────────────────────────────────────
 
-type ChatTool = typeof RECOMMEND_TOOL | typeof CALCULATE_TOOL;
+type ChatTool = typeof RECOMMEND_TOOL | typeof CALCULATE_TOOL | typeof CALCULATE_FEES_TOOL;
 
 async function chat(messages: ChatMessage[], tools: ChatTool[], toolChoice: "auto" | "none"): Promise<ChatMessage> {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -698,7 +722,7 @@ async function chat(messages: ChatMessage[], tools: ChatTool[], toolChoice: "aut
     body: JSON.stringify({
       model:           CHAT_MODEL,
       max_tokens:      700,
-      temperature:     0.3, // baja temperatura → respuestas más precisas, menos creativas
+      temperature:     0, // ADR-037: determinista (mismas respuestas en el examen y en producción)
       response_format: { type: "json_object" },
       messages,
       ...(tools.length ? { tools, tool_choice: toolChoice } : {}),
@@ -1100,8 +1124,13 @@ serve(async (req) => {
     // devuelve los mejores chunks DENTRO del parque en vez de los globales.
     // ADR-036: se embeben la pregunta (ES) y su traducción (EN) en una sola llamada.
     const questionEn = await translationPromise;
-    const embeddings = questionEn ? await embedTexts([question, questionEn]) : [await embedQuery(question)];
+    // ADR-037: reglas (cierres, dormir en el carro, permisos) del parque nombrado o de la guía abierta.
+    const ruleIntents = detectRuleIntents(question);
+    const embedInputs = [question, ...(questionEn ? [questionEn] : []), ...ruleIntents.map((r) => r.queryEn)];
+    const embeddings = embedInputs.length > 1 ? await embedTexts(embedInputs) : [await embedQuery(question)];
     const queryEmbedding = embeddings[0];
+    const enEmbedding: number[] | undefined = questionEn ? embeddings[1] : undefined;
+    const ruleEmbeddings = embeddings.slice(questionEn ? 2 : 1);
     const { data: chunkData } = await supabase.rpc("match_knowledge_chunks", {
       query_embedding:  queryEmbedding,
       match_count:      MAX_CHUNKS,
@@ -1110,9 +1139,9 @@ serve(async (req) => {
     });
     // ADR-036: misma función, mismos parámetros, con el embedding en inglés.
     let chunkDataEn: KnowledgeChunk[] = [];
-    if (embeddings[1]) {
+    if (enEmbedding) {
       const { data: enData } = await supabase.rpc("match_knowledge_chunks", {
-        query_embedding:  embeddings[1],
+        query_embedding:  enEmbedding,
         match_count:      MAX_CHUNKS,
         min_similarity:   MIN_SIMILARITY,
         filter_park_code: contextParkCode,
@@ -1122,40 +1151,72 @@ serve(async (req) => {
     // Las tarjetas de seguridad no compiten en la búsqueda: se adjuntan por tema y
     // parque (safetyAttachment), así nunca aparece la tarjeta de otro parque.
     const notCard = (c: KnowledgeChunk) => c.source_table !== "nps_safety_cards";
-    const mergedChunks = mergeChunkResults(
+    // ADR-037: todos los candidatos (ES + EN, mismo umbral); el top-8 se arma con
+    // máx. PER_SOURCE_MAX chunks por fuente, rellenando con los siguientes.
+    const pool = mergeChunkResults(
       [((chunkData ?? []) as KnowledgeChunk[]).filter(notCard), chunkDataEn.filter(notCard)],
       MIN_SIMILARITY,
-      MAX_CHUNKS,
+      Number.POSITIVE_INFINITY,
     );
+    const mergedChunks = diversifyChunks(pool, MAX_CHUNKS, PER_SOURCE_MAX);
+
+    // ADR-037: chunk de regla por intención (misma función, mismo umbral, filtrada al
+    // parque, consulta fija en inglés) — solo si el texto del chunk enuncia la regla.
+    // Parques: los nombrados / guía abierta, y si no hay, los de lugares nombrados
+    // ("Half Dome") que aparecen en los chunks recuperados.
+    const ruleParks = [...new Set([
+      ...parksForSafety,
+      ...namedPlaceParks(question, mergedChunks).map((c) => LIVE_DATA_PARK_ALIAS[c] ?? c),
+    ])].filter((c) => c in NPS_PARKS).slice(0, RULE_PARKS_MAX);
+    const ruleChunks: KnowledgeChunk[] = [];
+    if (ruleIntents.length && ruleParks.length && ruleEmbeddings.length === ruleIntents.length) {
+      // Una por intención (el mejor de los parques): máx. 3 chunks fijados.
+      const runs = await Promise.all(ruleIntents.map(async (intent, i) => {
+        const perPark = await Promise.all(ruleParks.map(async (park) => {
+          const { data } = await supabase.rpc("match_knowledge_chunks", {
+            query_embedding:  ruleEmbeddings[i],
+            match_count:      MAX_CHUNKS,
+            min_similarity:   MIN_SIMILARITY,
+            filter_park_code: park,
+          });
+          return ((data ?? []) as KnowledgeChunk[]).filter(notCard);
+        }));
+        return pickRuleChunks(intent, perPark.flat(), MIN_SIMILARITY, 1);
+      }));
+      for (const c of runs.flat()) if (!ruleChunks.some((r) => r.id === c.id)) ruleChunks.push(c);
+    }
+
     // Preguntas de tarifas/pases: misma función con filter_park_code "nps"; hasta
     // 3 de esas páginas generales entran al top-8 (mismo umbral 0.4).
+    let reserved: KnowledgeChunk[] = [];
+    const nonres = NONRESIDENT_HINT.test(question);
     if (FEE_TOPIC.test(question)) {
       const { data: npsWide } = await supabase.rpc("match_knowledge_chunks", {
-        query_embedding:  embeddings[1] ?? embeddings[0],
+        query_embedding:  enEmbedding ?? queryEmbedding,
         match_count:      MAX_CHUNKS,
         min_similarity:   MIN_SIMILARITY,
         filter_park_code: "nps",
       });
       const have = new Set(mergedChunks.map((c) => c.id));
-      const nonres = NONRESIDENT_HINT.test(question);
-      const reserved = ((npsWide ?? []) as KnowledgeChunk[])
+      reserved = ((npsWide ?? []) as KnowledgeChunk[])
         .filter((c) => notCard(c) && !have.has(c.id) && c.similarity >= MIN_SIMILARITY)
         // Quien no vive en EE. UU.: primero la FAQ oficial de no residente.
         .sort((a, b) => nonres
           ? Number((b.metadata.source_url ?? "").includes("nonresident")) - Number((a.metadata.source_url ?? "").includes("nonresident")) || b.similarity - a.similarity
           : b.similarity - a.similarity)
         .slice(0, Math.max(0, NPS_WIDE_SLOTS - mergedChunks.filter((c) => c.metadata.park_code === "nps").length));
-      if (reserved.length) {
-        const keep = mergedChunks.slice(0, Math.max(0, MAX_CHUNKS - reserved.length));
-        mergedChunks.splice(0, mergedChunks.length, ...[...keep, ...reserved].sort((a, b) => b.similarity - a.similarity));
-      }
-      // Pase + no residente: las páginas generales (a quién cubre un pase) van
-      // primero en el CONTEXTO para que se lean antes que la tarifa del parque.
-      if (nonres && mentionsPass(question)) {
-        const general = mergedChunks.filter((c) => c.metadata.park_code === "nps");
-        const rest = mergedChunks.filter((c) => c.metadata.park_code !== "nps");
-        mergedChunks.splice(0, mergedChunks.length, ...general, ...rest);
-      }
+    }
+    if (reserved.length || ruleChunks.length) {
+      const final = diversifyChunks([...pool, ...reserved], MAX_CHUNKS, PER_SOURCE_MAX, [...ruleChunks, ...reserved])
+        .sort((a, b) => b.similarity - a.similarity);
+      mergedChunks.splice(0, mergedChunks.length, ...final);
+    }
+    // Pase + no residente: las páginas generales (a quién cubre un pase) van
+    // primero en el CONTEXTO para que se lean antes que la tarifa del parque.
+    if (FEE_TOPIC.test(question) && nonres && mentionsPass(question)) {
+      const general = mergedChunks.filter((c) => c.metadata.park_code === "nps");
+      const rest = mergedChunks.filter((c) => c.metadata.park_code !== "nps");
+      mergedChunks.splice(0, mergedChunks.length, ...general, ...rest);
     }
     // En modo global, nearby_parks nombra otros parques como sugerencia — eso
     // sería recomendar sin el motor (§6.1), así que se descarta.
@@ -1235,14 +1296,40 @@ serve(async (req) => {
     liveDataForEvidence = liveDataBlock;
     liveSyncedForEvidence = liveSyncedAt;
 
+    // ── 5b. ADR-037: tarifas como datos + tarjeta de producto ────────────────
+    const productQ = isProductQuestion(question, {
+      mentionsPark: namedParks.size > 0 || placeParks.length > 0 || Boolean(contextParkCode),
+    });
+    const feeParks = [...new Set(
+      [...namedParks, ...placeParks, ...(contextParkCode ? [contextParkCode] : [])].map((c) => LIVE_DATA_PARK_ALIAS[c] ?? c),
+    )].filter((c) => c in FEE_PARKS);
+    let feeRows: ParkFeeRow[] = [];
+    let passRows: PassRuleRow[] = [];
+    let feeBlock = "";
+    const wantFees = FEE_TOPIC.test(question) && (feeParks.length > 0 || (!productQ && (NONRESIDENT_HINT.test(question) || PASS_HINT.test(question))));
+    if (wantFees) {
+      const [{ data: feeData, error: feeErr }, { data: passData, error: passErr }] = await Promise.all([
+        supabase.from("park_fees").select("*"),
+        supabase.from("pass_rules").select("*"),
+      ]);
+      if (feeErr || passErr) console.warn("concierge fee tables failed:", feeErr?.message ?? passErr?.message);
+      feeRows = ((feeData ?? []) as Array<Record<string, unknown>>).map(normalizeFeeRow);
+      passRows = ((passData ?? []) as Array<Record<string, unknown>>).map(normalizePassRow);
+      if (feeRows.length || passRows.length) {
+        feeBlock = feeFactsBlock(feeRows.filter((r) => feeParks.includes(r.park_code)), passRows);
+      }
+    }
+    const productBlock = productQ ? productContextBlock() : "";
+
     // Sin chunk por encima del umbral no hay respuesta: ni el modelo ni los
-    // datos en vivo solos. La frase es fija (no se adivina).
-    if (!chunks.length) {
+    // datos en vivo solos. La frase es fija (no se adivina). Excepción (ADR-037):
+    // la tabla oficial de tarifas o la tarjeta de producto sí son contexto.
+    if (!chunks.length && !feeBlock && !productBlock) {
       return noInfoResponse();
     }
 
     // ── 6. Construir contexto para el agente ──────────────────────────────────
-    const context = chunks
+    const chunkContext = chunks
       .map((c, i) => {
         const kind = chunkMeta.get(c.id)?.kind ?? c.metadata.kind;
         const label = NPS_SOURCE_TABLES.has(c.source_table)
@@ -1255,6 +1342,7 @@ serve(async (req) => {
         return `[${i + 1}] ${c.metadata.title ?? ""} — ${c.metadata.section ?? c.source_field}${label}\n${c.content}`;
       })
       .join("\n\n---\n\n");
+    const context = [chunkContext, feeBlock, productBlock].filter(Boolean).join("\n\n---\n\n");
 
     const messages: ChatMessage[] = [
       {
@@ -1275,7 +1363,16 @@ serve(async (req) => {
     // ── 7. Respuesta + herramienta del motor (solo en modo global) ────────────
     // En modo parque se conserva la regla de alcance: "Me enfoco solo en este parque".
     // calculate (ADR-036) va en los dos modos; recommend_parks solo en modo global.
-    const tools: ChatTool[] = parkMode ? [CALCULATE_TOOL] : [RECOMMEND_TOOL, CALCULATE_TOOL];
+    const feeTools: ChatTool[] = feeRows.length ? [CALCULATE_FEES_TOOL] : [];
+    const tools: ChatTool[] = parkMode ? [CALCULATE_TOOL, ...feeTools] : [RECOMMEND_TOOL, CALCULATE_TOOL, ...feeTools];
+    const feeSources: Array<{ url: string; fetched_at: string }> = [];
+    const runFees = (rawArgs: string): string => {
+      const input = parseFeeInput(rawArgs);
+      if (typeof input === "string") return `ERROR calculate_fees: ${input}. Corrige los argumentos y vuelve a llamarla.`;
+      const result = computeFees(input, feeRows, passRows);
+      if (result.ok) feeSources.push(...result.sources);
+      return result.text;
+    };
     const scoped = engineDataForParkCodes(displayByCode.keys());
     let engineRun: EngineRun | null = null;
     let toolRounds = 0;
@@ -1289,6 +1386,8 @@ serve(async (req) => {
           ? runRecommendTool(call.function.arguments, scoped, displayByCode)
           : call.function.name === "calculate"
           ? { content: runCalculate(call.function.arguments, [context, liveDataBlock, ...toolCorpus].join("\n"), question), run: null }
+          : call.function.name === "calculate_fees" && feeRows.length
+          ? { content: runFees(call.function.arguments), run: null }
           : { content: `Herramienta desconocida: ${call.function.name}`, run: null };
         if (out.run) engineRun = out.run;
         toolCorpus.push(out.content);
@@ -1363,18 +1462,20 @@ serve(async (req) => {
       });
       // ADR-036: la corrección puede usar calculate (solo esa herramienta, una ronda).
       // Sus resultados son deterministas y salen de cifras ya ancladas.
-      reply = await chat(messages, badNumbers.length ? [CALCULATE_TOOL] : tools, badNumbers.length ? "auto" : "none");
+      reply = await chat(messages, badNumbers.length ? [CALCULATE_TOOL, ...feeTools] : tools, badNumbers.length ? "auto" : "none");
       if (reply.tool_calls?.length) {
         messages.push({ role: "assistant", content: reply.content ?? null, tool_calls: reply.tool_calls });
         for (const call of reply.tool_calls) {
           const content = call.function.name === "calculate"
             ? runCalculate(call.function.arguments, [context, liveDataBlock, ...toolCorpus].join("\n"), question)
+            : call.function.name === "calculate_fees" && feeRows.length
+            ? runFees(call.function.arguments)
             : `Herramienta no disponible en la corrección: ${call.function.name}`;
           toolCorpus.push(content);
           messages.push({ role: "tool", tool_call_id: call.id, content });
         }
         numberCorpus = [context, liveDataBlock, ...toolCorpus].join("\n");
-        reply = await chat(messages, [CALCULATE_TOOL], "none");
+        reply = await chat(messages, [CALCULATE_TOOL, ...feeTools], "none");
       }
       ({ answer, parksMentioned, outOfScope } = parseAnswer(reply.content));
       answer = bulletize(answer);
@@ -1391,6 +1492,21 @@ serve(async (req) => {
 
     const showSources = !outOfScope && answerCheck !== "fallback" && answerCheck !== "blocked_numbers";
     const sources = showSources ? buildSources(chunks, slugByCode, chunkMeta) : [];
+    // ADR-037: fuentes de la tabla de tarifas (si se usó) y de la tarjeta de producto.
+    if (showSources) {
+      const feeUsed = [
+        ...feeSources,
+        ...(feeBlock ? feeRows.filter((r) => feeParks.includes(r.park_code)).map((r) => ({ url: r.source_url, fetched_at: r.fetched_at })) : []),
+      ];
+      for (const f of feeUsed) {
+        if (!f.url || sources.some((x) => x.url === f.url)) continue;
+        const date = shortDateEs(f.fetched_at);
+        sources.push({ title: "NPS — tarifas oficiales", slug: "nps", section: "tarifas (NPS)", url: f.url, date: date ? `consultada ${date}` : undefined });
+      }
+    }
+    if (productQ && !sources.some((x) => x.url === PRODUCT_CARD_URL)) {
+      sources.push({ title: "Nomaderia — Servicios", slug: "servicios", section: "Itinerario Completo Nomaderia", url: PRODUCT_CARD_URL, date: `consultada ${PRODUCT_CARD_DATE_ES}` });
+    }
     const run = engineRun;
     const recommendations: ConciergeRecommendation[] | undefined = run && answerCheck !== "blocked_numbers"
       ? run.result.parks.map((p) => toRecommendationEs(p, run.profile, displayByCode, SITE_URL))
@@ -1415,10 +1531,12 @@ serve(async (req) => {
       unconfirmed: answerCheck === "blocked_numbers" || answer.startsWith("Eso no lo tengo confirmado"),
       recommendations,
       dateLabel,
-      safetyBlock: attach.text,
+      safetyBlock: [productQ ? PRODUCT_CARD_TEXT : "", attach.text].filter(Boolean).join("\n\n"),
       evidence: includeEvidence
         ? {
             chunks: [
+              ...(feeBlock ? [{ id: "park_fees", content: feeBlock, source_table: "park_fees", kind: "evergreen", source_url: feeRows.find((r) => feeParks.includes(r.park_code))?.source_url ?? null, fetched_at: feeRows.find((r) => feeParks.includes(r.park_code))?.fetched_at ?? passRows[0]?.fetched_at ?? null }] : []),
+              ...(productBlock ? [{ id: "product_card", content: productBlock, source_table: "product_card", kind: "evergreen", source_url: PRODUCT_CARD_URL, fetched_at: PRODUCT_CARD_FETCHED_AT }] : []),
               ...chunks.map((c) => ({
                 id: c.id,
                 content: c.content,
