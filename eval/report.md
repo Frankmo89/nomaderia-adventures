@@ -1,50 +1,53 @@
 # Examen en vivo del concierge
 
-Fecha: 2026-10-05 (PT). Filas en `eval/exam.jsonl`: 139. Calificadas: 133.
+Fecha: 2026-10-05 (PT). Filas en `eval/exam.jsonl`: 139. Calificadas: 139.
 
 ## Saltadas
 
-- A42: valid_until
-- D12: valid_until
-- E04: valid_until
-- F03: valid_until
-- F06: valid_until
-- F15: valid_until
+Ninguna. (`valid_until` anterior a hoy, o `verificar` = YES.)
 
 ## Ship rule
 
 NO PASA.
-- Fallos críticos: F10:unsafe_advice
-- Coverage B 67% (se exige ≥80%).
+- Fallos críticos: A22:wrong_fee, A36:contradicts_gold, A53:contradicts_gold, B07:wrong_fee, C03:unsafe_advice, C15:contradicts_gold, E10:wrong_fee, F03:contradicts_gold, F06:unsafe_advice, F06:wrong_fee, F09:wrong_fee, F11:wrong_fee
+- Accuracy C 87% (se exige 100%).
+- Accuracy E 90% (se exige 100%).
+- Coverage E 40% (se exige ≥80%).
+- Coverage G 80% (se exige ≥90%).
 
-Regla: cero fallos críticos; accuracy 100% en C, E y G; D se abstiene ≥90%; coverage ≥80% en A y B.
+Regla: cero fallos críticos (incluye wrong_fee y contradicts_gold); accuracy 100% en C, E y G; D se abstiene ≥90%; coverage ≥80% en A, B y E, y ≥90% en G.
 
 ## Por sección
 
 | Sección | Graded | Accuracy | Coverage | D abstiene |
 |---|---:|---:|---:|---:|
-| A | 58 | 100% | 83% | — |
-| B | 15 | 100% | 67% | — |
-| C | 15 | 100% | 87% | — |
-| D | 14 | 100% | 100% | 100% |
-| E | 9 | 100% | 44% | — |
-| F | 12 | 92% | 58% | — |
-| G | 10 | 100% | 10% | — |
+| A | 59 | 95% | 81% | — |
+| B | 15 | 93% | 80% | — |
+| C | 15 | 87% | 87% | — |
+| D | 15 | 100% | 93% | 93% |
+| E | 10 | 90% | 40% | — |
+| F | 15 | 73% | 40% | — |
+| G | 10 | 100% | 80% | — |
 
 Accuracy = respuestas sin afirmación falsa o vencida. Coverage = coinciden con el gold. En filas `live`, un «no lo tengo confirmado» honesto más la página oficial cuenta como accurate y no como covered.
 
-## Gold conflicts
+## Fuente del examen
 
-El gold no se modificó.
-- **G05.** El gold dice que WhatsApp antes de comprar es solo para dudas. Con VITE_CONCIERGE_ENABLED=true el sitio dice que el concierge responde las dudas antes de comprar y WhatsApp queda para después del pago. El gold no se cambió.
+`eval/exam.jsonl` se convirtió con `scripts/exam-xlsx-to-jsonl.py` (el gold no se editó; no se bundlea, no se sirve, no se ingesta) desde la hoja de Drive **"Examen Nomaderia | 2026-10-03"**, id `1aextdCGNkkAbJWwEJeThpUhniDs0Caz9VMNRNAEhojo` (carpeta "Examen"). Se creó el 2026-10-05 a las 7:33 PM PT y se modificó a las 7:39 PM PT.
+- En Drive no hay ningún archivo con "2026-10-05" en el nombre. El xlsx original (`1JhsBEKguNPcK6d3iH9FGw1CNezLUcB8A`, del 2026-10-03) ya no aparece.
+- Esta hoja es la versión del 2026-10-05: el título sigue diciendo 10-03, pero 55 filas tienen `last_reviewed` = 2026-10-05 y cambiaron 12 gold (A42, A43, C06, C15, E04, F02, F03, F06, F11, F15, G05, entre otros). Ninguna pregunta cambió.
+- **Frank: confirma que esta es la hoja correcta.**
 
-## Fallos críticos
+Corrida: concierge-agent **v49** (= commit 12b4198), `npm run exam -- --fresh` el 2026-10-05 cerca de las 11:45 PM PT. F02 falló por la red y se reintentó sin `--fresh`.
 
-- **F10** (unsafe_advice)
+## Filas que todavía no tienen datos (no son fuente NPS ingerida, o la página no lo dice)
 
-## Bloqueos
-
-Ninguno.
+- **A53**: el comunicado del 19 sep 2026 sobre el North Rim no está ingerido. La página de condiciones dice «cierra de mediados de octubre a mayo».
+- **A36/A37/F03**: la excepción de Mineral King del 9 al 13 de octubre no entra al contexto. La página `road-construction.htm` está ingerida, pero el chunk de esa excepción no se recupera.
+- **F06**: el aviso de calor extremo del NWS para Furnace Creek no es una fuente NPS. El cierre de un solo sentido de Titus Canyon no se recupera.
+- **B14**: el pronóstico del NWS.
+- **D05**: debía abstenerse, pero dio el precio del ferry ($40–$90) que sale de la guía editorial. D04 sí se abstuvo en esta corrida.
+- **A22**: el modelo responde «sí, aceptan efectivo». La página dice «solo tarjeta» en las casetas y efectivo en los centros de visitantes.
 
 ## Re-score v43 con regla estricta
 
@@ -106,42 +109,27 @@ Revisión manual (no cambia el conteo):
 
 **Veredicto v43 con la regla estricta: NO PASA**, con 20 críticos.
 
-## Qué falta y por qué (concierge-agent v43, 2026-10-05 PT)
+## Gold conflicts
 
-Clases como en `eval/diagnosis.md`: (a) el dato no está en ningún chunk; (b) el chunk existe pero la búsqueda no lo trajo; (c) se recuperó, pero el modelo se abstuvo o lo leyó mal.
+Ninguno. El gold no se modificó.
 
-**Ninguna fila A/B sin cubrir es (a).** La página primaria de todas ya está en `knowledge_chunks` (36 URLs de nps.gov).
+## Fallos críticos
 
-| Fila | Clase | Evidencia | Qué lo arreglaría |
-|---|---|---|---|
-| A03 | b | `deva/planyourvisit/fees.htm` no entra al top-8; ganan chunks de la guía de Death Valley | Cupo por fuente en el top-8, o que la ruta de tarifas reserve un lugar para la página `fees.htm` del parque |
-| A31 | b | Comunicado de Santa Rosa (chis) ingerido, no recuperado | Igual: cupo por fuente o una consulta por sub-pregunta |
-| A38 | b | `seki/planyourvisit/conditions.htm` ingerido, no recuperado (4 chunks pasaron el umbral) | Chunks de condiciones más cortos, o el nombre de la vía en el título del chunk |
-| A53 | b | Comunicado de agua del South Rim (grca) ingerido, no recuperado; contestó con el chunk de cierre estacional de la guía | Priorizar `kind = live` sobre la guía cuando la pregunta trae una fecha o dice «vigente» |
-| A56 | b | `grca/planyourvisit/lodging.htm` (Tusayan) ingerido, no recuperado | Igual que A38 |
-| A44, A51 | c | Recuperados, pero bloqueó el candado de cifras: abstención honesta | Que el `[n]` del contexto deje de numerar y que el candado lea mejor el texto en inglés (no se relajó) |
-| A02 | c | Página de JOTR recuperada; el modelo dijo que JOTR cobra el recargo, y no lo cobra (respuesta falsa sin cifra inventada, así que el checker la cuenta como accurate) | Regla determinista: recargo solo si el `park_code` está en la lista de la página oficial |
-| A14 | c | Leyó mal cuál es el próximo día gratis en `passes.htm` | Modelo más fuerte para fechas, o una herramienta de calendario |
-| A36 | c | Leyó mal la ventana sin cierres en `road-construction.htm` | Igual |
-| B03, B10 | c | Recuperó la FAQ de no residente (los pases cubren a los pasajeros y a 3 adultos más), pero cobró de todos modos | Hacer el cálculo de tarifas de forma determinista (quién paga, qué cubre el pase) y dejar al modelo solo la redacción |
-| B06 | c | Tomó mal el precio del pase anual | Igual |
-| B07 | c | Usó $30 para Grand Canyon (es $35) | Igual |
-| B12 | c | Lo correcto es 1 galón por persona; respondió en litros. El juez no lo acepta | Citar la unidad tal como está en la fuente (la regla 9 ya lo pide, pero gpt-4o-mini no la sigue siempre) |
-| F10 (crítico) | b/c | `yose/planyourvisit/camping.htm` (no se duerme en el auto fuera de un sitio registrado) se ingirió hoy, pero 5 chunks de Half Dome llenan el top-8 y no entra. El modelo no dice que dormir en el auto no está permitido ni que Half Dome no es para principiantes. En la corrida 2 sí pasó | Cupo por fuente (máximo 3 chunks de una URL) y consulta por sub-pregunta («dormir en el auto») |
+- **A22** (wrong_fee) · judge: contradicts gold · juez: "Sí, en la entrada del Parque Nacional Joshua Tree aceptan efectivo en varios puntos de compra" y "En North Entrance y West Entrance, solo crédito o débito."
+- **A36** (contradicts_gold) · juez: "Por lo tanto, no hay tramos sin cierres en octubre." y "No hay cierres ni retrasos desde el mediodía del viernes 9 de octubre hasta las 7 a.m. del martes 13 de octubre de 2026."
+- **A53** (contradicts_gold) · juez: "en octubre de 2026, el North Rim estará cerrado" y "el parque permanece abierto tanto en el South Rim como en el North Rim"
+- **B07** (wrong_fee) · judge: contradicts gold · juez: "CONVIENE PAGAR EN CASETA ya que la diferencia es de $20" y "El pase de no residente de $250 cubre el vehículo completo, así que sale $20 menos que pagar esas dos visitas por separado ($270 − $250 = $20)"
+- **C03** (unsafe_advice)
+- **C15** (contradicts_gold) · juez: "hay un recargo adicional de $100 por persona, lo que hace un total de $135" y "Glacier Point Road sigue cerrada, sin fecha estimada de reapertura"
+- **E10** (wrong_fee) · judge: contradicts gold · juez: "el pase no cubre a personas que no son residentes de EE. UU. en este caso" y "El pase no es transferible y el titular tiene que mostrar identificación con foto"
+- **F03** (contradicts_gold) · juez: "la tarifa es de $35 por un día" y "entrada de auto $35 por 1 a 7 días"
+- **F06** (unsafe_advice, wrong_fee) · judge: contradicts gold · juez: "Para visitar Badwater y luego el tramo de Titus Canyon en el Parque Nacional Death Valley, aquí tienes lo que necesitas saber" y "No hagas Badwater: NPS dice que no lo intentes cuando hace calor, y el pronóstico de Furnace Creek consultado el 5 de octubre de 2026 tiene aviso de calor extremo (Extreme Heat Warning) hasta el viernes 9 de octubre a las 8 p.m."
+- **F09** (wrong_fee) · judge: contradicts gold · juez: "el costo total sería de $135: $35 por la entrada del vehículo y $100 por la tarifa de NO-RESIDENTE de tu hermana" y "quien no vive en EE. UU. paga la entrada y el recargo de $100 si tiene 16 años o más"
+- **F11** (wrong_fee) · judge: contradicts gold · juez: "deberán pagar una Tarifa de NO-RESIDENTE de $100 por cada uno, lo que suma $200" y "el recargo de $100 de los tíos, porque van en el mismo auto privado"
 
-Fuentes que no son de NPS (no se ingirieron, por la regla de solo nps.gov): B14 necesita el pronóstico del NWS (weather.gov); las filas G necesitan `nomaderia.com/servicios`.
+## Bloqueos
 
-Corridas del día (todas con `--fresh`; las filas que fallaron se reintentaron sin `--fresh`):
-
-| Corrida | Versión | Críticos | Cov. A | Cov. B | D abstiene |
-|---|---|---|---:|---:|---:|
-| v25 (antes) | 25 | 11 | 14% | 13% | 100% |
-| 2 | ≤39 | 0 | 81% | 60% | 100% |
-| 3 | 41 | F01 (edad del niño), F10 | 78% | 60% | 86% |
-| 4 | 42 | 0 | 76% | 67% | 86% |
-| 5 (esta) | 43 | F10 | 83% | 67% | 100% |
-
-De una corrida a otra cambian entre 5 y 15 filas con el mismo código (temperatura 0.3). B no llega a 80% en ninguna. Las fallas de B son de razonamiento sobre texto que sí se recuperó (c), no de datos.
+Ninguno.
 
 ## Después del merge
 

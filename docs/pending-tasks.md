@@ -12,6 +12,38 @@
 
 ---
 
+## Changelog 2026-10-05 (noche): tarifas como datos, diversidad, tarjeta de producto, regla estricta (PR #204, draft, ADR-037)
+
+Rama `feat/concierge-flag-exam`. No se mergeó nada y `VITE_CONCIERGE_ENABLED` sigue apagado. No se tocó Stripe, auth, rutas ni las queries/RPC (`match_knowledge_chunks` sigue igual, con 8 y 0.4). La abstención y el candado de cifras no cambian.
+
+**Hecho:**
+- **Scorer estricto.** Nuevos críticos `wrong_fee` y `contradicts_gold`. El juez es gpt-4o, con un glosario de sinónimos y la obligación de citar el par de frases. Nuevo `--rescore`. El re-score de v43 está en `eval/report.md`: 20 críticos.
+- **Ship rule:** 0 críticos; accuracy 100% en C, E y G; D se abstiene ≥90%; coverage ≥80% en A, B y E, y ≥90% en G.
+- **Migración `20261006120000_park_fees_pass_rules.sql`** (aplicada por MCP, RLS solo lectura). `ingest-nps-pages` (v7) llena `park_fees` desde `fees.htm` y lo cruza con la lista oficial de `passes.htm`. También llena `pass_rules` desde `passes.htm` y el FAQ de no residente. El refresh corre con el mismo cron diario, `nps-pages-refresh-daily`.
+- **`concierge-agent` v49:**
+  - Herramienta `calculate_fees`: el código suma, y una revisión determinista compara los argumentos con la pregunta.
+  - Bloque TARIFAS OFICIALES.
+  - Máximo 2 chunks por fuente en el top 8.
+  - Chunks de regla para cierres, dormir en el carro, permisos y fuego.
+  - Tarjeta de producto fija tomada de `nomaderia.com/servicios`.
+  - Línea HOY y próximo día gratis calculados por código.
+  - Temperatura 0.
+- **Guard de inmigración:** si la pregunta es de tarifas, gana la tarifa (5 tests nuevos). El texto fijo no cambió.
+- **Examen:** `eval/exam.jsonl` sale de la hoja «Examen Nomaderia | 2026-10-03» (id `1aextdCGNkkAbJWwEJeThpUhniDs0Caz9VMNRNAEhojo`, modificada el 2026-10-05). Frank tiene que confirmar que es la hoja correcta.
+
+**Examen v49: NO PASA.** Hay 11 críticos: A22, A36, A53, B07, C03, C15, E10, F03, F06, F09 y F11. Accuracy C 87% y E 90%. Coverage E 40% y G 80%. Los demás umbrales pasan: A 95/81, B 93/80, D se abstiene 93%, G accuracy 100%.
+
+**Seguimiento abierto:**
+- [ ] B07: el modelo vuelve a llamar a `calculate_fees` parque por parque y su conclusión contradice la comparación de la primera llamada. Hay que forzar una sola llamada (fusionar las visitas en el código) o quitar la herramienta después de la primera llamada que salga bien.
+- [ ] C03: la serpiente de cascabel no activa la tarjeta de seguridad ni el 911 (detector de fauna).
+- [ ] Mineral King, 9 al 13 de octubre (A36/F03): recuperar ese chunk de `road-construction.htm`.
+- [ ] A53: ingerir los comunicados de grca (nps.gov/grca/learn/news).
+- [ ] F06 y B14: el NWS no es fuente NPS. Frank decide si se agrega.
+- [ ] Revisar a mano los posibles falsos positivos del juez: E10, F09, F11 y C15 (sus respuestas sobre tarifas coinciden con la tabla oficial).
+- Rollback: los snapshots de `concierge-agent` v25, v39, v41, v42, v43 y v46, y de `ingest-nps-pages` v6, están en `/workspace/rollback/`.
+
+---
+
 ## Changelog 2026-10-05 — Concierge: fuentes oficiales NPS, seguridad textual, fecha real (PR #204, draft)
 
 Rama `feat/concierge-flag-exam`. **No se mergeó nada.** `VITE_CONCIERGE_ENABLED` sigue apagado. No se tocó Stripe, auth, rutas ni las queries/RPC existentes (`match_knowledge_chunks` igual, 8 / 0.4). ADR-036.
@@ -1569,3 +1601,4 @@ Sesión Claude Projects: auditoría + generación masiva de contenido SOUL.
 - [ ] Re-ingestión RAG con la base completa (después de validar el ingest con Gran Cañón)
 - [2026-07-02] Añadido `public/_headers` con Cache-Control headers para Cloudflare Pages: no-store en `/` e `/index.html`, immutable en `/assets/*`.
 - [2026-10-05] concierge-agent v25 desplegado desde PR 204 (solo esa función, verify_jwt=true, flag apagado); exam: NO PASA (133/139 calificadas; 14 fallos críticos; accuracy C 80%, E 89%, G 90%; D abstiene 100%; coverage A 14%, B 13%). Ver eval/report.md.
+- [2026-10-05] concierge-agent v49 + ingest-nps-pages v7 (ADR-037: park_fees/pass_rules, calculate_fees, diversidad, tarjeta de producto). Examen v49: NO PASA (11 críticos). Ver eval/report.md.
