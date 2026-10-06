@@ -144,7 +144,7 @@ src/
 │   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
 │   ├── quiz-ranking.ts       # Adaptador quiz → motor de ranking vendorizado (@engine, ADR-026)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
-└── supabase/functions/       # Edge Functions — 20 en total
+└── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts
     │                         #  (engine.ts byte a byte + engine-data.generated.ts + engine.lock.json).
     │                         #  NO editar a mano. Vite lo importa como `@engine/*`; Deno por ruta relativa.
@@ -153,7 +153,7 @@ src/
     ├── _shared/engine-es.ts  # Presentación en español del motor + scoping (Vite: `@shared/*`; lo usan quiz, quiz-preview y concierge)
     ├── _shared/park-mentions.ts # Detector de parques nombrados — revisión de respuestas del concierge (ADR-029)
     ├── concierge-agent/      # Concierge IA (RAG + tool `recommend_parks` → motor, ADR-029). UI apagada salvo VITE_CONCIERGE_ENABLED=true (ADR-035)
-    ├── ingest-*              # 4: knowledge, national-parks, park-permits, campgrounds
+    ├── ingest-*              # 5: knowledge, national-parks, park-permits, campgrounds, nps-pages (páginas nps.gov + tarjetas de seguridad, cron diario, ADR-036)
     ├── sync-park-*           # 3: live-data, trails, weather
     ├── generate-*            # 3: park-content, gear-draft, blog-draft
     ├── discover-*            # 3: trending-gear, trending-blog, permit-windows
