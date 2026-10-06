@@ -445,7 +445,7 @@ export function feeFactsBlock(feeRows: ParkFeeRow[], passRows: PassRuleRow[]): s
     const nr = f.nonresident_fee_on_page && f.on_nonresident_list === true
       ? `Tarifa de NO-RESIDENTE ${fmt(f.nonresident_fee ?? 0)} por persona de 16+ que no vive en EE. UU. (además de la entrada)`
       : "NO cobra Tarifa de NO-RESIDENTE (no está en la lista oficial)";
-    lines.push(`- ${f.park_name}: carro ${fmt(f.vehicle ?? 0)} (una vez por carro, cubre a todos dentro); moto ${fmt(f.motorcycle ?? 0)}; por persona a pie/bici ${fmt(f.per_person ?? 0)}${f.min_paying_age ? ` (${f.min_paying_age}+; menores de ${f.min_paying_age} no pagan)` : ""}; pase anual del parque ${f.annual_park_pass === null ? "—" : fmt(f.annual_park_pass)}; ${nr}. (${f.source_url}, consultada ${dayEs(f.fetched_at)})`);
+    lines.push(`- ${f.park_name}: carro ${fmt(f.vehicle ?? 0)} (una vez por carro, cubre a todos dentro${f.valid_days ? `; la entrada vale ${f.valid_days} días` : ""}); moto ${fmt(f.motorcycle ?? 0)}; por persona a pie/bici ${fmt(f.per_person ?? 0)}${f.min_paying_age ? ` (${f.min_paying_age}+; menores de ${f.min_paying_age} no pagan)` : ""}; pase anual del parque ${f.annual_park_pass === null ? "—" : fmt(f.annual_park_pass)}; ${nr}. (${f.source_url}, consultada ${dayEs(f.fetched_at)})`);
   }
   const res = passRows.find((p) => p.pass_code === "atb_resident");
   const non = passRows.find((p) => p.pass_code === "atb_nonresident");
@@ -459,7 +459,18 @@ export function feeFactsBlock(feeRows: ParkFeeRow[], passRows: PassRuleRow[]): s
 // ─── Question-aware review of the model's arguments ──────────────────────────
 
 const BUY_PASS = /\bconviene|vale la pena|\bcomprar\b|\bcompro\b|\bsacar (el|un) pase|sale m[aá]s barato|ahorr\w*/i;
-const HAS_PASS = /\b(ya )?(tengo|tenemos|traigo|traemos|llevo|llevamos)\b[^.?!]{0,40}\bpase|\bcon (mi|nuestro|el) pase\b|\bpase que (ya )?tenemos/i;
+const HAS_PASS = /\b(ya )?(tengo|tienes?|tenemos|tiene|traigo|traemos|llevo|llevamos)\b[^.?!]{0,40}(\bpase|america the beautiful|annual pass)|\bcon (mi|nuestro|el|su) (pase|america the beautiful)\b|\b(pase|america the beautiful) que (ya )?(tengo|tenemos)/i;
+const NUM_WORDS: Record<string, number> = { dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10 };
+
+/** "cinco adultos", "4 personas" → the largest stated group size (adults/people), or null. */
+export function statedGroupSize(question: string): number | null {
+  let best: number | null = null;
+  for (const m of question.matchAll(/\b(\d{1,2}|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\s+(adultos|personas|amigos|viajeros)\b/gi)) {
+    const n = /^\d+$/.test(m[1]) ? Number(m[1]) : NUM_WORDS[m[1].toLowerCase()];
+    if (n && (best === null || n > best)) best = n;
+  }
+  return best;
+}
 
 /**
  * Deterministic fixes of tool arguments against the user's own question:
@@ -472,6 +483,10 @@ export function reviewFeeInput(input: FeeInput, question: string, opts: { mentio
   let out = input;
   if (out.pass_held !== "none" && BUY_PASS.test(question) && !HAS_PASS.test(question)) {
     out = { ...out, pass_held: "none", pass_park_code: undefined, compare_passes: true };
+  }
+  const stated = statedGroupSize(question);
+  if (stated !== null && out.us_resident_adults + out.nonresident_adults < stated && !/\bniñ|menor|hij[oa]s?\b/i.test(question)) {
+    return `la pregunta habla de ${stated} adultos/personas y contaste ${out.us_resident_adults + out.nonresident_adults}: cuenta a TODOS, incluido el titular del pase, y vuelve a llamar`;
   }
   if (opts.mentionsNonresident && out.nonresident_adults === 0) {
     return "la pregunta dice que alguien de 16+ NO vive en EE. UU.: cuéntalo en nonresident_adults (y en us_resident_adults solo a quien sí vive en EE. UU.) y vuelve a llamar";
@@ -548,8 +563,8 @@ export const CALCULATE_FEES_TOOL = {
             additionalProperties: false,
           },
         },
-        us_resident_adults: { type: "integer", description: "Personas de 16+ que VIVEN en EE. UU. (sin importar ciudadanía)." },
-        nonresident_adults: { type: "integer", description: "Personas de 16+ que NO viven en EE. UU. (p. ej. viven en México)." },
+        us_resident_adults: { type: "integer", description: "Personas de 16+ que VIVEN en EE. UU. (sin importar ciudadanía). Cuenta a TODOS, incluido quien tiene el pase." },
+        nonresident_adults: { type: "integer", description: "Personas de 16+ que NO viven en EE. UU. (p. ej. viven en México). Cuenta a TODOS, incluido quien tiene el pase." },
         children_under_16: { type: "integer", description: "Menores de 16 años." },
         pass_held: { type: "string", enum: ["none", "atb_resident", "atb_nonresident", "park_annual"], description: "Pase que YA tienen (none si no dicen). Para saber si conviene COMPRAR un pase deja none y usa compare_passes: true." },
         pass_park_code: { type: "string", description: "Solo con park_annual: parque del pase anual." },

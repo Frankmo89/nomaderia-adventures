@@ -5,6 +5,7 @@ import {
   parseNonresidentList,
   parseParkFeesPage,
   reviewFeeInput,
+  statedGroupSize,
   parsePassRules,
   withNonresidentList,
   type ParkFeeRow,
@@ -120,5 +121,22 @@ describe("reviewFeeInput", () => {
   });
   it("asks for a recount when the question mentions nonresidents but none were counted", () => {
     expect(typeof reviewFeeInput({ ...base, us_resident_adults: 3, nonresident_adults: 0, pass_held: "none" }, "Vivimos en Puebla, ¿cuánto pagamos?", { mentionsNonresident: true })).toBe("string");
+  });
+});
+
+describe("group size check", () => {
+  it("reads the stated group size", () => {
+    expect(statedGroupSize("Somos seis adultos de Sonora")).toBe(6);
+    expect(statedGroupSize("Vamos 3 personas en carro")).toBe(3);
+    expect(statedGroupSize("¿Cuánto paga mi tía?")).toBeNull();
+  });
+  it("asks for a recount when the pass holder was left out", () => {
+    const input = { visits: [{ park_code: "yose", entry: "on_foot" as const }], us_resident_adults: 0, nonresident_adults: 5, children_under_16: 0, pass_held: "atb_nonresident" as const };
+    expect(typeof reviewFeeInput(input, "Seis adultos que viven en Chiapas entran caminando y uno trae el pase de no residente, ¿cuánto pagan los demás?", { mentionsNonresident: true })).toBe("string");
+    expect(reviewFeeInput({ ...input, nonresident_adults: 6 }, "Seis adultos que viven en Chiapas entran caminando y uno trae el pase de no residente, ¿cuánto pagan los demás?", { mentionsNonresident: true })).toMatchObject({ nonresident_adults: 6, pass_held: "atb_nonresident" });
+  });
+  it("treats 'tengo el America the Beautiful' as a pass already held", () => {
+    const input = { visits: [{ park_code: "yose", entry: "vehicle" as const }], us_resident_adults: 1, nonresident_adults: 2, children_under_16: 0, pass_held: "atb_resident" as const };
+    expect(reviewFeeInput(input, "Yo tengo el America the Beautiful y mis tíos viven en Oaxaca; ¿tienen que comprar otro pase?", { mentionsNonresident: false })).toMatchObject({ pass_held: "atb_resident" });
   });
 });
