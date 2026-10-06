@@ -396,7 +396,7 @@ export function computeFees(input: FeeInput, feeRows: ParkFeeRow[], passRows: Pa
     `TOTAL: ${base.terms.join(" + ")} = ${fmt(base.total)}`,
   ];
   if (input.compare_passes) {
-    const options: Array<{ code: PassHeld; eligible: boolean }> = [
+    const options: Array<{ code: "atb_resident" | "atb_nonresident"; eligible: boolean }> = [
       { code: "atb_resident", eligible: input.us_resident_adults > 0 },
       { code: "atb_nonresident", eligible: input.nonresident_adults > 0 },
     ];
