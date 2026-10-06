@@ -6,6 +6,10 @@
 // upserts rows with source_url / fetched_at / park_code / kind. Then builds
 // the per-park safety cards (_shared/safety-cards.ts): NPS text verbatim plus
 // a faithful Spanish rendering whose numbers must match the original.
+// Also refreshes the fee tables (ADR-037): park_fees from each park's
+// fees.htm (cross-checked with the passes.htm nonresident list) and
+// pass_rules from passes.htm + the nonresident-fees FAQ. A row that fails
+// to parse keeps its last good values (only parse_ok rows overwrite).
 //
 // Leave-last-known-good: a page that fails to fetch keeps its old rows. Live
 // rows older than 7 days are deleted (here and by the daily pg_cron job).
@@ -29,6 +33,16 @@ import {
 } from "../_shared/nps-pages.ts";
 import { buildCardCandidates, cardContent, SAFETY_TOPIC_ES, type CardCandidate } from "../_shared/safety-cards.ts";
 import { ungroundedNumbers } from "../_shared/concierge-guard.ts";
+import {
+  FEE_PARKS,
+  feesUrl,
+  NONRESIDENT_FAQ_URL,
+  parseNonresidentList,
+  parseParkFeesPage,
+  parsePassRules,
+  PASSES_URL,
+  withNonresidentList,
+} from "../_shared/park-fees.ts";
 
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const SUPA_URL = Deno.env.get("SUPABASE_URL")!;
@@ -304,6 +318,59 @@ serve(async (req) => {
     }
   }
 
+  // ── Fee tables (ADR-037) ───────────────────────────────────────────────────
+  const feeResults: Array<{ park_code: string; ok: boolean; issues: string[] }> = [];
+  const passResults: Array<{ pass_code: string; ok: boolean }> = [];
+  try {
+    const textByUrl = new Map<string, { text: string; fetched_at: string }>();
+    for (const list of extractedByPark.values()) for (const x of list) textByUrl.set(x.page.url, { text: x.text, fetched_at: x.fetched_at });
+    const feeParks = Object.keys(FEE_PARKS).filter((c) => textByUrl.has(feesUrl(c)));
+    const wantRules = textByUrl.has(PASSES_URL) || textByUrl.has(NONRESIDENT_FAQ_URL);
+    const ensure = async (url: string) => {
+      if (textByUrl.has(url)) return textByUrl.get(url)!;
+      const fetchedAt = new Date().toISOString();
+      const ex = extractNpsPage(await fetchPage(url));
+      const got = { text: ex.text, fetched_at: fetchedAt };
+      textByUrl.set(url, got);
+      return got;
+    };
+    if (feeParks.length || wantRules) {
+      // The nonresident list lives on passes.htm: always check each park against it.
+      const passes = await ensure(PASSES_URL);
+      const list = parseNonresidentList(passes.text);
+      for (const code of feeParks) {
+        const page = textByUrl.get(feesUrl(code))!;
+        let row = parseParkFeesPage(code, page.text, page.fetched_at);
+        if (list.names.length) row = withNonresidentList(row, list.names);
+        else row = { ...row, parse_ok: false, issues: [...row.issues, "lista oficial de no residentes no encontrada en passes.htm"] };
+        feeResults.push({ park_code: code, ok: row.parse_ok, issues: row.issues });
+        if (!row.parse_ok) {
+          // Keep last good values; only flag the problem.
+          await supabase.from("park_fees").update({ issues: row.issues, updated_at: new Date().toISOString() }).eq("park_code", code);
+          console.warn(`ingest-nps-pages: park_fees ${code} not verified: ${row.issues.join("; ")}`);
+          continue;
+        }
+        const { error } = await supabase.from("park_fees").upsert({ ...row, updated_at: new Date().toISOString() }, { onConflict: "park_code" });
+        if (error) console.warn(`ingest-nps-pages: park_fees ${code}: ${error.message}`);
+      }
+      if (wantRules) {
+        const faq = await ensure(NONRESIDENT_FAQ_URL);
+        const rules = parsePassRules(passes.text, faq.text, faq.fetched_at);
+        for (const r of rules) {
+          passResults.push({ pass_code: r.pass_code, ok: r.parse_ok });
+          if (!r.parse_ok) {
+            console.warn(`ingest-nps-pages: pass_rules ${r.pass_code} not verified; keeping last good row`);
+            continue;
+          }
+          const { error } = await supabase.from("pass_rules").upsert({ ...r, updated_at: new Date().toISOString() }, { onConflict: "pass_code" });
+          if (error) console.warn(`ingest-nps-pages: pass_rules ${r.pass_code}: ${error.message}`);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`ingest-nps-pages: fee tables failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   // ── Drop live chunks older than LIVE_MAX_AGE_DAYS ─────────────────────────
   let pruned = 0;
   if (body.prune !== false) {
@@ -324,6 +391,8 @@ serve(async (req) => {
     chunks: results.reduce((n, r) => n + (r.chunks ?? 0), 0),
     embedded: results.reduce((n, r) => n + (r.embedded ?? 0), 0),
     cards: cardResults,
+    park_fees: feeResults,
+    pass_rules: passResults,
     pruned_live: pruned,
   }, failed.length && failed.length === results.length ? 502 : 200);
 });
