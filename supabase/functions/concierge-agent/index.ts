@@ -164,6 +164,27 @@ interface SafetyCardRow {
   metadata:     { verbatim?: string; es?: string | null; topic?: string } | null;
 }
 
+/**
+ * Fee/pass questions: service-wide NPS pages (nonresident FAQ, passes; park_code
+ * "nps") get up to NPS_WIDE_SLOTS of the top-8, since park pages crowd them out.
+ */
+const FEE_TOPIC = /recargo|no[- ]residente|extranjer|vivo en m[eé]xico|viven en m[eé]xico|\bpases?\b|\bpass\b|america the beautiful|tarifa|cu[aá]nto (cuesta|pago|pagan|paga|cobra)|\bcobra|entrada gratis|d[ií]as? (de entrada )?gratis|senior|descuento/i;
+const NPS_WIDE_SLOTS = 3;
+
+/** The question mentions people who live outside the U.S. (nonresident fee applies to them). */
+const NONRESIDENT_HINT = new RegExp(
+  String.raw`no[- ]residente|extranjer|turista|fuera de (ee\.?\s?uu|estados unidos)|otro pa[ií]s|` +
+  String.raw`viv\w* en (m[eé]xico|guatemala|el salvador|honduras|nicaragua|costa rica|panam[aá]|colombia|venezuela|ecuador|per[uú]|bolivia|chile|argentina|uruguay|paraguay|cuba|rep[uú]blica dominicana|espa[nñ]a|canad[aá])|` +
+  String.raw`\b(mexican|guatemaltec|salvadore[nñ]|hondure[nñ]|colombian|venezolan|peruan|argentin|chilen|cuban|dominican)[oa]s?\b`,
+  "i",
+);
+const PASS_HINT = /\bpases?\b|america the beautiful|annual pass|pase anual/i;
+/** Menciona un pase que SÍ tiene ("sin pase" / "no tenemos pase" no cuenta). */
+function mentionsPass(question: string): boolean {
+  return PASS_HINT.test(question.replace(/\b(sin|no\s+\w+)\s+(un\s+|el\s+|ningún\s+)?pases?\b/gi, ""));
+}
+const US_RESIDENT_HINT = /viv\w* en (ee\.?\s?uu|estados unidos|usa|los estados unidos)|soy residente|residente de (ee|estados)/i;
+
 /** Official NPS page chunks written by ingest-nps-pages. */
 const NPS_SOURCE_TABLES = new Set(["nps_pages", "nps_safety_cards"]);
 
@@ -591,14 +612,16 @@ REGLAS ESTRICTAS:
 6. Máximo 3 párrafos. Respuestas claras y útiles, no largas.
 7. Cualquier cifra (precio, distancia, hora, fecha, edad, dosis) tiene que aparecer en el CONTEXTO, en DATOS EN VIVO o en el resultado del motor. Si no está, no la escribas.
 8. En calor, agua, fauna, clima o emergencias no inventes cantidades ni des consejos de seguridad propios: di solo lo que diga el CONTEXTO. El sistema agrega la tarjeta oficial de seguridad del NPS y el aviso de llamar al 911.
-9. Parte del CONTEXTO son PÁGINAS OFICIALES NPS en inglés: responde en español traduciendo fielmente, con las mismas cifras y unidades. Lee con cuidado a qué lugar exacto (isla, camino, sendero, alojamiento) se refiere cada alerta, cierre o fecha, y no la atribuyas a otro.
-10. Si la respuesta requiere una cuenta (tarifas × personas, agua por persona × personas, sumas o diferencias), usa la herramienta calculate. Nunca hagas cuentas de memoria; escribe el resultado que devuelve.
+9. Parte del CONTEXTO son PÁGINAS OFICIALES NPS en inglés: responde en español traduciendo fielmente, con las mismas cifras y unidades (no conviertas pies, millas, galones ni °F). Lee con cuidado a qué lugar exacto (isla, camino, sendero, alojamiento) se refiere cada alerta, cierre o fecha, y no la atribuyas a otro.
+10. Si la respuesta requiere una cuenta (tarifas × personas, agua por persona × personas, sumas o diferencias), usa la herramienta calculate con UNA expresión que tenga la fórmula completa (todas las personas y todos los cargos), p. ej. (a + b) * n. Nunca hagas cuentas de memoria; escribe el resultado que devuelve. Antes de calcular, decide con la PÁGINA OFICIAL quién paga y qué cubre cada tarifa o pase (titular, pasajeros del vehículo, adultos adicionales, menores de 16), y solo entonces arma la fórmula con esas personas. Al comparar dos totales, resta el mayor menos el menor y di cuál sale más barato.
+11. No uses listas numeradas; usa viñetas con «-».
 
 DATOS VIVOS — REGLAS IMPORTANTES:
 - Para precios de entrada, alertas y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO o las PÁGINAS OFICIALES NPS del CONTEXTO.
 - Cada vez que des una tarifa o una alerta, agrega la liga oficial de nps.gov (del bloque o de la página oficial): son datos que pueden haber cambiado. La fecha de verificación la agrega el sistema.
 - Cada línea de tarifa del bloque DATOS EN VIVO es DISTINTA y NO se combina ni se sustituye una por otra. Son tarifas separadas: "Entrada por vehículo", "Entrada por persona" y "Tarifa de NO-RESIDENTE".
-- Cuando te pregunten por el recargo de NO-RESIDENTE o de extranjero (p. ej. "soy mexicano, ¿pago más?"), usa EXCLUSIVAMENTE la línea etiquetada "Tarifa de NO-RESIDENTE". NUNCA respondas ese recargo con la tarifa "por persona" ni con ninguna otra tarifa de entrada.
+- Cuando te pregunten por el recargo de NO-RESIDENTE o de extranjero (p. ej. "soy mexicano, ¿pago más?"), usa EXCLUSIVAMENTE la línea etiquetada "Tarifa de NO-RESIDENTE" o lo que diga la página oficial de tarifas de no residente. NUNCA respondas ese recargo con la tarifa "por persona" ni con ninguna otra tarifa de entrada.
+- El recargo de NO-RESIDENTE solo aplica a quien NO vive en EE. UU. y solo en los parques que la página oficial nombra. Si el usuario dice que vive en EE. UU., no lo sumes. Si el parque no está en esa lista, dilo.
 - Cierres, condiciones y estado de caminos: úsalos solo si vienen en una PÁGINA OFICIAL NPS del CONTEXTO (cita su liga). Si el CONTEXTO los menciona como GUÍA EDITORIAL, preséntalo como "según nuestra guía (puede haber cambiado)" y remite a nps.gov.
 - Si los datos vivos no existen, dilo con honestidad y dirige al usuario a nps.gov.
 - Nunca inventes precios ni fechas. Honestidad sobre completitud.
@@ -700,6 +723,26 @@ function parseAnswer(content: string | null): { answer: string; parksMentioned: 
   } catch {
     return { answer: raw, parksMentioned: [], outOfScope: false };
   }
+}
+
+/** Deterministic note on who lives where, read from the question (no facts added). */
+function residencyNote(question: string): string {
+  const notes: string[] = [];
+  if (NONRESIDENT_HINT.test(question) && !mentionsPass(question)) {
+    notes.push("la pregunta menciona personas que NO viven en EE. UU. Si DATOS EN VIVO trae la línea «Tarifa de NO-RESIDENTE» para ese parque, o su página oficial la cobra, inclúyela para esas personas según lo que diga la línea (a quién se cobra), además de la entrada; no la omitas. Ojo: la «Entrada por vehículo» se cobra UNA sola vez por carro (no por persona); la Tarifa de NO-RESIDENTE se cobra por persona. Si entran en UN carro: entrada_vehículo + recargo × personas. Si entran a pie o se cobra por persona: (entrada_persona + recargo) × personas.");
+  }
+  if (mentionsPass(question)) {
+    notes.push("la pregunta menciona un pase: ANTES de cobrar entrada o Tarifa de NO-RESIDENTE, lee en el CONTEXTO la página oficial de pases o de no residentes (aparece primero) y copia a quién cubre ese pase (titular, pasajeros del vehículo, adultos adicionales, y si cubre también la tarifa de no residente). No cobres nada que esa página diga que el pase cubre.");
+  }
+  if (US_RESIDENT_HINT.test(question)) {
+    notes.push("la pregunta menciona a alguien que SÍ vive en EE. UU.: a esa persona no se le cobra la Tarifa de NO-RESIDENTE.");
+  }
+  return notes.length ? `\n\nNOTA DEL SISTEMA: ${notes.join(" ")}` : "";
+}
+
+/** "1. foo" list markers → "- foo": an ordinal is formatting, not a fact to ground. */
+function bulletize(answer: string): string {
+  return answer.replace(/^(\s*)\d{1,2}[.)]\s+(?=\S)/gm, "$1- ");
 }
 
 function jsonResponse(body: unknown, corsHeaders: Record<string, string>, status = 200): Response {
@@ -1079,6 +1122,36 @@ serve(async (req) => {
       MIN_SIMILARITY,
       MAX_CHUNKS,
     );
+    // Preguntas de tarifas/pases: misma función con filter_park_code "nps"; hasta
+    // 3 de esas páginas generales entran al top-8 (mismo umbral 0.4).
+    if (FEE_TOPIC.test(question)) {
+      const { data: npsWide } = await supabase.rpc("match_knowledge_chunks", {
+        query_embedding:  embeddings[1] ?? embeddings[0],
+        match_count:      MAX_CHUNKS,
+        min_similarity:   MIN_SIMILARITY,
+        filter_park_code: "nps",
+      });
+      const have = new Set(mergedChunks.map((c) => c.id));
+      const nonres = NONRESIDENT_HINT.test(question);
+      const reserved = ((npsWide ?? []) as KnowledgeChunk[])
+        .filter((c) => notCard(c) && !have.has(c.id) && c.similarity >= MIN_SIMILARITY)
+        // Quien no vive en EE. UU.: primero la FAQ oficial de no residente.
+        .sort((a, b) => nonres
+          ? Number((b.metadata.source_url ?? "").includes("nonresident")) - Number((a.metadata.source_url ?? "").includes("nonresident")) || b.similarity - a.similarity
+          : b.similarity - a.similarity)
+        .slice(0, Math.max(0, NPS_WIDE_SLOTS - mergedChunks.filter((c) => c.metadata.park_code === "nps").length));
+      if (reserved.length) {
+        const keep = mergedChunks.slice(0, Math.max(0, MAX_CHUNKS - reserved.length));
+        mergedChunks.splice(0, mergedChunks.length, ...[...keep, ...reserved].sort((a, b) => b.similarity - a.similarity));
+      }
+      // Pase + no residente: las páginas generales (a quién cubre un pase) van
+      // primero en el CONTEXTO para que se lean antes que la tarifa del parque.
+      if (nonres && mentionsPass(question)) {
+        const general = mergedChunks.filter((c) => c.metadata.park_code === "nps");
+        const rest = mergedChunks.filter((c) => c.metadata.park_code !== "nps");
+        mergedChunks.splice(0, mergedChunks.length, ...general, ...rest);
+      }
+    }
     // En modo global, nearby_parks nombra otros parques como sugerencia — eso
     // sería recomendar sin el motor (§6.1), así que se descarta.
     const chunks: KnowledgeChunk[] = mergedChunks
@@ -1190,7 +1263,7 @@ serve(async (req) => {
       },
       {
         role:    "user",
-        content: `CONTEXTO:\n${context || "(sin contexto de la guía)"}\n\nPREGUNTA DEL USUARIO:\n${question}`,
+        content: `CONTEXTO:\n${context || "(sin contexto de la guía)"}\n\nPREGUNTA DEL USUARIO:\n${question}${residencyNote(question)}`,
       },
     ];
 
@@ -1239,6 +1312,7 @@ serve(async (req) => {
     }
 
     let { answer, parksMentioned, outOfScope } = parseAnswer(reply.content);
+    answer = bulletize(answer);
     let unbacked = findUnbackedParks(answer, parksMentioned, allowed, nameIndex);
     let answerCheck: "ok" | "regenerated" | "fallback" | "blocked_numbers" = "ok";
 
@@ -1254,6 +1328,7 @@ serve(async (req) => {
       });
       reply = await chat(messages, tools, "none");
       ({ answer, parksMentioned, outOfScope } = parseAnswer(reply.content));
+      answer = bulletize(answer);
       unbacked = findUnbackedParks(answer, parksMentioned, allowed, nameIndex);
       answerCheck = "regenerated";
 
@@ -1269,7 +1344,7 @@ serve(async (req) => {
     // actually grounded in them: the out_of_scope sentence (fixed template,
     // park mode) and the fallback answer (built straight from the engine
     // result, not from chunks). noInfoResponse() already returns sources: [].
-    const numberCorpus = [context, liveDataBlock, ...toolCorpus].join("\n");
+    let numberCorpus = [context, liveDataBlock, ...toolCorpus].join("\n");
     const numberAllow = safety ? ["911"] : [];
     let badNumbers = ungroundedNumbers(answer, numberCorpus, numberAllow);
     if (badNumbers.length > 0 || !answer) {
@@ -1278,11 +1353,26 @@ serve(async (req) => {
       messages.push({
         role: "user",
         content: badNumbers.length
-          ? `CORRECCIÓN: tu respuesta usa estas cifras que NO están en el contexto ni en DATOS EN VIVO ni en el motor: ${badNumbers.join(", ")}. Reescribe sin ninguna cifra que no aparezca ahí. Si no puedes, responde exactamente "Eso no lo tengo confirmado." Mismo formato JSON.`
+          ? `CORRECCIÓN: tu respuesta usa estas cifras que NO están en el contexto ni en DATOS EN VIVO ni en el motor: ${badNumbers.join(", ")}. Si una de ellas es el resultado de una cuenta hecha solo con cifras del contexto, calcúlala ahora con la herramienta calculate en UNA expresión completa. Si no, reescribe sin ninguna cifra que no aparezca ahí. Si no puedes, responde exactamente "Eso no lo tengo confirmado." Mismo formato JSON.`
           : `CORRECCIÓN: tu respuesta quedó vacía. Si no está en el contexto, responde exactamente "Eso no lo tengo confirmado." Mismo formato JSON.`,
       });
-      reply = await chat(messages, tools, "none");
+      // ADR-036: la corrección puede usar calculate (solo esa herramienta, una ronda).
+      // Sus resultados son deterministas y salen de cifras ya ancladas.
+      reply = await chat(messages, badNumbers.length ? [CALCULATE_TOOL] : tools, badNumbers.length ? "auto" : "none");
+      if (reply.tool_calls?.length) {
+        messages.push({ role: "assistant", content: reply.content ?? null, tool_calls: reply.tool_calls });
+        for (const call of reply.tool_calls) {
+          const content = call.function.name === "calculate"
+            ? runCalculate(call.function.arguments, [context, liveDataBlock, ...toolCorpus].join("\n"), question)
+            : `Herramienta no disponible en la corrección: ${call.function.name}`;
+          toolCorpus.push(content);
+          messages.push({ role: "tool", tool_call_id: call.id, content });
+        }
+        numberCorpus = [context, liveDataBlock, ...toolCorpus].join("\n");
+        reply = await chat(messages, [CALCULATE_TOOL], "none");
+      }
       ({ answer, parksMentioned, outOfScope } = parseAnswer(reply.content));
+      answer = bulletize(answer);
       badNumbers = ungroundedNumbers(answer, numberCorpus, numberAllow);
       if (badNumbers.length > 0 || !answer) {
         console.warn(`concierge-agent number check: still [${badNumbers.join(", ")}]; blocking`);
