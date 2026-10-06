@@ -91,6 +91,7 @@ export const NPS_PAGES: NpsPage[] = [
     ["planyourvisit/fees.htm", "evergreen", "Yosemite — Fees & Passes"],
     ["planyourvisit/hiking.htm", "evergreen", "Yosemite — Hiking"],
     ["planyourvisit/halfdome.htm", "evergreen", "Yosemite — Half Dome"],
+    ["planyourvisit/camping.htm", "evergreen", "Yosemite — Camping"],
     ["planyourvisit/conditions.htm", "live", "Yosemite — Current Conditions"],
     ["planyourvisit/safety.htm", "safety", "Yosemite — Safety"],
     ["planyourvisit/bears.htm", "safety", "Yosemite — Bears"],
