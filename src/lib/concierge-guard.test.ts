@@ -66,6 +66,23 @@ describe("immigration guard", () => {
     expect(isImmigrationQuestion("¿Revisan el estatus migratorio en la entrada?")).toBe(true);
     expect(isImmigrationQuestion("¿Necesito una visa para entrar a EE. UU.?")).toBe(true);
   });
+  it("fee intent wins over residency words (relatives who live outside the U.S.)", () => {
+    // Written for these tests; not exam rows.
+    const feeQuestions = [
+      "Mi mamá vive en México y viene de visita, ¿paga la tarifa de no residente en Sequoia?",
+      "Mi primo no tiene residencia permanente, ¿cuánto paga de entrada en Yosemite?",
+      "Mi suegra tiene green card y vive en Fresno, ¿le cobran el recargo de $100?",
+      "Mi hermano está tramitando la ciudadanía y vive en Tijuana, ¿cuánto le cobran en Grand Canyon?",
+      "Mi cuñado vive en Guadalajara y no tiene ciudadanía americana, ¿cuánto paga en la caseta de Joshua Tree?",
+    ];
+    for (const q of feeQuestions) expect(isImmigrationQuestion(q)).toBe(false);
+  });
+  it("status questions keep the fixed answer even when they mention a pass or the gate", () => {
+    expect(isImmigrationQuestion("¿Me pueden deportar si entro al parque sin pase?")).toBe(true);
+    expect(isImmigrationQuestion("Si compro el pase, ¿mi primo puede quedarse a vivir aquí?")).toBe(true);
+    expect(isImmigrationQuestion("¿En la entrada del parque revisan el estatus migratorio?")).toBe(true);
+    expect(isImmigrationQuestion("¿Cómo saco la residencia permanente?")).toBe(true);
+  });
   it("leaves park and payment questions alone", () => {
     expect(isImmigrationQuestion("Vivo en México, ¿pago el recargo de no residente?")).toBe(false);
     expect(isImmigrationQuestion("¿Aceptan tarjeta Visa en la caseta?")).toBe(false);

@@ -52,11 +52,20 @@ export function unconfirmedAnswer(askEmail: boolean): string {
  * No es tema del concierge (NOMADERIA_SOUL: «cedes ante el profesional … legal»):
  * respuesta fija, sin tranquilizar ni alarmar, y sin pasar por el modelo.
  */
-const IMMIGRATION =
-  /quedar\w* a vivir|inmigraci|migratori|green card|residencia permanente|ciudadan[ií]a|asilo|deporta|indocumentad|sin papeles|\bvisas?\s+(de|para|americana)|necesit\w* (una )?visa/i;
+// Status / enforcement questions: always the fixed answer, even if they mention a pass or the gate.
+const IMMIGRATION_STRONG =
+  /deport|estatus migratorio|status migratorio|migratori|quedar\w* a vivir|vivir aqu[ií] para siempre|asilo|la migra\b|\bice\b|patrulla fronteriza|me (?:pueden|van a) detener|revis\w* (?:mi|su|tu|el) (?:estatus|status|papeles)|\bvisas?\s+(?:de|para|americana)|necesit\w* (?:una )?visa|cruzar la frontera|pedir (?:la )?residencia|sacar (?:la )?(?:residencia|ciudadan[ií]a|green card)|tr[aá]mite migratorio/i;
+// Residency / citizenship words: they also appear in fee questions about relatives ("no tiene
+// residencia permanente, ¿cuánto paga?"). Fixed answer only when there is no fee intent.
+const IMMIGRATION_WEAK =
+  /inmigraci|residencia permanente|ciudadan[ií]a|green card|indocumentad|sin papeles|no tiene papeles/i;
+// Fee intent wins over the weak words: the question is what someone pays at a park.
+const FEE_INTENT =
+  /recargo|tarifa|no[- ]residente|cu[aá]nto (?:paga|pagan|pago|pagar[ií]a|cuesta|cobra|cobran|le cobran|les cobran)|\bcobra|\bpaga\b|\bpagan\b|\bpases?\b|entrada|caseta|\$\d/i;
 
 export function isImmigrationQuestion(question: string): boolean {
-  return IMMIGRATION.test(question);
+  if (IMMIGRATION_STRONG.test(question)) return true;
+  return IMMIGRATION_WEAK.test(question) && !FEE_INTENT.test(question);
 }
 
 export function immigrationAnswer(): string {
