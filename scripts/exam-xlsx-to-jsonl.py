@@ -18,13 +18,19 @@ FIELDS = [
 ]
 
 
-def cell(value):
+# Only valid_until may be empty (null = no expiry); every other empty cell is ""
+# (same shape as the original 2026-10-03 conversion; the scorer trims strings).
+NULLABLE = {"valid_until"}
+
+
+def cell(field, value):
+    empty = None if field in NULLABLE else ""
     if value is None:
-        return None
+        return empty
     if isinstance(value, (datetime.datetime, datetime.date)):
         return value.strftime("%Y-%m-%d")
     text = str(value)
-    return text if text.strip() else None
+    return text if text.strip() else empty
 
 
 def main() -> None:
@@ -41,7 +47,7 @@ def main() -> None:
         record = dict(zip(header, raw))
         if not record.get("id"):
             continue
-        out.append({f: cell(record.get(f)) for f in FIELDS})
+        out.append({f: cell(f, record.get(f)) for f in FIELDS})
     with open(dst, "w", encoding="utf-8") as fh:
         for r in out:
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
