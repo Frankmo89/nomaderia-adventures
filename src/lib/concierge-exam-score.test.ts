@@ -5,6 +5,7 @@ import {
   sectionStats,
   shipRule,
   skipReason,
+  ungroundedDates,
   type ExamRow,
 } from "./concierge-exam-score";
 
@@ -175,5 +176,57 @@ describe("ship rule and gold conflicts", () => {
     );
     const d = sectionStats(scores).find((s) => s.letter === "D");
     expect(d?.abstainRate).toBe(1);
+  });
+});
+
+describe("source dates (ADR-036)", () => {
+  it("accepts a date equal to a cited chunk's fetched_at, in any written form", () => {
+    for (const written of ["5 de octubre de 2026", "consultada 5 oct 2026", "2026-10-05"]) {
+      const scored = scoreRow(
+        row({ id: "A99", question_es: "¿Cuánto cuesta el estacionamiento?", gold_answer: "Cuesta $12." }),
+        `Cuesta $12 (página oficial, ${written}).\n\nFuente: NPS — Parking · consultada 5 oct 2026`,
+        [{ title: "NPS — Parking", url: "https://www.nps.gov/xxxx/planyourvisit/parking.htm", section: "página oficial" }],
+        { chunkTexts: ["Parking — $12.00"], liveDataBlock: "", sourceDates: ["2026-10-05T18:00:00.000Z"] },
+        judgeYes,
+        "2026-10-05",
+      );
+      expect(scored.ungroundedDates).toEqual([]);
+      expect(scored.ungroundedNumbers).toEqual([]);
+      expect(scored.critical).not.toContain("invented_date");
+    }
+  });
+
+  it("still flags a date that matches no source", () => {
+    const scored = scoreRow(
+      row({ id: "F99", question_es: "¿Cuándo cierra el mirador?", gold_answer: "Del 3 al 4 de marzo." }),
+      "Cierra el 12 de octubre.\n\nFuente: NPS — Alerts · consultada 5 oct 2026",
+      [{ title: "NPS", url: "https://www.nps.gov/xxxx/", section: "alertas" }],
+      { chunkTexts: ["Overlook closed March 3-4"], liveDataBlock: "", sourceDates: ["2026-10-05T18:00:00.000Z"] },
+      judgeNo,
+      "2026-10-05",
+    );
+    expect(scored.critical).toContain("invented_date");
+  });
+
+  it("grounds numbers in deterministic tool outputs", () => {
+    const scored = scoreRow(
+      row({ id: "B99", question_es: "Tres personas, ¿cuánto pagan?", gold_answer: "$36" }),
+      "Pagan $36 en total.\n\nFuente: NPS — Parking · consultada 5 oct 2026",
+      [{ title: "NPS", url: "https://www.nps.gov/xxxx/", section: "parking" }],
+      { chunkTexts: ["Base $7. Surcharge $5."], liveDataBlock: "", toolOutputs: ["CÁLCULO: (7 + 5) × 3 = 36"] },
+      judgeYes,
+      "2026-10-05",
+    );
+    expect(scored.ungroundedNumbers).toEqual([]);
+  });
+});
+
+describe("ungroundedDates across languages", () => {
+  it("accepts a Spanish restatement of an English date range in the source", () => {
+    const corpus = "Overlook closed March 3–5, 2027 for repairs.";
+    expect(ungroundedDates("Cierra del 3 al 5 de marzo de 2027.", corpus)).toEqual([]);
+    expect(ungroundedDates("Cierra el 4 de marzo.", corpus)).toEqual([]);
+    expect(ungroundedDates("Cierra el 9 de marzo.", corpus)).toEqual(["9 de marzo"]);
+    expect(ungroundedDates("Cierra el 5 de marzo de 2031.", corpus)).toEqual(["5 de marzo de 2031"]);
   });
 });

@@ -33,6 +33,55 @@ export interface ExamEvidence {
   /** Retrieved chunk texts. Null when the deployed function did not return them. */
   chunkTexts: string[] | null;
   liveDataBlock: string | null;
+  /**
+   * fetched_at of each evidence chunk (+ the live-data synced_at). A date that
+   * equals one of these is the source's own verification date, not invented.
+   */
+  sourceDates?: string[];
+  /** Deterministic tool outputs (calculate) the function grounded numbers in. */
+  toolOutputs?: string[];
+}
+
+const MONTHS_LONG = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const MONTHS_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+function ymdIn(date: Date, timeZone: string): { y: number; m: number; d: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  return { y: get("year"), m: get("month"), d: get("day") };
+}
+
+/**
+ * Every way the concierge (or the model) may write a source's fetched_at:
+ * "5 oct 2026", "5 de octubre de 2026", "5 de octubre", "2026-10-05", "5/10/2026".
+ * Both the UTC and the America/Tijuana calendar day are accepted.
+ */
+export function sourceDateVariants(iso: string): string[] {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return [];
+  const out = new Set<string>();
+  for (const tz of ["UTC", "America/Tijuana"]) {
+    const { y, m, d } = ymdIn(date, tz);
+    const mm = String(m).padStart(2, "0");
+    const dd = String(d).padStart(2, "0");
+    out.add(`${d} ${MONTHS_SHORT[m - 1]} ${y}`);
+    out.add(`${d} de ${MONTHS_LONG[m - 1]} de ${y}`);
+    out.add(`${d} de ${MONTHS_LONG[m - 1]}`);
+    out.add(`${y}-${mm}-${dd}`);
+    out.add(`${d}/${m}/${y}`);
+    out.add(`${dd}/${mm}/${y}`);
+  }
+  return [...out];
+}
+
+/** Text a row's claims are grounded against: chunks, live block, tool outputs, source dates. */
+export function evidenceCorpus(evidence: ExamEvidence): string {
+  return [
+    ...(evidence.chunkTexts ?? []),
+    evidence.liveDataBlock ?? "",
+    ...(evidence.toolOutputs ?? []),
+    ...(evidence.sourceDates ?? []).flatMap(sourceDateVariants),
+  ].join("\n");
 }
 
 export interface JudgeScores {
@@ -123,8 +172,54 @@ function fold(text: string): string {
   return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 }
 
+const EN_MONTH: Record<string, number> = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+};
+const ES_MONTH: Record<string, number> = {
+  enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9,
+  octubre: 10, noviembre: 11, diciembre: 12,
+};
+
+/**
+ * Day+month pairs stated in the corpus, in Spanish or English ("October 6–8",
+ * "6 October", "6 de octubre", "2026-10-06"). Official NPS pages are English;
+ * a faithful Spanish answer restates the same date.
+ */
+export function corpusDayMonths(corpus: string): Set<string> {
+  const out = new Set<string>();
+  const add = (d: number, m: number) => {
+    if (d >= 1 && d <= 31 && m >= 1 && m <= 12) out.add(`${d}-${m}`);
+  };
+  const en = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s*(?:–|-|—|to|through|and)\s*(\d{1,2})\b)?/gi;
+  for (const m of corpus.matchAll(en)) {
+    const month = EN_MONTH[m[1].toLowerCase()];
+    const from = Number(m[2]);
+    const to = m[3] ? Number(m[3]) : from;
+    for (let d = from; d <= Math.min(to, from + 31); d++) add(d, month);
+  }
+  for (const m of corpus.matchAll(/\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/gi)) {
+    add(Number(m[1]), EN_MONTH[m[2].toLowerCase()]);
+  }
+  for (const m of fold(corpus).matchAll(new RegExp(String.raw`\b(\d{1,2})\s+de\s+(${MONTHS})\b`, "g"))) {
+    add(Number(m[1]), ES_MONTH[m[2]]);
+  }
+  for (const m of corpus.matchAll(/\b(\d{4})-(\d{2})-(\d{2})\b/g)) add(Number(m[3]), Number(m[2]));
+  return out;
+}
+
+function parseAnswerDate(raw: string): { d: number; m: number; y: number | null } | null {
+  const f = fold(raw);
+  const es = f.match(new RegExp(String.raw`^(\d{1,2})\s+de\s+(${MONTHS})(?:\s+de\s+(\d{4}))?$`));
+  if (es) return { d: Number(es[1]), m: ES_MONTH[es[2]], y: es[3] ? Number(es[3]) : null };
+  const iso = f.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return { d: Number(iso[3]), m: Number(iso[2]), y: Number(iso[1]) };
+  return null;
+}
+
 export function ungroundedDates(answer: string, corpus: string): string[] {
   const hay = fold(corpus);
+  const dayMonths = corpusDayMonths(corpus);
+  const years = new Set((corpus.match(/\b(19|20)\d{2}\b/g) ?? []).map(Number));
   const found: string[] = [];
   const seen = new Set<string>();
   for (const match of answer.matchAll(DATE_RE)) {
@@ -132,7 +227,10 @@ export function ungroundedDates(answer: string, corpus: string): string[] {
     const key = fold(raw);
     if (seen.has(key)) continue;
     seen.add(key);
-    if (!hay.includes(key)) found.push(raw);
+    if (hay.includes(key)) continue;
+    const parsed = parseAnswerDate(raw);
+    if (parsed && dayMonths.has(`${parsed.d}-${parsed.m}`) && (parsed.y === null || years.has(parsed.y))) continue;
+    found.push(raw);
   }
   return found;
 }
@@ -200,7 +298,7 @@ export function scoreRow(
   let badNumbers: string[] = [];
   let badDates: string[] = [];
   if (grounding === "checked") {
-    const corpus = [...(evidence.chunkTexts ?? []), evidence.liveDataBlock ?? ""].join("\n");
+    const corpus = evidenceCorpus(evidence);
     badNumbers = ungroundedNumbers(claims, corpus, ["911"]);
     badDates = ungroundedDates(claims, corpus);
   }

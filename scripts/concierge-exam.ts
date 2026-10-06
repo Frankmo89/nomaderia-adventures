@@ -96,9 +96,21 @@ interface LiveAnswer {
   httpStatus?: number;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** OpenAI rate limits surface as 429/5xx from the function: retry with backoff. */
+async function fetchWithRetry(endpoint: string, init: RequestInit, attempts = 4): Promise<Response> {
+  let res = await fetch(endpoint, init);
+  for (let i = 1; i < attempts && (res.status === 429 || res.status >= 500); i++) {
+    await sleep(4000 * i + Math.floor(Math.random() * 1000));
+    res = await fetch(endpoint, init);
+  }
+  return res;
+}
+
 async function callFunction(url: string, key: string, row: ExamRow): Promise<LiveAnswer> {
   const endpoint = `${url.replace(/\/$/, "")}/functions/v1/concierge-agent`;
-  const res = await fetch(endpoint, {
+  const res = await fetchWithRetry(endpoint, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
@@ -127,14 +139,25 @@ async function callFunction(url: string, key: string, row: ExamRow): Promise<Liv
     answer?: string;
     sources?: CitedSource[];
     chunk_ids?: string[];
-    evidence?: { chunks?: Array<{ id?: string; content?: string }>; live_data_block?: string };
+    evidence?: {
+      chunks?: Array<{ id?: string; content?: string; fetched_at?: string | null }>;
+      live_data_block?: string;
+      live_synced_at?: string | null;
+      tool_outputs?: string[];
+    };
   };
   const sources = Array.isArray(data.sources) ? data.sources : [];
   let chunkIds = Array.isArray(data.chunk_ids) ? data.chunk_ids.filter((id) => typeof id === "string") : [];
   let chunkTexts: string[] | null = null;
   let liveDataBlock: string | null = null;
+  const sourceDates: string[] = [];
+  const toolOutputs: string[] = Array.isArray(data.evidence?.tool_outputs)
+    ? data.evidence.tool_outputs.filter((t): t is string => typeof t === "string")
+    : [];
   if (data.evidence && Array.isArray(data.evidence.chunks)) {
     chunkTexts = data.evidence.chunks.map((c) => c.content ?? "");
+    for (const c of data.evidence.chunks) if (typeof c.fetched_at === "string") sourceDates.push(c.fetched_at);
+    if (typeof data.evidence.live_synced_at === "string") sourceDates.push(data.evidence.live_synced_at);
     if (!chunkIds.length) {
       chunkIds = data.evidence.chunks.map((c) => c.id).filter((id): id is string => typeof id === "string");
     }
@@ -147,7 +170,7 @@ async function callFunction(url: string, key: string, row: ExamRow): Promise<Liv
     answer: data.answer ?? "",
     sources,
     chunkIds,
-    evidence: { chunkTexts, liveDataBlock },
+    evidence: { chunkTexts, liveDataBlock, sourceDates, toolOutputs },
     httpStatus: res.status,
   };
 }
@@ -171,7 +194,7 @@ async function judge(row: ExamRow, answer: string): Promise<JudgeScores> {
   if (!key || !answer.trim()) {
     return { matchesGold: null, toneOk: null, safetyWordingOk: null, note: key ? "empty answer" : "no OPENAI_API_KEY" };
   }
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetchWithRetry("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -229,6 +252,8 @@ interface StoredResult {
   chunk_ids: string[];
   chunk_texts: string[] | null;
   live_data_block: string | null;
+  source_dates?: string[];
+  tool_outputs?: string[];
   error?: string;
   judge: JudgeScores;
   score: RowScore;
@@ -371,7 +396,9 @@ async function main(): Promise<void> {
 
   const results: StoredResult[] = [];
   let done = 0;
-  await pool(todo, 3, async (row) => {
+  // EXAM_CONCURRENCY (default 3): lower it if OpenAI rate limits (gpt-4o-mini TPM) cause 429/500s.
+  const concurrency = Math.max(1, Number(process.env.EXAM_CONCURRENCY) || 3);
+  await pool(todo, concurrency, async (row) => {
     const cached = previous.get(row.id);
     const cacheUsable = Boolean(cached && cached.answer && !cached.error);
     let live: LiveAnswer;
@@ -384,6 +411,8 @@ async function main(): Promise<void> {
         evidence: {
           chunkTexts: cached.chunk_texts,
           liveDataBlock: cached.live_data_block,
+          sourceDates: cached.source_dates ?? [],
+          toolOutputs: cached.tool_outputs ?? [],
         },
       };
       judged = cached.judge;
@@ -403,6 +432,8 @@ async function main(): Promise<void> {
       chunk_ids: live.chunkIds,
       chunk_texts: live.evidence.chunkTexts,
       live_data_block: live.evidence.liveDataBlock,
+      source_dates: live.evidence.sourceDates ?? [],
+      tool_outputs: live.evidence.toolOutputs ?? [],
       error: live.error,
       judge: judged,
       score,
