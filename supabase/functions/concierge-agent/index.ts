@@ -14,6 +14,18 @@
 //      regenera una vez; si sigue fallando, respuesta fija desde el motor.
 //   7. Escala al quiz gratuito (+ captura de correo) si no hubo contexto ni motor
 //
+// ADR-036 (bilingüe + páginas NPS + tarjetas de seguridad):
+//   - La pregunta (español) se traduce al inglés; se embeben las dos y se llama
+//     match_knowledge_chunks dos veces con los mismos parámetros. Se fusiona por
+//     id (mejor similitud), mismo umbral y top-8.
+//   - knowledge_chunks ahora incluye páginas oficiales de nps.gov (ingest-nps-pages)
+//     con source_url / fetched_at / kind. La fecha "verificado" sale de fetched_at
+//     del chunk citado, nunca de hoy.
+//   - Seguridad: nunca se genera libremente. Si la pregunta es de seguridad se
+//     agregan tarjetas NPS textuales (kind=safety) con fuente y fecha; si no hay,
+//     "En una emergencia, llama al 911" + la página oficial de seguridad.
+//   - Cuentas: herramienta calculate determinista (_shared/concierge-calc.ts).
+//
 // Producto: WhatsApp es solo para clientes que ya pagaron (botón propio en
 // /i/:token). Este chat lo usan visitantes anónimos — nunca ofrece whatsapp_url;
 // toda escalación apunta al quiz (/#quiz), con captura de correo en el frontend.
@@ -44,7 +56,6 @@ import { buildParkNameIndex, findParkMentions, findUnbackedParks, type ParkNameI
 import {
   composeVisibleAnswer,
   CONCIERGE_MAX_PER_HOUR,
-  formatAnswerDate,
   greetingAnswer,
   isClearlyOutOfScope,
   isGreetingOnly,
@@ -55,6 +66,16 @@ import {
   unconfirmedAnswer,
   ungroundedNumbers,
 } from "../_shared/concierge-guard.ts";
+import { CALCULATE_TOOL, runCalculate } from "../_shared/concierge-calc.ts";
+import { NPS_PARKS, shortDateEs } from "../_shared/nps-pages.ts";
+import {
+  detectSafetyTopics,
+  formatSafetyCards,
+  safetyFallback,
+  SAFETY_TOPICS,
+  type SafetyCard,
+  type SafetyTopic,
+} from "../_shared/safety-cards.ts";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const OPENAI_KEY   = Deno.env.get("OPENAI_API_KEY")!;
@@ -108,16 +129,43 @@ interface Source {
   slug:    string;
   section: string;
   url:     string;
+  /** "verificado 27 sep 2026" / "consultada 5 oct 2026" — from the chunk's fetched_at. */
+  date?:   string;
 }
 
 interface KnowledgeChunk {
   id:          string;
   content:     string;
-  metadata:    { slug?: string; title?: string; section?: string; park_code?: string; park_title?: string };
+  metadata:    {
+    slug?: string; title?: string; section?: string; park_code?: string; park_title?: string;
+    source_url?: string; fetched_at?: string; kind?: string;
+  };
   source_table: string;
   source_field: string;
   similarity:  number;
 }
+
+/** Columns added by ADR-036 (new query; match_knowledge_chunks is unchanged). */
+interface ChunkSourceMeta {
+  id:         string;
+  source_url: string | null;
+  fetched_at: string | null;
+  kind:       string | null;
+  park_code:  string | null;
+}
+
+interface SafetyCardRow {
+  id:           string;
+  content:      string;
+  source_field: string;
+  source_url:   string | null;
+  fetched_at:   string | null;
+  park_code:    string | null;
+  metadata:     { verbatim?: string; es?: string | null; topic?: string } | null;
+}
+
+/** Official NPS page chunks written by ingest-nps-pages. */
+const NPS_SOURCE_TABLES = new Set(["nps_pages", "nps_safety_cards"]);
 
 interface ParkLiveRow {
   park_code:     string;
@@ -181,6 +229,89 @@ async function embedQuery(text: string): Promise<number[]> {
   return data.data[0].embedding;
 }
 
+/** Embeds several texts in one call (same model as embedQuery). */
+async function embedTexts(texts: string[]): Promise<number[][]> {
+  const res = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ model: EMBED_MODEL, input: texts }),
+  });
+  if (!res.ok) throw new Error(`OpenAI embedding error ${res.status}: ${await res.text()}`);
+  const data = await res.json() as { data: Array<{ embedding: number[]; index: number }> };
+  return data.data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
+}
+
+/**
+ * Spanish question → English, for matching the English nps.gov chunks.
+ * Null on any failure: retrieval then runs with the Spanish embedding only.
+ */
+async function translateQuestionToEnglish(question: string): Promise<string | null> {
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${OPENAI_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: CHAT_MODEL,
+        temperature: 0,
+        max_tokens: 200,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Translate the user's question into English for a search over U.S. National Park Service web pages. " +
+              "Keep park names, numbers and units exactly. Output only the translation.",
+          },
+          { role: "user", content: question.slice(0, 1000) },
+        ],
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+    const en = (data.choices?.[0]?.message?.content ?? "").trim();
+    return en || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Merge two match_knowledge_chunks result sets: dedupe by id, keep best similarity, same threshold, top N. */
+function mergeChunkResults(lists: KnowledgeChunk[][], minSimilarity: number, limit: number): KnowledgeChunk[] {
+  const byId = new Map<string, KnowledgeChunk>();
+  for (const list of lists) {
+    for (const c of list) {
+      const prev = byId.get(c.id);
+      if (!prev || c.similarity > prev.similarity) byId.set(c.id, c);
+    }
+  }
+  return [...byId.values()]
+    .filter((c) => c.similarity >= minSimilarity)
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, limit);
+}
+
+/** Fetch/verification date of a chunk: fetched_at column, else metadata (NPS rows), else null. */
+function chunkFetchedAt(c: KnowledgeChunk, meta: Map<string, ChunkSourceMeta>): string | null {
+  return meta.get(c.id)?.fetched_at ?? c.metadata.fetched_at ?? null;
+}
+
+/** Sources for official NPS page chunks: the nps.gov URL, deduped by URL. */
+function npsSourceOf(c: KnowledgeChunk, meta: Map<string, ChunkSourceMeta>): Source | null {
+  if (!NPS_SOURCE_TABLES.has(c.source_table)) return null;
+  const url = meta.get(c.id)?.source_url ?? c.metadata.source_url;
+  if (!url) return null;
+  const date = shortDateEs(chunkFetchedAt(c, meta));
+  return {
+    title:   c.metadata.title ?? "NPS",
+    slug:    c.metadata.park_code ?? "nps",
+    section: c.metadata.section ?? "página oficial (NPS)",
+    url,
+    date:    date ? `consultada ${date}` : undefined,
+  };
+}
+
 /**
  * Deduplica fuentes por slug+section.
  * ingest-knowledge guarda `park_code` pero NO `slug` en metadata, así que el
@@ -208,6 +339,58 @@ function deduplicateSources(chunks: KnowledgeChunk[], slugByCode: Map<string, st
     }
   }
   return sources;
+}
+
+/** Capitalized words that are not place names inside a park. */
+const NOT_PLACES = new Set([
+  "méxico", "mexico", "estados", "unidos", "america", "américa", "beautiful", "parque", "parques", "nacional",
+  "nacionales", "frank", "nomaderia", "servicio", "california", "arizona", "nevada", "angeles", "ángeles",
+  "diego", "francisco", "vegas", "tijuana", "whatsapp", "google", "national", "service", "hola", "gracias",
+]);
+
+/**
+ * Parks of places the user named that are not park names ("Badwater", "Half Dome"):
+ * a capitalized word from the question that appears verbatim in a retrieved chunk of
+ * that park. Lets the answer name the park the user already pointed at.
+ */
+function namedPlaceParks(question: string, chunks: KnowledgeChunk[]): string[] {
+  const words = new Set<string>();
+  for (const m of question.matchAll(/(^|[^¿¡.?!\s]\s+)(\p{Lu}[\p{L}'’-]{3,})/gu)) {
+    if (!NOT_PLACES.has(m[2].toLowerCase())) words.add(m[2]);
+  }
+  const parks: string[] = [];
+  for (const word of words) {
+    const re = new RegExp(`(^|[^\\p{L}])${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^\\p{L}]|$)`, "u");
+    for (const c of chunks) {
+      const code = c.metadata.park_code;
+      if (code && code !== "nps" && !parks.includes(code) && re.test(c.content)) parks.push(code);
+    }
+  }
+  return parks;
+}
+
+/** Editorial sources (dated from fetched_at) + official NPS sources, in retrieval order. */
+function buildSources(chunks: KnowledgeChunk[], slugByCode: Map<string, string>, meta: Map<string, ChunkSourceMeta>): Source[] {
+  const editorialChunks = chunks.filter((c) => !NPS_SOURCE_TABLES.has(c.source_table));
+  const ranked: Array<{ rank: number; source: Source }> = [];
+  for (const src of deduplicateSources(editorialChunks, slugByCode)) {
+    const idx = chunks.findIndex((c) =>
+      !NPS_SOURCE_TABLES.has(c.source_table) &&
+      (c.metadata.slug ?? (c.metadata.park_code ? slugByCode.get(c.metadata.park_code) : undefined)) === src.slug &&
+      (c.metadata.section ?? c.source_field) === src.section
+    );
+    const date = idx >= 0 ? shortDateEs(chunkFetchedAt(chunks[idx], meta)) : "";
+    ranked.push({ rank: idx, source: date ? { ...src, date: `verificado ${date}` } : src });
+  }
+  const seenUrl = new Set<string>();
+  chunks.forEach((c, idx) => {
+    const src = npsSourceOf(c, meta);
+    if (src && !seenUrl.has(src.url)) {
+      seenUrl.add(src.url);
+      ranked.push({ rank: idx, source: src });
+    }
+  });
+  return ranked.sort((a, b) => a.rank - b.rank).map((r) => r.source);
 }
 
 /** nps.gov page for a park: engine catalog URL, else the standard pattern. */
@@ -404,17 +587,19 @@ REGLAS ESTRICTAS:
 2. Usa ÚNICAMENTE la información del CONTEXTO, de los DATOS EN VIVO y del resultado de la herramienta. No inventes nada.
 3. Si el CONTEXTO y los DATOS EN VIVO no contienen el dato, responde exactamente: "Eso no lo tengo confirmado." No lo completes con conocimiento general.
 4. Sé concreto solo con datos que estén en el contexto. No completes cifras de memoria.
-5. No cierres tú la fuente: el sistema agrega "Fuente:" y la fecha al final.
+5. No cierres tú la fuente: el sistema agrega "Fuente:" y la fecha al final. No escribas tú fechas de verificación o consulta.
 6. Máximo 3 párrafos. Respuestas claras y útiles, no largas.
 7. Cualquier cifra (precio, distancia, hora, fecha, edad, dosis) tiene que aparecer en el CONTEXTO, en DATOS EN VIVO o en el resultado del motor. Si no está, no la escribas.
-8. En calor, agua, fauna, clima o emergencias no inventes cantidades. El sistema agrega el aviso de llamar al 911.
+8. En calor, agua, fauna, clima o emergencias no inventes cantidades ni des consejos de seguridad propios: di solo lo que diga el CONTEXTO. El sistema agrega la tarjeta oficial de seguridad del NPS y el aviso de llamar al 911.
+9. Parte del CONTEXTO son PÁGINAS OFICIALES NPS en inglés: responde en español traduciendo fielmente, con las mismas cifras y unidades. Lee con cuidado a qué lugar exacto (isla, camino, sendero, alojamiento) se refiere cada alerta, cierre o fecha, y no la atribuyas a otro.
+10. Si la respuesta requiere una cuenta (tarifas × personas, agua por persona × personas, sumas o diferencias), usa la herramienta calculate. Nunca hagas cuentas de memoria; escribe el resultado que devuelve.
 
 DATOS VIVOS — REGLAS IMPORTANTES:
-- Para precios de entrada, alertas y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO (si está disponible).
-- Cada vez que des una tarifa o una alerta, di la fecha de verificación y agrega la liga oficial de nps.gov del bloque: son datos sincronizados que pueden haber cambiado.
+- Para precios de entrada, alertas y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO o las PÁGINAS OFICIALES NPS del CONTEXTO.
+- Cada vez que des una tarifa o una alerta, agrega la liga oficial de nps.gov (del bloque o de la página oficial): son datos que pueden haber cambiado. La fecha de verificación la agrega el sistema.
 - Cada línea de tarifa del bloque DATOS EN VIVO es DISTINTA y NO se combina ni se sustituye una por otra. Son tarifas separadas: "Entrada por vehículo", "Entrada por persona" y "Tarifa de NO-RESIDENTE".
 - Cuando te pregunten por el recargo de NO-RESIDENTE o de extranjero (p. ej. "soy mexicano, ¿pago más?"), usa EXCLUSIVAMENTE la línea etiquetada "Tarifa de NO-RESIDENTE". NUNCA respondas ese recargo con la tarifa "por persona" ni con ninguna otra tarifa de entrada.
-- NO hay datos en vivo de cierres, clima ni estado de caminos. Si el CONTEXTO los menciona (marcado GUÍA EDITORIAL), preséntalo como "según nuestra guía (puede haber cambiado)" y remite a nps.gov.
+- Cierres, condiciones y estado de caminos: úsalos solo si vienen en una PÁGINA OFICIAL NPS del CONTEXTO (cita su liga). Si el CONTEXTO los menciona como GUÍA EDITORIAL, preséntalo como "según nuestra guía (puede haber cambiado)" y remite a nps.gov.
 - Si los datos vivos no existen, dilo con honestidad y dirige al usuario a nps.gov.
 - Nunca inventes precios ni fechas. Honestidad sobre completitud.
 
@@ -476,7 +661,9 @@ REGLAS:
 
 // ─── OpenAI chat ──────────────────────────────────────────────────────────────
 
-async function chat(messages: ChatMessage[], withTools: boolean, toolChoice: "auto" | "none"): Promise<ChatMessage> {
+type ChatTool = typeof RECOMMEND_TOOL | typeof CALCULATE_TOOL;
+
+async function chat(messages: ChatMessage[], tools: ChatTool[], toolChoice: "auto" | "none"): Promise<ChatMessage> {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -489,7 +676,7 @@ async function chat(messages: ChatMessage[], withTools: boolean, toolChoice: "au
       temperature:     0.3, // baja temperatura → respuestas más precisas, menos creativas
       response_format: { type: "json_object" },
       messages,
-      ...(withTools ? { tools: [RECOMMEND_TOOL], tool_choice: toolChoice } : {}),
+      ...(tools.length ? { tools, tool_choice: toolChoice } : {}),
     }),
   });
   if (!res.ok) {
@@ -580,6 +767,88 @@ async function logTurn(
   return true;
 }
 
+// ─── ADR-036: chunk dates, safety cards ───────────────────────────────────────
+
+/** source_url / fetched_at / kind for retrieved chunks (service role: knowledge_chunks RLS is admin-only). */
+async function loadChunkMeta(ids: string[]): Promise<Map<string, ChunkSourceMeta>> {
+  const out = new Map<string, ChunkSourceMeta>();
+  if (!SUPA_SERVICE || !ids.length) return out;
+  const client = createClient(SUPA_URL, SUPA_SERVICE);
+  const { data, error } = await client
+    .from("knowledge_chunks")
+    .select("id, source_url, fetched_at, kind, park_code")
+    .in("id", ids)
+    .returns<ChunkSourceMeta[]>();
+  if (error) {
+    console.warn("concierge chunk meta failed:", error.message);
+    return out;
+  }
+  for (const row of data ?? []) out.set(row.id, row);
+  return out;
+}
+
+/** NPS safety cards for these topics/parks: park order first, then topic order. Max `limit`, distinct topics. */
+async function loadSafetyCards(topics: SafetyTopic[], parkCodes: string[], limit = 2): Promise<{ cards: SafetyCard[]; rows: SafetyCardRow[] }> {
+  if (!SUPA_SERVICE || !topics.length || !parkCodes.length) return { cards: [], rows: [] };
+  const client = createClient(SUPA_URL, SUPA_SERVICE);
+  const { data, error } = await client
+    .from("knowledge_chunks")
+    .select("id, content, source_field, source_url, fetched_at, park_code, metadata")
+    .eq("source_table", "nps_safety_cards")
+    .eq("kind", "safety")
+    .in("park_code", parkCodes)
+    .in("source_field", topics.map((t) => `card:${t}`))
+    .returns<SafetyCardRow[]>();
+  if (error) {
+    console.warn("concierge safety cards failed:", error.message);
+    return { cards: [], rows: [] };
+  }
+  const rows = (data ?? []).slice().sort((a, b) => {
+    const pa = parkCodes.indexOf(a.park_code ?? ""), pb = parkCodes.indexOf(b.park_code ?? "");
+    if (pa !== pb) return pa - pb;
+    return topics.indexOf(a.source_field.replace("card:", "") as SafetyTopic) -
+      topics.indexOf(b.source_field.replace("card:", "") as SafetyTopic);
+  });
+  const picked: SafetyCardRow[] = [];
+  const seenTopics = new Set<string>();
+  for (const row of rows) {
+    if (picked.length >= limit) break;
+    if (seenTopics.has(row.source_field) || !row.metadata?.verbatim || !row.source_url) continue;
+    seenTopics.add(row.source_field);
+    picked.push(row);
+  }
+  const cards: SafetyCard[] = picked.map((row) => {
+    const topic = row.source_field.replace("card:", "") as SafetyTopic;
+    return {
+      id: row.id,
+      park_code: row.park_code ?? "",
+      topic: (SAFETY_TOPICS as readonly string[]).includes(topic) ? topic : "emergency",
+      es: row.metadata?.es ?? null,
+      verbatim: row.metadata?.verbatim ?? "",
+      source_url: row.source_url ?? "",
+      fetched_at: row.fetched_at,
+      park_name: NPS_PARKS[row.park_code ?? ""] ?? row.park_code ?? "",
+    };
+  });
+  return { cards, rows: picked };
+}
+
+interface EvidenceChunk {
+  id:            string;
+  content:       string;
+  source_table?: string;
+  kind?:         string | null;
+  source_url?:   string | null;
+  fetched_at?:   string | null;
+}
+
+interface Evidence {
+  chunks:          EvidenceChunk[];
+  live_data_block: string;
+  live_synced_at?: string | null;
+  tool_outputs?:   string[];
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -605,7 +874,10 @@ serve(async (req) => {
     const sessionId = visitorSession(body.session_id);
     const priorAnswers = priorCount(body.prior_answers);
     const askEmail = shouldAskEmail(priorAnswers);
-    const safety = isSafetyTopic(question ?? "");
+    // Seguridad: detector original (fixture offline) + temas ES de ADR-036.
+    // Se recalcula con los parques mencionados una vez construido el índice.
+    let safetyTopics: SafetyTopic[] = detectSafetyTopics(question ?? "");
+    let safety = isSafetyTopic(question ?? "") || safetyTopics.length > 0;
     const service: EventsWriter | null = SUPA_SERVICE
       ? createClient(SUPA_URL, SUPA_SERVICE) as unknown as EventsWriter
       : null;
@@ -624,10 +896,14 @@ serve(async (req) => {
       unconfirmed?: boolean;
       recommendations?: ConciergeRecommendation[];
       dateLabel?: string;
-      evidence?: { chunks: Array<{ id: string; content: string }>; live_data_block: string };
+      /** Verbatim NPS safety cards (or the 911 fallback), appended after the grounded answer. */
+      safetyBlock?: string;
+      evidence?: Evidence;
     }): Promise<Response> {
       const sources = opts.sources ?? [];
-      const text = composeVisibleAnswer(opts.answer, safety, sources, opts.dateLabel ?? formatAnswerDate());
+      // No date by default: the footer only shows dates of the cited sources (never today's).
+      const body = opts.safetyBlock ? `${opts.answer.trim()}\n\n${opts.safetyBlock}` : opts.answer;
+      const text = composeVisibleAnswer(body, safety, sources, opts.dateLabel);
       const logged = await logTurn(service, sessionId, {
         question: question.slice(0, 4000),
         answer: text.slice(0, 4000),
@@ -665,16 +941,60 @@ serve(async (req) => {
       return deliver({ answer: greetingAnswer(), answerCheck: "greeting", askEmail: false });
     }
 
-    const noInfoResponse = () =>
-      deliver({
+    // Estado que llena la búsqueda; lo usan noInfoResponse y la respuesta final.
+    let retrievedChunks: KnowledgeChunk[] = [];
+    let cardParkCodes: string[] = [];
+    let fallbackParkCode: string | null = null;
+    let liveDataForEvidence = "";
+    let liveSyncedForEvidence: string | null = null;
+
+    /** Safety cards (verbatim NPS) for the detected topics, or the 911 line + the park's safety page. */
+    async function safetyAttachment(): Promise<{ text: string; chunks: EvidenceChunk[]; ids: string[] }> {
+      if (!safety) return { text: "", chunks: [], ids: [] };
+      const topics: SafetyTopic[] = safetyTopics.length ? safetyTopics : ["emergency"];
+      const { cards, rows } = await loadSafetyCards(topics, cardParkCodes);
+      if (!cards.length) return { text: safetyFallback(fallbackParkCode), chunks: [], ids: [] };
+      return {
+        text: formatSafetyCards(cards),
+        chunks: rows.map((r) => ({
+          id: r.id,
+          content: r.content,
+          source_table: "nps_safety_cards",
+          kind: "safety",
+          source_url: r.source_url,
+          fetched_at: r.fetched_at,
+        })),
+        ids: rows.map((r) => r.id),
+      };
+    }
+
+    const noInfoResponse = async () => {
+      const attach = await safetyAttachment();
+      return deliver({
         answer: unconfirmedAnswer(askEmail),
         answerCheck: "unconfirmed",
         askEmail,
         unconfirmed: true,
+        safetyBlock: attach.text,
+        chunkIds: attach.ids,
+        evidence: includeEvidence
+          ? {
+              chunks: [
+                ...retrievedChunks.map((c) => ({ id: c.id, content: c.content, source_table: c.source_table })),
+                ...attach.chunks,
+              ],
+              live_data_block: liveDataForEvidence,
+              live_synced_at: liveSyncedForEvidence,
+              tool_outputs: [],
+            }
+          : undefined,
       });
+    };
 
     // ── 1. Detectar si requiere handoff inmediato ─────────────────────────────
     const needsEscalation = shouldEscalate(question);
+    // ADR-036: la traducción al inglés corre en paralelo con las consultas de destinos.
+    const translationPromise = translateQuestionToEnglish(question);
 
     const supabase = createClient(SUPA_URL, SUPA_ANON);
 
@@ -716,21 +1036,76 @@ serve(async (req) => {
     }
     const parkMode = Boolean(destination_slug);
 
+    // Parques para tarjetas de seguridad: los nombrados + la guía abierta (kica → seki).
+    const namedParks = findParkMentions(question, nameIndex);
+    const parksForSafety = [...new Set(
+      [...namedParks, ...(contextParkCode ? [contextParkCode] : [])].map((c) => LIVE_DATA_PARK_ALIAS[c] ?? c),
+    )];
+    safetyTopics = detectSafetyTopics(question, parksForSafety);
+    safety = isSafetyTopic(question) || safetyTopics.length > 0;
+    cardParkCodes = parksForSafety.filter((c) => c in NPS_PARKS);
+    fallbackParkCode = parksForSafety[0] ?? null;
+
     // ── 4. Búsqueda por similitud en knowledge_chunks ─────────────────────────
     // FIX 2: cuando hay parque en contexto, el pre-filtro por park_code vive
     // dentro de match_knowledge_chunks (parámetro filter_park_code), así la DB
     // devuelve los mejores chunks DENTRO del parque en vez de los globales.
-    const queryEmbedding = await embedQuery(question);
+    // ADR-036: se embeben la pregunta (ES) y su traducción (EN) en una sola llamada.
+    const questionEn = await translationPromise;
+    const embeddings = questionEn ? await embedTexts([question, questionEn]) : [await embedQuery(question)];
+    const queryEmbedding = embeddings[0];
     const { data: chunkData } = await supabase.rpc("match_knowledge_chunks", {
       query_embedding:  queryEmbedding,
       match_count:      MAX_CHUNKS,
       min_similarity:   MIN_SIMILARITY,
       filter_park_code: contextParkCode, // null → búsqueda global (comportamiento previo)
     });
+    // ADR-036: misma función, mismos parámetros, con el embedding en inglés.
+    let chunkDataEn: KnowledgeChunk[] = [];
+    if (embeddings[1]) {
+      const { data: enData } = await supabase.rpc("match_knowledge_chunks", {
+        query_embedding:  embeddings[1],
+        match_count:      MAX_CHUNKS,
+        min_similarity:   MIN_SIMILARITY,
+        filter_park_code: contextParkCode,
+      });
+      chunkDataEn = (enData ?? []) as KnowledgeChunk[];
+    }
+    // Las tarjetas de seguridad no compiten en la búsqueda: se adjuntan por tema y
+    // parque (safetyAttachment), así nunca aparece la tarjeta de otro parque.
+    const notCard = (c: KnowledgeChunk) => c.source_table !== "nps_safety_cards";
+    const mergedChunks = mergeChunkResults(
+      [((chunkData ?? []) as KnowledgeChunk[]).filter(notCard), chunkDataEn.filter(notCard)],
+      MIN_SIMILARITY,
+      MAX_CHUNKS,
+    );
     // En modo global, nearby_parks nombra otros parques como sugerencia — eso
     // sería recomendar sin el motor (§6.1), así que se descarta.
-    const chunks: KnowledgeChunk[] = ((chunkData ?? []) as KnowledgeChunk[])
+    const chunks: KnowledgeChunk[] = mergedChunks
       .filter((c) => parkMode || c.source_field !== "nearby_parks");
+    retrievedChunks = chunks;
+    const chunkMeta = await loadChunkMeta(chunks.map((c) => c.id));
+
+    // Lugares nombrados que no son nombres de parque (p. ej. un mirador): su parque.
+    const placeParks = namedPlaceParks(question, chunks);
+    if (placeParks.length) {
+      safetyTopics = detectSafetyTopics(question, [...parksForSafety, ...placeParks]);
+      safety = isSafetyTopic(question) || safetyTopics.length > 0;
+      if (!cardParkCodes.length) {
+        cardParkCodes = [...new Set(placeParks.map((c) => LIVE_DATA_PARK_ALIAS[c] ?? c))].filter((c) => c in NPS_PARKS);
+        fallbackParkCode = fallbackParkCode ?? placeParks[0];
+      }
+    }
+
+    // Pregunta de seguridad sin parque nombrado: el parque del chunk más relevante.
+    if (safety && !cardParkCodes.length) {
+      const top = chunks.find((c) => c.metadata.park_code && (LIVE_DATA_PARK_ALIAS[c.metadata.park_code] ?? c.metadata.park_code) in NPS_PARKS);
+      if (top?.metadata.park_code) {
+        const code = LIVE_DATA_PARK_ALIAS[top.metadata.park_code] ?? top.metadata.park_code;
+        cardParkCodes = [code];
+        fallbackParkCode = fallbackParkCode ?? code;
+      }
+    }
 
     // ── 5. Cargar datos en vivo (ANTES de decidir si se escala) ───────────────
     // Datos volátiles (tarifas, alertas, campamentos) vienen EXCLUSIVAMENTE de
@@ -742,6 +1117,11 @@ serve(async (req) => {
           chunk.metadata.park_code,
           chunk.metadata.park_title ?? chunk.metadata.title ?? chunk.metadata.park_code
         );
+      }
+      // ADR-036: una página oficial NPS de un parque también trae sus datos en vivo.
+      const npsCode = chunk.metadata.park_code;
+      if (NPS_SOURCE_TABLES.has(chunk.source_table) && npsCode && npsCode !== "nps" && !parkCodeMap.has(npsCode)) {
+        parkCodeMap.set(npsCode, displayByCode.get(npsCode)?.title ?? NPS_PARKS[npsCode] ?? npsCode);
       }
     }
     // FIX 3: si hay guía abierta, asegura el parque en contexto aunque ningún
@@ -774,6 +1154,8 @@ serve(async (req) => {
         if (liveRows.length === 1 && liveRows[0].synced_at) liveSyncedAt = liveRows[0].synced_at;
       }
     }
+    liveDataForEvidence = liveDataBlock;
+    liveSyncedForEvidence = liveSyncedAt;
 
     // Sin chunk por encima del umbral no hay respuesta: ni el modelo ni los
     // datos en vivo solos. La frase es fija (no se adivina).
@@ -784,7 +1166,12 @@ serve(async (req) => {
     // ── 6. Construir contexto para el agente ──────────────────────────────────
     const context = chunks
       .map((c, i) => {
-        const label = TIME_SENSITIVE_SECTIONS.has(c.source_field)
+        const kind = chunkMeta.get(c.id)?.kind ?? c.metadata.kind;
+        const label = NPS_SOURCE_TABLES.has(c.source_table)
+          ? kind === "live"
+            ? " [PÁGINA OFICIAL NPS — condiciones/alertas: pueden cambiar; cita la liga]"
+            : " [PÁGINA OFICIAL NPS]"
+          : TIME_SENSITIVE_SECTIONS.has(c.source_field)
           ? " [GUÍA EDITORIAL: puede haber cambiado — confirmar en nps.gov]"
           : "";
         return `[${i + 1}] ${c.metadata.title ?? ""} — ${c.metadata.section ?? c.source_field}${label}\n${c.content}`;
@@ -809,24 +1196,27 @@ serve(async (req) => {
 
     // ── 7. Respuesta + herramienta del motor (solo en modo global) ────────────
     // En modo parque se conserva la regla de alcance: "Me enfoco solo en este parque".
-    const withTools = !parkMode;
+    // calculate (ADR-036) va en los dos modos; recommend_parks solo en modo global.
+    const tools: ChatTool[] = parkMode ? [CALCULATE_TOOL] : [RECOMMEND_TOOL, CALCULATE_TOOL];
     const scoped = engineDataForParkCodes(displayByCode.keys());
     let engineRun: EngineRun | null = null;
     let toolRounds = 0;
     const toolCorpus: string[] = [];
-    let reply = await chat(messages, withTools, "auto");
-    while (withTools && reply.tool_calls?.length && toolRounds < MAX_TOOL_ROUNDS) {
+    let reply = await chat(messages, tools, "auto");
+    while (reply.tool_calls?.length && toolRounds < MAX_TOOL_ROUNDS) {
       toolRounds += 1;
       messages.push({ role: "assistant", content: reply.content ?? null, tool_calls: reply.tool_calls });
       for (const call of reply.tool_calls) {
-        const out = call.function.name === "recommend_parks"
+        const out = call.function.name === "recommend_parks" && !parkMode
           ? runRecommendTool(call.function.arguments, scoped, displayByCode)
+          : call.function.name === "calculate"
+          ? { content: runCalculate(call.function.arguments, [context, liveDataBlock, ...toolCorpus].join("\n"), question), run: null }
           : { content: `Herramienta desconocida: ${call.function.name}`, run: null };
         if (out.run) engineRun = out.run;
         toolCorpus.push(out.content);
         messages.push({ role: "tool", tool_call_id: call.id, content: out.content });
       }
-      reply = await chat(messages, withTools, toolRounds < MAX_TOOL_ROUNDS ? "auto" : "none");
+      reply = await chat(messages, tools, toolRounds < MAX_TOOL_ROUNDS ? "auto" : "none");
     }
 
     // ── 9. Revisión: solo parques respaldados (§6.1) ──────────────────────────
@@ -834,6 +1224,7 @@ serve(async (req) => {
     // conjunto), los que nombró el usuario, y en modo parque los de nearby_parks
     // (el prompt los limita a "cerca de aquí").
     const allowed = new Set<string>(findParkMentions(question, nameIndex));
+    for (const code of placeParks) allowed.add(code);
     for (const p of engineRun?.result.parks ?? []) allowed.add(p.facts.park_code);
     if (contextParkCode) {
       allowed.add(contextParkCode);
@@ -861,7 +1252,7 @@ serve(async (req) => {
           ? `CORRECCIÓN: tu respuesta nombra ${names}, que no están respaldados por el motor ni los nombró el usuario. Reescribe la respuesta completa sin mencionarlos. Mismo formato JSON.`
           : `CORRECCIÓN: tu respuesta quedó vacía. Responde la pregunta del usuario. Mismo formato JSON.`,
       });
-      reply = await chat(messages, withTools, "none");
+      reply = await chat(messages, tools, "none");
       ({ answer, parksMentioned, outOfScope } = parseAnswer(reply.content));
       unbacked = findUnbackedParks(answer, parksMentioned, allowed, nameIndex);
       answerCheck = "regenerated";
@@ -890,7 +1281,7 @@ serve(async (req) => {
           ? `CORRECCIÓN: tu respuesta usa estas cifras que NO están en el contexto ni en DATOS EN VIVO ni en el motor: ${badNumbers.join(", ")}. Reescribe sin ninguna cifra que no aparezca ahí. Si no puedes, responde exactamente "Eso no lo tengo confirmado." Mismo formato JSON.`
           : `CORRECCIÓN: tu respuesta quedó vacía. Si no está en el contexto, responde exactamente "Eso no lo tengo confirmado." Mismo formato JSON.`,
       });
-      reply = await chat(messages, withTools, "none");
+      reply = await chat(messages, tools, "none");
       ({ answer, parksMentioned, outOfScope } = parseAnswer(reply.content));
       badNumbers = ungroundedNumbers(answer, numberCorpus, numberAllow);
       if (badNumbers.length > 0 || !answer) {
@@ -904,7 +1295,7 @@ serve(async (req) => {
     }
 
     const showSources = !outOfScope && answerCheck !== "fallback" && answerCheck !== "blocked_numbers";
-    const sources = showSources ? deduplicateSources(chunks, slugByCode) : [];
+    const sources = showSources ? buildSources(chunks, slugByCode, chunkMeta) : [];
     const run = engineRun;
     const recommendations: ConciergeRecommendation[] | undefined = run && answerCheck !== "blocked_numbers"
       ? run.result.parks.map((p) => toRecommendationEs(p, run.profile, displayByCode, SITE_URL))
@@ -913,23 +1304,39 @@ serve(async (req) => {
     // Escalación al quiz (ADR-030). El correo se pide aparte, solo después de
     // 2 respuestas previas (ask_email), y se guarda como lead — no aquí.
     const escalate = needsEscalation || outOfScope;
-    const dateLabel = liveSyncedAt ? `verificado ${formatDateEs(liveSyncedAt)}` : formatAnswerDate();
+    // Fecha: la de cada fuente citada (fetched_at) va en el footer; aquí solo la de
+    // los datos en vivo si se usaron. Nunca la fecha de hoy.
+    const dateLabel = liveSyncedAt && liveDataBlock ? `datos en vivo NPS: ${formatDateEs(liveSyncedAt)}` : undefined;
+    const attach = await safetyAttachment();
 
     // ── 10. Responder ─────────────────────────────────────────────────────────
     return deliver({
       answer,
       sources,
-      chunkIds: chunks.map((c) => c.id),
+      chunkIds: [...chunks.map((c) => c.id), ...attach.ids],
       escalate,
       askEmail,
       answerCheck,
       unconfirmed: answerCheck === "blocked_numbers" || answer.startsWith("Eso no lo tengo confirmado"),
       recommendations,
       dateLabel,
+      safetyBlock: attach.text,
       evidence: includeEvidence
         ? {
-            chunks: chunks.map((c) => ({ id: c.id, content: c.content })),
+            chunks: [
+              ...chunks.map((c) => ({
+                id: c.id,
+                content: c.content,
+                source_table: c.source_table,
+                kind: chunkMeta.get(c.id)?.kind ?? c.metadata.kind ?? null,
+                source_url: chunkMeta.get(c.id)?.source_url ?? c.metadata.source_url ?? null,
+                fetched_at: chunkFetchedAt(c, chunkMeta),
+              })),
+              ...attach.chunks.filter((a) => !chunks.some((c) => c.id === a.id)),
+            ],
             live_data_block: liveDataBlock,
+            live_synced_at: liveSyncedAt,
+            tool_outputs: toolCorpus,
           }
         : undefined,
     });

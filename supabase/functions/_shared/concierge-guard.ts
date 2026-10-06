@@ -104,15 +104,22 @@ export function formatAnswerDate(date = new Date()): string {
   return formatted.replace(/\./g, "");
 }
 
+/** A cited source. `date` is when that source text was fetched/verified (never today by default). */
+export interface FooterSource {
+  title: string;
+  section: string;
+  date?: string;
+}
+
 export function appendSourceFooter(
   answer: string,
-  sources: Array<{ title: string; section: string }>,
-  dateLabel: string,
+  sources: FooterSource[],
+  dateLabel?: string,
 ): string {
   const src = sources.length
-    ? sources.slice(0, 3).map((s) => `${s.title} — ${s.section}`).join("; ")
+    ? sources.slice(0, 3).map((s) => `${s.title} — ${s.section}${s.date ? ` (${s.date})` : ""}`).join("; ")
     : "base de conocimiento Nomaderia";
-  const footer = `Fuente: ${src} · ${dateLabel}`;
+  const footer = `Fuente: ${src}${dateLabel ? ` · ${dateLabel}` : ""}`;
   const trimmed = answer.trim();
   if (trimmed.endsWith(footer)) return trimmed;
   return `${trimmed}\n\n${footer}`;
@@ -121,8 +128,8 @@ export function appendSourceFooter(
 export function composeVisibleAnswer(
   answer: string,
   safety: boolean,
-  sources: Array<{ title: string; section: string }>,
-  dateLabel: string,
+  sources: FooterSource[],
+  dateLabel?: string,
 ): string {
   let text = answer.trim();
   if (safety && !text.includes("En una emergencia, llama al 911")) {
