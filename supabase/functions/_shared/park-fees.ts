@@ -232,6 +232,9 @@ function dayEs(iso: string): string {
   return `${get("day")} ${MONTHS_ES[get("month") - 1]} ${get("year")}`;
 }
 
+/** Kings Canyon shares Sequoia's fees page and row. */
+const FEE_PARK_ALIAS: Record<string, string> = { kica: "seki", sequ: "seki" };
+
 function int(v: unknown): number {
   const n = Number(v);
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
@@ -248,7 +251,8 @@ export function parseFeeInput(raw: string): FeeInput | string {
   const visitsRaw = Array.isArray(a.visits) ? a.visits : a.park_code ? [{ park_code: a.park_code, entry: a.entry }] : [];
   const visits: FeeVisit[] = [];
   for (const v of visitsRaw as Array<Record<string, unknown>>) {
-    const code = String(v?.park_code ?? "").toLowerCase();
+    const raw = String(v?.park_code ?? "").toLowerCase().trim();
+    const code = FEE_PARK_ALIAS[raw] ?? raw;
     const entry = String(v?.entry ?? "") as EntryMode;
     if (!code || !["vehicle", "motorcycle", "on_foot"].includes(entry)) return "cada visita necesita park_code y entry (vehicle | motorcycle | on_foot)";
     visits.push({ park_code: code, entry });
@@ -262,7 +266,7 @@ export function parseFeeInput(raw: string): FeeInput | string {
     nonresident_adults: int(a.nonresident_adults),
     children_under_16: int(a.children_under_16),
     pass_held: pass,
-    pass_park_code: a.pass_park_code ? String(a.pass_park_code).toLowerCase() : undefined,
+    pass_park_code: a.pass_park_code ? (FEE_PARK_ALIAS[String(a.pass_park_code).toLowerCase()] ?? String(a.pass_park_code).toLowerCase()) : undefined,
     compare_passes: a.compare_passes === true,
   };
   if (input.us_resident_adults + input.nonresident_adults === 0) return "indica cuántos adultos (16+) viven en EE. UU. y cuántos no";
@@ -441,7 +445,7 @@ export function feeFactsBlock(feeRows: ParkFeeRow[], passRows: PassRuleRow[]): s
     const nr = f.nonresident_fee_on_page && f.on_nonresident_list === true
       ? `Tarifa de NO-RESIDENTE ${fmt(f.nonresident_fee ?? 0)} por persona de 16+ que no vive en EE. UU. (además de la entrada)`
       : "NO cobra Tarifa de NO-RESIDENTE (no está en la lista oficial)";
-    lines.push(`- ${f.park_name}: carro ${fmt(f.vehicle ?? 0)} (una vez por carro, cubre a todos dentro); moto ${fmt(f.motorcycle ?? 0)}; por persona a pie/bici ${fmt(f.per_person ?? 0)} (16+; menores de 16 no pagan); pase anual del parque ${f.annual_park_pass === null ? "—" : fmt(f.annual_park_pass)}; ${nr}. (${f.source_url}, consultada ${dayEs(f.fetched_at)})`);
+    lines.push(`- ${f.park_name}: carro ${fmt(f.vehicle ?? 0)} (una vez por carro, cubre a todos dentro); moto ${fmt(f.motorcycle ?? 0)}; por persona a pie/bici ${fmt(f.per_person ?? 0)}${f.min_paying_age ? ` (${f.min_paying_age}+; menores de ${f.min_paying_age} no pagan)` : ""}; pase anual del parque ${f.annual_park_pass === null ? "—" : fmt(f.annual_park_pass)}; ${nr}. (${f.source_url}, consultada ${dayEs(f.fetched_at)})`);
   }
   const res = passRows.find((p) => p.pass_code === "atb_resident");
   const non = passRows.find((p) => p.pass_code === "atb_nonresident");
@@ -451,3 +455,85 @@ export function feeFactsBlock(feeRows: ParkFeeRow[], passRows: PassRuleRow[]): s
   lines.push("Para cualquier total usa la herramienta calculate_fees; no sumes tarifas a mano.");
   return lines.join("\n");
 }
+
+// ─── DB rows → typed rows (PostgREST returns numeric columns as strings) ─────
+
+const num = (v: unknown): number | null => (v === null || v === undefined || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null);
+
+export function normalizeFeeRow(r: Record<string, unknown>): ParkFeeRow {
+  return {
+    park_code: String(r.park_code ?? ""),
+    park_name: String(r.park_name ?? ""),
+    entrance_fee_required: Boolean(r.entrance_fee_required),
+    vehicle: num(r.vehicle),
+    motorcycle: num(r.motorcycle),
+    per_person: num(r.per_person),
+    annual_park_pass: num(r.annual_park_pass),
+    min_paying_age: num(r.min_paying_age),
+    valid_days: num(r.valid_days),
+    nonresident_fee_on_page: Boolean(r.nonresident_fee_on_page),
+    on_nonresident_list: r.on_nonresident_list === null || r.on_nonresident_list === undefined ? null : Boolean(r.on_nonresident_list),
+    nonresident_fee: num(r.nonresident_fee),
+    parse_ok: Boolean(r.parse_ok),
+    issues: Array.isArray(r.issues) ? r.issues.map(String) : [],
+    source_url: String(r.source_url ?? ""),
+    nonresident_list_url: String(r.nonresident_list_url ?? PASSES_URL),
+    fetched_at: String(r.fetched_at ?? ""),
+  };
+}
+
+export function normalizePassRow(r: Record<string, unknown>): PassRuleRow {
+  return {
+    pass_code: String(r.pass_code) as PassRuleRow["pass_code"],
+    label_es: String(r.label_es ?? ""),
+    price: num(r.price),
+    available_to: String(r.available_to ?? "") as PassRuleRow["available_to"],
+    covers_vehicle_and_passengers: Boolean(r.covers_vehicle_and_passengers),
+    per_person_additional_adults: num(r.per_person_additional_adults),
+    covers_nonresident_fee: Boolean(r.covers_nonresident_fee),
+    evidence: String(r.evidence ?? ""),
+    source_url: String(r.source_url ?? ""),
+    fetched_at: String(r.fetched_at ?? ""),
+    parse_ok: Boolean(r.parse_ok),
+  };
+}
+
+// ─── OpenAI tool schema ───────────────────────────────────────────────────────
+
+export const CALCULATE_FEES_TOOL = {
+  type: "function",
+  function: {
+    name: "calculate_fees",
+    description:
+      "Calcula con la tabla oficial de tarifas NPS (park_fees + pass_rules) cuánto paga un grupo de entrada. " +
+      "Úsala SIEMPRE que pregunten cuánto pagan / cuánto cuesta entrar, la Tarifa de NO-RESIDENTE, si conviene un pase, " +
+      "o totales de entrada para varias personas o parques. El código suma; tú explicas el resultado y citas la fuente y fecha que devuelve. " +
+      "Parques: jotr (Joshua Tree), deva (Death Valley), chis (Channel Islands), pinn (Pinnacles), seki (Sequoia & Kings Canyon), yose (Yosemite), grca (Grand Canyon).",
+    parameters: {
+      type: "object",
+      properties: {
+        visits: {
+          type: "array",
+          description: "Una entrada por parque visitado.",
+          items: {
+            type: "object",
+            properties: {
+              park_code: { type: "string", enum: ["jotr", "deva", "chis", "pinn", "seki", "yose", "grca"] },
+              entry: { type: "string", enum: ["vehicle", "motorcycle", "on_foot"], description: "vehicle = carro particular (default si van en carro o no lo dicen); on_foot = a pie o en bici" },
+            },
+            required: ["park_code", "entry"],
+            additionalProperties: false,
+          },
+        },
+        us_resident_adults: { type: "integer", description: "Personas de 16+ que VIVEN en EE. UU. (sin importar ciudadanía)." },
+        nonresident_adults: { type: "integer", description: "Personas de 16+ que NO viven en EE. UU. (p. ej. viven en México)." },
+        children_under_16: { type: "integer", description: "Menores de 16 años." },
+        pass_held: { type: "string", enum: ["none", "atb_resident", "atb_nonresident", "park_annual"], description: "Pase que YA tienen (none si no dicen)." },
+        pass_park_code: { type: "string", description: "Solo con park_annual: parque del pase anual." },
+        compare_passes: { type: "boolean", description: "true si preguntan si conviene comprar un pase America the Beautiful." },
+      },
+      required: ["visits", "us_resident_adults", "nonresident_adults", "children_under_16", "pass_held"],
+      additionalProperties: false,
+    },
+  },
+} as const;
