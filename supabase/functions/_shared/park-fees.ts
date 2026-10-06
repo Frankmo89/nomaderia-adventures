@@ -460,6 +460,18 @@ export function feeFactsBlock(feeRows: ParkFeeRow[], passRows: PassRuleRow[]): s
 
 const BUY_PASS = /\bconviene|vale la pena|\bcomprar\b|\bcompro\b|\bsacar (el|un) pase|sale m[aá]s barato|ahorr\w*/i;
 const HAS_PASS = /\b(ya )?(tengo|tienes?|tenemos|tiene|traigo|traemos|llevo|llevamos)\b[^.?!]{0,40}(\bpase|america the beautiful|annual pass)|\bcon (mi|nuestro|el|su) (pase|america the beautiful)\b|\b(pase|america the beautiful) que (ya )?(tengo|tenemos)/i;
+/** Lives outside the U.S.: Mexican states/big cities and Latin American countries (fee residency is where you live). */
+const OUTSIDE_US = new RegExp(
+  String.raw`\b(viv\w*|radic\w*|son|somos|es|soy|vienen?|venimos)\b[^.?!]{0,30}\b(en|de|desde)\s+(m[eé]xico|cdmx|ciudad de m[eé]xico|tijuana|mexicali|ensenada|rosarito|tecate|hermosillo|nogales|ju[aá]rez|chihuahua|monterrey|saltillo|torre[oó]n|guadalajara|zapopan|le[oó]n|quer[eé]taro|puebla|oaxaca|chiapas|tabasco|veracruz|yucat[aá]n|m[eé]rida|canc[uú]n|quintana roo|sonora|sinaloa|culiac[aá]n|mazatl[aá]n|durango|zacatecas|aguascalientes|san luis potos[ií]|michoac[aá]n|morelia|jalisco|nayarit|colima|guerrero|acapulco|morelos|cuernavaca|hidalgo|pachuca|tlaxcala|estado de m[eé]xico|toluca|nuevo le[oó]n|coahuila|tamaulipas|baja california|la paz|los cabos|campeche|guanajuato|guatemala|el salvador|honduras|nicaragua|costa rica|panam[aá]|colombia|venezuela|ecuador|per[uú]|bolivia|chile|argentina|uruguay|paraguay|cuba|rep[uú]blica dominicana|espa[nñ]a|canad[aá])\b`,
+  "i",
+);
+/** Someone in the group lives in the U.S. */
+const IN_US = /viv\w* en (ee\.?\s?uu|estados unidos|usa|los estados unidos)|soy residente|residente de (ee|estados)|\b(en|de)\s+(san diego|los [aá]ngeles|california|texas|arizona|nevada|fresno|sacramento|san francisco|san jos[eé]|phoenix|tucson|las vegas|houston|dallas|chicago|nueva york|new york|florida|oxnard|riverside|bakersfield|chula vista|el centro|calexico|yuma|el paso)\b|green card|residencia permanente/i;
+
+export function mentionsLivingOutsideUS(question: string): boolean {
+  return OUTSIDE_US.test(question);
+}
+
 const NUM_WORDS: Record<string, number> = { dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10 };
 
 /** "cinco adultos", "4 personas" → the largest stated group size (adults/people), or null. */
@@ -488,8 +500,13 @@ export function reviewFeeInput(input: FeeInput, question: string, opts: { mentio
   if (stated !== null && out.us_resident_adults + out.nonresident_adults < stated && !/\bniñ|menor|hij[oa]s?\b/i.test(question)) {
     return `la pregunta habla de ${stated} adultos/personas y contaste ${out.us_resident_adults + out.nonresident_adults}: cuenta a TODOS, incluido el titular del pase, y vuelve a llamar`;
   }
-  if (opts.mentionsNonresident && out.nonresident_adults === 0) {
+  const outside = opts.mentionsNonresident || OUTSIDE_US.test(question);
+  const inUs = IN_US.test(question);
+  if (outside && out.nonresident_adults === 0) {
     return "la pregunta dice que alguien de 16+ NO vive en EE. UU.: cuéntalo en nonresident_adults (y en us_resident_adults solo a quien sí vive en EE. UU.) y vuelve a llamar";
+  }
+  if (outside && !inUs && out.us_resident_adults > 0 && !HAS_PASS.test(question)) {
+    return "nadie en la pregunta dice vivir en EE. UU.: si todos viven fuera, ponlos a todos en nonresident_adults (us_resident_adults = 0) y vuelve a llamar";
   }
   return out;
 }

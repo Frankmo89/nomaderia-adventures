@@ -140,3 +140,13 @@ describe("group size check", () => {
     expect(reviewFeeInput(input, "Yo tengo el America the Beautiful y mis tíos viven en Oaxaca; ¿tienen que comprar otro pase?", { mentionsNonresident: false })).toMatchObject({ pass_held: "atb_resident" });
   });
 });
+
+describe("residency check", () => {
+  const input = { visits: [{ park_code: "grca", entry: "on_foot" as const }], us_resident_adults: 2, nonresident_adults: 4, children_under_16: 0, pass_held: "atb_nonresident" as const };
+  it("rejects U.S. residents nobody mentioned when the group lives abroad", () => {
+    expect(typeof reviewFeeInput(input, "Seis adultos que viven en Zacatecas entran a pie y uno trae el pase de no residente, ¿cuánto pagan?", { mentionsNonresident: false })).toBe("string");
+  });
+  it("accepts a mixed group", () => {
+    expect(reviewFeeInput({ ...input, us_resident_adults: 1, nonresident_adults: 1, pass_held: "none" }, "Mi esposa vive en Tecate y yo en Chula Vista, ¿cuánto pagamos caminando?", { mentionsNonresident: false })).toMatchObject({ us_resident_adults: 1 });
+  });
+});
