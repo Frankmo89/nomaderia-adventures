@@ -45,3 +45,9 @@ describe("rule intents", () => {
     expect(pickRuleChunks(overnight, [results[0]], 0.4)).toEqual([]);
   });
 });
+
+describe("fire restrictions intent", () => {
+  it("detects campfire questions", () => {
+    expect(detectRuleIntents("¿Se puede prender una fogata con leña en el campamento xxxx?").map((r) => r.id)).toContain("fires");
+  });
+});

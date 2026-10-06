@@ -5,7 +5,7 @@
 //   Nomaderia guide/page they come from) in the top N, refilled from the
 //   remaining candidates. Applied after merging the match_knowledge_chunks
 //   results in function code; the SQL function is unchanged.
-// - Rule intents: closures, overnight stays / sleeping in the car, permits.
+// - Rule intents: closures, overnight stays / sleeping in the car, permits, fire restrictions.
 //   When the question matches, the agent runs the same match_knowledge_chunks
 //   (same count and threshold) with a fixed English intent query, filtered to
 //   the park, and pins the best chunk whose text really states that rule.
@@ -51,7 +51,7 @@ export function diversifyChunks<T extends DiverseChunk>(
   return out;
 }
 
-export type RuleIntentId = "closures" | "overnight" | "permits";
+export type RuleIntentId = "closures" | "overnight" | "permits" | "fires";
 
 export interface RuleIntent {
   id: RuleIntentId;
@@ -75,6 +75,12 @@ export const RULE_INTENTS: RuleIntent[] = [
     question: /cerrad[oa]s?|\bcierr[ae]n?\b|\bcierre\b|abiert[oa]s?|\bclosed\b|closure|temporada|est[aá] (abierto|cerrado|disponible)/i,
     queryEn: "Current road and trail closures: which roads, trails and areas of the park are closed or open now.",
     content: /\bclos(ed|ure|ures|ing)\b|\breopen\w*/i,
+  },
+  {
+    id: "fires",
+    question: /fogat\w*|\bfuego\b|\bleña\b|carb[oó]n|\basador|\bparrilla|\bcampfire|\bbbq\b/i,
+    queryEn: "Fire restrictions: are wood and charcoal campfires allowed in campgrounds and picnic areas right now?",
+    content: /fire restriction|campfires?|wood and charcoal|charcoal/i,
   },
   {
     id: "permits",
