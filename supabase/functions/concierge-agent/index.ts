@@ -640,7 +640,7 @@ REGLAS ESTRICTAS:
 10. Si la respuesta requiere una cuenta (tarifas × personas, agua por persona × personas, sumas o diferencias), usa la herramienta calculate con UNA expresión que tenga la fórmula completa (todas las personas y todos los cargos), p. ej. (a + b) * n. Nunca hagas cuentas de memoria; escribe el resultado que devuelve. Antes de calcular, decide con la PÁGINA OFICIAL quién paga y qué cubre cada tarifa o pase (titular, pasajeros del vehículo, adultos adicionales, menores de 16), y solo entonces arma la fórmula con esas personas. Al comparar dos totales, resta el mayor menos el menor y di cuál sale más barato.
 11. No uses listas numeradas; usa viñetas con «-».
 12. TARIFAS DE ENTRADA: si hay bloque TARIFAS OFICIALES y la herramienta calculate_fees, úsala para CUALQUIER total o monto que pague una persona o un grupo (entrada, Tarifa de NO-RESIDENTE, si conviene un pase). No sumes tarifas a mano ni con calculate. Escribe el TOTAL que devuelve, explica en pocas palabras qué paga cada quien, y cita la liga de la fuente y la fecha de consulta que vienen en FUENTES. Si un parque NO cobra la Tarifa de NO-RESIDENTE, dilo claramente. Si la herramienta devuelve ERROR, responde "Eso no lo tengo confirmado." y da la liga oficial.
-13. PRODUCTO: si hay TARJETA DE PRODUCTO en el CONTEXTO, responde la pregunta sobre el Itinerario Completo Nomaderia solo con lo que dice esa tarjeta (precio, qué incluye, entrega, cambios, pago, WhatsApp). El sistema agrega la tarjeta completa al final. No digas que este chat cobra o reserva: el pago es con tarjeta en nomaderia.com.
+13. PRODUCTO: si hay TARJETA DE PRODUCTO en el CONTEXTO, responde la pregunta sobre el Itinerario Completo Nomaderia solo con lo que dice esa tarjeta (precio, qué incluye, entrega, cambios, pago, WhatsApp). El sistema agrega la tarjeta completa y su fuente al final (no escribas tú "Fuente:"). No digas que este chat cobra o reserva: el pago es con tarjeta en nomaderia.com.
 
 DATOS VIVOS — REGLAS IMPORTANTES:
 - Para precios de entrada, alertas y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO o las PÁGINAS OFICIALES NPS del CONTEXTO.
@@ -1297,9 +1297,17 @@ serve(async (req) => {
     liveSyncedForEvidence = liveSyncedAt;
 
     // ── 5b. ADR-037: tarifas como datos + tarjeta de producto ────────────────
-    const productQ = isProductQuestion(question, {
-      mentionsPark: namedParks.size > 0 || placeParks.length > 0 || Boolean(contextParkCode),
-    });
+    const mentionsPark = namedParks.size > 0 || placeParks.length > 0 || Boolean(contextParkCode);
+    const productQ = isProductQuestion(question, { mentionsPark });
+    // Pregunta solo de producto (sin parque): la tarjeta es el único contexto; los
+    // chunks de guías de parques que salieron por la palabra "itinerario" no aplican.
+    if (productQ && !mentionsPark) {
+      chunks.splice(0, chunks.length);
+      liveDataBlock = "";
+      liveSyncedAt = null;
+      liveDataForEvidence = "";
+      liveSyncedForEvidence = null;
+    }
     const feeParks = [...new Set(
       [...namedParks, ...placeParks, ...(contextParkCode ? [contextParkCode] : [])].map((c) => LIVE_DATA_PARK_ALIAS[c] ?? c),
     )].filter((c) => c in FEE_PARKS);
