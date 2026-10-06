@@ -6,6 +6,8 @@ import {
   parseParkFeesPage,
   reviewFeeInput,
   statedGroupSize,
+  nextFreeDayNote,
+  statedToday,
   parsePassRules,
   withNonresidentList,
   type ParkFeeRow,
@@ -148,5 +150,26 @@ describe("residency check", () => {
   });
   it("accepts a mixed group", () => {
     expect(reviewFeeInput({ ...input, us_resident_adults: 1, nonresident_adults: 1, pass_held: "none" }, "Mi esposa vive en Tecate y yo en Chula Vista, ¿cuánto pagamos caminando?", { mentionsNonresident: false })).toMatchObject({ us_resident_adults: 1 });
+  });
+});
+
+describe("pass comparison and dates", () => {
+  it("prices an unmentioned pass as a purchase, with its price", () => {
+    const input = { visits: [{ park_code: "jotr", entry: "vehicle" as const }, { park_code: "yose", entry: "vehicle" as const }], us_resident_adults: 2, nonresident_adults: 1, children_under_16: 0, pass_held: "park_annual" as const, pass_park_code: "yose" };
+    const r = reviewFeeInput(input, "Vivimos en Oxnard y viene una amiga de Puebla en el carro, ¿qué hacemos con los pases?", { mentionsNonresident: true });
+    expect(r).toMatchObject({ pass_held: "none", compare_passes: true });
+    const out = computeFees(r as Exclude<typeof r, string>, rows, rules);
+    expect(out.total).toBe(165);
+    expect(out.text).toMatch(/COMPARACIÓN con America the Beautiful \(residente de EE\. UU\.\) \(\$80\): \$80 \+ \$0 en caseta = \$80; sin pase \$165; diferencia \$165 − \$80 = \$85 \(CONVIENE EL PASE\)/);
+  });
+  it("offers the park's own annual pass when only one park is visited", () => {
+    const input = { visits: [{ park_code: "jotr", entry: "vehicle" as const }], us_resident_adults: 1, nonresident_adults: 0, children_under_16: 0, pass_held: "none" as const, compare_passes: true };
+    expect(computeFees(input, rows, rules).text).toMatch(/Pase anual de Joshua Tree National Park \(\$55\).*CONVIENE PAGAR EN CASETA/);
+  });
+  it("finds the next free-entrance day after a date", () => {
+    const list = "## 2026 Free Entrance Days\n- March 3 : Day one\n- July 3–5: Long weekend\n- October 27 : Day two\n- November 11: Day three";
+    expect(nextFreeDayNote([list], { m: 10, d: 3 })).toMatch(/October 27 : Day two\. El siguiente: November 11: Day three/);
+    expect(nextFreeDayNote(["sin lista"], { m: 10, d: 3 })).toBe("");
+    expect(statedToday("Hoy es sábado 3 de octubre de 2026, ¿cuándo es gratis?")).toEqual({ m: 10, d: 3 });
   });
 });

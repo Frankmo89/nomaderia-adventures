@@ -404,14 +404,25 @@ export function computeFees(input: FeeInput, feeRows: ParkFeeRow[], passRows: Pa
       { code: "atb_resident", eligible: input.us_resident_adults > 0 },
       { code: "atb_nonresident", eligible: input.nonresident_adults > 0 },
     ];
+    const priced: Array<{ label: string; price: number; input: FeeInput; pass: PassHeld }> = [];
     for (const o of options) {
       const rule = rules.get(o.code);
       if (!o.eligible || !rule?.parse_ok || rule.price === null) continue;
-      const withPass = runVisits({ ...input, pass_held: o.code }, o.code, fees, rules);
+      priced.push({ label: rule.label_es, price: rule.price, input: { ...input, pass_held: o.code }, pass: o.code });
+    }
+    // One park only: its own annual pass is also an option.
+    const parks = [...new Set(input.visits.map((v) => v.park_code))];
+    const annual = rules.get("park_annual");
+    const onlyFee = parks.length === 1 ? fees.get(parks[0]) : undefined;
+    if (onlyFee && annual?.parse_ok && onlyFee.annual_park_pass !== null && onlyFee.entrance_fee_required) {
+      priced.push({ label: `Pase anual de ${onlyFee.park_name}`, price: onlyFee.annual_park_pass, input: { ...input, pass_held: "park_annual", pass_park_code: onlyFee.park_code }, pass: "park_annual" });
+    }
+    for (const o of priced) {
+      const withPass = runVisits(o.input, o.pass, fees, rules);
       if (typeof withPass === "string") continue;
-      const cost = rule.price + withPass.total;
+      const cost = o.price + withPass.total;
       const diff = base.total - cost;
-      out.push(`COMPARACIÓN con ${rule.label_es} (${fmt(rule.price)}): ${fmt(rule.price)} + ${fmt(withPass.total)} en caseta = ${fmt(cost)}; sin pase ${fmt(base.total)}; diferencia ${fmt(base.total)} − ${fmt(cost)} = ${diff < 0 ? "-" : ""}${fmt(Math.abs(diff))} (${diff > 0 ? "conviene el pase" : diff < 0 ? "conviene pagar en caseta" : "da igual"}).`);
+      out.push(`COMPARACIÓN con ${o.label} (${fmt(o.price)}): ${fmt(o.price)} + ${fmt(withPass.total)} en caseta = ${fmt(cost)}; sin pase ${fmt(base.total)}; diferencia ${diff >= 0 ? `${fmt(base.total)} − ${fmt(cost)}` : `${fmt(cost)} − ${fmt(base.total)}`} = ${fmt(Math.abs(diff))} (${diff > 0 ? "CONVIENE EL PASE" : diff < 0 ? "CONVIENE PAGAR EN CASETA" : "da igual"}).`);
     }
   }
   const srcs = new Map<string, string>();
@@ -458,8 +469,8 @@ export function feeFactsBlock(feeRows: ParkFeeRow[], passRows: PassRuleRow[]): s
 
 // ─── Question-aware review of the model's arguments ──────────────────────────
 
-const BUY_PASS = /\bconviene|vale la pena|\bcomprar\b|\bcompro\b|\bsacar (el|un) pase|sale m[aá]s barato|ahorr\w*/i;
-const HAS_PASS = /\b(ya )?(tengo|tienes?|tenemos|tiene|traigo|traemos|llevo|llevamos)\b[^.?!]{0,40}(\bpase|america the beautiful|annual pass)|\bcon (mi|nuestro|el|su) (pase|america the beautiful)\b|\b(pase|america the beautiful) que (ya )?(tengo|tenemos)/i;
+const BUY_PASS = /\bconviene|vale la pena|\bcomprar\b|\bcompro\b|\bsacar (el|un) pase|sale m[aá]s barato|ahorr\w*|ajust\w* de pases|\bqu[eé] pase/i;
+const HAS_PASS = /\b(ya )?(tengo|tienes?|tenemos|tienen?|traigo|traes?|traemos|traen|llevo|llevas?|llevamos|llevan)\b[^.?!]{0,40}(\bpase|america the beautiful|annual pass)|\bcon (mi|nuestro|el|su) (pase|america the beautiful)\b|\b(pase|america the beautiful) que (ya )?(tengo|tenemos)/i;
 /** Lives outside the U.S.: Mexican states/big cities and Latin American countries (fee residency is where you live). */
 const OUTSIDE_US = new RegExp(
   String.raw`\b(viv\w*|radic\w*|son|somos|es|soy|vienen?|venimos)\b[^.?!]{0,30}\b(en|de|desde)\s+(m[eé]xico|cdmx|ciudad de m[eé]xico|tijuana|mexicali|ensenada|rosarito|tecate|hermosillo|nogales|ju[aá]rez|chihuahua|monterrey|saltillo|torre[oó]n|guadalajara|zapopan|le[oó]n|quer[eé]taro|puebla|oaxaca|chiapas|tabasco|veracruz|yucat[aá]n|m[eé]rida|canc[uú]n|quintana roo|sonora|sinaloa|culiac[aá]n|mazatl[aá]n|durango|zacatecas|aguascalientes|san luis potos[ií]|michoac[aá]n|morelia|jalisco|nayarit|colima|guerrero|acapulco|morelos|cuernavaca|hidalgo|pachuca|tlaxcala|estado de m[eé]xico|toluca|nuevo le[oó]n|coahuila|tamaulipas|baja california|la paz|los cabos|campeche|guanajuato|guatemala|el salvador|honduras|nicaragua|costa rica|panam[aá]|colombia|venezuela|ecuador|per[uú]|bolivia|chile|argentina|uruguay|paraguay|cuba|rep[uú]blica dominicana|espa[nñ]a|canad[aá])\b`,
@@ -493,9 +504,13 @@ export function statedGroupSize(question: string): number | null {
  */
 export function reviewFeeInput(input: FeeInput, question: string, opts: { mentionsNonresident: boolean }): FeeInput | string {
   let out = input;
-  if (out.pass_held !== "none" && BUY_PASS.test(question) && !HAS_PASS.test(question)) {
+  const hasPass = HAS_PASS.test(question);
+  // A pass the user never said they have is a pass to BUY: price it as a comparison
+  // (with its price), never as "already covered".
+  if (out.pass_held !== "none" && !hasPass) {
     out = { ...out, pass_held: "none", pass_park_code: undefined, compare_passes: true };
   }
+  if (BUY_PASS.test(question) && !hasPass) out = { ...out, compare_passes: true };
   const stated = statedGroupSize(question);
   if (stated !== null && out.us_resident_adults + out.nonresident_adults < stated && !/\bniñ|menor|hij[oa]s?\b/i.test(question)) {
     return `la pregunta habla de ${stated} adultos/personas y contaste ${out.us_resident_adults + out.nonresident_adults}: cuenta a TODOS, incluido el titular del pase, y vuelve a llamar`;
@@ -505,7 +520,9 @@ export function reviewFeeInput(input: FeeInput, question: string, opts: { mentio
   if (outside && out.nonresident_adults === 0) {
     return "la pregunta dice que alguien de 16+ NO vive en EE. UU.: cuéntalo en nonresident_adults (y en us_resident_adults solo a quien sí vive en EE. UU.) y vuelve a llamar";
   }
-  if (outside && !inUs && out.us_resident_adults > 0 && !HAS_PASS.test(question)) {
+  // A held resident pass ($80) implies its holder lives in the U.S.
+  const residentHolder = hasPass && out.pass_held === "atb_resident";
+  if (outside && !inUs && out.us_resident_adults > 0 && !residentHolder) {
     return "nadie en la pregunta dice vivir en EE. UU.: si todos viven fuera, ponlos a todos en nonresident_adults (us_resident_adults = 0) y vuelve a llamar";
   }
   return out;
@@ -569,7 +586,7 @@ export const CALCULATE_FEES_TOOL = {
       properties: {
         visits: {
           type: "array",
-          description: "Una entrada por parque visitado.",
+          description: "TODAS las visitas del viaje en UNA sola llamada (una entrada por parque), para que el total y la comparación con pases salgan completos.",
           items: {
             type: "object",
             properties: {
@@ -592,3 +609,53 @@ export const CALCULATE_FEES_TOOL = {
     },
   },
 } as const;
+
+// ─── Dates: today and the next free-entrance day (from the official list) ─────
+
+const MONTHS_EN = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+const MONTHS_ES_FULL = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const WEEKDAYS_ES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+/** Today in America/Tijuana as {y, m (1-12), d, weekday}. */
+export function todayPacific(now = new Date()): { y: number; m: number; d: number; weekday: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Tijuana", year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" }).formatToParts(now);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(get("weekday"));
+  return { y: Number(get("year")), m: Number(get("month")), d: Number(get("day")), weekday: wd };
+}
+
+export function todayLineEs(now = new Date()): string {
+  const t = todayPacific(now);
+  return `HOY (hora del Pacífico): ${WEEKDAYS_ES[t.weekday]} ${t.d} de ${MONTHS_ES_FULL[t.m - 1]} de ${t.y}.`;
+}
+
+/** "hoy es sábado 3 de octubre (de 2026)" in the question → that date. */
+export function statedToday(question: string): { m: number; d: number } | null {
+  const m = question.match(/\bhoy es\s+(?:\p{L}+\s+)?(\d{1,2})\s+de\s+(\p{L}+)/iu);
+  if (!m) return null;
+  const month = MONTHS_ES_FULL.indexOf(m[2].toLowerCase()) + 1;
+  return month ? { m: month, d: Number(m[1]) } : null;
+}
+
+/**
+ * From an official "Free Entrance Days" list ("- October 27 : Theodore Roosevelt's birthday"),
+ * the first listed date after `from`. Returns a context note, or "" when no list is present.
+ */
+export function nextFreeDayNote(texts: string[], from: { m: number; d: number }): string {
+  const list = texts.find((t) => /Free Entrance Days/i.test(t));
+  if (!list) return "";
+  const days: Array<{ m: number; d: number; name: string; raw: string }> = [];
+  for (const line of list.split("\n")) {
+    const mm = line.match(/^-\s*([A-Z][a-z]+)\s+(\d{1,2})(?:[–-]\d{1,2})?\s*:\s*(.+)$/);
+    if (!mm) continue;
+    const m = MONTHS_EN.indexOf(mm[1].toLowerCase()) + 1;
+    if (m) days.push({ m, d: Number(mm[2]), name: mm[3].trim(), raw: line.replace(/^-\s*/, "").trim() });
+  }
+  if (!days.length) return "";
+  const after = days.filter((x) => x.m > from.m || (x.m === from.m && x.d > from.d));
+  const next = after[0];
+  const fromEs = `${from.d} de ${MONTHS_ES_FULL[from.m - 1]}`;
+  return next
+    ? `PRÓXIMO DÍA DE ENTRADA GRATIS después del ${fromEs} (lista oficial NPS): ${next.raw}.${after[1] ? ` El siguiente: ${after[1].raw}.` : ""}`
+    : `No queda ningún día de entrada gratis de la lista oficial después del ${fromEs}.`;
+}
