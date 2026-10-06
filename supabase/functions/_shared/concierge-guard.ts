@@ -47,6 +47,22 @@ export function unconfirmedAnswer(askEmail: boolean): string {
   return `${UNCONFIRMED_PHRASE} Si me dejas tu correo, lo revisamos y te escribimos.`;
 }
 
+/**
+ * Preguntas legales de inmigración (estatus, visas, quedarse a vivir, deportación).
+ * No es tema del concierge (NOMADERIA_SOUL: «cedes ante el profesional … legal»):
+ * respuesta fija, sin tranquilizar ni alarmar, y sin pasar por el modelo.
+ */
+const IMMIGRATION =
+  /quedar\w* a vivir|inmigraci|migratori|green card|residencia permanente|ciudadan[ií]a|asilo|deporta|indocumentad|sin papeles|\bvisas?\s+(de|para|americana)|necesit\w* (una )?visa/i;
+
+export function isImmigrationQuestion(question: string): boolean {
+  return IMMIGRATION.test(question);
+}
+
+export function immigrationAnswer(): string {
+  return `${UNCONFIRMED_PHRASE} Las preguntas de inmigración (estatus, visas, quedarse en EE. UU.) son un tema legal y no las respondo: no soy abogado. Para eso, consulta a un abogado de inmigración acreditado. Con el parque sí te ayudo: entradas, senderos y seguridad.`;
+}
+
 export function outOfScopeAnswer(): string {
   return "Solo puedo ayudarte con parques nacionales de Estados Unidos y con planear ese tipo de viaje. ¿Qué parque te interesa?";
 }

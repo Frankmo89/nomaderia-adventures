@@ -63,6 +63,8 @@ import {
   outOfScopeAnswer,
   rateLimitAnswer,
   shouldAskEmail,
+  immigrationAnswer,
+  isImmigrationQuestion,
   unconfirmedAnswer,
   ungroundedNumbers,
 } from "../_shared/concierge-guard.ts";
@@ -982,6 +984,9 @@ serve(async (req) => {
     }
     if (isGreetingOnly(question)) {
       return deliver({ answer: greetingAnswer(), answerCheck: "greeting", askEmail: false });
+    }
+    if (isImmigrationQuestion(question)) {
+      return deliver({ answer: immigrationAnswer(), answerCheck: "out_of_scope", askEmail: false });
     }
 
     // Estado que llena la búsqueda; lo usan noInfoResponse y la respuesta final.

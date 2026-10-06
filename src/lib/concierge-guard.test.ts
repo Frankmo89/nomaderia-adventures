@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   composeVisibleAnswer,
+  immigrationAnswer,
   isClearlyOutOfScope,
+  isImmigrationQuestion,
   shouldAskEmail,
   unconfirmedAnswer,
   ungroundedNumbers,
@@ -55,5 +57,23 @@ describe("concierge offline eval", () => {
     expect(report.failures).toEqual([]);
     expect(report.passed).toBe(30);
     expect(report.numberLeaks).toEqual([]);
+  });
+});
+
+describe("immigration guard", () => {
+  it("routes legal immigration questions to the fixed answer", () => {
+    expect(isImmigrationQuestion("¿Si compro un pase me puedo quedar a vivir aquí?")).toBe(true);
+    expect(isImmigrationQuestion("¿Revisan el estatus migratorio en la entrada?")).toBe(true);
+    expect(isImmigrationQuestion("¿Necesito una visa para entrar a EE. UU.?")).toBe(true);
+  });
+  it("leaves park and payment questions alone", () => {
+    expect(isImmigrationQuestion("Vivo en México, ¿pago el recargo de no residente?")).toBe(false);
+    expect(isImmigrationQuestion("¿Aceptan tarjeta Visa en la caseta?")).toBe(false);
+  });
+  it("abstains without reassuring or alarming", () => {
+    const a = immigrationAnswer();
+    expect(a.startsWith(UNCONFIRMED_PHRASE)).toBe(true);
+    expect(a).not.toMatch(/\d/);
+    expect(a).not.toMatch(/no te revisan|te pueden detener|puedes quedarte/i);
   });
 });
