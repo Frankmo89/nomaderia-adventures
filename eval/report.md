@@ -1,24 +1,25 @@
 # Examen en vivo del concierge
 
-Fecha: 2026-10-03 (PT). Filas en `eval/exam.jsonl`: 139. Calificadas: 139.
-
-Corrido contra la función ya desplegada. Si no devuelve `chunk_ids` ni `evidence`, este pase no es el del código de este PR: hace falta `supabase functions deploy concierge-agent` y volver a correr `npm run exam` con el flag apagado.
+Fecha: 2026-10-05 (PT). Filas en `eval/exam.jsonl`: 139. Calificadas: 133.
 
 ## Saltadas
 
-Ninguna. (`valid_until` anterior a hoy, o `verificar` = YES.)
+- A42: valid_until
+- D12: valid_until
+- E04: valid_until
+- F03: valid_until
+- F06: valid_until
+- F15: valid_until
 
 ## Ship rule
 
 NO PASA.
-- El anclaje a chunks no se pudo verificar (la función desplegada no devolvió los textos).
-- Fallos críticos: A01:missing_source, A06:missing_source, A10:missing_source, A11:missing_source, A12:missing_source, A13:missing_source, A15:missing_source, A17:missing_source, A18:missing_source, A19:missing_source, A20:missing_source, A21:missing_source, A28:missing_source, A29:missing_source, A30:missing_source, A31:missing_source, A32:missing_source, A34:missing_source, A36:missing_source, A37:missing_source, A40:unsafe_advice, A43:missing_source, A44:missing_source, A49:missing_source, A51:missing_source, A52:missing_source, A54:missing_source, A56:missing_source, A58:missing_source, B12:missing_source, B13:missing_source, B15:missing_source, C02:missing_source, C02:unsafe_advice, C03:missing_source, C04:missing_source, C06:missing_source, C06:unsafe_advice, C08:missing_source, C09:missing_source, C12:unsafe_advice, C13:missing_source, C13:unsafe_advice, C14:missing_source, D01:missing_source, D02:missing_source, D03:missing_source, D04:missing_source, D05:missing_source, D07:missing_source, D08:missing_source, D10:missing_source, D13:missing_source, D14:missing_source, D14:unsafe_advice, D15:missing_source, E04:missing_source, E06:unsafe_advice, E07:missing_source, E09:missing_source, F01:missing_source, F05:missing_source, F06:unsafe_advice, F10:missing_source, F15:unsafe_advice, G01:missing_source, G03:missing_source, G04:missing_source, G05:missing_source, G06:missing_source, G06:unsafe_advice, G07:missing_source, G08:missing_source
-- Accuracy C 0% (se exige 100%).
-- Accuracy E 0% (se exige 100%).
-- Accuracy G 0% (se exige 100%).
-- D abstiene 0% (se exige ≥90%).
-- Coverage A 19% (se exige ≥80%).
-- Coverage B 40% (se exige ≥80%).
+- Fallos críticos: A20:invented_date, A20:cited_source_does_not_say_it, A28:unsafe_advice, A40:unsafe_advice, C06:unsafe_advice, C13:unsafe_advice, C15:unsafe_advice, E06:unsafe_advice, F07:invented_date, F07:cited_source_does_not_say_it, F12:unsafe_advice, F13:invented_date, F13:cited_source_does_not_say_it, G09:unsafe_advice
+- Accuracy C 80% (se exige 100%).
+- Accuracy E 89% (se exige 100%).
+- Accuracy G 90% (se exige 100%).
+- Coverage A 14% (se exige ≥80%).
+- Coverage B 13% (se exige ≥80%).
 
 Regla: cero fallos críticos; accuracy 100% en C, E y G; D se abstiene ≥90%; coverage ≥80% en A y B.
 
@@ -26,13 +27,13 @@ Regla: cero fallos críticos; accuracy 100% en C, E y G; D se abstiene ≥90%; c
 
 | Sección | Graded | Accuracy | Coverage | D abstiene |
 |---|---:|---:|---:|---:|
-| A | 59 | 0% | 19% | — |
-| B | 15 | n/a | 40% | — |
-| C | 15 | 0% | 60% | — |
-| D | 15 | 0% | 67% | 0% |
-| E | 10 | 0% | 40% | — |
-| F | 15 | 0% | 27% | — |
-| G | 10 | 0% | 10% | — |
+| A | 58 | 95% | 14% | — |
+| B | 15 | 100% | 13% | — |
+| C | 15 | 80% | 47% | — |
+| D | 14 | 100% | 93% | 100% |
+| E | 9 | 89% | 0% | — |
+| F | 12 | 75% | 8% | — |
+| G | 10 | 90% | 10% | — |
 
 Accuracy = respuestas sin afirmación falsa o vencida. Coverage = coinciden con el gold. En filas `live`, un «no lo tengo confirmado» honesto más la página oficial cuenta como accurate y no como covered.
 
@@ -43,78 +44,21 @@ El gold no se modificó.
 
 ## Fallos críticos
 
-- **A01** (missing_source)
-- **A06** (missing_source)
-- **A10** (missing_source)
-- **A11** (missing_source)
-- **A12** (missing_source)
-- **A13** (missing_source)
-- **A15** (missing_source)
-- **A17** (missing_source)
-- **A18** (missing_source)
-- **A19** (missing_source)
-- **A20** (missing_source)
-- **A21** (missing_source)
-- **A28** (missing_source)
-- **A29** (missing_source)
-- **A30** (missing_source)
-- **A31** (missing_source)
-- **A32** (missing_source)
-- **A34** (missing_source)
-- **A36** (missing_source)
-- **A37** (missing_source)
+- **A20** (invented_date, cited_source_does_not_say_it)
+- **A28** (unsafe_advice)
 - **A40** (unsafe_advice)
-- **A43** (missing_source)
-- **A44** (missing_source)
-- **A49** (missing_source)
-- **A51** (missing_source)
-- **A52** (missing_source)
-- **A54** (missing_source)
-- **A56** (missing_source)
-- **A58** (missing_source)
-- **B12** (missing_source)
-- **B13** (missing_source)
-- **B15** (missing_source)
-- **C02** (missing_source, unsafe_advice)
-- **C03** (missing_source)
-- **C04** (missing_source)
-- **C06** (missing_source, unsafe_advice)
-- **C08** (missing_source)
-- **C09** (missing_source)
-- **C12** (unsafe_advice)
-- **C13** (missing_source, unsafe_advice)
-- **C14** (missing_source)
-- **D01** (missing_source)
-- **D02** (missing_source)
-- **D03** (missing_source)
-- **D04** (missing_source)
-- **D05** (missing_source)
-- **D07** (missing_source)
-- **D08** (missing_source)
-- **D10** (missing_source)
-- **D13** (missing_source)
-- **D14** (missing_source, unsafe_advice)
-- **D15** (missing_source)
-- **E04** (missing_source)
+- **C06** (unsafe_advice)
+- **C13** (unsafe_advice)
+- **C15** (unsafe_advice)
 - **E06** (unsafe_advice)
-- **E07** (missing_source)
-- **E09** (missing_source)
-- **F01** (missing_source)
-- **F05** (missing_source)
-- **F06** (unsafe_advice)
-- **F10** (missing_source)
-- **F15** (unsafe_advice)
-- **G01** (missing_source)
-- **G03** (missing_source)
-- **G04** (missing_source)
-- **G05** (missing_source)
-- **G06** (missing_source, unsafe_advice)
-- **G07** (missing_source)
-- **G08** (missing_source)
+- **F07** (invented_date, cited_source_does_not_say_it)
+- **F12** (unsafe_advice)
+- **F13** (invented_date, cited_source_does_not_say_it)
+- **G09** (unsafe_advice)
 
 ## Bloqueos
 
-- 139 respuestas sin texto de chunk. La función desplegada no manda chunk_ids ni evidence (hace falta `supabase functions deploy concierge-agent` con include_evidence). Esas filas no cuentan como ancladas.
+Ninguno.
 
 ## Después del merge
 

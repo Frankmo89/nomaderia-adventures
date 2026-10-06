@@ -1526,3 +1526,4 @@ Sesión Claude Projects: auditoría + generación masiva de contenido SOUL.
 - [ ] Identificar la fila 63 nueva y decidir si cierra el pendiente seki/sequ/kica
 - [ ] Re-ingestión RAG con la base completa (después de validar el ingest con Gran Cañón)
 - [2026-07-02] Añadido `public/_headers` con Cache-Control headers para Cloudflare Pages: no-store en `/` e `/index.html`, immutable en `/assets/*`.
+- [2026-10-05] concierge-agent v25 desplegado desde PR 204 (solo esa función, verify_jwt=true, flag apagado); exam: NO PASA (133/139 calificadas; 14 fallos críticos; accuracy C 80%, E 89%, G 90%; D abstiene 100%; coverage A 14%, B 13%). Ver eval/report.md.
