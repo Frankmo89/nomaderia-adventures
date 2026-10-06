@@ -78,6 +78,7 @@ import {
   normalizeFeeRow,
   normalizePassRow,
   parseFeeInput,
+  reviewFeeInput,
   type ParkFeeRow,
   type PassRuleRow,
 } from "../_shared/park-fees.ts";
@@ -1375,7 +1376,10 @@ serve(async (req) => {
     const tools: ChatTool[] = parkMode ? [CALCULATE_TOOL, ...feeTools] : [RECOMMEND_TOOL, CALCULATE_TOOL, ...feeTools];
     const feeSources: Array<{ url: string; fetched_at: string }> = [];
     const runFees = (rawArgs: string): string => {
-      const input = parseFeeInput(rawArgs);
+      const parsed = parseFeeInput(rawArgs);
+      const input = typeof parsed === "string"
+        ? parsed
+        : reviewFeeInput(parsed, question, { mentionsNonresident: NONRESIDENT_HINT.test(question) && !US_RESIDENT_HINT.test(question) });
       if (typeof input === "string") return `ERROR calculate_fees: ${input}. Corrige los argumentos y vuelve a llamarla.`;
       const result = computeFees(input, feeRows, passRows);
       if (result.ok) feeSources.push(...result.sources);

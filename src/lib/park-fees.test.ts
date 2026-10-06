@@ -4,6 +4,7 @@ import {
   parseFeeInput,
   parseNonresidentList,
   parseParkFeesPage,
+  reviewFeeInput,
   parsePassRules,
   withNonresidentList,
   type ParkFeeRow,
@@ -102,5 +103,22 @@ describe("calculate_fees", () => {
   it("refuses unknown parks and unverified data instead of guessing", () => {
     expect(run({ visits: [{ park_code: "xxxx", entry: "vehicle" }], us_resident_adults: 1, nonresident_adults: 0, children_under_16: 0, pass_held: "none" }).ok).toBe(false);
     expect(typeof parseFeeInput(JSON.stringify({ visits: [{ park_code: "yose", entry: "vehicle" }] }))).toBe("string");
+  });
+});
+
+describe("reviewFeeInput", () => {
+  const base = { visits: [{ park_code: "yose", entry: "vehicle" as const }], us_resident_adults: 0, nonresident_adults: 3, children_under_16: 0, pass_held: "atb_nonresident" as const };
+  it("turns 'should we buy the pass?' into a priced comparison", () => {
+    const r = reviewFeeInput(base, "Somos tres de Oaxaca, ¿nos sale más barato sacar el pase anual?", { mentionsNonresident: true });
+    expect(r).toMatchObject({ pass_held: "none", compare_passes: true });
+    const total = computeFees(r as Exclude<typeof r, string>, rows, rules);
+    expect(total.total).toBe(335);
+    expect(total.text).toMatch(/COMPARACIÓN con America the Beautiful \(no residente\) \(\$250\)/);
+  });
+  it("keeps a pass the group already has", () => {
+    expect(reviewFeeInput(base, "Ya tenemos el pase anual, ¿conviene usarlo?", { mentionsNonresident: true })).toMatchObject({ pass_held: "atb_nonresident" });
+  });
+  it("asks for a recount when the question mentions nonresidents but none were counted", () => {
+    expect(typeof reviewFeeInput({ ...base, us_resident_adults: 3, nonresident_adults: 0, pass_held: "none" }, "Vivimos en Puebla, ¿cuánto pagamos?", { mentionsNonresident: true })).toBe("string");
   });
 });

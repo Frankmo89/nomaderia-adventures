@@ -456,6 +456,29 @@ export function feeFactsBlock(feeRows: ParkFeeRow[], passRows: PassRuleRow[]): s
   return lines.join("\n");
 }
 
+// ─── Question-aware review of the model's arguments ──────────────────────────
+
+const BUY_PASS = /\bconviene|vale la pena|\bcomprar\b|\bcompro\b|\bsacar (el|un) pase|sale m[aá]s barato|ahorr\w*/i;
+const HAS_PASS = /\b(ya )?(tengo|tenemos|traigo|traemos|llevo|llevamos)\b[^.?!]{0,40}\bpase|\bcon (mi|nuestro|el) pase\b|\bpase que (ya )?tenemos/i;
+
+/**
+ * Deterministic fixes of tool arguments against the user's own question:
+ * - "¿conviene comprar el pase?" without already holding one → price the visit
+ *   without a pass and compare (pass_held none + compare_passes).
+ * - the question says someone lives outside the U.S. but nobody was counted as
+ *   nonresident → ask the model to fix the counts (no guessing here).
+ */
+export function reviewFeeInput(input: FeeInput, question: string, opts: { mentionsNonresident: boolean }): FeeInput | string {
+  let out = input;
+  if (out.pass_held !== "none" && BUY_PASS.test(question) && !HAS_PASS.test(question)) {
+    out = { ...out, pass_held: "none", pass_park_code: undefined, compare_passes: true };
+  }
+  if (opts.mentionsNonresident && out.nonresident_adults === 0) {
+    return "la pregunta dice que alguien de 16+ NO vive en EE. UU.: cuéntalo en nonresident_adults (y en us_resident_adults solo a quien sí vive en EE. UU.) y vuelve a llamar";
+  }
+  return out;
+}
+
 // ─── DB rows → typed rows (PostgREST returns numeric columns as strings) ─────
 
 const num = (v: unknown): number | null => (v === null || v === undefined || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null);
@@ -528,7 +551,7 @@ export const CALCULATE_FEES_TOOL = {
         us_resident_adults: { type: "integer", description: "Personas de 16+ que VIVEN en EE. UU. (sin importar ciudadanía)." },
         nonresident_adults: { type: "integer", description: "Personas de 16+ que NO viven en EE. UU. (p. ej. viven en México)." },
         children_under_16: { type: "integer", description: "Menores de 16 años." },
-        pass_held: { type: "string", enum: ["none", "atb_resident", "atb_nonresident", "park_annual"], description: "Pase que YA tienen (none si no dicen)." },
+        pass_held: { type: "string", enum: ["none", "atb_resident", "atb_nonresident", "park_annual"], description: "Pase que YA tienen (none si no dicen). Para saber si conviene COMPRAR un pase deja none y usa compare_passes: true." },
         pass_park_code: { type: "string", description: "Solo con park_annual: parque del pase anual." },
         compare_passes: { type: "boolean", description: "true si preguntan si conviene comprar un pase America the Beautiful." },
       },
