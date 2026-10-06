@@ -640,8 +640,11 @@ REGLAS ESTRICTAS:
 9. Parte del CONTEXTO son PÁGINAS OFICIALES NPS en inglés: responde en español traduciendo fielmente, con las mismas cifras y unidades (no conviertas pies, millas, galones ni °F). Lee con cuidado a qué lugar exacto (isla, camino, sendero, alojamiento) se refiere cada alerta, cierre o fecha, y no la atribuyas a otro.
 10. Si la respuesta requiere una cuenta (tarifas × personas, agua por persona × personas, sumas o diferencias), usa la herramienta calculate con UNA expresión que tenga la fórmula completa (todas las personas y todos los cargos), p. ej. (a + b) * n. Nunca hagas cuentas de memoria; escribe el resultado que devuelve. Antes de calcular, decide con la PÁGINA OFICIAL quién paga y qué cubre cada tarifa o pase (titular, pasajeros del vehículo, adultos adicionales, menores de 16), y solo entonces arma la fórmula con esas personas. Al comparar dos totales, resta el mayor menos el menor y di cuál sale más barato.
 11. No uses listas numeradas; usa viñetas con «-».
-12. TARIFAS DE ENTRADA: si hay bloque TARIFAS OFICIALES y la herramienta calculate_fees, úsala para CUALQUIER total o monto que pague una persona o un grupo (entrada, Tarifa de NO-RESIDENTE, si conviene un pase). No sumes tarifas a mano ni con calculate. Escribe el TOTAL que devuelve, explica en pocas palabras qué paga cada quien, y cita la liga de la fuente y la fecha de consulta que vienen en FUENTES. Si un parque NO cobra la Tarifa de NO-RESIDENTE, dilo claramente. Si la herramienta devuelve ERROR, responde "Eso no lo tengo confirmado." y da la liga oficial.
+12. TARIFAS DE ENTRADA: si hay bloque TARIFAS OFICIALES y la herramienta calculate_fees, úsala para CUALQUIER total o monto que pague una persona o un grupo (entrada, Tarifa de NO-RESIDENTE, si conviene un pase). No sumes tarifas a mano ni con calculate. Escribe el TOTAL que devuelve, explica en pocas palabras qué paga cada quien, y cita la liga de la fuente y la fecha de consulta que vienen en FUENTES. Si un parque NO cobra la Tarifa de NO-RESIDENTE, dilo claramente. Si devuelve ERROR, corrige los argumentos como dice y llámala otra vez; si aun así no puedes, responde "Eso no lo tengo confirmado." y da la liga oficial.
 13. PRODUCTO: si hay TARJETA DE PRODUCTO en el CONTEXTO, responde la pregunta sobre el Itinerario Completo Nomaderia solo con lo que dice esa tarjeta (precio, qué incluye, entrega, cambios, pago, WhatsApp). El sistema agrega la tarjeta completa y su fuente al final (no escribas tú "Fuente:"). No digas que este chat cobra o reserva: el pago es con tarjeta en nomaderia.com.
+14. Si el CONTEXTO trae una REGLA OFICIAL NPS (dormir en el carro, cierres, permisos, fuego) que aplica al plan del usuario, dila explícitamente aunque no la haya preguntado con esas palabras.
+15. Da tarifas o costos de entrada solo si la pregunta es de tarifas, pases, costos o dinero.
+16. Si preguntan por "el próximo" día, fecha o evento, compara cada fecha de la lista del CONTEXTO con la fecha de hoy que da el usuario y elige la primera posterior.
 
 DATOS VIVOS — REGLAS IMPORTANTES:
 - Para precios de entrada, alertas y reservas de campamentos, usa ÚNICAMENTE el bloque DATOS EN VIVO o las PÁGINAS OFICIALES NPS del CONTEXTO.
@@ -1341,7 +1344,9 @@ serve(async (req) => {
     const chunkContext = chunks
       .map((c, i) => {
         const kind = chunkMeta.get(c.id)?.kind ?? c.metadata.kind;
-        const label = NPS_SOURCE_TABLES.has(c.source_table)
+        const label = ruleChunks.some((r) => r.id === c.id)
+          ? " [REGLA OFICIAL NPS para lo que pregunta el usuario: dila]"
+          : NPS_SOURCE_TABLES.has(c.source_table)
           ? kind === "live"
             ? " [PÁGINA OFICIAL NPS — condiciones/alertas: pueden cambiar; cita la liga]"
             : " [PÁGINA OFICIAL NPS]"
