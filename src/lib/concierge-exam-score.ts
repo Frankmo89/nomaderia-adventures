@@ -300,7 +300,8 @@ export function scoreRow(
   if (grounding === "checked") {
     const corpus = evidenceCorpus(evidence);
     badNumbers = ungroundedNumbers(claims, corpus, ["911"]);
-    badDates = ungroundedDates(claims, corpus);
+    // A date the user wrote in the question is not invented when the answer repeats it.
+    badDates = ungroundedDates(claims, `${corpus}\n${row.question_es}`);
   }
 
   const critical: string[] = [];

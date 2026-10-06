@@ -230,3 +230,17 @@ describe("ungroundedDates across languages", () => {
     expect(ungroundedDates("Cierra el 5 de marzo de 2031.", corpus)).toEqual(["5 de marzo de 2031"]);
   });
 });
+
+describe("dates from the question", () => {
+  it("does not flag a date the user wrote", () => {
+    const scored = scoreRow(
+      row({ id: "F98", question_es: "Quiero ir el 14 de marzo, ¿qué cambia?", gold_answer: "Nada." }),
+      "Para el 14 de marzo no hay cambios publicados.\n\nFuente: NPS — Alerts · consultada 5 oct 2026",
+      [{ title: "NPS", url: "https://www.nps.gov/xxxx/", section: "alertas" }],
+      { chunkTexts: ["No alerts."], liveDataBlock: "" },
+      judgeYes,
+      "2026-10-05",
+    );
+    expect(scored.ungroundedDates).toEqual([]);
+  });
+});
