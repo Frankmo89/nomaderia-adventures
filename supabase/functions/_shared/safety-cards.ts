@@ -145,7 +145,7 @@ const INTENT: Record<SafetyTopic, RegExp> = {
   drowning: /\br[ií]os?\b|ahog|nadar|\bnado\b|corriente|cascada|\bpoza|\bpool\b|lago|oleaje|\bolas\b|ba[nñ]arme|meterme al agua|meterme a/i,
   wildlife: /\bosos?\b|puma|le[oó]n de monta|serpiente|v[ií]bora|cascabel|fauna|animal|coyote|alacr[aá]n|escorpi[oó]n|abejas?\b/i,
   smoke: /humo|calidad del aire|aire (no saludable|insalubre|malo)/i,
-  altitude: /\baltura\b|altitud|mal de (altura|monta)|soroche|duele (mucho )?la cabeza|n[aá]usea|mareo/i,
+  altitude: /mal de (altura|monta)|soroche|enfermedad de (altura|altitud)|duele (mucho )?la cabeza|n[aá]usea|mareo/i,
   flood: /inundaci|crecida|lluvia|tormenta|aguacero|monz[oó]n|rayos?\b|rel[aá]mpago/i,
   emergency: /emergenc|\b911\b|me perd[ií]|perdid[oa]s?\b|herid|lastim|torc[ií]|accidente|ambulanc|rescate|se[nñ]al|celular/i,
 };
@@ -155,12 +155,15 @@ const HIKING = /caminat|sendero|hiking|\bhike|caminar|excursi|descenso|bajar al 
 const HEAT_PARKS = new Set(["deva", "jotr", "grca", "pinn"]);
 /** Hiking at these times implies heat anywhere. */
 const HOT_TIME = /verano|mediod[ií]a|pleno sol|julio|agosto/i;
+/** Talk about the weather in a desert park implies heat. */
+const WEATHER_TALK = /fresco|clima|temperatura|grados|calor|\bsol\b/i;
 
 /** Safety topics in a Spanish question. `parkCodes` lets desert hiking imply heat. */
 export function detectSafetyTopics(question: string, parkCodes: Iterable<string> = []): SafetyTopic[] {
   const found = SAFETY_TOPICS.filter((t) => INTENT[t].test(question));
   const parks = [...parkCodes];
-  if (!found.includes("heat") && HIKING.test(question) && (parks.some((p) => HEAT_PARKS.has(p)) || HOT_TIME.test(question))) {
+  const heatPark = parks.some((p) => HEAT_PARKS.has(p));
+  if (!found.includes("heat") && ((HIKING.test(question) && (heatPark || HOT_TIME.test(question))) || (heatPark && WEATHER_TALK.test(question)))) {
     found.unshift("heat");
   }
   return found;

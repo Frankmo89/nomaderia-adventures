@@ -189,8 +189,8 @@ function clean(s: string): string {
 
 // ─── Chunking ────────────────────────────────────────────────────────────────
 
-export const NPS_MAX_CHUNK_CHARS = 2400;
-export const NPS_OVERLAP_CHARS = 300;
+export const NPS_MAX_CHUNK_CHARS = 1500;
+export const NPS_OVERLAP_CHARS = 250;
 
 /**
  * Splits page text into chunks on heading/paragraph boundaries. Each chunk
