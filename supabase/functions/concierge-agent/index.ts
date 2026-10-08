@@ -86,7 +86,13 @@ import {
   type ParkFeeRow,
   type PassRuleRow,
 } from "../_shared/park-fees.ts";
-import { detectRuleIntents, diversifyChunks, pickRuleChunks } from "../_shared/retrieval-rules.ts";
+import {
+  detectRuleIntents,
+  diversifyChunks,
+  dropSupersededEditorial,
+  pickRuleChunks,
+  TIME_SENSITIVE_SECTIONS,
+} from "../_shared/retrieval-rules.ts";
 import {
   isProductQuestion,
   PRODUCT_CARD_DATE_ES,
@@ -149,7 +155,6 @@ const JOINT_PARKS: Record<string, string[]> = {
 // Guide sections whose content is time-sensitive. They are editorial snapshots,
 // not live data, so the model must present them as "según nuestra guía" and
 // send people to nps.gov (contract §6.4).
-const TIME_SENSITIVE_SECTIONS = new Set(["seasonal_closures", "zone_closures", "special_dates", "weather"]);
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -1230,7 +1235,9 @@ serve(async (req) => {
     }
     // En modo global, nearby_parks nombra otros parques como sugerencia — eso
     // sería recomendar sin el motor (§6.1), así que se descarta.
-    const chunks: KnowledgeChunk[] = mergedChunks
+    // Una página oficial NPS en vivo del parque reemplaza a la guía editorial de
+    // cierres/temporada/clima de ese parque (foto de la última edición).
+    const chunks: KnowledgeChunk[] = dropSupersededEditorial(mergedChunks, LIVE_DATA_PARK_ALIAS)
       .filter((c) => parkMode || c.source_field !== "nearby_parks");
     retrievedChunks = chunks;
     const chunkMeta = await loadChunkMeta(chunks.map((c) => c.id));
@@ -1354,7 +1361,7 @@ serve(async (req) => {
           ? " [REGLA OFICIAL NPS para lo que pregunta el usuario: dila]"
           : NPS_SOURCE_TABLES.has(c.source_table)
           ? kind === "live"
-            ? " [PÁGINA OFICIAL NPS — condiciones/alertas: pueden cambiar; cita la liga]"
+            ? " [PÁGINA OFICIAL NPS — condiciones/alertas vigentes: si choca con otra fuente, gana esta; lee también excepciones y fechas; cita la liga]"
             : " [PÁGINA OFICIAL NPS]"
           : TIME_SENSITIVE_SECTIONS.has(c.source_field)
           ? " [GUÍA EDITORIAL: puede haber cambiado — confirmar en nps.gov]"

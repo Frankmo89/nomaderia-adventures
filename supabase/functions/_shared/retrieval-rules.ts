@@ -106,3 +106,37 @@ export function pickRuleChunks<T extends DiverseChunk & { content: string }>(
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, max);
 }
+
+// ─── Official live pages beat the editorial snapshot ─────────────────────────
+
+/** Editorial guide sections that go stale (snapshot from the last guide edit). */
+export const TIME_SENSITIVE_SECTIONS = new Set(["seasonal_closures", "zone_closures", "special_dates", "weather"]);
+
+export interface EditorialChunk {
+  source_table: string;
+  source_field: string;
+  metadata: { park_code?: string; kind?: string };
+}
+
+/**
+ * When the context already has an official NPS live page (conditions, road
+ * construction, news release) for a park, that park's time-sensitive editorial
+ * sections are dropped: they are a snapshot from the last guide edit and the
+ * model believed them over the current page (exam 2026-10-05: A36, A53).
+ * `alias` maps editorial park codes to NPS ones (kica → seki).
+ */
+export function dropSupersededEditorial<T extends EditorialChunk>(chunks: T[], alias: Record<string, string> = {}): T[] {
+  const code = (c: T) => {
+    const p = c.metadata.park_code ?? "";
+    return alias[p] ?? p;
+  };
+  const official = new Set(
+    chunks.filter((c) => c.source_table === "nps_pages" && c.metadata.kind === "live").map(code).filter(Boolean),
+  );
+  if (!official.size) return chunks;
+  return chunks.filter((c) => {
+    if (c.source_table !== "destinations") return true;
+    const field = c.source_field.replace(/\s*\(parte \d+(\/\d+)?\)$/, "");
+    return !(TIME_SENSITIVE_SECTIONS.has(field) && official.has(code(c)));
+  });
+}
