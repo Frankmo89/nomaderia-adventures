@@ -7,11 +7,8 @@ import { CardGridSkeleton } from "@/components/LoadingSkeletons";
 import Reveal from "@/components/editorial/Reveal";
 import { useFeaturedGearArticles } from "@/hooks/use-gear-articles";
 import { resizedImageUrl } from "@/lib/resized-image";
+import { gearCategoryLabel } from "@/lib/gear-categories";
 
-const categoryLabel: Record<string, string> = {
-  boots: "Botas", poles: "Bastones", cameras: "Fotografía",
-  backpacks: "Mochilas", clothing: "Ropa", accessories: "Accesorios",
-};
 
 const categoryImage: Record<string, string> = {
   boots: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256",
@@ -90,7 +87,7 @@ const GearPreview = () => {
                   </div>
                   <div className="p-4 sm:p-5">
                     <Badge className="bg-green-wash text-green border-0 mb-3">
-                      {categoryLabel[a.category] || a.category}
+                      {gearCategoryLabel(a.category)}
                     </Badge>
                     <h3 className="font-sans font-semibold text-lg text-ink mb-2">{a.title}</h3>
                     <p className="text-sm text-slate">{a.short_description}</p>

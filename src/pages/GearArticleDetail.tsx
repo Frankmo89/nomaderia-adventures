@@ -22,7 +22,8 @@ type GearArticle = Tables<"gear_articles">;
 interface Product {
   name: string;
   price: string;
-  rating: number;
+  /** Editorial rating 1–5; products without one show no stars. */
+  rating?: number;
   pros: string[];
   cons: string[];
   affiliate_url: string;
@@ -189,11 +190,13 @@ const GearArticleDetail = () => {
                           <h3 className="font-serif text-lg font-bold text-card-foreground mb-1">{p.name}</h3>
                           <div className="flex items-center gap-3 mb-2">
                             <span className="text-green font-bold">{p.price}</span>
-                            <span className="flex items-center gap-0.5">
-                              {Array.from({ length: 5 }).map((_, si) => (
-                                <Star key={si} className={`h-4 w-4 ${si < p.rating ? "text-green fill-green" : "text-muted-foreground"}`} />
-                              ))}
-                            </span>
+                            {p.rating ? (
+                              <span className="flex items-center gap-0.5">
+                                {Array.from({ length: 5 }).map((_, si) => (
+                                  <Star key={si} className={`h-4 w-4 ${si < p.rating! ? "text-green fill-green" : "text-muted-foreground"}`} />
+                                ))}
+                              </span>
+                            ) : null}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-sm">
                             <div>
