@@ -675,6 +675,31 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-10-08] **Limpieza de contenido de blog y gear (decisiones de Frank, aplicada por SQL en vivo).**
+  Despublicados (siguen en la DB): historias presentadas como reales que no lo
+  son (`de-120kg-sedentario-senderismo-historia-miguel`,
+  `mi-primera-noche-en-la-montana`); contenido de México
+  (`7-caminatas-faciles-cdmx-principiantes`, `5-rutas-secretas-mexico-locales`,
+  `mariposa-monarca-2026-rutas-costos-consejos`,
+  `senderismo-mexico-2026-rutas-abren-cierran`, `ruta-66-2026-guia-paradas`,
+  `verdadero-lujo-no-es-all-inclusive-montana`); y
+  `que-llevar-primera-caminata-lista-principiantes` (presupuesto en pesos y
+  Oxxo: reescribir para EE. UU.). Gear: ligas `amazon.com.mx` → `amazon.com`
+  (tag `nomaderia-20` es de EE. UU.); precios estáticos reemplazados por
+  «Precio actual en Amazon» (Amazon no permite precios fijos sin PA-API); fotos
+  de producto falsas (Unsplash) borradas; montos en pesos quitados del texto
+  (`kit-esencial-*`, `ropa-*`, fila MXN de `grand-canyon-4-dias-*`). Fotos
+  oficiales NPS (hero de `destinations`) en 5 artículos de parque.
+  Borradores reescritos, **sin publicar**:
+  `que-equipo-necesitas-para-tu-primera-caminata-en-joshua-tree` (agua según
+  NPS, ligas reales) y `mejores-casas-campana-dos-personas` (antes recomendaba
+  bell tents; ahora tiendas para principiantes).
+  **Pendiente Frank:** revisar y publicar los 2 borradores en `/admin/gear`;
+  foto propia para la crónica del South Kaibab y para el gear de Grand Canyon
+  (son de tu viaje); fotos para los artículos genéricos (siguen con Unsplash).
+  **Pendiente de código:** `generate-gear-draft` acepta categoría libre (de ahí
+  "casas" y "Senderismo"); restringirla a las llaves de `src/lib/gear-categories.ts`.
+
 - [2026-10-08] **`calculate_fees`: arreglos de los fallos de tarifas del examen v49.**
   Diagnóstico por fila desde `eval/results.jsonl`: en B07 la calculadora sí
   dio $270, pero la comparación con el pase no corrió en la llamada del viaje
