@@ -170,6 +170,14 @@ Draft PR (no merge): https://github.com/Frankmo89/nomaderia-adventures/pull/202.
 
 ---
 
+## Changelog 2026-10-03 — Meta Pixel ID (Draft PR #203)
+
+- `index.html`: reemplazado `TU_PIXEL_ID_AQUI` por `1865887438163992` en la
+  inicialización `fbq` y el fallback noscript.
+- No se tocaron otros archivos de runtime.
+
+---
+
 ## Changelog 2026-10-03 — Fix: botones $49 abrían el Payment Link $29 (Draft PR #200)
 
 Los CTAs `Comprar mi itinerario – $49` abrían el link retirado de **$29** ("Acceso de Fundador" / alerta Yosemite): `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00`.
@@ -393,8 +401,8 @@ referenciar esta lista primero.
       de Instagram (no vive en este repo). En el código solo hay perfiles sociales
       (`Footer.tsx`, `sameAs` en `Index.tsx`); no hay URL de "link in bio".
 - [ ] **Fase 4c — Subir PNG del patrón de fondo de `QuizSection`** (último pendiente de la Fase 4, sistema de diseño). Bloqueado en Frank: requiere el asset final (no hay placeholder aceptable a producción). Con esto, Fase 4 queda cerrada.
-- [ ] **Facebook Pixel:** crear cuenta en Business Manager, obtener el Pixel ID y
-      reemplazar `TU_PIXEL_ID_AQUI` en `index.html`.
+- [x] **Facebook Pixel:** Pixel ID `1865887438163992` configurado en `index.html`
+      (Draft PR #203; inicialización `fbq` y fallback noscript).
 - [x] **Iconos PWA / Replace PWA fallback icons (192/512):** DONE en Draft PR #199.
       `public/icons/icon-192.png`, `icon-512.png` e `icon-maskable-512.png` (El Pin).
       El manifest ya no usa el fallback viejo.
@@ -666,6 +674,30 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-10-08] **`calculate_fees`: arreglos de los fallos de tarifas del examen v49.**
+  Diagnóstico por fila desde `eval/results.jsonl`: en B07 la calculadora sí
+  dio $270, pero la comparación con el pase no corrió en la llamada del viaje
+  completo (bug de `HAS_PASS`, ver lección en `decisions.md`), solo en las
+  llamadas por parque, y el modelo usó el veredicto de un solo parque. Cambios en
+  `_shared/park-fees.ts`: comparación forzada para el viaje completo; una sola
+  `MEJOR OPCIÓN` (F11: ya no salen dos pases con "CONVIENE"); `fee_free_day`
+  por visita y grupo por visita para otro carro (F09); `holder_present` y
+  titular elegible, porque los pases no son transferibles (E10). `concierge-agent`
+  pasa `tripParks` a `reviewFeeInput`. Tests: 7 regresiones nuevas, 243/243.
+  `deno check` no corrió aquí (la red bloquea deno.land/esm.sh); lo corre el CI.
+  **Pendiente Frank:** desplegar `concierge-agent` y volver a correr
+  `npm run exam` (flag apagado). Fallos críticos que NO son de la calculadora:
+  A36/A53/C15 (la guía editorial de julio gana sobre la página oficial NPS
+  vigente), A22/F03 (el modelo lee mal la página: efectivo, validez 7 días),
+  F06 (la pregunta de tarifas tapa la de seguridad), C03 (la respuesta SÍ trae
+  «llama al 911»; el juez gpt-4o dijo que no: falso positivo del juez).
+  Segundo arreglo en la misma rama: `dropSupersededEditorial`
+  (`_shared/retrieval-rules.ts`) saca del contexto la guía editorial de
+  cierres/temporada/clima de un parque cuando ya está su página oficial NPS en
+  vivo (A36, A53). El comunicado del North Rim sí está ingerido; no faltaba dato.
+  Ojo: A36, A53, C15, F03 y F06 vencen entre el 9 y el 13 de octubre
+  (`valid_until`); después de esas fechas el examen las salta.
 
 - [2026-09-27] **Quiz: código postal + modo de viaje, mes en vez de fechas (ADR-031).**
   "¿Desde qué ciudad sales?" (SoCal/LA/resto/fuera de EE. UU.) se reemplaza por

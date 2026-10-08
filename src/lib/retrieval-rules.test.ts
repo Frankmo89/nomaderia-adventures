@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectRuleIntents, diversifyChunks, pickRuleChunks, RULE_INTENTS, sourceKey } from "@shared/retrieval-rules";
+import { detectRuleIntents, diversifyChunks, pickRuleChunks, RULE_INTENTS, sourceKey, dropSupersededEditorial } from "@shared/retrieval-rules";
 
 type C = { id: string; similarity: number; source_table: string; content: string; metadata: { source_url?: string; slug?: string; park_code?: string } };
 const nps = (id: string, sim: number, url: string, content = "text"): C => ({ id, similarity: sim, source_table: "nps_pages", content, metadata: { source_url: url, park_code: "xxxx" } });
@@ -49,5 +49,24 @@ describe("rule intents", () => {
 describe("fire restrictions intent", () => {
   it("detects campfire questions", () => {
     expect(detectRuleIntents("¿Se puede prender una fogata con leña en el campamento xxxx?").map((r) => r.id)).toContain("fires");
+  });
+});
+
+describe("dropSupersededEditorial", () => {
+  const ed = (park: string, field: string) => ({ source_table: "destinations", source_field: field, metadata: { park_code: park } });
+  const live = (park: string) => ({ source_table: "nps_pages", source_field: "page (parte 2/2)", metadata: { park_code: park, kind: "live" } });
+  const ever = (park: string) => ({ source_table: "nps_pages", source_field: "page (parte 1/1)", metadata: { park_code: park, kind: "evergreen" } });
+
+  it("A53/A36: an official live page drops that park's stale editorial closures", () => {
+    const out = dropSupersededEditorial([ed("grca", "seasonal_closures"), ed("grca", "zone_closures"), ed("grca", "hikes"), live("grca")]);
+    expect(out.map((c) => c.source_field)).toEqual(["hikes", "page (parte 2/2)"]);
+  });
+  it("keeps the editorial closures of other parks and when no live page is present", () => {
+    expect(dropSupersededEditorial([ed("yose", "zone_closures"), live("grca")])).toHaveLength(2);
+    expect(dropSupersededEditorial([ed("grca", "zone_closures"), ever("grca")])).toHaveLength(2);
+  });
+  it("matches split parts and aliased park codes (kica → seki)", () => {
+    const out = dropSupersededEditorial([ed("kica", "seasonal_closures (parte 2)"), live("seki")], { kica: "seki" });
+    expect(out).toHaveLength(1);
   });
 });
