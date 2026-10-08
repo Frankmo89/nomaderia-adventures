@@ -690,8 +690,14 @@ Siempre que hagas cambios al código:
   `npm run exam` (flag apagado). Fallos críticos que NO son de la calculadora:
   A36/A53/C15 (la guía editorial de julio gana sobre la página oficial NPS
   vigente), A22/F03 (el modelo lee mal la página: efectivo, validez 7 días),
-  F06 (la pregunta de tarifas tapa la de seguridad), C03 (respuesta correcta;
-  probable falso positivo de la regla de seguridad, revisar).
+  F06 (la pregunta de tarifas tapa la de seguridad), C03 (la respuesta SÍ trae
+  «llama al 911»; el juez gpt-4o dijo que no: falso positivo del juez).
+  Segundo arreglo en la misma rama: `dropSupersededEditorial`
+  (`_shared/retrieval-rules.ts`) saca del contexto la guía editorial de
+  cierres/temporada/clima de un parque cuando ya está su página oficial NPS en
+  vivo (A36, A53). El comunicado del North Rim sí está ingerido; no faltaba dato.
+  Ojo: A36, A53, C15, F03 y F06 vencen entre el 9 y el 13 de octubre
+  (`valid_until`); después de esas fechas el examen las salta.
 
 - [2026-09-27] **Quiz: código postal + modo de viaje, mes en vez de fechas (ADR-031).**
   "¿Desde qué ciudad sales?" (SoCal/LA/resto/fuera de EE. UU.) se reemplaza por
