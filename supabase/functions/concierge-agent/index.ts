@@ -1396,7 +1396,10 @@ serve(async (req) => {
       const parsed = parseFeeInput(rawArgs);
       const input = typeof parsed === "string"
         ? parsed
-        : reviewFeeInput(parsed, question, { mentionsNonresident: NONRESIDENT_HINT.test(question) && !US_RESIDENT_HINT.test(question) });
+        : reviewFeeInput(parsed, question, {
+          mentionsNonresident: NONRESIDENT_HINT.test(question) && !US_RESIDENT_HINT.test(question),
+          tripParks: feeParks,
+        });
       if (typeof input === "string") return `ERROR calculate_fees: ${input}. Corrige los argumentos y vuelve a llamarla.`;
       const result = computeFees(input, feeRows, passRows);
       if (result.ok) feeSources.push(...result.sources);

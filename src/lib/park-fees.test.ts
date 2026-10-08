@@ -173,3 +173,85 @@ describe("pass comparison and dates", () => {
     expect(statedToday("Hoy es sábado 3 de octubre de 2026, ¿cuándo es gratis?")).toEqual({ m: 10, d: 3 });
   });
 });
+
+// Cases from the 2026-10-05 exam failures (B07, E10, F09, F11), on synthetic pages.
+describe("exam regressions", () => {
+  const grcaPage = listedPage.replace(/Yosemite/g, "Grand Canyon");
+  const list3 = parseNonresidentList(passes.replace("Yosemite National Park, and", "Yosemite National Park, Grand Canyon National Park, and"));
+  const yose3 = withNonresidentList(parseParkFeesPage("yose", listedPage, T), list3.names);
+  const grca3 = withNonresidentList(parseParkFeesPage("grca", grcaPage, T), list3.names);
+  const jotr3 = withNonresidentList(parseParkFeesPage("jotr", unlistedPage, T), list3.names);
+  const rows3: ParkFeeRow[] = [yose3, grca3, jotr3];
+  const review = (o: object, q: string, tripParks: string[] = []) => {
+    const parsed = parseFeeInput(JSON.stringify(o));
+    if (typeof parsed === "string") throw new Error(parsed);
+    return reviewFeeInput(parsed, q, { mentionsNonresident: false, tripParks });
+  };
+
+  it("B07: 'cómo se compara con el pase' compares, and only for the whole trip", () => {
+    const q = "Un adulto que vive en México, sin pase, entra en su auto a Yosemite y, otro día, en su auto a Grand Canyon. ¿Cuánto paga en las dos entradas, y cómo se compara con el pase de $250?";
+    const one = { visits: [{ park_code: "yose", entry: "vehicle" }], us_resident_adults: 0, nonresident_adults: 1, children_under_16: 0, pass_held: "none" };
+    expect(review(one, q, ["yose", "grca"])).toMatch(/UNA sola llamada/);
+    const both = review({ ...one, visits: [{ park_code: "yose", entry: "vehicle" }, { park_code: "grca", entry: "vehicle" }] }, q, ["yose", "grca"]);
+    if (typeof both === "string") throw new Error(both);
+    const r = computeFees(both, rows3, rules);
+    expect(r.total).toBe(270);
+    expect(r.text).toMatch(/America the Beautiful \(no residente\).*\$270 − \$250 = \$20 \(CONVIENE EL PASE\)/);
+    expect(r.text).toMatch(/MEJOR OPCIÓN: America the Beautiful \(no residente\) — \$250/);
+    expect(r.text).not.toMatch(/Pase anual de/); // a single park's annual pass does not cover a two-park trip
+  });
+
+  it("F11: two passes beat the gate, only the cheapest is 'CONVIENE'", () => {
+    const q = "Íbamos a hacer solo Joshua Tree, pago por día, porque vivimos en EE. UU. Cambio a mitad del plan: la misma semana también entramos a Yosemite, y en nuestro auto vienen dos tíos que viven en México. ¿Qué ajusto de pases y de dinero?";
+    const input = review({ visits: [{ park_code: "jotr", entry: "vehicle" }, { park_code: "yose", entry: "vehicle" }], us_resident_adults: 2, nonresident_adults: 2, children_under_16: 0, pass_held: "none" }, q, ["jotr", "yose"]);
+    if (typeof input === "string") throw new Error(input);
+    const r = computeFees(input, rows3, rules);
+    expect(r.total).toBe(265);
+    expect(r.text).toMatch(/residente de EE\. UU\.\) \(\$80\).*\(CONVIENE EL PASE\)/);
+    expect(r.text).toMatch(/no residente\) \(\$250\).*pero America the Beautiful \(residente de EE\. UU\.\) sale más barato/);
+    expect(r.text).toMatch(/MEJOR OPCIÓN: America the Beautiful \(residente de EE\. UU\.\) — \$80 en total, \$185 menos/);
+  });
+
+  it("E10: a lent pass does not cover anyone without its holder", () => {
+    const q = "Le presto mi America the Beautiful a mi primo, que vive en México, para que entre a Yosemite sin mí. Así no paga el recargo. ¿Correcto?";
+    const input = review({ visits: [{ park_code: "yose", entry: "vehicle" }], us_resident_adults: 0, nonresident_adults: 1, children_under_16: 0, pass_held: "atb_resident" }, q);
+    if (typeof input === "string") throw new Error(input);
+    expect(input).toMatchObject({ pass_held: "atb_resident", holder_present: false });
+    const r = computeFees(input, rows3, rules);
+    expect(r.total).toBe(135);
+    expect(r.text).toMatch(/no es transferible/);
+  });
+
+  it("F09: free day — the U.S. resident enters free; the sister in another car pays entrance + $100", () => {
+    const q = "Quiero entrar a Grand Canyon el 27 de octubre porque es día gratis. Yo vivo en EE. UU. y mi hermana, que vive en México, llega ese día en otro auto, sin pase. ¿Los dos entramos gratis?";
+    const input = review({
+      visits: [
+        { park_code: "grca", entry: "vehicle", us_resident_adults: 1, nonresident_adults: 0 },
+        { park_code: "grca", entry: "vehicle", us_resident_adults: 0, nonresident_adults: 1 },
+      ],
+      us_resident_adults: 1, nonresident_adults: 1, children_under_16: 0, pass_held: "none",
+    }, q);
+    if (typeof input === "string") throw new Error(input);
+    expect(input.visits.every((v) => v.fee_free_day)).toBe(true);
+    const r = computeFees(input, rows3, rules);
+    expect(r.total).toBe(135);
+    expect(r.text).toMatch(/solo van personas que viven en EE\. UU\. → entrada gratis ese día \(\$0\)/);
+    expect(r.text).toMatch(/desde 2026 solo aplica a quienes viven en EE\. UU\./);
+  });
+
+  it("free day on foot: residents $0, nonresidents entrance + $100", () => {
+    const r = run({ visits: [{ park_code: "yose", entry: "on_foot", fee_free_day: true }], us_resident_adults: 1, nonresident_adults: 1, children_under_16: 0, pass_held: "none" });
+    expect(r.total).toBe(120);
+  });
+
+  it("a pass still covers the car on a free day", () => {
+    const r = run({ visits: [{ park_code: "yose", entry: "vehicle", fee_free_day: true }], us_resident_adults: 1, nonresident_adults: 2, children_under_16: 0, pass_held: "atb_resident" });
+    expect(r.total).toBe(0);
+  });
+
+  it("does not flag a free day when the question asks for the date", () => {
+    const input = review({ visits: [{ park_code: "yose", entry: "vehicle" }], us_resident_adults: 1, nonresident_adults: 0, children_under_16: 0, pass_held: "none" }, "¿Cuándo es el próximo día gratis y cuánto cuesta entrar otro día?");
+    if (typeof input === "string") throw new Error(input);
+    expect(input.visits[0].fee_free_day).toBeUndefined();
+  });
+});

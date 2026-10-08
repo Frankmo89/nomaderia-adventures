@@ -199,6 +199,12 @@ export type PassHeld = "none" | "atb_resident" | "atb_nonresident" | "park_annua
 export interface FeeVisit {
   park_code: string;
   entry: EntryMode;
+  /** The visit falls on an official free-entrance day (U.S. residents only since 2026). */
+  fee_free_day?: boolean;
+  /** Who is in THIS entry when it differs from the whole group (e.g. another car). */
+  us_resident_adults?: number;
+  nonresident_adults?: number;
+  children_under_16?: number;
 }
 
 export interface FeeInput {
@@ -211,6 +217,8 @@ export interface FeeInput {
   pass_park_code?: string;
   /** Also price the passes the group could buy. */
   compare_passes?: boolean;
+  /** The pass holder enters too (passes are not transferable). Default true. */
+  holder_present?: boolean;
 }
 
 export interface FeeResult {
@@ -255,7 +263,16 @@ export function parseFeeInput(raw: string): FeeInput | string {
     const code = FEE_PARK_ALIAS[raw] ?? raw;
     const entry = String(v?.entry ?? "") as EntryMode;
     if (!code || !["vehicle", "motorcycle", "on_foot"].includes(entry)) return "cada visita necesita park_code y entry (vehicle | motorcycle | on_foot)";
-    visits.push({ park_code: code, entry });
+    const visit: FeeVisit = { park_code: code, entry };
+    if (v.fee_free_day === true) visit.fee_free_day = true;
+    // Per-entry group only when the model sends one (another car, someone joins later).
+    if (["us_resident_adults", "nonresident_adults", "children_under_16"].some((k) => v[k] !== undefined && v[k] !== null)) {
+      visit.us_resident_adults = int(v.us_resident_adults);
+      visit.nonresident_adults = int(v.nonresident_adults);
+      visit.children_under_16 = int(v.children_under_16);
+      if (visit.us_resident_adults + visit.nonresident_adults === 0) return "una visita con su propio grupo necesita al menos un adulto (16+)";
+    }
+    visits.push(visit);
   }
   if (!visits.length) return "falta al menos una visita";
   const pass = String(a.pass_held ?? "none") as PassHeld;
@@ -268,6 +285,7 @@ export function parseFeeInput(raw: string): FeeInput | string {
     pass_held: pass,
     pass_park_code: a.pass_park_code ? (FEE_PARK_ALIAS[String(a.pass_park_code).toLowerCase()] ?? String(a.pass_park_code).toLowerCase()) : undefined,
     compare_passes: a.compare_passes === true,
+    holder_present: a.holder_present !== false,
   };
   if (input.us_resident_adults + input.nonresident_adults === 0) return "indica cuántos adultos (16+) viven en EE. UU. y cuántos no";
   return input;
@@ -279,12 +297,14 @@ interface VisitCost {
   total: number;
 }
 
-function visitCost(fee: ParkFeeRow, entry: EntryMode, input: FeeInput, pass: PassHeld, rules: Map<string, PassRuleRow>): VisitCost | string {
+function visitCost(fee: ParkFeeRow, visit: FeeVisit, input: FeeInput, pass: PassHeld, rules: Map<string, PassRuleRow>): VisitCost | string {
   const name = fee.park_name;
+  const entry = visit.entry;
   if (!fee.parse_ok) return `${name}: los datos oficiales no se pudieron verificar (${fee.issues.join("; ")})`;
-  const res = input.us_resident_adults;
-  const non = input.nonresident_adults;
-  const kids = input.children_under_16;
+  const res = visit.us_resident_adults ?? input.us_resident_adults;
+  const non = visit.nonresident_adults ?? input.nonresident_adults;
+  const kids = visit.children_under_16 ?? input.children_under_16;
+  const freeDay = visit.fee_free_day === true;
   if (!fee.entrance_fee_required) {
     return { lines: [`${name}: no cobra entrada (página oficial: no se requiere pase).`], terms: ["0"], total: 0 };
   }
@@ -295,9 +315,19 @@ function visitCost(fee: ParkFeeRow, entry: EntryMode, input: FeeInput, pass: Pas
   if (kids && fee.min_paying_age === 16) lines.push(`Menores de 16: no pagan entrada ni Tarifa de NO-RESIDENTE (${kids}).`);
 
   const rule = pass !== "none" ? rules.get(pass) : undefined;
-  const passUsable = Boolean(rule?.parse_ok) && (pass !== "park_annual" || input.pass_park_code === fee.park_code);
+  // Passes are not transferable: the holder enters and must be eligible for that pass type.
+  const holderHere = input.holder_present !== false &&
+    (pass !== "atb_resident" || res > 0) && (pass !== "atb_nonresident" || non > 0);
+  const passUsable = Boolean(rule?.parse_ok) && holderHere && (pass !== "park_annual" || input.pass_park_code === fee.park_code);
   if (pass !== "none" && !passUsable) {
-    lines.push(pass === "park_annual" ? `El pase anual de otro parque no sirve en ${name}.` : `No pude verificar las reglas del pase; se calcula sin pase.`);
+    lines.push(
+      !holderHere
+        ? `El pase no es transferible: el titular tiene que entrar y mostrar identificación con foto. Sin el titular no cubre a nadie; se calcula sin pase.`
+        : pass === "park_annual" ? `El pase anual de otro parque no sirve en ${name}.` : `No pude verificar las reglas del pase; se calcula sin pase.`,
+    );
+  }
+  if (freeDay && !passUsable) {
+    lines.push(`Día de entrada gratis: desde 2026 solo aplica a quienes viven en EE. UU. Quien tiene 16+ y no vive en EE. UU. paga la entrada${nrFee ? " y la Tarifa de NO-RESIDENTE" : ""}.`);
   }
 
   if (entry === "vehicle") {
@@ -305,6 +335,13 @@ function visitCost(fee: ParkFeeRow, entry: EntryMode, input: FeeInput, pass: Pas
     if (passUsable && rule?.covers_vehicle_and_passengers) {
       lines.push(`Con el pase (${rule.label_es}): cubre la entrada del carro${rule.covers_nonresident_fee ? " y la Tarifa de NO-RESIDENTE" : ""} del titular y de todos los pasajeros del carro → $0.`);
       return { lines, terms: ["0"], total: 0 };
+    }
+    if (freeDay && non === 0) {
+      lines.push(`En el carro solo van personas que viven en EE. UU. → entrada gratis ese día ($0).`);
+      return { lines, terms: ["0"], total: 0 };
+    }
+    if (freeDay) {
+      lines.push(`El carro lleva a alguien de 16+ que no vive en EE. UU.: la página oficial no da una regla distinta para carros mixtos, así que se cobra la entrada del carro.`);
     }
     const terms = [`${fee.vehicle} (carro)`];
     let total = fee.vehicle;
@@ -321,6 +358,10 @@ function visitCost(fee: ParkFeeRow, entry: EntryMode, input: FeeInput, pass: Pas
     if (fee.motorcycle === null) return `${name}: tarifa de moto no disponible`;
     if (passUsable && rule?.covers_vehicle_and_passengers) {
       lines.push(`Con el pase (${rule.label_es}): cubre hasta dos motos con titular y pasajeros${rule.covers_nonresident_fee ? ", incluida la Tarifa de NO-RESIDENTE" : ""} → $0.`);
+      return { lines, terms: ["0"], total: 0 };
+    }
+    if (freeDay && non === 0) {
+      lines.push(`En la moto solo van personas que viven en EE. UU. → entrada gratis ese día ($0).`);
       return { lines, terms: ["0"], total: 0 };
     }
     const terms = [`${fee.motorcycle} (moto)`];
@@ -354,7 +395,9 @@ function visitCost(fee: ParkFeeRow, entry: EntryMode, input: FeeInput, pass: Pas
   const payNon = non - coveredNon;
   const terms: string[] = [];
   let total = 0;
-  if (payRes) {
+  if (payRes && freeDay) {
+    lines.push(`Personas (16+) que viven en EE. UU.: entrada gratis ese día × ${payRes} = $0.`);
+  } else if (payRes) {
     terms.push(`${fee.per_person} × ${payRes} (entrada)`);
     total += fee.per_person * payRes;
     lines.push(`Entrada por persona (16+) que vive en EE. UU.: ${fmt(fee.per_person)} × ${payRes} = ${fmt(fee.per_person * payRes)}.`);
@@ -378,9 +421,12 @@ function runVisits(input: FeeInput, pass: PassHeld, fees: Map<string, ParkFeeRow
   for (const v of input.visits) {
     const fee = fees.get(v.park_code);
     if (!fee) return `No tengo tarifas oficiales guardadas para ${v.park_code}.`;
-    const c = visitCost(fee, v.entry, input, pass, rules);
+    const c = visitCost(fee, v, input, pass, rules);
     if (typeof c === "string") return c;
-    lines.push(`• ${fee.park_name}, ${ENTRY_ES[v.entry]}:`, ...c.lines.map((l) => `  - ${l}`), `  - Subtotal ${fee.park_name}: ${fmt(c.total)}`);
+    const who = v.us_resident_adults !== undefined
+      ? ` (esta entrada: ${v.us_resident_adults} que viven en EE. UU., ${v.nonresident_adults} que no${v.children_under_16 ? `, ${v.children_under_16} menor(es)` : ""})`
+      : "";
+    lines.push(`• ${fee.park_name}, ${ENTRY_ES[v.entry]}${v.fee_free_day ? ", en día de entrada gratis" : ""}${who}:`, ...c.lines.map((l) => `  - ${l}`), `  - Subtotal ${fee.park_name}: ${fmt(c.total)}`);
     terms.push(...c.terms.map((t) => (input.visits.length > 1 ? `${t} [${fee.park_code}]` : t)));
     total += c.total;
   }
@@ -417,12 +463,29 @@ export function computeFees(input: FeeInput, feeRows: ParkFeeRow[], passRows: Pa
     if (onlyFee && annual?.parse_ok && onlyFee.annual_park_pass !== null && onlyFee.entrance_fee_required) {
       priced.push({ label: `Pase anual de ${onlyFee.park_name}`, price: onlyFee.annual_park_pass, input: { ...input, pass_held: "park_annual", pass_park_code: onlyFee.park_code }, pass: "park_annual" });
     }
+    const costed: Array<{ label: string; price: number; gate: number; cost: number }> = [];
     for (const o of priced) {
       const withPass = runVisits(o.input, o.pass, fees, rules);
       if (typeof withPass === "string") continue;
-      const cost = o.price + withPass.total;
-      const diff = base.total - cost;
-      out.push(`COMPARACIÓN con ${o.label} (${fmt(o.price)}): ${fmt(o.price)} + ${fmt(withPass.total)} en caseta = ${fmt(cost)}; sin pase ${fmt(base.total)}; diferencia ${diff >= 0 ? `${fmt(base.total)} − ${fmt(cost)}` : `${fmt(cost)} − ${fmt(base.total)}`} = ${fmt(Math.abs(diff))} (${diff > 0 ? "CONVIENE EL PASE" : diff < 0 ? "CONVIENE PAGAR EN CASETA" : "da igual"}).`);
+      costed.push({ label: o.label, price: o.price, gate: withPass.total, cost: o.price + withPass.total });
+    }
+    // Only the cheapest option gets "CONVIENE": two passes can both beat the gate.
+    const best = costed.reduce<(typeof costed)[number] | null>((b, o) => (o.cost < base.total && (!b || o.cost < b.cost) ? o : b), null);
+    for (const o of costed) {
+      const diff = base.total - o.cost;
+      const verdict = diff < 0
+        ? "CONVIENE PAGAR EN CASETA"
+        : diff === 0
+        ? "da igual"
+        : o === best
+        ? "CONVIENE EL PASE"
+        : `ahorra frente a la caseta, pero ${best!.label} sale más barato`;
+      out.push(`COMPARACIÓN con ${o.label} (${fmt(o.price)}): ${fmt(o.price)} + ${fmt(o.gate)} en caseta = ${fmt(o.cost)}; sin pase ${fmt(base.total)}; diferencia ${diff >= 0 ? `${fmt(base.total)} − ${fmt(o.cost)}` : `${fmt(o.cost)} − ${fmt(base.total)}`} = ${fmt(Math.abs(diff))} (${verdict}).`);
+    }
+    if (costed.length) {
+      out.push(best
+        ? `MEJOR OPCIÓN: ${best.label} — ${fmt(best.cost)} en total, ${fmt(base.total - best.cost)} menos que pagar en caseta (${fmt(base.total)}). Empieza la respuesta por aquí.`
+        : `MEJOR OPCIÓN: pagar en caseta — ${fmt(base.total)}; ningún pase sale más barato para este viaje. Empieza la respuesta por aquí.`);
     }
   }
   const srcs = new Map<string, string>();
@@ -469,8 +532,14 @@ export function feeFactsBlock(feeRows: ParkFeeRow[], passRows: PassRuleRow[]): s
 
 // ─── Question-aware review of the model's arguments ──────────────────────────
 
-const BUY_PASS = /\bconviene|vale la pena|\bcomprar\b|\bcompro\b|\bsacar (el|un) pase|sale m[aá]s barato|ahorr\w*|ajust\w* de pases|\bqu[eé] pase/i;
-const HAS_PASS = /\b(ya )?(tengo|tienes?|tenemos|tienen?|traigo|traes?|traemos|traen|llevo|llevas?|llevamos|llevan)\b[^.?!]{0,40}(\bpase|america the beautiful|annual pass)|\bcon (mi|nuestro|el|su) (pase|america the beautiful)\b|\b(pase|america the beautiful) que (ya )?(tengo|tenemos)/i;
+const BUY_PASS = /\bconviene|vale la pena|\bcomprar\b|\bcompro\b|\bsacar (el|un) pase|sale m[aá]s barato|ahorr\w*|ajust\w* de pases|\bqu[eé] pase|\bcompar\w*/i;
+const NO_PASS = /\bsin (ning[uú]n )?pase\b|\bno (tengo|tenemos|tiene|tienen) (ning[uú]n |el |un )?pase/i;
+const FREE_DAY = /d[ií]a(s)? (de entrada )?gratis|entrada gratis|fee[- ]free/i;
+/** "¿Cuándo es el próximo día gratis?" asks for a date, not a free-day price. */
+const ASKS_WHEN = /cu[aá]ndo (es|son|hay|cae|caen)\b/i;
+/** The pass holder will not be there ("le presto mi pase", "sin mí"). */
+const HOLDER_ABSENT = /\b(le|les) prest\w*|\bprest\w* (mi|el|nuestro) (pase|america the beautiful)|\bsin m[ií](?=[\s.,;:?!)]|$)|sin el titular|sin que yo (vaya|est[eé])/i;
+const HAS_PASS = /\b(ya )?(tengo|tienes?|tenemos|tienen?|traigo|traes?|traemos|traen|llevo|llevas?|llevamos|llevan)\b[^.?!]{0,40}(\bpase|america the beautiful|annual pass)|(?<!compar\w* )\bcon (mi|nuestro|el|su) (pase|america the beautiful)\b|\b(pase|america the beautiful) que (ya )?(tengo|tenemos)/i;
 /** Lives outside the U.S.: Mexican states/big cities and Latin American countries (fee residency is where you live). */
 const OUTSIDE_US = new RegExp(
   String.raw`\b(viv\w*|radic\w*|son|somos|es|soy|vienen?|venimos)\b[^.?!]{0,30}\b(en|de|desde)\s+(m[eé]xico|cdmx|ciudad de m[eé]xico|tijuana|mexicali|ensenada|rosarito|tecate|hermosillo|nogales|ju[aá]rez|chihuahua|monterrey|saltillo|torre[oó]n|guadalajara|zapopan|le[oó]n|quer[eé]taro|puebla|oaxaca|chiapas|tabasco|veracruz|yucat[aá]n|m[eé]rida|canc[uú]n|quintana roo|sonora|sinaloa|culiac[aá]n|mazatl[aá]n|durango|zacatecas|aguascalientes|san luis potos[ií]|michoac[aá]n|morelia|jalisco|nayarit|colima|guerrero|acapulco|morelos|cuernavaca|hidalgo|pachuca|tlaxcala|estado de m[eé]xico|toluca|nuevo le[oó]n|coahuila|tamaulipas|baja california|la paz|los cabos|campeche|guanajuato|guatemala|el salvador|honduras|nicaragua|costa rica|panam[aá]|colombia|venezuela|ecuador|per[uú]|bolivia|chile|argentina|uruguay|paraguay|cuba|rep[uú]blica dominicana|espa[nñ]a|canad[aá])\b`,
@@ -502,15 +571,31 @@ export function statedGroupSize(question: string): number | null {
  * - the question says someone lives outside the U.S. but nobody was counted as
  *   nonresident → ask the model to fix the counts (no guessing here).
  */
-export function reviewFeeInput(input: FeeInput, question: string, opts: { mentionsNonresident: boolean }): FeeInput | string {
+export function reviewFeeInput(
+  input: FeeInput,
+  question: string,
+  opts: { mentionsNonresident: boolean; tripParks?: string[] },
+): FeeInput | string {
   let out = input;
-  const hasPass = HAS_PASS.test(question);
+  // "sin pase" is explicit; "¿cómo se compara con el pase?" is a pass to buy, not one held.
+  const hasPass = !NO_PASS.test(question) && (HAS_PASS.test(question) || HOLDER_ABSENT.test(question));
+  if (HOLDER_ABSENT.test(question)) out = { ...out, holder_present: false };
+  // "¿Si voy el día gratis…?": the model often forgets the flag; the question decides.
+  if (FREE_DAY.test(question) && !ASKS_WHEN.test(question) && !out.visits.some((v) => v.fee_free_day)) {
+    out = { ...out, visits: out.visits.map((v) => ({ ...v, fee_free_day: true })) };
+  }
   // A pass the user never said they have is a pass to BUY: price it as a comparison
   // (with its price), never as "already covered".
   if (out.pass_held !== "none" && !hasPass) {
     out = { ...out, pass_held: "none", pass_park_code: undefined, compare_passes: true };
   }
   if (BUY_PASS.test(question) && !hasPass) out = { ...out, compare_passes: true };
+  // A pass is bought for the whole trip: comparing one park at a time gives the wrong verdict.
+  const trip = [...new Set(opts.tripParks ?? [])];
+  const missing = trip.filter((p) => !out.visits.some((v) => v.park_code === p));
+  if (out.compare_passes && trip.length > 1 && missing.length) {
+    return `la pregunta habla de ${trip.join(", ")} y la llamada no incluye ${missing.join(", ")}: para comparar pases pon TODAS las visitas del viaje en UNA sola llamada y vuelve a llamar`;
+  }
   const stated = statedGroupSize(question);
   if (stated !== null && out.us_resident_adults + out.nonresident_adults < stated && !/\bniñ|menor|hij[oa]s?\b/i.test(question)) {
     return `la pregunta habla de ${stated} adultos/personas y contaste ${out.us_resident_adults + out.nonresident_adults}: cuenta a TODOS, incluido el titular del pase, y vuelve a llamar`;
@@ -592,6 +677,10 @@ export const CALCULATE_FEES_TOOL = {
             properties: {
               park_code: { type: "string", enum: ["jotr", "deva", "chis", "pinn", "seki", "yose", "grca"] },
               entry: { type: "string", enum: ["vehicle", "motorcycle", "on_foot"], description: "vehicle = carro particular (default si van en carro o no lo dicen); on_foot = a pie o en bici" },
+              fee_free_day: { type: "boolean", description: "true si esa entrada es en un día oficial de entrada gratis." },
+              us_resident_adults: { type: "integer", description: "Solo si ESTA entrada lleva a otro grupo (p. ej. alguien llega en otro carro): adultos 16+ de esta entrada que viven en EE. UU." },
+              nonresident_adults: { type: "integer", description: "Solo con un grupo propio de esta entrada: adultos 16+ que no viven en EE. UU." },
+              children_under_16: { type: "integer", description: "Solo con un grupo propio de esta entrada: menores de 16." },
             },
             required: ["park_code", "entry"],
             additionalProperties: false,
@@ -602,7 +691,8 @@ export const CALCULATE_FEES_TOOL = {
         children_under_16: { type: "integer", description: "Menores de 16 años." },
         pass_held: { type: "string", enum: ["none", "atb_resident", "atb_nonresident", "park_annual"], description: "Pase que YA tienen (none si no dicen). Para saber si conviene COMPRAR un pase deja none y usa compare_passes: true." },
         pass_park_code: { type: "string", description: "Solo con park_annual: parque del pase anual." },
-        compare_passes: { type: "boolean", description: "true si preguntan si conviene comprar un pase America the Beautiful." },
+        compare_passes: { type: "boolean", description: "true si preguntan si conviene comprar un pase o cómo se compara con un pase." },
+        holder_present: { type: "boolean", description: "false si el titular del pase NO va (p. ej. lo presta). Los pases no son transferibles." },
       },
       required: ["visits", "us_resident_adults", "nonresident_adults", "children_under_16", "pass_held"],
       additionalProperties: false,
