@@ -667,6 +667,24 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-10-08] **`calculate_fees`: arreglos de los fallos de tarifas del examen v49.**
+  Diagnóstico por fila desde `eval/results.jsonl`: en B07 la calculadora sí
+  dio $270, pero la comparación con el pase no corrió en la llamada del viaje
+  completo (bug de `HAS_PASS`, ver lección en `decisions.md`), solo en las
+  llamadas por parque, y el modelo usó el veredicto de un solo parque. Cambios en
+  `_shared/park-fees.ts`: comparación forzada para el viaje completo; una sola
+  `MEJOR OPCIÓN` (F11: ya no salen dos pases con "CONVIENE"); `fee_free_day`
+  por visita y grupo por visita para otro carro (F09); `holder_present` y
+  titular elegible, porque los pases no son transferibles (E10). `concierge-agent`
+  pasa `tripParks` a `reviewFeeInput`. Tests: 7 regresiones nuevas, 243/243.
+  `deno check` no corrió aquí (la red bloquea deno.land/esm.sh); lo corre el CI.
+  **Pendiente Frank:** desplegar `concierge-agent` y volver a correr
+  `npm run exam` (flag apagado). Fallos críticos que NO son de la calculadora:
+  A36/A53/C15 (la guía editorial de julio gana sobre la página oficial NPS
+  vigente), A22/F03 (el modelo lee mal la página: efectivo, validez 7 días),
+  F06 (la pregunta de tarifas tapa la de seguridad), C03 (respuesta correcta;
+  probable falso positivo de la regla de seguridad, revisar).
+
 - [2026-09-27] **Quiz: código postal + modo de viaje, mes en vez de fechas (ADR-031).**
   "¿Desde qué ciudad sales?" (SoCal/LA/resto/fuera de EE. UU.) se reemplaza por
   código postal (tabla ZCTA del Census en `public/data/`, se pide solo al

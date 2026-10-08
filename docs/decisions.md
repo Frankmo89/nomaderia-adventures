@@ -650,6 +650,14 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
 > error ya pagado.
 
+- **Un regex de "ya tiene el pase" se tragaba las comparaciones:** `HAS_PASS`
+  aceptaba "con el pase", así que "¿cómo se compara **con el pase** de $250?"
+  (B07, examen 2026-10-05) se leía como pase ya comprado y `calculate_fees`
+  nunca comparaba. Fix: "compar*" pide comparación, "sin pase" gana sobre
+  `HAS_PASS`, y una comparación de pases tiene que llevar todas las visitas
+  del viaje en una sola llamada (por parque, el veredicto sale al revés).
+  Lección: los atajos por regex sobre la pregunta necesitan un test con la
+  frase exacta del examen que los rompió.
 - **Triggers `UPDATE OF col` ignoran cambios hechos por triggers `BEFORE`:**
   un trigger con lista de columnas solo dispara si la columna está en el `SET`
   del UPDATE. Si un `BEFORE` trigger cambia la columna (p. ej. sube
