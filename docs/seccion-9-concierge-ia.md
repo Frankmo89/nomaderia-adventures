@@ -1,5 +1,8 @@
 # Sección 9 — Concierge IA con RAG (Decisión: PARKED)
 
+> **Estado 2026-10-03:** el concierge **ya está construido** (`concierge-agent`). El launcher solo se monta si `VITE_CONCIERGE_ENABLED=true` (default **apagado**, ADR-035). Este archivo conserva el diseño original y la decisión de haberlo parqueado. No lo uses como orden de «no construir». El contrato vigente de pre-compra está en ADR-034, ADR-035 y en `docs/concierge-audit.md`.
+
+
 **Última actualización:** 5 junio 2026
 **Estado:** ⛔ NO CONSTRUIR TODAVÍA — parqueado hasta cumplir el TRIGGER (ver abajo)
 

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { STRIPE_AND_DOUBT_COPY } from "@/lib/concierge-flag";
 import {
   Accordion,
   AccordionContent,
@@ -29,7 +30,7 @@ const faqItems: FaqItem[] = [
   {
     question: "¿Cómo funciona el pago?",
     answer:
-      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
+      STRIPE_AND_DOUBT_COPY,
   },
   {
     question: "Nunca he hecho senderismo, ¿es para mí?",

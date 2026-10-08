@@ -170,7 +170,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-013 — `ingest-knowledge`: section-based chunking + regla de exclusión de datos volátiles
 - **Fecha:** 2026-06
-- **Estado:** Vigente (reemplaza el enfoque "ficha monolítica" de 2026-06-05)
+- **Estado:** Vigente para `ingest-knowledge` (reemplaza el enfoque "ficha monolítica" de 2026-06-05). La regla "nunca embeber datos volátiles" queda **reemplazada por ADR-036** para páginas oficiales NPS, que sí tienen estrategia de refresh.
 - **Contexto:** El pipeline anterior generaba una "ficha" única por parque y la dividía en secciones genéricas (`section: "Presentación"`, etc.). Esto hacía difícil recuperar secciones específicas por relevancia y mezclaba contenido de distintas secciones en un mismo chunk.
 - **Decisión:** Un chunk por sección por parque. Cada sección tiene un `source_field` fijo (`why_visit`, `guide`, `itinerary`, `preparation`, `gear`, `safety`, `getting_there`, `weather`, `accessibility`, `profile`, `hikes`, `lodging`). El prefijo `"Parque: {title} — Sección: {source_field}\n\n"` hace cada chunk auto-contenido. Secciones > ~800 tokens se dividen con ~100 tokens de overlap. **Regla de exclusión de datos volátiles:** `park_live_data` (entrance fees, alerts, campground availability) NUNCA se embebe — sus datos cambian con frecuencia y embeddings obsoletos inducen respuestas incorrectas. Solo se embebe contenido editorial estable de `destinations`.
 - **Consecuencias:** `ingest-knowledge` lee únicamente `public.destinations`. No debe leer `park_live_data` en ninguna versión futura sin repensar la estrategia de refresh de chunks. Cuando `content_version` exista en destinations, usarla para omitir parques sin cambios. La columna `section` en metadata se preserva para compatibilidad con `concierge-agent`.
@@ -586,6 +586,59 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Consecuencias:** NO volver a poner WhatsApp como botón primario de compra en home/servicios/destinos/quiz. NO tocar price/product Stripe ni auth/queries. Frank debe setear Success URL → `/gracias`. Webhook sigue en T06.
 
 
+
+### ADR-034 — Concierge pre-compra: RAG con candado de cifras, correo después de 2 respuestas
+- **Fecha:** 2026-10-03
+- **Estado:** Vigente (acota ADR-016, ADR-029, ADR-030 y ADR-032 en el chat de visitantes)
+- **Contexto:** El concierge ya respondía con RAG + DATOS EN VIVO + motor, pero el launcher no estaba montado y «¿Dudas? Escríbenos» seguía abriendo WhatsApp. No había candado de cifras, ni la frase fija cuando el retrieval queda vacío, ni tope por visitante.
+- **Decisión:**
+  1. `match_count` 8 y `min_similarity` 0.4 se mantienen en la llamada. Si ningún chunk pasa el umbral, la respuesta es exactamente «Eso no lo tengo confirmado.» — no se llama al modelo y no se contestan tarifas solo con datos en vivo.
+  2. Toda cifra de la respuesta del modelo tiene que aparecer en los chunks, en el bloque DATOS EN VIVO o en el texto de la herramienta del motor. Si tras un reintento sigue habiendo una cifra suelta, se sustituye la respuesta por la frase fija. La fuente, la fecha y el «llama al 911» se agregan después, en código.
+  3. Calor, agua, fauna, clima y emergencias llevan la orientación del NPS y «En una emergencia, llama al 911».
+  4. El correo se pide a partir de la tercera respuesta (`prior_answers >= 2`) y se inserta en `leads` (`quiz_answers.source = concierge`). No va a `newsletter_subscribers` desde el chat.
+  5. Cada turno se inserta en `events` (`type = concierge_turn`, pregunta, respuesta, `chunk_ids`) con la service role. Tope: 40 turnos por `session_id` por hora. Si no hay service role, no se bloquea y el navegador registra el turno.
+  6. Los CTA «¿Dudas?» de visitantes abren el concierge. WhatsApp queda para quien ya pagó (`/gracias`, `/i/:token`).
+- **Consecuencias:** Hay que desplegar `concierge-agent` (no hay migración nueva). Un `session_id` nuevo salta el tope; un límite por IP queda pendiente. El eval en vivo contra el LLM no corre sin la función desplegada y `OPENAI_API_KEY`.
+
+
+### ADR-035 — Concierge pre-compra detrás de flag; examen en vivo aparte del fixture
+- **Fecha:** 2026-10-03
+- **Estado:** Vigente (acota el punto 6 de ADR-034)
+- **Contexto:** El PR del concierge reemplazaba «¿Dudas? Escríbenos» por el chat antes de tener un examen en vivo contra el modelo desplegado. Mergearlo así dejaría el sitio sin el botón de WhatsApp de dudas.
+- **Decisión:** `VITE_CONCIERGE_ENABLED` solo es verdadero con el string `true`. Si no, los CTA de dudas siguen en WhatsApp y `ConciergeLauncher` no se monta. `npm run eval:concierge` sigue siendo el fixture de 30 preguntas, sin modelo. `npm run exam` llama a la función **desplegada**, guarda chunk ids y fuentes, y escribe `eval/report.md`. `eval/` no se sirve, no entra al bundle y está en la lista de ignore de la ingesta. El gold del examen no se edita; si choca con el sitio cuando el flag está on, se anota en «Gold conflicts».
+- **Consecuencias:** No encender el flag hasta que Frank acepte el reporte (cero críticos; accuracy 100% en C, E y G; D abstiene ≥90%; coverage ≥80% en A y B). Desplegar con `supabase functions deploy concierge-agent` y correr `npm run exam` con el flag todavía off. CI debe correr `npm run exam` si cambian la función, sus prompts o el harness (el workflow no se pudo pushear: el token no tiene scope `workflow`; el YAML quedó en pending-tasks).
+
+### ADR-036 — Páginas oficiales NPS en `knowledge_chunks` con refresh diario; retrieval bilingüe; tarjetas de seguridad textuales
+- **Fecha:** 2026-10-05
+- **Estado:** Vigente. **Reemplaza** la regla de ADR-013 "nunca embeber datos volátiles": ahora existe una estrategia de refresh (fetch diario + borrado de lo `live` con más de 7 días). Acota ADR-034 §3 (seguridad) y la fecha del footer.
+- **Contexto:** El examen v25 dio NO PASA. El diagnóstico (`eval/diagnosis.md`) mostró que casi todo era falta de datos: los 1,768 chunks venían solo de `destinations`, ninguno de nps.gov, y solo 3 mencionaban la tarifa de no residente. Las preguntas llegan en español y las páginas oficiales están en inglés. Los riesgos (calor, río) no activaban `isSafetyTopic`, y la fecha "verificado" era la de hoy o la de sync, no la del texto citado.
+- **Decisión:**
+  1. Columnas aditivas en `knowledge_chunks`: `source_url`, `fetched_at` (backfill = `created_at` para los de `destinations`), `park_code`, `kind` (`evergreen | live | safety`). `match_knowledge_chunks` no cambia.
+  2. Edge Function `ingest-nps-pages` (solo service_role): baja las páginas del registro `_shared/nps-pages.ts` (tarifas, pases, FAQ de no residente, hiking, condiciones, seguridad, alertas) de jotr, deva, chis, pinn, seki, yose, grca y nps.gov general. Las parte en chunks de 1500 caracteres con 250 de overlap, las embebe con `text-embedding-3-small` y hace upsert con `source_table = nps_pages`. Si una página falla, se queda la última versión buena. Las fuentes son **solo nps.gov**.
+  3. Refresh: `pg_cron` `nps-pages-refresh-daily` (11:15 UTC) llama `public.request_nps_pages_ingest()`, que hace un POST por grupo de parque con el JWT de Vault `ingest_knowledge_jwt`. `nps-live-prune-daily` (11:50 UTC) borra `kind = live` con `fetched_at` de más de 7 días. No usa un workflow de GitHub porque el token no tiene scope `workflow`.
+  4. Retrieval bilingüe en `concierge-agent`: la pregunta se traduce al inglés, se embeben las dos en una llamada y se llama `match_knowledge_chunks` dos veces con los mismos parámetros (8 / 0.4). Se fusiona por id con la mejor similitud y se aplican el mismo umbral y el top 8. Las tarjetas no compiten en el retrieval. Si la pregunta es de tarifas o pases, una tercera llamada a la misma función con `filter_park_code = 'nps'` reserva hasta 3 lugares del top 8 para las páginas generales (FAQ de no residente, pases), que las páginas de cada parque desplazaban.
+  5. Seguridad: nunca se genera libremente. Por parque se guardan tarjetas (`source_table = nps_safety_cards`, `kind = safety`) con un párrafo **textual** del NPS y su traducción fiel; la traducción se descarta si trae una cifra que no está en el original. Si la pregunta tiene intención de seguridad (`isSafetyTopic` o el detector ES por tema), se anexan hasta 2 tarjetas con la página y la fecha de consulta. Si no hay tarjeta: «En una emergencia, llama al 911.» + la página de seguridad del parque.
+  6. Fecha: el footer muestra el `fetched_at` de cada fuente citada ("verificado …" para la guía y "consultada …" para nps.gov). Si no hay fuente, no hay fecha. Nunca se pone la fecha de hoy.
+  7. Cuentas: la herramienta `calculate` es determinista. Sus operandos tienen que estar en el contexto, en DATOS EN VIVO o ser cantidades escritas en la pregunta. Su salida entra al corpus del candado de cifras. La corrección del candado puede pedir una ronda más de `calculate` (solo esa herramienta). La regla de abstención y el candado no cambian.
+  8. El examen (`scripts/concierge-exam.ts`) acepta como no inventada una fecha igual al `fetched_at` de un chunk de la evidencia, y una fecha en español que repite una fecha que el texto NPS da en inglés. También lee `tool_outputs`.
+  9. Inmigración: una pregunta legal de inmigración (estatus, visas, quedarse a vivir, deportación) recibe una respuesta fija sin llamar al modelo (`isImmigrationQuestion` / `immigrationAnswer` en `_shared/concierge-guard.ts`). Empieza con "Eso no lo tengo confirmado.", no tranquiliza ni alarma y manda a un abogado de inmigración (NOMADERIA_SOUL: "cedes ante el profesional").
+  10. El examen tampoco cuenta como inventada una cifra que el usuario escribió en la pregunta (p. ej. edades). El candado de cifras del agente no cambió.
+- **Consecuencias:** Hay 20+1 Edge Functions (`ingest-nps-pages`). Para agregar un parque o una página, se edita `NPS_PAGES` y se despliega `ingest-nps-pages`. `npm run nps:preview` hace un dry run. El fetch de nps.gov puede romperse si cambia el HTML; el extractor busca `h1.page-title` … "Last updated". Si Vault pierde `ingest_knowledge_jwt`, el cron solo deja un WARNING. Cada pregunta hace una llamada extra a gpt-4o-mini para la traducción.
+
+### ADR-037 — Tarifas como datos (`park_fees` / `pass_rules` + `calculate_fees`), diversidad de retrieval, tarjeta de producto, regla estricta del examen
+- **Fecha:** 2026-10-05
+- **Estado:** Vigente. Amplía ADR-036 (puntos 4 y 7) y la ship rule de ADR-035.
+- **Contexto:** Con la regla estricta (un dato equivocado es crítico aunque la cifra aparezca en algún chunk), el re-score de v43 dio 20 críticos, casi todos tarifas: gpt-4o-mini decidía mal quién paga, qué cubre un pase o qué parque cobra la Tarifa de NO-RESIDENTE. Además, 4–5 chunks de una misma página (Half Dome) sacaban del top 8 la regla de dormir en el carro (F10). Las preguntas de producto (G) no tenían fuente.
+- **Decisión:**
+  1. **Tablas** aditivas (`20261006120000_park_fees_pass_rules.sql`, RLS: lectura pública, escritura solo service_role). `park_fees` tiene una fila por parque (jotr, deva, chis, pinn, seki, yose, grca) con carro, moto, por persona, pase anual del parque, edad mínima que paga, días de validez, `nonresident_fee_on_page`, `on_nonresident_list`, `nonresident_fee`, `parse_ok`, `issues`, `source_url` y `fetched_at`. `pass_rules` guarda America the Beautiful residente ($80) y no residente ($250), más el pase anual del parque, cada uno con su frase textual del NPS (`evidence`).
+  2. **Origen y verificación:** las llena `ingest-nps-pages` con el texto de `fees.htm` de cada parque. La Tarifa de NO-RESIDENTE solo aplica si la página del parque lo dice **y** el parque está en la lista oficial de `passes.htm` («At the following national parks…»). Si los dos no coinciden, `parse_ok = false`, se conservan los últimos valores buenos y `calculate_fees` se niega a calcular. Las reglas de cobertura vienen del FAQ `aboutus/nonresident-fees.htm`: el pase cubre al titular y a los pasajeros del carro (o 2 motos); donde se cobra por persona, al titular y a 3 adultos más. Las tablas se refrescan con el mismo cron diario (`nps-pages-refresh-daily`). No hizo falta un job nuevo.
+  3. **`calculate_fees`** (herramienta de OpenAI en `concierge-agent`): recibe visitas (`park_code`, `entry` vehicle|motorcycle|on_foot), adultos que viven y que no viven en EE. UU., menores de 16, el pase que ya tienen y `compare_passes`. **El código suma** (`_shared/park-fees.ts`) y devuelve la fórmula, el TOTAL y las FUENTES (URL + fecha de consulta). La salida entra al corpus del candado de cifras. Una revisión determinista contra la pregunta convierte «¿conviene comprar el pase?» en una comparación sin pase. Si la pregunta dice que alguien no vive en EE. UU. y nadie quedó contado como no residente, pide que se rehaga la cuenta. En preguntas de tarifas con parque, el contexto lleva el bloque TARIFAS OFICIALES de la tabla. La tabla o la tarjeta también cuentan como contexto para la regla «sin chunks no hay respuesta». La abstención y el candado no cambian.
+  4. **Diversidad:** con todos los candidatos de las llamadas ES y EN (mismo umbral 0.4), el top 8 admite como máximo **2 chunks por fuente** (`source_url`, o la guía de Nomaderia), y los lugares se rellenan con los siguientes candidatos. Se aplica en el código de la función; la SQL no se tocó. Hay tres intenciones de regla (cierres, dormir o pernoctar, permisos). Si la pregunta coincide y hay un parque (nombrado, la guía abierta, o un lugar nombrado que aparece en los chunks), se hace una llamada más a la misma RPC (8 / 0.4) con una consulta fija en inglés y filtrada a ese parque. Se fija el mejor chunk cuyo texto enuncia la regla (máximo 1 por intención).
+  5. **Tarjeta de producto** (`_shared/product-card.ts`): es texto fijo tomado de la página viva `nomaderia.com/servicios` (DOM renderizado y respuestas del FAQ, consultada el 5 oct 2026): $49 USD, qué incluye, entrega en 24 a 48 h, una ronda de ajustes, pago con tarjeta en el sitio (Stripe), WhatsApp después de pagar y durante el viaje. Se adjunta a toda pregunta de producto (por detección de intención) y entra al contexto. Si no hay parque en juego, la tarjeta es el único contexto y la única fuente. La constante del link de Stripe no cambió. Si la página cambia, se actualiza este archivo.
+  6. Temperatura del chat: 0 (antes 0.3), para que el examen se pueda reproducir.
+  7. **Examen:** hay críticos nuevos. `wrong_fee`: en una pregunta de tarifas, la polaridad sí/no contraria al gold, o un total declarado que no coincide con la fórmula del gold. `contradicts_gold`: el juez (gpt-4o) marca una contradicción con el gold. `--rescore` vuelve a calificar `eval/results.jsonl` sin llamar a la función. **Ship rule:** cero críticos; accuracy 100% en C, E y G; D se abstiene ≥90%; coverage ≥80% en A, B y E, y ≥90% en G.
+- **Consecuencias:** Para agregar un parque a las tarifas, se agrega a `FEE_PARKS` (y su `fees.htm` a `NPS_PAGES`). Si el NPS cambia el formato de «Private Vehicle — $35.00», la fila queda en `parse_ok = false` (no se inventa) hasta ajustar el parser. Las preguntas con parque y una regla detectada hacen hasta 2–3 llamadas RPC extra.
+
 ### ADR-033 — Logo: El Pin
 - **Fecha:** 2026-10-03
 - **Estado:** Vigente
@@ -597,6 +650,14 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
 > error ya pagado.
 
+- **Un regex de "ya tiene el pase" se tragaba las comparaciones:** `HAS_PASS`
+  aceptaba "con el pase", así que "¿cómo se compara **con el pase** de $250?"
+  (B07, examen 2026-10-05) se leía como pase ya comprado y `calculate_fees`
+  nunca comparaba. Fix: "compar*" pide comparación, "sin pase" gana sobre
+  `HAS_PASS`, y una comparación de pases tiene que llevar todas las visitas
+  del viaje en una sola llamada (por parque, el veredicto sale al revés).
+  Lección: los atajos por regex sobre la pregunta necesitan un test con la
+  frase exacta del examen que los rompió.
 - **Triggers `UPDATE OF col` ignoran cambios hechos por triggers `BEFORE`:**
   un trigger con lista de columnas solo dispara si la columna está en el `SET`
   del UPDATE. Si un `BEFORE` trigger cambia la columna (p. ej. sube

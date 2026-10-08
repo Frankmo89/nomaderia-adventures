@@ -12,6 +12,164 @@
 
 ---
 
+## Changelog 2026-10-05 (noche): tarifas como datos, diversidad, tarjeta de producto, regla estricta (PR #204, draft, ADR-037)
+
+Rama `feat/concierge-flag-exam`. No se mergeó nada y `VITE_CONCIERGE_ENABLED` sigue apagado. No se tocó Stripe, auth, rutas ni las queries/RPC (`match_knowledge_chunks` sigue igual, con 8 y 0.4). La abstención y el candado de cifras no cambian.
+
+**Hecho:**
+- **Scorer estricto.** Nuevos críticos `wrong_fee` y `contradicts_gold`. El juez es gpt-4o, con un glosario de sinónimos y la obligación de citar el par de frases. Nuevo `--rescore`. El re-score de v43 está en `eval/report.md`: 20 críticos.
+- **Ship rule:** 0 críticos; accuracy 100% en C, E y G; D se abstiene ≥90%; coverage ≥80% en A, B y E, y ≥90% en G.
+- **Migración `20261006120000_park_fees_pass_rules.sql`** (aplicada por MCP, RLS solo lectura). `ingest-nps-pages` (v7) llena `park_fees` desde `fees.htm` y lo cruza con la lista oficial de `passes.htm`. También llena `pass_rules` desde `passes.htm` y el FAQ de no residente. El refresh corre con el mismo cron diario, `nps-pages-refresh-daily`.
+- **`concierge-agent` v49:**
+  - Herramienta `calculate_fees`: el código suma, y una revisión determinista compara los argumentos con la pregunta.
+  - Bloque TARIFAS OFICIALES.
+  - Máximo 2 chunks por fuente en el top 8.
+  - Chunks de regla para cierres, dormir en el carro, permisos y fuego.
+  - Tarjeta de producto fija tomada de `nomaderia.com/servicios`.
+  - Línea HOY y próximo día gratis calculados por código.
+  - Temperatura 0.
+- **Guard de inmigración:** si la pregunta es de tarifas, gana la tarifa (5 tests nuevos). El texto fijo no cambió.
+- **Examen:** `eval/exam.jsonl` sale de la hoja «Examen Nomaderia | 2026-10-03» (id `1aextdCGNkkAbJWwEJeThpUhniDs0Caz9VMNRNAEhojo`, modificada el 2026-10-05). Frank tiene que confirmar que es la hoja correcta.
+
+**Examen v49: NO PASA.** Hay 11 críticos: A22, A36, A53, B07, C03, C15, E10, F03, F06, F09 y F11. Accuracy C 87% y E 90%. Coverage E 40% y G 80%. Los demás umbrales pasan: A 95/81, B 93/80, D se abstiene 93%, G accuracy 100%.
+
+**Seguimiento abierto:**
+- [ ] B07: el modelo vuelve a llamar a `calculate_fees` parque por parque y su conclusión contradice la comparación de la primera llamada. Hay que forzar una sola llamada (fusionar las visitas en el código) o quitar la herramienta después de la primera llamada que salga bien.
+- [ ] C03: la serpiente de cascabel no activa la tarjeta de seguridad ni el 911 (detector de fauna).
+- [ ] Mineral King, 9 al 13 de octubre (A36/F03): recuperar ese chunk de `road-construction.htm`.
+- [ ] A53: ingerir los comunicados de grca (nps.gov/grca/learn/news).
+- [ ] F06 y B14: el NWS no es fuente NPS. Frank decide si se agrega.
+- [ ] Revisar a mano los posibles falsos positivos del juez: E10, F09, F11 y C15 (sus respuestas sobre tarifas coinciden con la tabla oficial).
+- Rollback: los snapshots de `concierge-agent` v25, v39, v41, v42, v43 y v46, y de `ingest-nps-pages` v6, están en `/workspace/rollback/`.
+
+---
+
+## Changelog 2026-10-05 — Concierge: fuentes oficiales NPS, seguridad textual, fecha real (PR #204, draft)
+
+Rama `feat/concierge-flag-exam`. **No se mergeó nada.** `VITE_CONCIERGE_ENABLED` sigue apagado. No se tocó Stripe, auth, rutas ni las queries/RPC existentes (`match_knowledge_chunks` igual, 8 / 0.4). ADR-036.
+
+**Hecho:**
+- `eval/diagnosis.md`: clasificó las filas que fallaron en v25. Casi todo era (a), falta de datos.
+- Migración `20261005120000_knowledge_chunks_nps_sources.sql` (aditiva, aplicada por MCP). Agrega a `knowledge_chunks` las columnas `source_url`, `fetched_at`, `park_code` y `kind` (`evergreen|live|safety`). También agrega un trigger de relleno, `request_nps_pages_ingest()` y 2 jobs de pg_cron.
+- Edge Function nueva `ingest-nps-pages`: baja 36 páginas de nps.gov (jotr, deva, chis, pinn, seki, yose, grca y nps.gov general), las parte en chunks de 1500 caracteres con 250 de traslape y las embebe con `text-embedding-3-small`. Hoy hay 226 chunks de páginas NPS y **30 tarjetas de seguridad** textuales (`nps_safety_cards`), además de los 1,768 de `destinations`, que no se tocaron.
+- `concierge-agent` (v43):
+  - Búsqueda bilingüe: la pregunta se traduce ES→EN y se llama dos veces a la misma RPC; se fusionan los resultados.
+  - En preguntas de tarifas hay 3 lugares reservados para páginas generales de NPS.
+  - Las tarjetas de seguridad se adjuntan por tema y parque; si no hay tarjeta, va «En una emergencia, llama al 911» con la página de seguridad del parque.
+  - El footer lleva la fecha `fetched_at` de cada fuente, nunca la de hoy.
+  - Notas de residencia y de pase.
+  - `calculate` puede usarse en la ronda de corrección del candado.
+  - Las preguntas de inmigración reciben una respuesta fija sin llamar al modelo.
+- `scripts/concierge-exam.ts`:
+  - Ya no cuenta como inventadas las fechas iguales al `fetched_at` de la evidencia, las de `tool_outputs` ni las que el usuario escribió en la pregunta; lo mismo con las cifras de la pregunta.
+  - Reintenta los errores 429/5xx.
+  - Agrega `EXAM_CONCURRENCY`.
+
+**Refresh diario (pg_cron, no GitHub Actions: el token no tiene scope `workflow`):**
+- `nps-pages-refresh-daily` corre a las `15 11 * * *` UTC. Llama a `public.request_nps_pages_ingest()`, que hace un POST a `ingest-nps-pages` por cada parque con el JWT guardado en Vault (`ingest_knowledge_jwt`).
+- `nps-live-prune-daily` corre a las `50 11 * * *` UTC y borra los chunks `kind = live` con `fetched_at` de más de 7 días.
+
+**Examen** (`eval/report.md`, corrida 5 contra v43): **NO PASA**.
+- Coverage B 67% (se pide 80%).
+- 1 crítico: F10, una falla de retrieval.
+- A 83%, D se abstiene 100%, accuracy 100% en C/E/G.
+
+**Seguimiento abierto:**
+- [ ] Coverage B ≥80%. Las 5 filas son (c): gpt-4o-mini lee mal qué cubre un pase o cuál es la tarifa. Propuesta: hacer el cálculo de tarifas de forma determinista (quién paga, qué cubre el pase) y dejar al modelo solo la redacción. Otra opción, que decide Frank, es usar un modelo más fuerte solo para tarifas.
+- [ ] F10 y las filas (b) A03, A31, A38, A53, A56: poner un cupo por fuente en el top-8 (máximo 3 chunks de una URL) y hacer una consulta por sub-pregunta. Hoy 5 chunks de Half Dome sacan la página de camping de Yosemite.
+- [ ] A02: regla determinista «recargo solo en los parques de la lista oficial». Hoy dijo que JOTR lo cobra.
+- [ ] El contexto numera cada chunk como `[n]`, así que los dígitos del 1 al 8 pasan el candado de cifras. Es un problema anterior a este trabajo.
+- [ ] Bajar la temperatura de 0.3 a 0 para que el examen sea reproducible. Entre corridas cambian de 5 a 15 filas.
+- [ ] El job `concierge-exam` en CI sigue sin agregarse (ver la entrada del 2026-10-03).
+- [ ] B14 necesita el pronóstico del NWS y las filas G necesitan `nomaderia.com/servicios`; ninguna de las dos es fuente NPS.
+- Rollback: los snapshots de `concierge-agent` v25, v39, v41 y v42 están en `/workspace/rollback/` (en la box del agente).
+
+---
+
+## Changelog 2026-10-03 — Flag del concierge + examen en vivo
+
+Draft PR (no merge) encima de #202. El concierge queda **apagado** hasta que Frank acepte `eval/report.md`.
+
+**Hecho:**
+- `VITE_CONCIERGE_ENABLED` default off. Con el flag apagado, «¿Dudas? Escríbenos» sigue abriendo WhatsApp (hero, servicios, quiz, sticky, artículos, alertas, FAQ y legales). El launcher no se monta.
+- `eval/exam.jsonl` (139 filas, gold intacto). `eval/` en la lista de ignore de `ingest-knowledge`. No se bundlea.
+- `npm run exam` llama a `concierge-agent` desplegado (`include_evidence` pide chunks y DATOS EN VIVO). Checks deterministas de cifras, fechas, fuente, abstención D, inmigración y promesas de más de una ronda en G. El juez solo mira gold, tono y redacción de seguridad.
+- CI: el job `concierge-exam` está escrito abajo. **No entró al PR** porque el token de `gh` no tiene scope `workflow` y GitHub rechazó `.github/workflows/ci.yml`.
+
+**Verificación:** `npm run typecheck` y `npm run build` pasan. `npm run eval:concierge` 30/30. `npm run exam` sí corrió contra la función desplegada hoy (139 filas, 0 saltadas): ship rule **NO PASA** porque esa función todavía no devuelve chunks ni la frase de abstención. Detalle en `eval/report.md`.
+
+**FRANK:** no prender `VITE_CONCIERGE_ENABLED` hasta aceptar el reporte. Después del merge, con el flag **off**: `supabase functions deploy concierge-agent`, luego `npm run exam`, y leer `eval/report.md`.
+
+**Seguimiento abierto:**
+- [ ] Pegar el job `concierge-exam` en `.github/workflows/ci.yml` (el push lo bloqueó el scope `workflow`) y añadir secretos `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `OPENAI_API_KEY`. Sin secretos, `npm run exam` valida el jsonl y sale 0.
+
+```yaml
+  concierge-exam:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Concierge paths changed
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --name-only "$BASE" HEAD > /tmp/changed.txt || true
+          if grep -Eq '^(supabase/functions/concierge-agent/|supabase/functions/_shared/concierge-guard\.ts|supabase/functions/_shared/nomaderia-soul\.ts|supabase/functions/_shared/ingest-ignore\.ts|eval/|scripts/concierge-exam\.ts|src/lib/concierge-exam-score\.ts|src/lib/concierge-flag\.ts)' /tmp/changed.txt; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.changed.outputs.run == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        if: steps.changed.outputs.run == 'true'
+        run: npm ci
+      - name: Live concierge exam
+        if: steps.changed.outputs.run == 'true'
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CI: "true"
+        run: npm run exam
+```
+
+- [ ] La función que está en producción hoy no devuelve `chunk_ids` ni `evidence`. Sin el deploy nuevo el anclaje de cifras no se puede cerrar y la ship rule no pasa.
+
+---
+
+## Changelog 2026-10-03 — Concierge pre-compra anclado al RAG
+
+Draft PR (no merge): https://github.com/Frankmo89/nomaderia-adventures/pull/202. Auditoría en `docs/concierge-audit.md`.
+
+**Hecho:**
+- `ConciergeLauncher` montado en `App.tsx`. «¿Dudas? Escríbenos» (hero, servicios, quiz, sticky, artículos, alertas) abre el concierge. WhatsApp de dudas pre-compra retirado de esos CTA. Post-pago (`/gracias`, `/i/:token`) no se tocó.
+- `concierge-agent`: `match_count` 8, umbral 0.4, DATOS EN VIVO, frase «Eso no lo tengo confirmado» si no hay chunk, candado de cifras, aviso 911, rechazo fuera de alcance, log `concierge_turn`, tope 40/hora por sesión. Correo solo desde la 3.ª respuesta, guardado en `leads`.
+- Eval offline: `docs/concierge-eval.md` + `scripts/concierge-eval.ts`.
+
+**Verificación:** `npm run typecheck`, `npm run typecheck:functions`, `npm run build`, vitest del guard. Eval en vivo del LLM no corrido (no hay función desplegada ni `OPENAI_API_KEY` en el agente).
+
+**FRANK:** `supabase functions deploy concierge-agent` después del merge. No hay migración nueva.
+
+**Seguimiento abierto:**
+- [ ] Eval en vivo de las 30 preguntas contra el modelo desplegado (pass rate + cifras fuera de chunk).
+- [ ] Tope por IP además del `session_id` (hoy un id nuevo reinicia el cupo).
+- [ ] Revisar si alguna tarifa debe contestarse solo con DATOS EN VIVO cuando el embedding no recupera chunk (hoy se dice «no confirmado» a propósito).
+
+---
+
 ## Changelog 2026-10-03 — Meta Pixel ID (Draft PR #203)
 
 - `index.html`: reemplazado `TU_PIXEL_ID_AQUI` por `1865887438163992` en la
@@ -516,6 +674,30 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-10-08] **`calculate_fees`: arreglos de los fallos de tarifas del examen v49.**
+  Diagnóstico por fila desde `eval/results.jsonl`: en B07 la calculadora sí
+  dio $270, pero la comparación con el pase no corrió en la llamada del viaje
+  completo (bug de `HAS_PASS`, ver lección en `decisions.md`), solo en las
+  llamadas por parque, y el modelo usó el veredicto de un solo parque. Cambios en
+  `_shared/park-fees.ts`: comparación forzada para el viaje completo; una sola
+  `MEJOR OPCIÓN` (F11: ya no salen dos pases con "CONVIENE"); `fee_free_day`
+  por visita y grupo por visita para otro carro (F09); `holder_present` y
+  titular elegible, porque los pases no son transferibles (E10). `concierge-agent`
+  pasa `tripParks` a `reviewFeeInput`. Tests: 7 regresiones nuevas, 243/243.
+  `deno check` no corrió aquí (la red bloquea deno.land/esm.sh); lo corre el CI.
+  **Pendiente Frank:** desplegar `concierge-agent` y volver a correr
+  `npm run exam` (flag apagado). Fallos críticos que NO son de la calculadora:
+  A36/A53/C15 (la guía editorial de julio gana sobre la página oficial NPS
+  vigente), A22/F03 (el modelo lee mal la página: efectivo, validez 7 días),
+  F06 (la pregunta de tarifas tapa la de seguridad), C03 (la respuesta SÍ trae
+  «llama al 911»; el juez gpt-4o dijo que no: falso positivo del juez).
+  Segundo arreglo en la misma rama: `dropSupersededEditorial`
+  (`_shared/retrieval-rules.ts`) saca del contexto la guía editorial de
+  cierres/temporada/clima de un parque cuando ya está su página oficial NPS en
+  vivo (A36, A53). El comunicado del North Rim sí está ingerido; no faltaba dato.
+  Ojo: A36, A53, C15, F03 y F06 vencen entre el 9 y el 13 de octubre
+  (`valid_until`); después de esas fechas el examen las salta.
 
 - [2026-09-27] **Quiz: código postal + modo de viaje, mes en vez de fechas (ADR-031).**
   "¿Desde qué ciudad sales?" (SoCal/LA/resto/fuera de EE. UU.) se reemplaza por
@@ -1450,3 +1632,5 @@ Sesión Claude Projects: auditoría + generación masiva de contenido SOUL.
 - [ ] Identificar la fila 63 nueva y decidir si cierra el pendiente seki/sequ/kica
 - [ ] Re-ingestión RAG con la base completa (después de validar el ingest con Gran Cañón)
 - [2026-07-02] Añadido `public/_headers` con Cache-Control headers para Cloudflare Pages: no-store en `/` e `/index.html`, immutable en `/assets/*`.
+- [2026-10-05] concierge-agent v25 desplegado desde PR 204 (solo esa función, verify_jwt=true, flag apagado); exam: NO PASA (133/139 calificadas; 14 fallos críticos; accuracy C 80%, E 89%, G 90%; D abstiene 100%; coverage A 14%, B 13%). Ver eval/report.md.
+- [2026-10-05] concierge-agent v49 + ingest-nps-pages v7 (ADR-037: park_fees/pass_rules, calculate_fees, diversidad, tarjeta de producto). Examen v49: NO PASA (11 críticos). Ver eval/report.md.

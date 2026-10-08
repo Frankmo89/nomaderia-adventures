@@ -19,10 +19,13 @@
     "typecheck:functions": "deno check --no-lock supabase/functions",
     "preview": "vite preview",
     "test": "vitest run",
+    "eval:concierge": "tsx scripts/concierge-eval.ts",
     "test:watch": "vitest",
     "generate-sitemap": "npx tsx scripts/generate-sitemap.ts",
     "audit-images": "npx tsx scripts/audit-images.ts",
-    "generate:hero": "node scripts/generate-hero-images.mjs"
+    "generate:hero": "node scripts/generate-hero-images.mjs",
+    "exam": "tsx scripts/concierge-exam.ts",
+    "nps:preview": "tsx scripts/nps-pages-preview.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

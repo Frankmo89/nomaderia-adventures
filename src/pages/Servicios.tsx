@@ -1,4 +1,6 @@
-import { MessageCircle, Check, BadgeCheck, Route, Palmtree, CreditCard } from "lucide-react";
+import { Check, BadgeCheck, Route, Palmtree, CreditCard } from "lucide-react";
+import { PrePurchaseDoubtButton, PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
+import { STRIPE_AND_DOUBT_COPY } from "@/lib/concierge-flag";
 import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -19,9 +21,7 @@ import {
   products,
   PRICING,
   BUY_CTA_LABEL,
-  QUESTIONS_WHATSAPP_LABEL,
-  QUESTIONS_WHATSAPP_URL,
-  buildStripePaymentLink,
+    buildStripePaymentLink,
 } from "@/config/pricing";
 import JsonLd from "@/components/JsonLd";
 
@@ -30,7 +30,7 @@ const steps = [
     icon: CreditCard,
     title: "1. Paga con tarjeta aquí",
     description:
-      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
+      STRIPE_AND_DOUBT_COPY,
   },
   {
     icon: Route,
@@ -93,7 +93,7 @@ const faqs = [
   {
     question: "¿Cómo funciona el pago?",
     answer:
-      "Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. WhatsApp antes de comprar es solo para dudas.",
+      STRIPE_AND_DOUBT_COPY,
   },
   {
     question: "¿Qué incluye exactamente un itinerario?",
@@ -203,17 +203,12 @@ const Servicios = () => {
               un itinerario completo — ruta, equipo, presupuesto — adaptado a tu
               nivel y estilo.
             </p>
-            <Button asChild size="lg" className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground">
-              <a
-                href={QUESTIONS_WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackEvent("cta_itinerario_whatsapp_click", { source: "servicios_hero" })}
-              >
-                <MessageCircle className="h-5 w-5 mr-2" />
-                {QUESTIONS_WHATSAPP_LABEL}
-              </a>
-            </Button>
+            <PrePurchaseDoubtButton
+              source="servicios_hero"
+              size="lg"
+              className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground"
+              iconClassName="h-5 w-5 mr-2"
+            />
           </motion.div>
         </div>
       </section>
@@ -333,18 +328,10 @@ const Servicios = () => {
                       {BUY_CTA_LABEL}
                     </a>
                   </Button>
-                  <a
-                    href={QUESTIONS_WHATSAPP_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <PrePurchaseDoubtLink
+                    source={`servicios_${product.id}_dudas`}
                     className="text-sm text-center text-green hover:text-green-dark font-medium"
-                    onClick={() =>
-                      trackEvent("cta_itinerario_whatsapp_click", { source: `servicios_${product.id}_dudas` })
-                    }
-                  >
-                    <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
-                    {QUESTIONS_WHATSAPP_LABEL}
-                  </a>
+                  />
                 </CardFooter>
               </Card>
             </motion.div>

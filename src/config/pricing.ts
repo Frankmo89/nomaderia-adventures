@@ -46,12 +46,14 @@ export function buildStripePaymentLink(opts?: {
   return url.toString();
 }
 
-/** WhatsApp for questions only — never the buy path. */
+/** WhatsApp for questions only — used while VITE_CONCIERGE_ENABLED is not "true". */
 export const QUESTIONS_WHATSAPP_URL = buildWhatsAppLink(
   "Hola Nomaderia 👋 Tengo una duda antes de comprar el Itinerario Completo.",
 );
-
 export const QUESTIONS_WHATSAPP_LABEL = "¿Dudas? Escríbenos";
+
+/** Shown instead of the WhatsApp label when the concierge flag is on. */
+export const CONCIERGE_QUESTION_LABEL = "¿Dudas? Pregúntame";
 
 export const products: Product[] = [
   {

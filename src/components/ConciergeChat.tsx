@@ -15,11 +15,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, MessageCircle, ExternalLink, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { trackEvent } from "@/lib/analytics";
+import { getAnalyticsSessionId, logEvent } from "@/lib/events";
 import { useConcierge, type ConciergeMessage } from "@/hooks/use-concierge";
 
-const NEWSLETTER_UNIQUE_VIOLATION = "23505";
+const LEAD_SAVED_KEY = "concierge-lead-saved";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -69,28 +71,6 @@ function SourcePill({ title, section, url }: { title: string; section: string; u
  * (23505 = ya suscrito, se trata como éxito silencioso).
  */
 function EscalationCTA({ quizUrl, source }: { quizUrl: string; source: string }) {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
-
-  async function handleEmailSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email || status === "loading") return;
-    setStatus("loading");
-    try {
-      const { error } = await supabase
-        .from("newsletter_subscribers")
-        .insert({ email, source: "concierge_escalation" });
-      if (error && error.code !== NEWSLETTER_UNIQUE_VIOLATION) throw error;
-      setStatus("done");
-      trackEvent("concierge_email_capture_submit", { source });
-      if (!error) {
-        supabase.functions.invoke("send-welcome-email", { body: { email } }).catch(() => undefined);
-      }
-    } catch {
-      setStatus("idle");
-    }
-  }
-
   return (
     <div className="flex flex-col gap-2 max-w-[85%]">
       <Link
@@ -101,36 +81,68 @@ function EscalationCTA({ quizUrl, source }: { quizUrl: string; source: string })
         <Compass className="w-4 h-4" />
         Descubre tu aventura ideal (quiz gratis)
       </Link>
-
-      {status === "done" ? (
-        <p className="text-xs text-green-dark px-1">¡Gracias! Te escribimos con ideas para tu próxima aventura 🏔️</p>
-      ) : (
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-sage px-1">¿Prefieres que te escribamos por correo?</p>
-          <form onSubmit={handleEmailSubmit} className="flex gap-1.5">
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              disabled={status === "loading"}
-              aria-label="Correo para seguir ayudándote"
-              className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-green focus:ring-1 focus:ring-green/30 disabled:opacity-50 transition"
-            />
-            <Button
-              type="submit"
-              disabled={!email || status === "loading"}
-              size="sm"
-              variant="outline"
-              className="text-xs h-auto px-2.5 py-1.5 border-green/30 text-green-dark hover:bg-green-wash shrink-0"
-            >
-              {status === "loading" ? "..." : "Enviar"}
-            </Button>
-          </form>
-        </div>
-      )}
     </div>
+  );
+}
+
+/** Correo solo después de 2–3 respuestas. Se guarda en leads, no en el newsletter. */
+function LeadAsk({ onDone }: { onDone: () => void }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+
+  async function handleEmailSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || status === "loading") return;
+    setStatus("loading");
+    try {
+      const leadId = crypto.randomUUID();
+      const db = supabase as unknown as SupabaseClient;
+      const { error } = await db.from("leads").insert({
+        id: leadId,
+        email,
+        session_id: getAnalyticsSessionId(),
+        quiz_answers: { source: "concierge" },
+        top_park_codes: [],
+      });
+      if (error) throw error;
+      setStatus("done");
+      try { sessionStorage.setItem(LEAD_SAVED_KEY, "1"); } catch { /* private mode */ }
+      logEvent("lead_created", { source: "concierge" }, leadId);
+      onDone();
+    } catch {
+      setStatus("idle");
+    }
+  }
+
+  if (status === "done") {
+    return <p className="text-xs text-green-dark px-1">Listo. Te escribimos a ese correo.</p>;
+  }
+
+  return (
+    <form onSubmit={handleEmailSubmit} className="flex flex-col gap-1.5">
+      <p className="text-xs text-sage">Si quieres, déjanos tu correo y seguimos por email.</p>
+      <div className="flex gap-1.5">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="tu@email.com"
+          disabled={status === "loading"}
+          aria-label="Correo para seguir ayudándote"
+          className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-green focus:ring-1 focus:ring-green/30 disabled:opacity-50 transition"
+        />
+        <Button
+          type="submit"
+          disabled={!email || status === "loading"}
+          size="sm"
+          variant="outline"
+          className="text-xs h-auto px-2.5 py-1.5 border-green/30 text-green-dark hover:bg-green-wash shrink-0"
+        >
+          {status === "loading" ? "..." : "Enviar"}
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -189,6 +201,9 @@ export function ConciergeChat({
 }: ConciergeChatProps) {
   const [messages, setMessages] = useState<ConciergeMessage[]>([]);
   const [input, setInput]       = useState("");
+  const [leadSaved, setLeadSaved] = useState(() => {
+    try { return sessionStorage.getItem(LEAD_SAVED_KEY) === "1"; } catch { return false; }
+  });
   const messagesEndRef           = useRef<HTMLDivElement>(null);
   const inputRef                 = useRef<HTMLInputElement>(null);
   const { mutate, isPending }    = useConcierge();
@@ -222,8 +237,9 @@ export function ConciergeChat({
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
+    const priorAnswers = messages.filter((m) => m.role === "assistant").length;
     mutate(
-      { question, destination_slug: destinationSlug },
+      { question, destination_slug: destinationSlug, prior_answers: priorAnswers },
       {
         onSuccess(data) {
           const assistantMsg: ConciergeMessage = {
@@ -233,6 +249,7 @@ export function ConciergeChat({
             sources:   data.sources,
             escalate:  data.escalate,
             quiz_url:  data.quiz_url,
+            ask_email: data.ask_email,
           };
           setMessages((prev) => [...prev, assistantMsg]);
         },
@@ -321,6 +338,11 @@ export function ConciergeChat({
 
           {/* Input + nudge secundario persistente al quiz (patrón Zendesk, antes apuntaba a WhatsApp) */}
           <div className="border-t border-stone-100 shrink-0 pb-[calc(env(safe-area-inset-bottom,0px))] sm:pb-0">
+            {messages.some((m) => m.ask_email) && !leadSaved && (
+              <div className="px-3 pt-3">
+                <LeadAsk onDone={() => setLeadSaved(true)} />
+              </div>
+            )}
             <div className="flex gap-2 p-3">
               <input
                 ref={inputRef}

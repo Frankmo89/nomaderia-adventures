@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { PrePurchaseDoubtButton } from "@/components/PrePurchaseDoubt";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
-
-const WHATSAPP_URL = buildWhatsAppLink(
-  "Hola Nomaderia 👋 Tengo una duda antes de comprar el Itinerario Completo."
-);
 
 /** Curated local hero set (public/hero/). Frank can replace sources later. */
 const HERO_IDS = ["01", "02", "03", "04", "05", "06"] as const;
@@ -189,14 +184,13 @@ const HeroSection = () => {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8">
-          <Button
-            asChild
+          <PrePurchaseDoubtButton
+            source="hero_dudas"
+            icon={null}
+            enabledLabel="¿Dudas? Pregúntame"
+            disabledLabel="¿Dudas? Escríbenos"
             className="rounded-full bg-hero-accent text-white h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
-          >
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-              ¿Dudas? Escríbenos
-            </a>
-          </Button>
+          />
 
           <Link
             to="/destinos"

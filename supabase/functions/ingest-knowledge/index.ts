@@ -1,11 +1,13 @@
 // supabase/functions/ingest-knowledge/index.ts
 // Nomaderia Adventures — RAG Ingestion Pipeline (section-based)
 // Vectorizes destinations → knowledge_chunks, one chunk per content section per park.
+// eval/ is on the ingestion ignore list (isIngestIgnoredPath) and is never embedded.
 // POST /functions/v1/ingest-knowledge
 // Body: { "source": "destinations", "park_codes": ["yose"] | "all", "force": true|false }
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+import { isIngestIgnoredPath } from "../_shared/ingest-ignore.ts";
 
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const SUPA_URL = Deno.env.get("SUPABASE_URL")!;
@@ -260,6 +262,9 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPA_URL, SUPA_SERVICE);
     const body = (await req.json().catch(() => ({}))) as RequestBody;
+    if (body.source && isIngestIgnoredPath(body.source)) {
+      return new Response(JSON.stringify({ ok: false, error: `source "${body.source}" is on the ingestion ignore list` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     if (body.source && body.source !== "destinations") {
       return new Response(JSON.stringify({ ok: false, error: `source "${body.source}" not supported. Use "destinations".` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

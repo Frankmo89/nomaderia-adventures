@@ -1,10 +1,9 @@
-import { CreditCard, MessageCircle } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
+import { PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
 import {
   BUY_CTA_LABEL,
-  QUESTIONS_WHATSAPP_LABEL,
-  QUESTIONS_WHATSAPP_URL,
   buildStripePaymentLink,
 } from "@/config/pricing";
 import { cn } from "@/lib/utils";
@@ -43,19 +42,13 @@ const StickyMobileCTA = ({ whatsappMessage: _whatsappMessage, estimatedBudgetUsd
               {BUY_CTA_LABEL}
             </a>
           </Button>
-          <a
-            href={QUESTIONS_WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <PrePurchaseDoubtLink
+            source="destination_detail_sticky_mobile_dudas"
             className={cn(
               "text-center text-sm font-medium",
               hasBudget ? "text-white/80 hover:text-white" : "text-green hover:text-green-dark",
             )}
-            onClick={() => trackEvent("cta_itinerario_whatsapp_click", { source: "destination_detail_sticky_mobile_dudas" })}
-          >
-            <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
-            {QUESTIONS_WHATSAPP_LABEL}
-          </a>
+          />
         </div>
       </div>
     </div>
