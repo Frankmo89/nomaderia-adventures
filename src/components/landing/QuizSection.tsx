@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { openConcierge } from "@/lib/open-concierge";
+import { PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
+import { STRIPE_AND_DOUBT_COPY } from "@/lib/concierge-flag";
 import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motion";
 import {
   Footprints, Map, Mountain, Shield, TreePine, Sun, Compass,
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
   Mail, Loader2, HeartPulse, Backpack, Tent, MapPin,
   Users, BedDouble, Baby, UserRound, Hotel, Home, Car, Plane, HelpCircle,
-  CreditCard, MessageCircle,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,6 @@ import {
 } from "@/lib/quiz-ranking";
 import {
   BUY_CTA_LABEL,
-  CONCIERGE_QUESTION_LABEL,
     buildStripePaymentLink,
 } from "@/config/pricing";
 import { trackEvent } from "@/lib/analytics";
@@ -587,16 +587,13 @@ const QuizResults = ({
             <CreditCard className="h-6 w-6 shrink-0" aria-hidden="true" />
             {BUY_CTA_LABEL}
           </a>
-          <button
-            type="button"
-            onClick={() => openConcierge("quiz_results_dudas")}
+          <PrePurchaseDoubtLink
+            source="quiz_results_dudas"
             className="inline-flex items-center gap-2 text-sm font-medium text-green hover:text-green-dark"
-          >
-            <MessageCircle className="h-4 w-4" aria-hidden="true" />
-            {CONCIERGE_QUESTION_LABEL}
-          </button>
+            iconClassName="h-4 w-4"
+          />
           <p className="text-xs text-stone-500 text-center max-w-md">
-            Pagas $49 con tarjeta en nomaderia.com (Stripe). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. Antes de comprar, el concierge responde tus dudas.
+            {STRIPE_AND_DOUBT_COPY}
           </p>
         </motion.div>
 

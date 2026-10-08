@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { openConcierge } from "@/lib/open-concierge";
+import { PrePurchaseDoubtButton } from "@/components/PrePurchaseDoubt";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
@@ -185,13 +184,13 @@ const HeroSection = () => {
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8">
-          <Button
-            type="button"
-            onClick={() => openConcierge("hero_dudas")}
+          <PrePurchaseDoubtButton
+            source="hero_dudas"
+            icon={null}
+            enabledLabel="¿Dudas? Pregúntame"
+            disabledLabel="¿Dudas? Escríbenos"
             className="rounded-full bg-hero-accent text-white h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
-          >
-            ¿Dudas? Pregúntame
-          </Button>
+          />
 
           <Link
             to="/destinos"

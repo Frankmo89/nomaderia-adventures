@@ -144,7 +144,7 @@ src/
 │   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
 │   ├── quiz-ranking.ts       # Adaptador quiz → motor de ranking vendorizado (@engine, ADR-026)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
-└── supabase/functions/       # Edge Functions — 20 en total
+└── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts
     │                         #  (engine.ts byte a byte + engine-data.generated.ts + engine.lock.json).
     │                         #  NO editar a mano. Vite lo importa como `@engine/*`; Deno por ruta relativa.
@@ -152,8 +152,8 @@ src/
     ├── send-*                # 4: quiz-email, welcome-email, drip-emails, quiz-results
     ├── _shared/engine-es.ts  # Presentación en español del motor + scoping (Vite: `@shared/*`; lo usan quiz, quiz-preview y concierge)
     ├── _shared/park-mentions.ts # Detector de parques nombrados — revisión de respuestas del concierge (ADR-029)
-    ├── concierge-agent/      # Concierge IA (RAG + tool `recommend_parks` → motor, ADR-029) — EN PRODUCCIÓN
-    ├── ingest-*              # 4: knowledge, national-parks, park-permits, campgrounds
+    ├── concierge-agent/      # Concierge IA (RAG + tool `recommend_parks` → motor, ADR-029). UI apagada salvo VITE_CONCIERGE_ENABLED=true (ADR-035)
+    ├── ingest-*              # 5: knowledge, national-parks, park-permits, campgrounds, nps-pages (páginas nps.gov + tarjetas de seguridad, cron diario, ADR-036)
     ├── sync-park-*           # 3: live-data, trails, weather
     ├── generate-*            # 3: park-content, gear-draft, blog-draft
     ├── discover-*            # 3: trending-gear, trending-blog, permit-windows
@@ -245,6 +245,8 @@ npm run sync:engine -- --to <sha>   # Mover el pin del motor de ranking (ADR-026
 npm run verify:engine               # Re-descarga en el pin y falla si algo derivó
 npm run check:engine-upstream       # ¿Upstream main va adelante del pin? (exit 2 = sí)
 npm run build:zip-centroids         # Regenera la tabla ZIP→lat/lon del quiz desde el gazetteer ZCTA del Census (ADR-031)
+npm run eval:concierge              # 30 preguntas fixture, sin modelo (unitario)
+npm run exam                        # Examen en vivo contra concierge-agent desplegado → eval/report.md
 DATABASE_URL=<postgres desechable> scripts/test-sql.sh  # Tests SQL de triggers (job CI sql-tests; NUNCA contra Supabase)
 ```
 
@@ -256,6 +258,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=   # Publishable key (sb_publishable_*)
 VITE_SITE_URL=                   # https://nomaderia.com
 VITE_GA_MEASUREMENT_ID=          # GA4 — G-CK9STWJDFM
 VITE_SENTRY_DSN=                 # Sentry error tracking (opcional)
+VITE_CONCIERGE_ENABLED=          # "true" enciende el concierge pre-compra. Default: apagado (ADR-035)
 ```
 
 > El número de WhatsApp (`18588996802`) NO es variable de entorno: está

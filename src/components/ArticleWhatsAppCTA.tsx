@@ -1,12 +1,11 @@
 import { motion } from "framer-motion";
-import { openConcierge } from "@/lib/open-concierge";
-import { CreditCard, MessageCircle } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
+import { PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
 import {
   BUY_CTA_LABEL,
-  CONCIERGE_QUESTION_LABEL,
-    buildStripePaymentLink,
+  buildStripePaymentLink,
 } from "@/config/pricing";
 
 interface ArticleWhatsAppCTAProps {
@@ -47,14 +46,10 @@ const ArticleWhatsAppCTA = ({ title }: ArticleWhatsAppCTAProps) => {
           </a>
         </Button>
         <p className="mt-4">
-          <button
-            type="button"
+          <PrePurchaseDoubtLink
+            source="article_dudas"
             className="text-sm text-green hover:text-green-dark font-medium"
-            onClick={() => openConcierge("article_dudas")}
-          >
-            <MessageCircle className="inline h-4 w-4 mr-1 align-text-bottom" />
-            {CONCIERGE_QUESTION_LABEL}
-          </button>
+          />
         </p>
       </div>
     </motion.div>

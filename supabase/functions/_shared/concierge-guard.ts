@@ -47,6 +47,31 @@ export function unconfirmedAnswer(askEmail: boolean): string {
   return `${UNCONFIRMED_PHRASE} Si me dejas tu correo, lo revisamos y te escribimos.`;
 }
 
+/**
+ * Preguntas legales de inmigración (estatus, visas, quedarse a vivir, deportación).
+ * No es tema del concierge (NOMADERIA_SOUL: «cedes ante el profesional … legal»):
+ * respuesta fija, sin tranquilizar ni alarmar, y sin pasar por el modelo.
+ */
+// Status / enforcement questions: always the fixed answer, even if they mention a pass or the gate.
+const IMMIGRATION_STRONG =
+  /deport|estatus migratorio|status migratorio|migratori|quedar\w* a vivir|vivir aqu[ií] para siempre|asilo|la migra\b|\bice\b|patrulla fronteriza|me (?:pueden|van a) detener|revis\w* (?:mi|su|tu|el) (?:estatus|status|papeles)|\bvisas?\s+(?:de|para|americana)|necesit\w* (?:una )?visa|cruzar la frontera|pedir (?:la )?residencia|sacar (?:la )?(?:residencia|ciudadan[ií]a|green card)|tr[aá]mite migratorio/i;
+// Residency / citizenship words: they also appear in fee questions about relatives ("no tiene
+// residencia permanente, ¿cuánto paga?"). Fixed answer only when there is no fee intent.
+const IMMIGRATION_WEAK =
+  /inmigraci|residencia permanente|ciudadan[ií]a|green card|indocumentad|sin papeles|no tiene papeles/i;
+// Fee intent wins over the weak words: the question is what someone pays at a park.
+const FEE_INTENT =
+  /recargo|tarifa|no[- ]residente|cu[aá]nto (?:paga|pagan|pago|pagar[ií]a|cuesta|cobra|cobran|le cobran|les cobran)|\bcobra|\bpaga\b|\bpagan\b|\bpases?\b|entrada|caseta|\$\d/i;
+
+export function isImmigrationQuestion(question: string): boolean {
+  if (IMMIGRATION_STRONG.test(question)) return true;
+  return IMMIGRATION_WEAK.test(question) && !FEE_INTENT.test(question);
+}
+
+export function immigrationAnswer(): string {
+  return `${UNCONFIRMED_PHRASE} Las preguntas de inmigración (estatus, visas, quedarse en EE. UU.) son un tema legal y no las respondo: no soy abogado. Para eso, consulta a un abogado de inmigración acreditado. Con el parque sí te ayudo: entradas, senderos y seguridad.`;
+}
+
 export function outOfScopeAnswer(): string {
   return "Solo puedo ayudarte con parques nacionales de Estados Unidos y con planear ese tipo de viaje. ¿Qué parque te interesa?";
 }
@@ -104,15 +129,22 @@ export function formatAnswerDate(date = new Date()): string {
   return formatted.replace(/\./g, "");
 }
 
+/** A cited source. `date` is when that source text was fetched/verified (never today by default). */
+export interface FooterSource {
+  title: string;
+  section: string;
+  date?: string;
+}
+
 export function appendSourceFooter(
   answer: string,
-  sources: Array<{ title: string; section: string }>,
-  dateLabel: string,
+  sources: FooterSource[],
+  dateLabel?: string,
 ): string {
   const src = sources.length
-    ? sources.slice(0, 3).map((s) => `${s.title} — ${s.section}`).join("; ")
+    ? sources.slice(0, 3).map((s) => `${s.title} — ${s.section}${s.date ? ` (${s.date})` : ""}`).join("; ")
     : "base de conocimiento Nomaderia";
-  const footer = `Fuente: ${src} · ${dateLabel}`;
+  const footer = `Fuente: ${src}${dateLabel ? ` · ${dateLabel}` : ""}`;
   const trimmed = answer.trim();
   if (trimmed.endsWith(footer)) return trimmed;
   return `${trimmed}\n\n${footer}`;
@@ -121,8 +153,8 @@ export function appendSourceFooter(
 export function composeVisibleAnswer(
   answer: string,
   safety: boolean,
-  sources: Array<{ title: string; section: string }>,
-  dateLabel: string,
+  sources: FooterSource[],
+  dateLabel?: string,
 ): string {
   let text = answer.trim();
   if (safety && !text.includes("En una emergencia, llama al 911")) {

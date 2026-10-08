@@ -1,4 +1,5 @@
 import Navbar from "@/components/landing/Navbar";
+import { PRE_PURCHASE_DOUBT_COPY } from "@/lib/concierge-flag";
 import Footer from "@/components/landing/Footer";
 import { usePageMeta } from "@/hooks/use-seo";
 
@@ -58,7 +59,7 @@ const TermsAndConditions = () => {
           <section>
             <h2 className="font-serif text-xl text-foreground mb-3">6. Itinerario Completo Nomaderia</h2>
             <p>
-              El único servicio de pago que ofrecemos es el <strong className="text-foreground">Itinerario Completo Nomaderia</strong>, con un costo de $49 USD. Es elaborado por un agente de viajes certificado. Pagas $49 con tarjeta en nomaderia.com (<strong className="text-foreground">Stripe</strong>). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. Antes de comprar, el concierge responde tus dudas. Nomaderia no almacena números de tarjeta. El seguro de viaje no está incluido, pero te ayudamos a conseguir el adecuado para tu viaje.
+              El único servicio de pago que ofrecemos es el <strong className="text-foreground">Itinerario Completo Nomaderia</strong>, con un costo de $49 USD. Es elaborado por un agente de viajes certificado. Pagas $49 con tarjeta en nomaderia.com (<strong className="text-foreground">Stripe</strong>). Después de pagar, recibes nuestro WhatsApp y el itinerario en 24 a 48 horas. {PRE_PURCHASE_DOUBT_COPY} Nomaderia no almacena números de tarjeta. El seguro de viaje no está incluido, pero te ayudamos a conseguir el adecuado para tu viaje.
             </p>
           </section>
 
