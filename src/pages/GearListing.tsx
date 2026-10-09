@@ -9,8 +9,9 @@ import { CardImage } from "@/components/shared/CardImage";
 import { useCanonical, SITE_URL, usePageMeta } from "@/hooks/use-seo";
 import { useGearArticles } from "@/hooks/use-gear-articles";
 import JsonLd from "@/components/JsonLd";
+import { GEAR_CATEGORY_LABEL, gearCategoryLabel } from "@/lib/gear-categories";
 
-const categories = ["Todo", "Botas", "Bastones", "Mochilas", "Fotografía", "Ropa", "Accesorios"];
+const ALL = "Todo";
 
 const GearListing = () => {
   const { data: articles = [], isLoading, error } = useGearArticles();
@@ -32,8 +33,10 @@ const GearListing = () => {
     isPartOf: { "@type": "WebSite", name: "Nomaderia Adventures", url: SITE_URL },
   };
 
+  // Tabs only for categories that have articles; the filter compares stored keys.
+  const categories = [ALL, ...Object.keys(GEAR_CATEGORY_LABEL).filter((key) => articles.some((a) => a.category === key))];
   const filter = (cat: string) =>
-    cat === "Todo" ? articles : articles.filter((a) => a.category === cat);
+    cat === ALL ? articles : articles.filter((a) => a.category === cat);
 
   return (
     <main className="bg-background min-h-screen">
@@ -54,10 +57,10 @@ const GearListing = () => {
           )}
 
           {!isLoading && !error && (
-            <Tabs defaultValue="Todo" className="w-full">
+            <Tabs defaultValue={ALL} className="w-full">
               <TabsList className="bg-muted mb-8 flex flex-wrap gap-1 h-auto">
                 {categories.map((cat) => (
-                  <TabsTrigger key={cat} value={cat}>{cat}</TabsTrigger>
+                  <TabsTrigger key={cat} value={cat}>{cat === ALL ? ALL : gearCategoryLabel(cat)}</TabsTrigger>
                 ))}
               </TabsList>
               {categories.map((cat) => (
@@ -79,7 +82,7 @@ const GearListing = () => {
                         </div>
                         <div className="p-5">
                           <Badge variant="outline" className="mb-2 border-card-foreground/20 text-card-foreground">
-                            {a.category}
+                            {gearCategoryLabel(a.category)}
                           </Badge>
                           <h3 className="font-serif text-lg font-bold text-card-foreground mb-1">{a.title}</h3>
                           <p className="text-sm text-card-foreground/70 line-clamp-2">{a.short_description}</p>

@@ -21,20 +21,12 @@ import { useSortable, applySortable } from "@/hooks/use-sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
+import { gearCategoryLabel } from "@/lib/gear-categories";
 
 type GearArticle = Tables<"gear_articles">;
 
 type GearSortKey = "title" | "category" | "created_at";
 
-// Mirrors the label map in src/components/landing/GearPreview.tsx
-const gearCategoryLabel: Record<string, string> = {
-  boots: "Botas",
-  poles: "Bastones",
-  cameras: "Fotografía",
-  backpacks: "Mochilas",
-  clothing: "Ropa",
-  accessories: "Accesorios",
-};
 
 const getGearValue = (a: GearArticle, key: GearSortKey): string => {
   switch (key) {
@@ -217,7 +209,7 @@ const AdminGearArticles = () => {
                   <TableCell className="text-foreground font-medium">{a.title}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-foreground border-border">
-                      {gearCategoryLabel[a.category ?? ""] ?? a.category ?? "—"}
+                      {gearCategoryLabel(a.category) || "—"}
                     </Badge>
                   </TableCell>
                   <TableCell>
