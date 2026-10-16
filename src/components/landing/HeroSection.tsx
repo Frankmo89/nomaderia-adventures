@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { trackEvent } from "@/lib/analytics";
 import { logEvent } from "@/lib/events";
-import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
@@ -12,9 +10,6 @@ const HERO_IDS = ["01", "02", "03", "04", "05", "06"] as const;
 const HERO_WIDTHS = [640, 1080, 1600] as const;
 const HERO_SIZES = "100vw";
 const SLIDE_DURATION = 5000;
-
-/** Plain chat link (no prefilled text) — Frank's spec for the hero doubt link. */
-const HERO_WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 const KEN_BURNS_CSS = `
 @keyframes hero-ken-burns {
@@ -189,7 +184,10 @@ const HeroSection = () => {
           presupuesto, a tu nivel. $49.
         </p>
 
-        {/* CTAs — main = quiz (starts the sales flow); small text link = WhatsApp.
+        {/* CTAs — main = quiz (starts the sales flow); small text link = FAQ.
+            No WhatsApp before purchase (WhatsApp is for paying customers). The
+            AI assistant is gated off in prod (VITE_CONCIERGE_ENABLED), so the
+            doubts link points to the FAQ until the assistant passes the exam.
             Explorar Destinos lives in the navbar (desktop + mobile menu). */}
         <div className="flex flex-col items-start gap-1 mt-8">
           <Link
@@ -200,18 +198,13 @@ const HeroSection = () => {
             Encuentra tu parque →
           </Link>
 
-          <a
-            href={HERO_WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => {
-              logEvent("hero_cta_click", { cta: "whatsapp" });
-              trackEvent("cta_itinerario_whatsapp_click", { source: "hero_dudas" });
-            }}
+          <Link
+            to="/#faq"
+            onClick={() => logEvent("hero_cta_click", { cta: "faq" })}
             className="inline-flex min-h-[44px] items-center px-2 -ml-2 text-sm font-medium text-white/90 underline underline-offset-4 decoration-white/50 hover:text-white hover:decoration-white text-shadow-card"
           >
-            ¿Dudas? Escríbenos por WhatsApp
-          </a>
+            ¿Dudas? Lee las preguntas frecuentes
+          </Link>
         </div>
       </div>
     </section>
