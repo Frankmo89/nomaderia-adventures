@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { PrePurchaseDoubtButton } from "@/components/PrePurchaseDoubt";
+import { trackEvent } from "@/lib/analytics";
+import { logEvent } from "@/lib/events";
+import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
@@ -10,6 +12,9 @@ const HERO_IDS = ["01", "02", "03", "04", "05", "06"] as const;
 const HERO_WIDTHS = [640, 1080, 1600] as const;
 const HERO_SIZES = "100vw";
 const SLIDE_DURATION = 5000;
+
+/** Plain chat link (no prefilled text) — Frank's spec for the hero doubt link. */
+const HERO_WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 const KEN_BURNS_CSS = `
 @keyframes hero-ken-burns {
@@ -173,31 +178,40 @@ const HeroSection = () => {
             paint as soon as React commits (PR #194 left LCP on the H1 waiting
             ~96% render-delay for Framer). */}
         <h1 className="font-serif font-bold text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-shadow-hero">
-          Tu Primera <em style={{ color: "#FCD34D" }}>Aventura</em>
+          <span className="block">Aquí nadie se pierde…</span>
+          <em className="block" style={{ color: "#FCD34D" }}>
+            nomás se encuentra.
+          </em>
         </h1>
 
         <p className="mt-4 text-lg md:text-xl text-white/90 max-w-xl font-sans text-shadow-card">
-          Te armo tu viaje completo —itinerario, equipo y presupuesto— adaptado
-          a tu nivel.{" "}
-          <em style={{ color: "#FCD34D" }}>Todo en español.</em>
+          Te armo tu viaje a un parque nacional: ruta día por día, equipo y
+          presupuesto, a tu nivel. $49.
         </p>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-8">
-          <PrePurchaseDoubtButton
-            source="hero_dudas"
-            icon={null}
-            enabledLabel="¿Dudas? Pregúntame"
-            disabledLabel="¿Dudas? Escríbenos"
-            className="rounded-full bg-hero-accent text-white h-auto px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
-          />
-
+        {/* CTAs — main = quiz (starts the sales flow); small text link = WhatsApp.
+            Explorar Destinos lives in the navbar (desktop + mobile menu). */}
+        <div className="flex flex-col items-start gap-1 mt-8">
           <Link
-            to="/destinos"
-            className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 backdrop-blur-sm text-white px-8 py-4 text-base font-medium hover:bg-white/20 transition-colors"
+            to="/#quiz"
+            onClick={() => logEvent("hero_cta_click", { cta: "quiz" })}
+            className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-hero-accent text-white px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
           >
-            Explorar Destinos →
+            Encuentra tu parque →
           </Link>
+
+          <a
+            href={HERO_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              logEvent("hero_cta_click", { cta: "whatsapp" });
+              trackEvent("cta_itinerario_whatsapp_click", { source: "hero_dudas" });
+            }}
+            className="inline-flex min-h-[44px] items-center px-2 -ml-2 text-sm font-medium text-white/90 underline underline-offset-4 decoration-white/50 hover:text-white hover:decoration-white text-shadow-card"
+          >
+            ¿Dudas? Escríbenos por WhatsApp
+          </a>
         </div>
       </div>
     </section>
