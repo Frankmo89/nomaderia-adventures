@@ -12,6 +12,14 @@
 
 ---
 
+## Changelog 2026-10-16 — Hero del home: slogan + CTA al quiz (rama `feat/hero-slogan`)
+
+- [x] **[2026-10-16] Hero con el slogan de marca.** Solo `src/components/landing/HeroSection.tsx`. H1 «Aquí nadie se pierde… / *nomás se encuentra.*» (U+2026; misma tipografía, la 2.ª línea en el ámbar itálico que tenía «Aventura»). Subtítulo: «Te armo tu viaje a un parque nacional: ruta día por día, equipo y presupuesto, a tu nivel. $49.» (sin «Todo en español.»).
+- [x] **CTAs.** Botón principal naranja `bg-hero-accent` (#D97706) «Encuentra tu parque →» → `/#quiz` (mismo destino que el navbar «Descubre Tu Aventura»; no hay ruta `/quiz`, el quiz es la sección `#quiz` del home). Debajo, link de texto «¿Dudas? Escríbenos por WhatsApp» → `https://wa.me/18588996802` (`target=_blank`, `rel="noopener noreferrer"`, `min-h-[44px]`). Se quitó «Explorar Destinos»: el navbar ya enlaza `/destinos` en desktop y en el menú móvil.
+- [x] **Flag del concierge.** El hero ya no usa `PrePurchaseDoubtButton`: el link de dudas es siempre WhatsApp, con el flag apagado o prendido. Con `VITE_CONCIERGE_ENABLED=true` el concierge sigue a mano en el `ConciergeLauncher` global (App.tsx). No se tocó el flag, su default ni el componente.
+- [x] **Tracking.** `logEvent("hero_cta_click", { cta: "quiz" | "whatsapp" })` (`src/lib/events.ts`, tabla `events`). El link de WhatsApp también conserva el GA `cta_itinerario_whatsapp_click` (`source: "hero_dudas"`) que ya mandaba antes.
+- **Verificación:** `npm run typecheck`, `tsc --noEmit`, `npm run typecheck:functions`, `npm run build`, `npm test` (249/249) y eslint en el archivo. Playwright a 375×667 y 375×812: H1, subtítulo, botón y link caben en la primera pantalla (a 375×667 el link de WhatsApp termina en y≈500 px).
+
 ## Changelog 2026-10-05 (noche): tarifas como datos, diversidad, tarjeta de producto, regla estricta (PR #204, draft, ADR-037)
 
 Rama `feat/concierge-flag-exam`. No se mergeó nada y `VITE_CONCIERGE_ENABLED` sigue apagado. No se tocó Stripe, auth, rutas ni las queries/RPC (`match_knowledge_chunks` sigue igual, con 8 y 0.4). La abstención y el candado de cifras no cambian.
@@ -265,7 +273,7 @@ referenciar esta lista primero.
 - [ ] **El Pin — Facebook Sharing Debugger (después del deploy de PR #199).** Volver a scrapear `https://nomaderia.com` para que WhatsApp, Facebook e iMessage tomen `og-image.png`.
 - [ ] **El Pin — iPhone Safari, pestaña privada (después del deploy).** Confirmar favicon y el logo del navbar (sobre el hero y ya scrolleado).
 - [ ] **El Pin — fotos de perfil.** Cambiar la foto en Instagram, Facebook, TikTok y WhatsApp Business (los PNG están en el kit, carpeta `redes/` / `logos/`, no en el repo).
-- [ ] **Copy follow-up (PR aparte, no este).** El Hero "Tu Concierge de Aventuras en Español" y otros taglines con "primer/primera" y "en español" chocan con `docs/brand.md` (no usar "tu primer parque" ni "en español" en titulares). No se tocó en #199.
+- [ ] **Copy follow-up (PR aparte, no este).** El Hero "Tu Concierge de Aventuras en Español" y otros taglines con "primer/primera" y "en español" chocan con `docs/brand.md` (no usar "tu primer parque" ni "en español" en titulares). No se tocó en #199. **[2026-10-16] Hero del home: hecho** (`feat/hero-slogan`). Quedan las frases de abajo («Copy / share previews» → «Frases viejas fuera del hero»).
 
 - [ ] **Stripe Dashboard — Success URL del Payment Link $49 vivo → `https://nomaderia.com/gracias`.** Link: `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` (no el link retirado de $29). El frontend ya tiene `/gracias`. Sin Success URL, Stripe no redirige tras pagar. No cambiar price/product. Webhook + `orders` (resto de T06) sigue aparte.
 - [ ] **Stripe — desactivar el Payment Link $29 retirado** después del deploy del fix de botones. URL: `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00` ("Acceso de Fundador", alerta Yosemite). El único link vivo es Itinerario Completo $49.
@@ -615,6 +623,13 @@ Pendiente real:
 - [x] **Claims AI / números.** ConciergeLauncher desmontado de `App.tsx`; Preview IA oculto en quiz (se conserva ranking top-3 + “% compatible”). “63 parques” se mantiene. SocialProof oculto (sin clientes reales aún). “100%” solo donde dice “100% en español”. TAP / The Travel Institute se mantiene.
 - [ ] **Mercado México en CMS (humano).** SQL listo en `docs/sql/draft-mexico-blog-posts.sql` (4 posts → `is_published=false`). Frank debe correrlo en SQL Editor. Orphan `DidYouKnowSection` aún tiene copy México/CDMX si se remonta.
 - [ ] **Handle redes `@nomaderia.mx`.** Footer/JSON-LD apuntan Instagram/TikTok `.mx` mientras el producto es EE. UU. — confirmar branding intencional.
+
+- [ ] **Frases viejas fuera del hero (encontradas 2026-10-16, no se tocaron).** Hay que decidir el copy con Frank (`docs/brand.md` §Slogan):
+  - Correos (Edge Functions, hay que desplegarlas después): «Tu Primera Aventura Te Está Esperando» en `supabase/functions/send-quiz-email/index.ts:106`, `send-quiz-results/index.ts:91`, `send-welcome-email/index.ts:130` y `send-drip-emails/index.ts:66,166`.
+  - Prompts IA: «Todo en español.» en `supabase/functions/generate-blog-draft/index.ts:183`, `generate-gear-draft/index.ts:180` y `discover-permit-windows/index.ts:83`. Es una instrucción interna al modelo, no copy visible; probablemente se queda.
+  - Sitio: «Planear tu primer parque no debería sentirse así» (`src/components/landing/PainContrast.tsx:84`); «todo en español» (`src/components/landing/FaqSection.tsx:23`); «tu primera aventura» (`src/pages/BlogListing.tsx:34,41,56`, `src/pages/BlogPostDetail.tsx:196`, `src/pages/SobreNosotros.tsx:44`, `src/components/landing/BlogPreview.tsx:82`).
+  - Relacionado (no es match exacto): la meta description del home en `src/pages/Index.tsx` termina en «En español.». `index.html` (title/description/OG/Twitter) no tiene ninguna de las frases y no hay Pages Functions (`functions/`) que sobreescriban el OG.
+  - El navbar todavía dice «Descubre Tu Aventura» (CTA al quiz, desktop y móvil). No es una frase prohibida, pero ya no va con el slogan. El nav quedó fuera de alcance en este PR.
 
 ### Calidad / mantenimiento (tareas separadas)
 - [ ] **Mapa interactivo real en /destinos — sigue diferido (research Mobbin, reconfirmado 2026-07):** el tinte decorativo por estado ya se implementó ([2026-07] `USStateTintMap`, ver changelog) en el slot `children` de `PageHeader` — sin pines, sin coordenadas, plano. `useDestinationsMapData()` en `src/hooks/use-destinations.ts` sigue **sin usarse**, expuesto tal cual (`{id, title, slug, region, difficulty_level, latitude, longitude}`, 63/63 destinos con `latitude`/`longitude` pobladas) para el día que se justifique un mapa interactivo real tipo Airbnb (tiles + lista sincronizada). Research de Mobbin reconfirmado: ningún competidor premium usa mapa ilustrado estático con 60+ pines individuales a este nivel de densidad — no construir esa variante. Si el mapa interactivo se justifica por datos de conversión, ir directo a esa implementación (Mapbox/Leaflet + `useDestinationsMapData()`) en vez de una capa intermedia de pines. `parseNpsLatLong()` en `src/lib/parse-nps-lat-long.ts` (con tests) queda como utilidad documentada/fallback para ese trabajo futuro, sin usarse hoy.
