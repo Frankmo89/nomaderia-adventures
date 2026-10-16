@@ -10,6 +10,8 @@ const HERO_IDS = ["01", "02", "03", "04", "05", "06"] as const;
 const HERO_WIDTHS = [640, 1080, 1600] as const;
 const HERO_SIZES = "100vw";
 const SLIDE_DURATION = 5000;
+/** Fogata — the exact fill of "IA" in /brand/nomaderia-horizontal*.svg. */
+const HERO_ORANGE = "#D97706";
 
 const KEN_BURNS_CSS = `
 @keyframes hero-ken-burns {
@@ -146,65 +148,71 @@ const HeroSection = () => {
             />
           ))}
 
-        {/* Gradient scrim — sky stays clean, bottom text zone is readable */}
+        {/* Gradient scrim — light at the very top (sky/navbar), then dark enough
+            behind the text that the fogata line 2 of the H1 (#D97706) clears
+            WCAG AA large text (≥3:1) on every rotation photo at 375–1440 px
+            (worst measured ≈3.5:1). Was transparent 40% → 0.6 → 0.88 (≈1.0:1). */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 10,
             background:
-              "linear-gradient(to bottom, transparent 40%, rgba(10,25,10,0.6) 70%, rgba(10,25,10,0.88) 100%)",
+              "linear-gradient(to bottom, rgba(10,25,10,0.3) 0%, rgba(10,25,10,0.84) 24%, rgba(10,25,10,0.84) 75%, rgba(10,25,10,0.92) 100%)",
           }}
         />
       </div>
 
-      {/* Content — bottom-left, padded above the clipped curve (~78% safe zone) */}
-      <div
-        className="absolute bottom-0 left-0 max-w-2xl px-8 pb-[25vh] md:px-14 lg:px-20"
-        style={{ zIndex: 3 }}
-      >
-        {/* TAP badge */}
-        <div className="inline-flex items-center gap-2 bg-black/20 border border-white/20 backdrop-blur-sm rounded-full px-5 py-2.5 mb-5 text-xs sm:text-sm text-white/80 font-sans shadow-editorial">
-          <ShieldCheck className="h-4 w-4 text-hero-accent shrink-0" />
-          <span>Agente de Viajes Certificado (TAP) · Respuesta en {"<"} 24h</span>
-        </div>
+      {/* Content — bottom-left, padded above the clipped curve (~78% safe zone).
+          Same box as the navbar (`container mx-auto px-5`) so the logo, H1,
+          subtitle and CTAs share one left edge at every width. */}
+      <div className="absolute inset-x-0 bottom-0 pb-[25vh]" style={{ zIndex: 3 }}>
+        <div className="container mx-auto px-5">
+          <div className="max-w-2xl">
+            {/* H1 + subtitle: no entrance animation / no opacity 0 — LCP text must
+                paint as soon as React commits (PR #194 left LCP on the H1 waiting
+                ~96% render-delay for Framer). */}
+            <h1 className="font-serif font-bold text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-shadow-hero">
+              <span className="block">Aquí nadie se pierde…</span>
+              <em className="block" style={{ color: HERO_ORANGE }}>
+                nomás se encuentra.
+              </em>
+            </h1>
 
-        {/* H1 + subtitle: no entrance animation / no opacity 0 — LCP text must
-            paint as soon as React commits (PR #194 left LCP on the H1 waiting
-            ~96% render-delay for Framer). */}
-        <h1 className="font-serif font-bold text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight text-shadow-hero">
-          <span className="block">Aquí nadie se pierde…</span>
-          <em className="block" style={{ color: "#FCD34D" }}>
-            nomás se encuentra.
-          </em>
-        </h1>
+            <p className="mt-4 text-lg md:text-xl text-white/90 max-w-xl font-sans text-shadow-card">
+              Te armo tu viaje a un parque nacional: ruta día por día, equipo y
+              presupuesto, a tu nivel. $49.
+            </p>
 
-        <p className="mt-4 text-lg md:text-xl text-white/90 max-w-xl font-sans text-shadow-card">
-          Te armo tu viaje a un parque nacional: ruta día por día, equipo y
-          presupuesto, a tu nivel. $49.
-        </p>
+            {/* CTAs — main = quiz (starts the sales flow); small text link = FAQ.
+                No WhatsApp before purchase (WhatsApp is for paying customers). The
+                AI assistant is gated off in prod (VITE_CONCIERGE_ENABLED), so the
+                doubts link points to the FAQ until the assistant passes the exam.
+                Explorar Destinos lives in the navbar (desktop + mobile menu). */}
+            <div className="flex flex-col items-start gap-1 mt-8">
+              <Link
+                to="/#quiz"
+                onClick={() => logEvent("hero_cta_click", { cta: "quiz" })}
+                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-hero-accent text-white px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
+              >
+                Encuentra tu parque →
+              </Link>
 
-        {/* CTAs — main = quiz (starts the sales flow); small text link = FAQ.
-            No WhatsApp before purchase (WhatsApp is for paying customers). The
-            AI assistant is gated off in prod (VITE_CONCIERGE_ENABLED), so the
-            doubts link points to the FAQ until the assistant passes the exam.
-            Explorar Destinos lives in the navbar (desktop + mobile menu). */}
-        <div className="flex flex-col items-start gap-1 mt-8">
-          <Link
-            to="/#quiz"
-            onClick={() => logEvent("hero_cta_click", { cta: "quiz" })}
-            className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-hero-accent text-white px-8 py-4 text-base font-semibold shadow-lg shadow-hero-accent/25 hover:bg-hero-accent/90 transition-colors"
-          >
-            Encuentra tu parque →
-          </Link>
+              <Link
+                to="/#faq"
+                onClick={() => logEvent("hero_cta_click", { cta: "faq" })}
+                className="inline-flex min-h-[44px] items-center px-2 -ml-2 text-sm font-medium text-white/90 underline underline-offset-4 decoration-white/50 hover:text-white hover:decoration-white text-shadow-card"
+              >
+                ¿Dudas? Lee las preguntas frecuentes
+              </Link>
 
-          <Link
-            to="/#faq"
-            onClick={() => logEvent("hero_cta_click", { cta: "faq" })}
-            className="inline-flex min-h-[44px] items-center px-2 -ml-2 text-sm font-medium text-white/90 underline underline-offset-4 decoration-white/50 hover:text-white hover:decoration-white text-shadow-card"
-          >
-            ¿Dudas? Lee las preguntas frecuentes
-          </Link>
+              {/* Trust line (was a pill above the H1) */}
+              <p className="mt-2 flex items-start gap-2 text-xs sm:text-sm text-white/80 font-sans text-shadow-card">
+                <ShieldCheck className="h-4 w-4 shrink-0 mt-px" aria-hidden="true" />
+                <span>Agente de Viajes Certificado (TAP) · Itinerario en menos de 48 h</span>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
