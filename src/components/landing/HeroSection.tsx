@@ -5,7 +5,14 @@ import { PrePurchaseDoubtButton } from "@/components/PrePurchaseDoubt";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
-/** Curated local hero set (public/hero/). Frank can replace sources later. */
+/**
+ * Frank's own photos (public/hero/v2/): 01 Grand Canyon sunrise (LCP),
+ * 02 Joshua Tree, 03 Yosemite road in snow, 04 Grand Canyon trail,
+ * 05 Skull Rock, 06 Yosemite Falls in snow.
+ * /hero/* is cached immutable — new photos go in a new folder (v3, …) and
+ * HERO_BASE, the index.html preload and the script move together.
+ */
+const HERO_BASE = "/hero/v2";
 const HERO_IDS = ["01", "02", "03", "04", "05", "06"] as const;
 const HERO_WIDTHS = [640, 1080, 1600] as const;
 const HERO_SIZES = "100vw";
@@ -19,7 +26,9 @@ const KEN_BURNS_CSS = `
 `;
 
 function heroSrcSet(id: string, ext: "avif" | "webp"): string {
-  return HERO_WIDTHS.map((w) => `/hero/${id}-${w}.${ext} ${w}w`).join(", ");
+  return HERO_WIDTHS.map((w) => `${HERO_BASE}/${id}-${w}.${ext} ${w}w`).join(
+    ", ",
+  );
 }
 
 type HeroSlideProps = {
@@ -54,7 +63,7 @@ function HeroSlide({ id, active, priority, index }: HeroSlideProps) {
           sizes={HERO_SIZES}
         />
         <img
-          src={`/hero/${id}-1080.webp`}
+          src={`${HERO_BASE}/${id}-1080.webp`}
           alt=""
           width={1600}
           height={900}
