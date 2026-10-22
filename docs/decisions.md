@@ -768,3 +768,10 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   esconde filas en la policy pública, quien edita esa columna necesita su
   propia policy de lectura. Y en un `catch`, un error de Supabase no es
   `instanceof Error`: usar `errorMessage()` de `src/lib/error-message.ts`.
+- **La lista de rutas "con hero" del navbar se desfasa del layout:**
+  `/destinos/:slug` seguía marcada como ruta con foto detrás del navbar después
+  de que su carrusel bajó a `pt-20`, y el logo blanco desapareció sobre el fondo
+  claro. Nada fallaba en build ni en tests. Fix: la lista vive en
+  `src/lib/hero-routes.ts` con test y un comentario de por qué cada ruta está o
+  no está. Lección: si una página cambia lo que hay arriba (foto, banda oscura,
+  `pt-*`), revisar `hero-routes.ts` en el mismo PR.

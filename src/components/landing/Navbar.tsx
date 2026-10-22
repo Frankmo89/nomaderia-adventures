@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
 import Logo from "@/components/brand/Logo";
+import { hasHeroForPath } from "@/lib/hero-routes";
 
 const NAV_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -13,25 +14,7 @@ const NAV_EASE = [0.22, 1, 0.36, 1] as const;
 const HOMEPAGE_SCROLL_THRESHOLD_PX = 100;
 const INNER_PAGE_SCROLL_THRESHOLD_PX = 40;
 
-// Individual destination detail pages (e.g. /destinos/yosemite) have a photo
-// carousel hero — but the /destinos listing page itself does not.
-const DESTINATION_DETAIL_PATTERN = /^\/destinos\/[^/]+$/;
-
-// Routes that render an actual hero/header band behind the navbar (photo or
-// forest-dark PageHeader color-block — see src/components/shared/PageHeader.tsx).
-// /destinos, /blog, /gear and /sobre-nosotros now use PageHeader; their detail/
-// article sub-routes (/blog/:slug, /gear/:slug) do NOT and are excluded on purpose.
-// Every other route has no hero, so the navbar must render solid there regardless
-// of scroll position — otherwise it starts transparent over a light background.
-const hasHeroForPath = (pathname: string): boolean =>
-  pathname === "/" ||
-  pathname === "/calculadora" ||
-  pathname === "/servicios" ||
-  pathname === "/destinos" ||
-  pathname === "/blog" ||
-  pathname === "/gear" ||
-  pathname === "/sobre-nosotros" ||
-  DESTINATION_DETAIL_PATTERN.test(pathname);
+// Which routes start with a transparent navbar: see src/lib/hero-routes.ts.
 
 const navLinks = [
   { label: "Destinos", href: "/destinos" },
