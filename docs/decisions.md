@@ -649,7 +649,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Fecha:** 2026-10-21
 - **Estado:** Vigente.
 - **Contexto:** `public/_headers` sirve `/hero/*` con `Cache-Control: public, max-age=31536000, immutable`. Al cambiar las 6 fotos placeholder por las de Frank con los mismos nombres (`01-1080.avif`…), el navegador de quien ya visitó no vuelve a pedirlas durante un año.
-- **Decisión:** cada set de fotos vive en una carpeta nueva (`/hero/v2/`, luego `v3`…). Tres lugares se mueven juntos: `HERO_VERSION` en `scripts/generate-hero-images.mjs`, `HERO_BASE` en `HeroSection.tsx` y el preload de la foto 01 en `index.html`. El set anterior se borra en el mismo commit. La regla `immutable` de `_headers` no cambia.
+- **Decisión:** cada set de fotos vive en una carpeta nueva (`/hero/v2/`, luego `v3`…). Tres lugares se mueven juntos: `HERO_VERSION` en `scripts/generate-hero-images.mjs`, `HERO_BASE` (desde ADR-042 en `src/lib/hero-photos.ts`) y el preload de la foto 01 en `index.html`. El set anterior se borra en el mismo commit. La regla `immutable` de `_headers` no cambia.
 - **Consecuencias:** cambiar fotos no requiere purgar caché en Cloudflare. Si alguien cambia una foto sin subir la versión, el cambio no llega a visitantes que ya tienen la vieja en caché: el README de `public/hero/` lo explica.
 
 ### ADR-039 — Hero: luz dirigida y contraste medido sobre las fotos reales
@@ -688,6 +688,18 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   5. El código se guarda en `localStorage` (`nomaderia_route_origin`, con lat/lon para no bajar la tabla de 570 KB al volver). Lectura y escritura en try/catch; sin storage, la ruta funciona igual en esa visita.
   6. Evento `landing_origin_set` (`events` + GA4/Pixel) con `zip3` y `result` (`zip` / `san_diego_area` / `off_route`), igual que el quiz guarda `zip3`. Sirve para ver cuántas visitas no son de San Diego.
 - **Consecuencias:** las horas desde otro código son orientativas; nunca mostrarlas sin «≈» ni sin la nota. Si alguien reporta un error grande, no meter correcciones a mano por parque: el arreglo de fondo es una tabla de tiempos reales por carretera (requiere un servicio de rutas). El motor no se toca aquí (ADR-026); si cambia la fórmula upstream, la ruta la hereda.
+
+### ADR-042 — El cuestionario del home va sobre una foto de Frank
+- **Fecha:** 2026-10-22
+- **Estado:** Vigente.
+- **Contexto:** Frank: entre «La diferencia Nomaderia» y el cuestionario «está todo muy blanco y se ve mal». Las dos secciones eran `bg-cloud` con `py-16`/`py-24` y quedaban ~130 px de blanco entre el botón de compra y el cuestionario. De parques (oscuro) al seguro (verde claro) todo se leía como una pared blanca. Eligió la opción 1 de 4: el cuestionario sobre foto.
+- **Decisión:**
+  1. Las vistas de preguntas y de carga van sobre la foto 01 (Grand Canyon al amanecer), con la tarjeta del cuestionario opaca (`bg-cloud`, antes `bg-card/50` con blur) para que el texto oscuro nunca quede sobre la foto. Encabezado en `cloud`; la pastilla «Cuestionario personalizado» en vidrio oscuro.
+  2. Scrim «luz, no manta» (ADR-039): tinte `forest-dark/35` en toda la foto, degradado más oscuro arriba detrás del encabezado y sólido abajo para que la cresta oscura siguiente continúe sin línea. Cresta `cloud` arriba (de «La diferencia» a la foto) y cresta `forest-dark` abajo (de la foto al seguro), dentro de `QuizSection`, así solo aparecen cuando la foto está.
+  3. Contraste medido pixel a pixel con el texto oculto (peor pixel detrás de cada texto, 360/390/1024/1280 px): título 5.3–9.7, subtítulo 5.8–9.7, pastilla 5.0–11.5. Todo ≥4.5.
+  4. Los resultados se quedan en `bg-cloud`: ahí está el botón de compra y su texto (links verdes, notas `stone-500`) no pasa contraste sobre oscuro. Cambiarlos es otro PR.
+  5. Las rutas de las fotos pasan a `src/lib/hero-photos.ts` (`HERO_BASE`, `heroSrcSet`), que usan el hero y el cuestionario: un solo lugar al cambiar de carpeta (ADR-038). La foto 01 ya la baja el hero (4.ª del slideshow) con los mismos `sizes`, así que en el home sale de caché.
+- **Consecuencias:** al cambiar las fotos del hero, revisar que la 01 siga funcionando detrás del encabezado del cuestionario (repetir la medición). No volver a una tarjeta translúcida sobre la foto.
 
 ## Lecciones técnicas (bugs no obvios)
 

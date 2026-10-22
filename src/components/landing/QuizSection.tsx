@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
 import { STRIPE_AND_DOUBT_COPY } from "@/lib/concierge-flag";
 import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motion";
@@ -15,6 +15,8 @@ import { Link } from "react-router-dom";
 import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizPreview, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
+import SectionDivider from "@/components/landing/SectionDivider";
+import { heroFallbackSrc, heroSrcSet } from "@/lib/hero-photos";
 import { isIslandZip, isValidZipFormat, lookupZip, preloadZipTable } from "@/lib/zip-centroids";
 import {
   DRIVE_HOUR_OPTIONS,
@@ -628,6 +630,50 @@ const QuizResults = ({
   );
 };
 
+// --- Photo backdrop (questions + loading) ---
+
+/**
+ * The questions and the loading state sit on one of Frank's photos (ADR-042):
+ * the dark beat between "La diferencia" (light) and the insurance band
+ * (green wash), so the home no longer reads as one white wall. Results keep
+ * the light background: the buy button lives there and was not touched.
+ */
+const QUIZ_PHOTO_ID = "01"; // Grand Canyon at sunrise, by O'Neill Butte
+
+/** Opaque card: dark text inside never sits on the photo. */
+const QUIZ_CARD = "rounded-2xl border border-white/60 bg-cloud p-6 shadow-2xl shadow-forest-dark/50 sm:p-8";
+
+const QuizPhotoShell = ({ children }: { children: ReactNode }) => (
+  <>
+    <section id="quiz" className="relative overflow-hidden bg-forest-dark pb-20 pt-24 sm:pb-28 sm:pt-32">
+      <picture>
+        <source type="image/avif" srcSet={heroSrcSet(QUIZ_PHOTO_ID, "avif")} sizes="100vw" />
+        <source type="image/webp" srcSet={heroSrcSet(QUIZ_PHOTO_ID, "webp")} sizes="100vw" />
+        <img
+          src={heroFallbackSrc(QUIZ_PHOTO_ID)}
+          alt=""
+          width={1600}
+          height={2133}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+      </picture>
+      {/* Light, not a blanket: a soft tint everywhere, darker behind the
+          header text, solid at the bottom so the dark ridge below carries on. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-forest-dark/35" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[28rem] bg-gradient-to-b from-forest-dark/80 via-forest-dark/55 to-transparent" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-forest-dark from-35% to-transparent" />
+      {/* "La diferencia" (cloud) drops onto the photo as a ridge. */}
+      <div className="absolute inset-x-0 top-0">
+        <SectionDivider variant="layered" fill="#FBFAF7" />
+      </div>
+      <div className="container relative z-10 mx-auto max-w-2xl px-5">{children}</div>
+    </section>
+    <SectionDivider variant="layered" fill="#14201A" />
+  </>
+);
+
 // --- Main component ---
 const QuizSection = () => {
   const {
@@ -724,15 +770,11 @@ const QuizSection = () => {
   };
 
   if (loading && !showResults) return (
-    <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/6 blur-3xl" />
-        <div className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-secondary/6 blur-3xl" />
-      </div>
-      <div className="container mx-auto px-5 max-w-2xl relative z-10">
+    <QuizPhotoShell>
+      <div className={QUIZ_CARD}>
         <QuizLoading />
       </div>
-    </section>
+    </QuizPhotoShell>
   );
 
   if (showResults) return (
@@ -753,32 +795,24 @@ const QuizSection = () => {
   );
 
   return (
-    <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
-      {/* Atmospheric glow blobs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/6 blur-3xl" />
-        <div className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-secondary/6 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] rounded-full bg-accent/4 blur-3xl" />
-      </div>
-
-      <div className="container mx-auto px-5 max-w-2xl relative z-10">
-        {/* Section header */}
+    <QuizPhotoShell>
+        {/* Section header — light text on the photo */}
         <Reveal className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-2 bg-green-wash border border-green/20 rounded-full px-4 py-1.5 text-sm text-green mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cloud/30 bg-forest-dark/70 px-4 py-1.5 text-sm text-cloud mb-4 supports-[backdrop-filter]:bg-forest-dark/55 supports-[backdrop-filter]:backdrop-blur-md">
             <Sparkles className="h-3.5 w-3.5" />
             Cuestionario personalizado · unos minutos
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-cloud mb-2">
             ¿No Sabes A Dónde Ir?
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <p className="text-cloud text-sm sm:text-base">
             Responde {steps.length} preguntas y te decimos tu destino ideal
           </p>
         </Reveal>
 
 
-        {/* Glass card */}
-        <div className="bg-card/50 backdrop-blur-md border border-border/70 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-background/60">
+        {/* Question card — opaque on the photo */}
+        <div className={QUIZ_CARD}>
           {/* Linear progress bar — pinned to top of card */}
           <div className="h-[3px] rounded-full bg-stone/20 mb-5 overflow-hidden">
             <motion.div
@@ -1082,8 +1116,7 @@ const QuizSection = () => {
             </motion.div>
           </AnimatePresence>
         </div>
-      </div>
-    </section>
+    </QuizPhotoShell>
   );
 };
 

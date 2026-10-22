@@ -27,7 +27,8 @@ viejas. Por eso cada set nuevo va en una carpeta nueva (ADR-038):
 1. Pon los originales en `public/hero/sources/01.jpeg` … `06.jpeg`
    (la carpeta está en `.gitignore`).
 2. Sube `HERO_VERSION` en `scripts/generate-hero-images.mjs` (p. ej. `v3`),
-   `HERO_BASE` en `src/components/landing/HeroSection.tsx` y las rutas del
+   `HERO_BASE` en `src/lib/hero-photos.ts` (lo usan el hero y el fondo del
+   cuestionario) y las rutas del
    preload de la primera foto en `index.html`.
 3. Corre `npm run generate:hero` (usa `sharp`).
 4. Borra la carpeta anterior y haz commit de la nueva (no de `sources/`).
