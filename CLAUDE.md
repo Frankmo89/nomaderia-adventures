@@ -129,7 +129,7 @@ src/
 │   ├── pricing.ts            # Producto único ($49 USD). Re-exporta STRIPE_LINK_ITINERARIO_49 + buildStripePaymentLink
 │   └── assets.ts             # Brand assets URLs
 ├── hooks/                    # Custom hooks con TanStack Query
-│   ├── use-destinations.ts   # useDestinations(), useDestinationBySlug(), useRelatedDestinations()
+│   ├── use-destinations.ts   # useDestinations(), useDestinationBySlug(), useRelatedDestinations(), useLandingParks()
 │   ├── use-gear-articles.ts  # useGearArticles(), useFeaturedGearArticles()
 │   ├── use-blog-posts.ts     # useBlogPosts()
 │   ├── use-quiz.ts           # useQuiz() — estado + submit del quiz
@@ -143,6 +143,7 @@ src/
 │   ├── utils.ts              # cn() = clsx + tailwind-merge
 │   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
 │   ├── quiz-ranking.ts       # Adaptador quiz → motor de ranking vendorizado (@engine, ADR-026)
+│   ├── landing-parks.ts      # Orden por horas desde San Diego + etiquetas de las tarjetas del home (ADR-040)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
 └── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts

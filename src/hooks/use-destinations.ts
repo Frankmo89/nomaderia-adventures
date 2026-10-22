@@ -95,6 +95,45 @@ export function useDestinationsDirectory() {
   });
 }
 
+export interface LandingPark {
+  id: string;
+  title: string;
+  slug: string;
+  region: string | null;
+  difficulty_level: string;
+  days_needed: string | null;
+  hero_image_url: string | null;
+  drive_time_from_san_diego: string | null;
+  best_season: string | null;
+  entrance_fee_usd: number | null;
+  entrance_fee_type: string | null;
+  requires_permit: boolean | null;
+  signature_hikes: unknown;
+}
+
+/**
+ * Landing parks section (DestinationsCatalog, "ruta + vidrio"): the fields
+ * its cards show. A new query on purpose — useDestinations() feeds other
+ * components and stays as it is. Sorting by drive time happens in
+ * src/lib/landing-parks.ts.
+ */
+export function useLandingParks() {
+  return useQuery<LandingPark[]>({
+    queryKey: ["destinations", "landing-parks"],
+    staleTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("destinations")
+        .select(
+          "id, title, slug, region, difficulty_level, days_needed, hero_image_url, drive_time_from_san_diego, best_season, entrance_fee_usd, entrance_fee_type, requires_permit, signature_hikes"
+        )
+        .eq("is_published", true);
+      if (error) throw error;
+      return (data as LandingPark[]) ?? [];
+    },
+  });
+}
+
 export interface HeroPark {
   id: string;
   title: string;

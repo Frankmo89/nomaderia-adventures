@@ -717,6 +717,13 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-10-22] **Parques del home: «ruta + vidrio», el más cercano a San Diego primero (ADR-040).** Frank: «la presentación de los parques está muy básica». Diseño elegido en el canvas («3 + 5»).
+  - **Orden.** Antes los 3 parques salían al azar (`useDestinations()` no ordena). Ahora: horas en carro desde San Diego, solo manejos directos. Hoy: Joshua Tree 3 h, Saguaro 5.5 h, Kings Canyon 6 h. Lógica en `src/lib/landing-parks.ts` (10 tests con datos reales); query nueva `useLandingParks()`.
+  - **Diseño.** Ruta punteada desde San Diego; celular = carrusel con snap y una tarjeta final «Sigue la ruta: 63 parques»; desktop = 3 columnas bajo la ruta. Tarjeta = foto + panel de vidrio con nivel, estado, días, entrada, mejor época, primer sendero apto para niños y «Ver guía». Toda la tarjeta es link.
+  - **Bug de tarjetas cortadas:** resuelto (el panel ya no depende de `h-full`; Playwright confirma que cabe en 360, 390, 1024 y 1280).
+  - **Diferencias con el canvas:** sin fogata (eyebrow y puntos en `cloud`/`green`); sin filtros (los 3 más cercanos pasan los cuatro, no cambiarían nada); fotos = `hero_image_url` de cada parque (NPS), no las de Frank del mockup.
+  - **Verificación:** `npm run typecheck` ✅ · `npm test` 268/268 ✅ · `npm run build` ✅ · eslint en archivos tocados ✅ · Playwright con datos reales (Supabase simulado): orden, snap (54/362/670 y final 838 en 390 px), click → `/destinos/joshua-tree-national-park`, sin scroll horizontal de página. Contraste peor caso 5.0:1. `typecheck:functions` lo corre CI (no se tocó `supabase/functions`).
+
 - [2026-10-21] **Navbar en `/destinos/:slug`: el logo se perdía arriba (bug en producción, reportado por Frank desde el celular).** La página de destino arranca su carrusel de fotos 80 px abajo (`pt-20`), pero `Navbar.tsx` la seguía tratando como ruta con foto detrás: navbar transparente, logo blanco y menú blanco sobre el fondo claro; solo se veía «IA». Fix: la lista de rutas con banda oscura detrás del navbar pasa a `src/lib/hero-routes.ts` (con test) y ya no incluye `/destinos/:slug`; ahí el navbar sale sólido desde el scroll 0. Las demás rutas (`/`, `/servicios`, `/calculadora`, `/destinos`, `/blog`, `/gear`, `/sobre-nosotros`) sí tienen fondo oscuro detrás y no cambian. Verificado con Playwright a 390×844: antes logo `-oscuro` + menú blanco + barra con opacidad 0; después logo normal + menú oscuro + barra sólida. `npm run typecheck` ✅ · `npm test` ✅ · `npm run build` ✅.
 
 - [2026-10-21] **Hero: luz dirigida en vez de manta oscura (ADR-039).** Frank: «las fotos se ven muy opacas; el hero tiene que dar ganas de ir». Solo `HeroSection.tsx` + preload de `index.html`.

@@ -146,6 +146,14 @@ Hacerlos sentir intencionales, no clip-art decorativo:
 - Opcional: hairline de 1px `green` o `amber` en la cresta para un toque de "luz de horizonte" — máximo una o dos veces por página.
 - Relleno plano, sin trazos; la dirección de arte es realismo fotográfico + calma editorial, así que el divisor debe ser geometría callada.
 
+### 4.6 Tarjeta de foto con vidrio (parques del home, ADR-040)
+Variante oscura de 4.1, solo para la sección «¿A cuántas horas está tu próximo parque?» sobre `forest-dark`.
+- **Forma:** foto a todo lo alto (500 px celular, 540 px desktop), radio 24 px. Panel de vidrio abajo, a 10–12 px de los bordes, radio 18 px.
+- **Vidrio:** `forest-dark` al 70% + `backdrop-blur-lg`, borde 1 px `cloud/20`. Pill de nivel al 65% + `backdrop-blur-md`. Sin soporte de `backdrop-filter`: 85% sin blur. Texto blanco ≥4.5:1 aunque la foto sea blanca; no bajar estas opacidades sin volver a medir.
+- **Tipo:** nombre del parque y título de la sección en Oswald (regla de pareo: Oswald sobre oscuro). Datos en Inter 600 con íconos de línea 18 px.
+- **Ruta:** línea punteada `cloud/35`, nodo de inicio `cloud`, nodos de parque `green` con borde `cloud` de 3 px. Nada en fogata.
+- **CTA:** pill `cloud` con texto `ink` («Ver guía →»; desde `xl`, «Ver guía de X →»). Toda la tarjeta es el link.
+
 ---
 
 ## 5. Resumen de tokens (para Tailwind config)
