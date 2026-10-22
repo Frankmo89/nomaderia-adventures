@@ -97,18 +97,3 @@ export function parkShortName(title: string): string {
     title.replace(/^Parques?\s+Nacional(?:es)?\s+(?:y\s+Reserva\s+)?(?:del?\s+)?/i, "").trim() || title
   );
 }
-
-const LEVEL_ORDER: Record<string, number> = { easy: 0, moderate: 1, challenging: 2 };
-
-/** Nearest first; parks with no plain drive go last; ties: easier, then A–Z. */
-export function sortByDriveFromSanDiego<
-  T extends { title: string; difficulty_level: string; drive_time_from_san_diego: string | null },
->(parks: T[]): T[] {
-  const key = (p: T) => parseDriveFromSanDiego(p.drive_time_from_san_diego)?.hours ?? Infinity;
-  return [...parks].sort(
-    (a, b) =>
-      key(a) - key(b) ||
-      (LEVEL_ORDER[a.difficulty_level] ?? 9) - (LEVEL_ORDER[b.difficulty_level] ?? 9) ||
-      a.title.localeCompare(b.title, "es"),
-  );
-}

@@ -1,25 +1,33 @@
-import { useId, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, Car, Footprints, Sun, Ticket, type LucideIcon } from "lucide-react";
+import { CalendarDays, Car, Footprints, Loader2, MapPin, Sun, Ticket, type LucideIcon } from "lucide-react";
 import Reveal from "@/components/editorial/Reveal";
 import { CardImage } from "@/components/shared/CardImage";
+import { Input } from "@/components/ui/input";
 import { useLandingParks, type LandingPark } from "@/hooks/use-destinations";
+import { trackEvent } from "@/lib/analytics";
+import { logEvent } from "@/lib/events";
 import { formatRegionDisplay } from "@/lib/regions";
 import { resizedImageUrl } from "@/lib/resized-image";
+import { daysLabel, entranceFeeLabel, firstEasyTrail, parkShortName, shortBestSeason } from "@/lib/landing-parks";
 import {
-  daysLabel,
-  entranceFeeLabel,
-  firstEasyTrail,
-  parkShortName,
-  parseDriveFromSanDiego,
-  shortBestSeason,
-  sortByDriveFromSanDiego,
-} from "@/lib/landing-parks";
+  SAN_DIEGO_ORIGIN,
+  isOffRouteZip,
+  isSanDiegoArea,
+  originFromZip,
+  readSavedOrigin,
+  routeFrom,
+  saveOrigin,
+  type DriveFromOrigin,
+  type RouteOrigin,
+} from "@/lib/landing-origin";
+import { isValidZipFormat, lookupZip, preloadZipTable } from "@/lib/zip-centroids";
 import { cn } from "@/lib/utils";
 
 /**
  * Landing parks section — "Ruta + vidrio" (ADR-040).
- * Parks sit on a dashed route out of San Diego, nearest first. Phone: a
+ * Parks sit on a dashed route out of San Diego, nearest first. A visitor
+ * can start the route from their own ZIP instead (ADR-041). Phone: a
  * horizontal snap carousel. Desktop (lg): three columns under one route.
  * Each card is a photo with a frosted panel; the panel is opaque enough
  * that white text passes AA even over a white photo, and it falls back to
@@ -52,9 +60,7 @@ interface RouteStop {
   trail: string | null;
 }
 
-function toRouteStop(park: LandingPark): RouteStop | null {
-  const drive = parseDriveFromSanDiego(park.drive_time_from_san_diego);
-  if (!drive) return null;
+function toRouteStop(park: LandingPark, drive: DriveFromOrigin): RouteStop {
   const days = daysLabel(park.days_needed);
   const fee = entranceFeeLabel(park.entrance_fee_usd, park.entrance_fee_type);
   const season = shortBestSeason(park.best_season);
@@ -166,11 +172,11 @@ const SectionShell = ({ children }: { children: ReactNode }) => (
   </section>
 );
 
-const Heading = () => (
+const EYEBROW = "font-condensed text-[0.8125rem] font-semibold uppercase leading-tight tracking-[0.08em] text-cloud/80 lg:text-sm";
+
+const Heading = ({ eyebrow }: { eyebrow?: ReactNode }) => (
   <Reveal className="mb-[22px] max-w-2xl lg:mb-7">
-    <p className="font-condensed text-[0.8125rem] font-semibold uppercase leading-tight tracking-[0.08em] text-cloud/80 lg:text-sm">
-      Desde San Diego
-    </p>
+    {eyebrow ?? <p className={EYEBROW}>Desde San Diego</p>}
     <h2 className="mt-3 font-condensed text-[2.125rem] font-semibold leading-[1.12] text-cloud md:text-5xl xl:text-[3.25rem] xl:leading-[1.08]">
       ¿A cuántas horas está tu próximo parque?
     </h2>
@@ -181,6 +187,145 @@ const Heading = () => (
   </Reveal>
 );
 
+const MSG_FORMAT = "Escribe los 5 dígitos de tu código postal.";
+const MSG_OFF_ROUTE =
+  "Esta ruta es para manejar dentro de los 48 estados contiguos. Desde Alaska, Hawái o un territorio, haz el quiz: te muestra parques a los que puedes volar.";
+const MSG_NOT_FOUND = "No encontramos ese código postal. Revisa que sean los 5 dígitos de tu código en EE. UU.";
+const MSG_NETWORK = "No pudimos validar tu código postal. Revisa tu conexión e intenta de nuevo.";
+
+/**
+ * "Desde San Diego · Cambiar": the eyebrow plus a small ZIP form. The ZIP
+ * table (~570 KB, same file as the quiz) loads only when the field gets focus.
+ */
+const OriginControl = ({ origin, onChange }: { origin: RouteOrigin; onChange: (next: RouteOrigin) => void }) => {
+  const [open, setOpen] = useState(false);
+  const [zip, setZip] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const formId = useId();
+  const inputId = useId();
+  const messageId = useId();
+
+  const close = () => {
+    setOpen(false);
+    setMessage(null);
+    requestAnimationFrame(() => toggleRef.current?.focus());
+  };
+
+  const report = (zip3: string, result: "zip" | "san_diego_area" | "off_route") => {
+    logEvent("landing_origin_set", { zip3, result });
+    trackEvent("landing_origin_set", { zip3, result });
+  };
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (checking) return;
+    if (!isValidZipFormat(zip)) {
+      setMessage(MSG_FORMAT);
+      return;
+    }
+    if (isOffRouteZip(zip)) {
+      setMessage(MSG_OFF_ROUTE);
+      report(zip.slice(0, 3), "off_route");
+      return;
+    }
+    setChecking(true);
+    setMessage(null);
+    try {
+      const point = await lookupZip(zip);
+      if (!point) {
+        setMessage(MSG_NOT_FOUND);
+        return;
+      }
+      const next = originFromZip(zip, point);
+      onChange(next);
+      report(zip.slice(0, 3), next.kind === "san-diego" ? "san_diego_area" : "zip");
+      close();
+    } catch {
+      setMessage(MSG_NETWORK);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const place = origin.kind === "san-diego" ? "San Diego" : `tu código postal ${origin.zip}`;
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <p className={EYEBROW}>Desde {place}</p>
+        <button
+          ref={toggleRef}
+          type="button"
+          aria-expanded={open}
+          aria-controls={formId}
+          onClick={() => (open ? close() : setOpen(true))}
+          className="relative inline-flex h-8 items-center gap-1.5 rounded-full border border-cloud/30 bg-cloud/5 px-3 text-[0.8125rem] font-semibold text-cloud transition-colors after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] hover:bg-cloud/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cloud"
+        >
+          <MapPin aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+          {open ? "Cerrar" : "Cambiar"}
+        </button>
+      </div>
+
+      {open && (
+        <form id={formId} onSubmit={submit} noValidate className="mt-4 flex flex-wrap items-center gap-2">
+          <label htmlFor={inputId} className="basis-full text-sm font-medium text-cloud/90">
+            Tu código postal en EE. UU.
+          </label>
+          <Input
+            id={inputId}
+            autoFocus
+            inputMode="numeric"
+            autoComplete="postal-code"
+            maxLength={5}
+            placeholder="Ej. 85004"
+            value={zip}
+            onFocus={preloadZipTable}
+            onChange={(e) => {
+              setZip(e.target.value.replace(/\D/g, "").slice(0, 5));
+              setMessage(null);
+            }}
+            aria-invalid={message !== null && message !== MSG_OFF_ROUTE}
+            aria-describedby={messageId}
+            className="h-11 w-36 rounded-full border-cloud/30 bg-cloud/10 px-4 text-base tracking-widest md:text-base text-cloud placeholder:text-cloud/60 focus-visible:ring-cloud focus-visible:ring-offset-forest-dark"
+          />
+          <button
+            type="submit"
+            disabled={checking}
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-cloud px-5 text-[0.9375rem] font-semibold text-ink transition-colors hover:bg-white disabled:opacity-70"
+          >
+            {checking && <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />}
+            Ver mi ruta
+          </button>
+          {origin.kind !== "san-diego" && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange(SAN_DIEGO_ORIGIN);
+                close();
+              }}
+              className="h-11 px-2 text-[0.9375rem] font-semibold text-cloud underline underline-offset-4 hover:text-white"
+            >
+              Volver a San Diego
+            </button>
+          )}
+          <p id={messageId} aria-live="polite" className="min-h-5 basis-full text-sm text-cloud/85">
+            {message}
+          </p>
+        </form>
+      )}
+    </div>
+  );
+};
+
+/** Saved ZIP if any; a saved ZIP in the San Diego area counts as San Diego. */
+function initialOrigin(): RouteOrigin {
+  const saved = readSavedOrigin();
+  if (!saved || saved.kind !== "zip" || isSanDiegoArea(saved)) return SAN_DIEGO_ORIGIN;
+  return saved;
+}
+
 interface DestinationsCatalogProps {
   /** How many parks the route shows (Index passes 3). */
   limit?: number;
@@ -188,6 +333,18 @@ interface DestinationsCatalogProps {
 
 const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
   const { data: parks = [], isLoading, error } = useLandingParks();
+  const [origin, setOrigin] = useState<RouteOrigin>(initialOrigin);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  // A new origin is a new route: start the phone carousel from the beginning.
+  useEffect(() => {
+    scrollerRef.current?.scrollTo({ left: 0 });
+  }, [origin]);
+
+  const changeOrigin = (next: RouteOrigin) => {
+    setOrigin(next);
+    saveOrigin(next);
+  };
 
   if (isLoading) {
     return (
@@ -212,26 +369,27 @@ const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
     );
   }
 
-  const stops = sortByDriveFromSanDiego(parks)
-    .map(toRouteStop)
-    .filter((s): s is RouteStop => s !== null)
-    .slice(0, limit);
+  const stops = routeFrom(parks, origin)
+    .slice(0, limit)
+    .map(({ park, drive }) => toRouteStop(park, drive));
   const total = parks.length;
+  const startLabel = origin.kind === "san-diego" ? "San Diego" : origin.zip;
+  const estimated = origin.kind === "zip";
 
   return (
     <SectionShell>
-      <Heading />
+      <Heading eyebrow={<OriginControl origin={origin} onChange={changeOrigin} />} />
 
       {stops.length > 0 && (
         <Reveal delay={0.1}>
           {/* Phone: the track scrolls sideways and bleeds to the screen edge. */}
-          <div className="-mx-5 snap-x snap-mandatory overflow-x-auto scroll-px-5 pb-2 [scrollbar-color:rgba(251,250,247,0.3)_transparent] lg:mx-0 lg:overflow-visible lg:pb-0">
+          <div ref={scrollerRef} className="-mx-5 snap-x snap-mandatory overflow-x-auto scroll-px-5 pb-2 [scrollbar-color:rgba(251,250,247,0.3)_transparent] lg:mx-0 lg:overflow-visible lg:pb-0">
             <div className="relative w-max px-5 lg:w-full lg:px-0">
-              {/* The route: dashed line, San Diego at the start. */}
+              {/* The route: dashed line, the origin at the start. */}
               <div aria-hidden="true" className="pointer-events-none absolute left-[30px] right-5 top-[11px] border-t-2 border-dashed border-cloud/35 lg:left-[11px] lg:right-[11px]" />
               <div aria-hidden="true" className="absolute left-5 top-0 flex snap-start flex-col items-start gap-2 lg:left-0">
                 <span className={cn(NODE, "h-[22px] w-[22px] bg-cloud")} />
-                <span className={ROUTE_LABEL}>San Diego</span>
+                <span className={ROUTE_LABEL}>{startLabel}</span>
               </div>
               <div aria-hidden="true" className="absolute right-0 top-0 hidden flex-col items-end gap-2 lg:flex">
                 <span className={cn(NODE, "h-[22px] w-[22px] border-[3px] border-cloud bg-green")} />
@@ -239,7 +397,7 @@ const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
               </div>
 
               <ol
-                aria-label="Parques ordenados por distancia en carro desde San Diego"
+                aria-label={`Parques ordenados por distancia en carro desde ${origin.kind === "san-diego" ? "San Diego" : `el código postal ${origin.zip}`}`}
                 className="relative flex gap-3.5 pl-[54px] lg:grid lg:grid-cols-3 lg:gap-6 lg:pl-0"
               >
                 {stops.map((stop) => (
@@ -266,6 +424,12 @@ const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
               </ol>
             </div>
           </div>
+          {estimated && (
+            <p className="mt-3 max-w-2xl text-sm text-cloud/80">
+              ≈ Horas estimadas en línea recta desde {startLabel}, redondeadas hacia arriba. Antes de salir, revisa la
+              ruta en tu mapa.
+            </p>
+          )}
         </Reveal>
       )}
 
