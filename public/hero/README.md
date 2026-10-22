@@ -3,10 +3,16 @@
 **6** fotos de Frank servidas como AVIF + WebP responsivos en
 `public/hero/v2/` (`NN-640|1080|1600.{avif,webp}`):
 
+El **orden** en el hero lo pone `HERO_SLIDES` en `HeroSection.tsx` (hoy:
+02 → 04 → 03 → 01 → 05 → 06). La primera foto es la imagen LCP: el preload
+de `index.html` apunta a su id. Si cambias el orden, cambia también el preload.
+En celular solo se ve limpia la parte de **arriba** de la foto (el texto
+ocupa el resto), así que la primera necesita un arriba fuerte.
+
 | ID | Foto |
 |----|------|
-| 01 | Grand Canyon — amanecer junto a O'Neill Butte (LCP, se precarga en `index.html`) |
-| 02 | Joshua Tree — yuca y rocas |
+| 01 | Grand Canyon — amanecer junto a O'Neill Butte |
+| 02 | Joshua Tree — yuca y rocas (primera, LCP) |
 | 03 | Yosemite — carretera con nieve y túnel |
 | 04 | Grand Canyon — sendero con excursionista |
 | 05 | Joshua Tree — Skull Rock |
@@ -22,7 +28,7 @@ viejas. Por eso cada set nuevo va en una carpeta nueva (ADR-038):
    (la carpeta está en `.gitignore`).
 2. Sube `HERO_VERSION` en `scripts/generate-hero-images.mjs` (p. ej. `v3`),
    `HERO_BASE` en `src/components/landing/HeroSection.tsx` y las rutas del
-   preload de la foto 01 en `index.html`.
+   preload de la primera foto en `index.html`.
 3. Corre `npm run generate:hero` (usa `sharp`).
 4. Borra la carpeta anterior y haz commit de la nueva (no de `sources/`).
 

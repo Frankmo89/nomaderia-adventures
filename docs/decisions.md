@@ -652,6 +652,16 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Decisión:** cada set de fotos vive en una carpeta nueva (`/hero/v2/`, luego `v3`…). Tres lugares se mueven juntos: `HERO_VERSION` en `scripts/generate-hero-images.mjs`, `HERO_BASE` en `HeroSection.tsx` y el preload de la foto 01 en `index.html`. El set anterior se borra en el mismo commit. La regla `immutable` de `_headers` no cambia.
 - **Consecuencias:** cambiar fotos no requiere purgar caché en Cloudflare. Si alguien cambia una foto sin subir la versión, el cambio no llega a visitantes que ya tienen la vieja en caché: el README de `public/hero/` lo explica.
 
+### ADR-039 — Hero: luz dirigida y contraste medido sobre las fotos reales
+- **Fecha:** 2026-10-21
+- **Estado:** Vigente. Reemplaza el scrim uniforme de #208.
+- **Contexto:** #208 puso 84% forest sobre toda la foto para que la línea fogata (#D97706) pasara AA texto grande (≥3:1). Pasaba, pero las fotos de Frank se veían opacas y el hero no daba ganas de ir. `docs/design-system.md` ya decía «scrim: nunca una caja plana».
+- **Decisión:**
+  1. Oscuro solo donde va el texto. Menos de `lg`: empieza en `--hero-text-top` (posición real del bloque de texto, medida con ResizeObserver) y deja limpia la foto de arriba. `lg`+: degradado a la izquierda hasta `--hero-col-right` (borde de la columna: `container` + `px-5` + `max-w`); la mitad derecha queda limpia.
+  2. La primera foto se elige por cómo se ve **arriba** en celular, porque ahí es lo único limpio. Hoy: Joshua Tree (02). El preload de `index.html` sigue a `HERO_SLIDES[0]`.
+  3. El contraste se mide, no se estima: por cada foto y tamaño de pantalla, captura con el texto transparente (fondo) y con el texto magenta (máscara de glifos), sin text-shadow, y se calcula el contraste WCAG en cada pixel de glifo. Umbrales: H1 ≥3:1 (texto grande), el resto ≥4.5:1. Resultado 2026-10-21: 0 fallas en 6 fotos × 8 tamaños; peor pixel del H1 fogata 3.32.
+- **Consecuencias:** al cambiar fotos u orden, repetir la medición (sobre todo fotos con nieve o cielo blanco). Si una foto falla, subir el oscuro en ese tramo o cambiar el orden; no volver a la manta uniforme.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
