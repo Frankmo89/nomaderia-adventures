@@ -143,7 +143,8 @@ src/
 │   ├── utils.ts              # cn() = clsx + tailwind-merge
 │   ├── lazy-with-retry.ts    # lazyWithRetry() — React.lazy con retry + backoff
 │   ├── quiz-ranking.ts       # Adaptador quiz → motor de ranking vendorizado (@engine, ADR-026)
-│   ├── landing-parks.ts      # Orden por horas desde San Diego + etiquetas de las tarjetas del home (ADR-040)
+│   ├── landing-parks.ts      # Etiquetas de las tarjetas de parques del home (ADR-040)
+│   ├── landing-origin.ts     # Origen de la ruta del home: San Diego (horas reales) o código postal (≈ motor) (ADR-041)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
 └── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts

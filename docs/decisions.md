@@ -664,7 +664,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-040 — Parques en la landing: «ruta + vidrio», ordenados por distancia desde San Diego
 - **Fecha:** 2026-10-22
-- **Estado:** Vigente. Reemplaza las pestañas por dificultad de `DestinationsCatalog`.
+- **Estado:** Vigente. Reemplaza las pestañas por dificultad de `DestinationsCatalog`. El origen ya no es fijo: ADR-041 deja empezar la ruta desde cualquier código postal, y el orden pasó a `src/lib/landing-origin.ts`.
 - **Contexto:** Frank vio las tarjetas de parques «muy básicas». Además había dos bugs: `useDestinations()` no ordena, así que los 3 parques del home salían al azar, y la fila de abajo de las tarjetas se cortaba (cuerpo `h-full` dentro de una tarjeta `h-full` con `overflow-hidden`). Frank eligió el diseño «3 + 5» del canvas: ruta punteada desde San Diego + tarjetas de foto con panel de vidrio.
 - **Decisión:**
   1. Los parques salen por horas en carro desde San Diego (`drive_time_from_san_diego`), el más cercano primero; empates por nivel y luego A–Z. Solo cuenta un manejo directo: «3 horas en coche a Ventura» (Channel Islands, luego barco), «Sin carretera…» y «Vuelo vía…» no entran a la ruta. El parseo y las etiquetas viven en `src/lib/landing-parks.ts` (con test sobre valores reales); si un dato no se lee limpio, la etiqueta no sale en vez de inventarla. Hoy (63 publicados): Joshua Tree 3 h, Saguaro 5.5 h, Kings Canyon 6 h.
@@ -674,6 +674,19 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   5. Sin fogata (#D97706): el canvas la usaba en el eyebrow y en los puntos de la ruta; en código van `cloud` y `green` (regla: fogata solo en el Hero).
   6. Sin filtros. El canvas de desktop traía «Más cerca / Fácil / Sin permiso / Con niños», pero los 3 más cercanos pasan los cuatro: los botones no cambiarían nada. Los filtros viven en `/destinos`.
 - **Consecuencias:** si cambia el formato de `drive_time_from_san_diego`, revisar `parseDriveFromSanDiego` (un parque que no se lee sale de la ruta, no rompe). Para filtros en el home, que filtren por algo que cambie las 3 tarjetas (p. ej. tramos de horas), no por atributos que los cercanos ya cumplen.
+
+### ADR-041 — La ruta de parques puede salir de tu código postal; horas estimadas con «≈»
+- **Fecha:** 2026-10-22
+- **Estado:** Vigente. Amplía ADR-040.
+- **Contexto:** Frank: «¿y si la persona no es de San Diego?». La ruta del home solo tenía horas reales desde San Diego (`drive_time_from_san_diego`, capturadas a mano). Para alguien de Phoenix o Chicago, «3 h en carro» no le decía nada. El quiz ya convierte cualquier código postal de EE. UU. en lat/lon (ADR-031) y los 63 parques tienen `latitude`/`longitude`.
+- **Decisión:**
+  1. «Desde San Diego · Cambiar» en la sección: la persona escribe su código postal y la ruta se reordena desde ahí. San Diego sigue siendo el arranque (ahí van los anuncios). Un código a ≤0.5 h estimada del centro de San Diego (Chula Vista, etc.) cuenta como San Diego y ve las horas reales.
+  2. Horas desde otro código = la estimación del motor (`driveHours` de `@engine`: millas en línea recta × 1.25 / 65 mph, la misma con la que filtra el quiz), **redondeada hacia arriba** (medias horas bajo 10 h, horas enteras desde 10 h) y con «≈». Nota debajo de la ruta: «Horas estimadas en línea recta… Antes de salir, revisa la ruta en tu mapa».
+  3. Medición (2026-10-22). Contra las 33 horas reales de San Diego sin «+»: error mediano +3%, del −12% al +27% (p10–p90). Contra 31 viajes conocidos desde 10 ciudades (cifras públicas aproximadas): error medio 0.55 h; 7 de 31 se quedan cortos por más de media hora. Los cortos son caminos de montaña o rodeos: Las Vegas → Sequoia ≈4 h contra ~6 h (la Sierra Nevada no se cruza en línea recta), Denver → Black Canyon ≈3.5 contra ~5 h, Seattle → Olympic ≈1.5 contra ~2.5 h. Se probó multiplicar la estimación ×1.1–1.2: empeora el total. Se quedó ×1.
+  4. Los parques de la ruta son los mismos desde cualquier origen: los que tienen manejo directo desde San Diego (49 de 63). Hawái, territorios (`isIslandZip`) y Alaska (995–999) no reordenan: mensaje que manda al quiz.
+  5. El código se guarda en `localStorage` (`nomaderia_route_origin`, con lat/lon para no bajar la tabla de 570 KB al volver). Lectura y escritura en try/catch; sin storage, la ruta funciona igual en esa visita.
+  6. Evento `landing_origin_set` (`events` + GA4/Pixel) con `zip3` y `result` (`zip` / `san_diego_area` / `off_route`), igual que el quiz guarda `zip3`. Sirve para ver cuántas visitas no son de San Diego.
+- **Consecuencias:** las horas desde otro código son orientativas; nunca mostrarlas sin «≈» ni sin la nota. Si alguien reporta un error grande, no meter correcciones a mano por parque: el arreglo de fondo es una tabla de tiempos reales por carretera (requiere un servicio de rutas). El motor no se toca aquí (ADR-026); si cambia la fórmula upstream, la ruta la hereda.
 
 ## Lecciones técnicas (bugs no obvios)
 

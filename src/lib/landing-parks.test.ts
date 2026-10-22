@@ -6,7 +6,6 @@ import {
   parkShortName,
   parseDriveFromSanDiego,
   shortBestSeason,
-  sortByDriveFromSanDiego,
 } from "./landing-parks";
 
 // Fixtures are real values from destinations (2026-10-22).
@@ -83,24 +82,5 @@ describe("parkShortName", () => {
     expect(parkShortName("Parque Nacional del Gran Cañón")).toBe("Gran Cañón");
     expect(parkShortName("Parque Nacional y Reserva Great Sand Dunes")).toBe("Great Sand Dunes");
     expect(parkShortName("Yosemite")).toBe("Yosemite");
-  });
-});
-
-describe("sortByDriveFromSanDiego", () => {
-  it("puts the nearest first and non-drives last", () => {
-    const parks = [
-      { title: "Parque Nacional Yosemite", difficulty_level: "moderate", drive_time_from_san_diego: "8 horas en coche" },
-      { title: "Parque Nacional Channel Islands", difficulty_level: "easy", drive_time_from_san_diego: "3 horas en coche a Ventura" },
-      { title: "Parque Nacional Death Valley", difficulty_level: "moderate", drive_time_from_san_diego: "6 horas en coche" },
-      { title: "Parque Nacional Joshua Tree", difficulty_level: "easy", drive_time_from_san_diego: "3 horas en coche" },
-      { title: "Parque Nacional Pinnacles", difficulty_level: "easy", drive_time_from_san_diego: "6 horas en coche" },
-    ];
-    expect(sortByDriveFromSanDiego(parks).map((p) => parkShortName(p.title))).toEqual([
-      "Joshua Tree",
-      "Pinnacles",
-      "Death Valley",
-      "Yosemite",
-      "Channel Islands",
-    ]);
   });
 });

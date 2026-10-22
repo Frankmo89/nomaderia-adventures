@@ -277,6 +277,7 @@ Un agente **no** puede completar estos; al sugerir trabajo que dependa de ellos,
 referenciar esta lista primero.
 
 - [x] **[2026-10-22] Aplicada (Claude, con OK de Frank, vía Supabase MCP `apply_migration` «media_slider_admin_select»; probado como admin en transacción con rollback: el update pasa y la foto inactiva sigue visible). Galería Multimedia — aplicar `supabase/migrations/20261022010000_media_slider_admin_select.sql` en el SQL Editor.** Sin esta policy, desactivar una foto en `/admin/galeria` falla («new row violates row-level security policy»; el panel mostraba «Error desconocido»). Es solo un `CREATE POLICY` de lectura para admins; no cambia las 4 policies que ya existen.
+- [ ] **Revisar horas desde San Diego que parecen bajas (hallado 2026-10-22, ADR-041).** Al medir la estimación, cuatro valores de `drive_time_from_san_diego` quedaron muy por debajo: Saguaro «5.5 h», White Sands «9–10 h», Carlsbad Caverns «10–11 h», Guadalupe Mountains «10.5–11 h» (la estimación da 7, 12, 14 y 14 h). Revisar en Google Maps y corregir en `/admin` si hace falta; Saguaro sale segundo en el home.
 - [ ] **Galería Multimedia — policies demasiado abiertas (hallado 2026-10-21, no se tocó).** «Admin Insert», «Admin Update» y «Admin Delete» de `media_slider` dan permiso a **cualquier** usuario `authenticated` (`USING true` / `WITH CHECK true`), no solo a admins. Si el signup público de Supabase Auth está prendido, cualquiera con cuenta podría cambiar o borrar la galería. Arreglo: cambiar las tres a `public.has_role(auth.uid(), 'admin')` (no es aditivo: decisión de Frank). Revisar también las policies del bucket `media_gallery`.
 
 - [ ] **El Pin — Facebook Sharing Debugger (después del deploy de PR #199).** Volver a scrapear `https://nomaderia.com` para que WhatsApp, Facebook e iMessage tomen `og-image.png`.
@@ -716,6 +717,14 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-10-22] **Ruta de parques desde tu código postal (ADR-041).** Frank: «¿y si la persona no es de San Diego?». Nuevo «Desde San Diego · Cambiar» en la sección de parques del home.
+  - La persona escribe su código postal y la ruta se reordena desde ahí, con horas estimadas («≈ 2.5 h», redondeadas hacia arriba) y una nota que dice que son en línea recta. San Diego y su área (≤0.5 h, p. ej. Chula Vista) siguen con las horas reales.
+  - Hawái, territorios y Alaska: mensaje que manda al quiz. Código inexistente o con menos de 5 dígitos: mismo texto de error que el quiz.
+  - Se recuerda en este navegador (`localStorage`, con try/catch). «Volver a San Diego» lo borra.
+  - Código nuevo: `src/lib/landing-origin.ts` (+9 tests); el orden salió de `landing-parks.ts`. `useLandingParks()` ahora también trae `latitude, longitude`. El motor se usa tal cual (`@engine`), sin tocarlo; comparte chunk con el quiz, así que no agrega descarga en el home.
+  - Evento `landing_origin_set` con `zip3` + `result` en `events` y GA4.
+  - **Verificación:** `npm run typecheck` ✅ · `npm test` 276/276 ✅ · `npm run build` ✅ · eslint ✅ · Playwright con build de producción y datos reales: San Diego por defecto; 85004 → Saguaro ≈2.5 h, Petrified Forest ≈3.5 h, Gran Cañón ≈3.5 h; 89101 → Death Valley, Zion, Joshua Tree; 60601, 77002, 80202, 98101, 10001 con orden sensato; 91910 → San Diego; 96813 y 99501 → mensaje; 00000 y 1234 → error; se conserva al recargar; con storage bloqueado sigue funcionando; el carrusel vuelve al inicio al cambiar de origen; el foco regresa a «Cambiar». `typecheck:functions` lo corre CI.
 
 - [2026-10-22] **Parques del home: «ruta + vidrio», el más cercano a San Diego primero (ADR-040).** Frank: «la presentación de los parques está muy básica». Diseño elegido en el canvas («3 + 5»).
   - **Orden.** Antes los 3 parques salían al azar (`useDestinations()` no ordena). Ahora: horas en carro desde San Diego, solo manejos directos. Hoy: Joshua Tree 3 h, Saguaro 5.5 h, Kings Canyon 6 h. Lógica en `src/lib/landing-parks.ts` (10 tests con datos reales); query nueva `useLandingParks()`.
