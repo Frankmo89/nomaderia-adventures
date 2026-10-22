@@ -674,6 +674,8 @@ Pendiente real:
       `srcset`/WebP.
 - [ ] **`StickyMobileCTA.tsx` — posible colisión visual con el control de zoom de Leaflet:** hallazgo del trabajo de `ConciergeLauncher` (julio 2026, ver changelog): el mapa de `TrailsSection` (Leaflet) pinta su control de zoom a `z-index: 1000`, fuera del stacking context del `.leaflet-container` (que es `position: relative` sin `z-index` propio) — verificado con `elementFromPoint` + screenshot a nivel de elemento que esto puede tapar visualmente elementos fijos de página con `z-50` o menos cuando el mapa scrollea a esa zona de la pantalla. `ConciergeLauncher`, el panel de `ConciergeChat` y el scroll-to-top de `Navbar` ya se subieron a `z-[1200]` para evitarlo. `StickyMobileCTA.tsx` (el CTA "Planear con un experto" fijo en la franja inferior de `/destinos/:slug` en mobile) sigue en `z-50` y **no se tocó** en esa tarea por caer bajo la instrucción explícita de no modificar CTAs de WhatsApp en contenido de página — confirmar en producción si el mapa de senderos llega a solaparse con esta barra (depende del alto de cada página) y, si aplica, subirla también a `z-[1200]`.
 
+- [ ] **Navbar en tablet (768–1023 px) se rompe (hallado 2026-10-21, no se tocó).** Los 6 links de desktop salen desde `md:` y a 768 px se parten en dos líneas («Guía / de / Equipo», «Sobre / Nosotros») y tapan el logo. Opciones: mostrar los links desde `lg:` (menú hamburguesa hasta 1023 px) o acortarlos. El hero ya baja sus barras a `md:top-[112px]` para no chocar.
+
 ### Contenido en Supabase (requiere revisión manual en `/admin`)
 - [ ] Auditar cada **destino**: markdown en español, affiliate links funcionales,
       campos completos (`hero_image_url`, `difficulty_level`, `estimated_budget`,
@@ -714,6 +716,14 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-10-21] **Hero: luz dirigida en vez de manta oscura (ADR-039).** Frank: «las fotos se ven muy opacas; el hero tiene que dar ganas de ir». Solo `HeroSection.tsx` + preload de `index.html`.
+  - **Scrim.** Antes: 84% forest sobre toda la foto (#208). Ahora el oscuro va solo donde va el texto, como pide `docs/design-system.md` («nunca una caja plana»). Menos de `lg`: foto limpia arriba del bloque de texto; el oscuro empieza en `--hero-text-top`, que el componente mide del layout real (ResizeObserver), así funciona igual en 375×667 y en 430×932. `lg`+: oscuro a la izquierda hasta el borde de la columna de texto (`--hero-col-right`), mitad derecha limpia. Banda suave arriba para el navbar. Fotos con `saturate(1.15) contrast(1.05)`.
+  - **Orden.** Primera foto: Joshua Tree (02), la de arriba más fuerte en celular y el parque más cercano a SoCal. Preload de `index.html` → `02-*`. LCP `02-1080.avif` = 115 KB (antes 63 KB con 01; ~107 KB con los placeholders).
+  - **Lugar + barras tipo historias.** Chip «Joshua Tree · California» (solo el parque, nunca un sendero sin verificar) y 6 barras que avanzan con la foto; tocar una barra salta a esa foto (`logEvent("hero_photo_select")`). En celular van bajo el navbar (sobre la foto limpia); en desktop, abajo a la derecha. En pantallas bajas (≤740 px de alto) el chip se oculta para no tocar el H1. Con `prefers-reduced-motion`: sin Ken Burns ni autoplay; las barras siguen funcionando.
+  - **Desktop:** H1 `xl:text-7xl` (antes `lg:`) y columna `max-w-xl xl:max-w-2xl`, para que el texto quepa en la mitad oscura a 1024 px.
+  - **Contraste (WCAG AA), medido sin text-shadow:** las 6 fotos × 8 tamaños (375×667 → 1920×1080), pixel a pixel sobre los glifos. Peor pixel: H1 blanco 7.24 · H1 fogata 3.32 (pide 3.0) · subtítulo 8.96 · link FAQ 9.64 · línea TAP 8.03 · chip 4.56 (pide 4.5). 0 fallas.
+  - **Verificación:** `npm run typecheck` ✅ · `npm test` 252/252 ✅ · `npm run build` ✅ · eslint ✅ · Playwright: las barras responden al clic en celular, tablet y desktop.
 
 - [2026-10-21] **Hero con fotos de Frank (ADR-038).** Cierra el pendiente humano «Home hero — reemplazar las 6 fotos placeholder».
   - `public/hero/v2/`: 6 fotos propias de Frank (Grand Canyon, Joshua Tree, Yosemite), 640/1080/1600 en AVIF + WebP. Orden y lista en `public/hero/README.md`. Se borraron las 36 fotos placeholder de `public/hero/`.
