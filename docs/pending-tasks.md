@@ -284,7 +284,6 @@ referenciar esta lista primero.
 - [ ] **Stripe Dashboard — Success URL del Payment Link $49 vivo → `https://nomaderia.com/gracias`.** Link: `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` (no el link retirado de $29). El frontend ya tiene `/gracias`. Sin Success URL, Stripe no redirige tras pagar. No cambiar price/product. Webhook + `orders` (resto de T06) sigue aparte.
 - [ ] **Stripe — desactivar el Payment Link $29 retirado** después del deploy del fix de botones. URL: `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00` ("Acceso de Fundador", alerta Yosemite). El único link vivo es Itinerario Completo $49.
 - [ ] **Stripe branding — El Pin.** Actualizar el logo / marca del checkout de Stripe con El Pin.
-- [ ] **Home hero — reemplazar las 6 fotos placeholder** en `public/hero/sources/01.jpeg`…`06.jpeg` con las tomas finales de Frank, luego `npm run generate:hero` y commit de los AVIF/WebP regenerados. Hasta entonces el hero usa 6 fotos curadas bajadas una vez del bucket Supabase `media_gallery` (no hotlink nps.gov).
 - [ ] **Activar la ingesta RAG por parque (ADR-028) — dos pasos, en este orden.**
       1. **Paso manual en el Dashboard, NO es SQL de la migración:** Supabase
          Dashboard → Vault → nuevo secret con nombre exacto `ingest_knowledge_jwt`
@@ -710,6 +709,14 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-10-21] **Hero con fotos de Frank (ADR-038).** Cierra el pendiente humano «Home hero — reemplazar las 6 fotos placeholder».
+  - `public/hero/v2/`: 6 fotos propias de Frank (Grand Canyon, Joshua Tree, Yosemite), 640/1080/1600 en AVIF + WebP. Orden y lista en `public/hero/README.md`. Se borraron las 36 fotos placeholder de `public/hero/`.
+  - **Carpeta versionada:** `/hero/*` es `immutable` por un año en `_headers`; con los mismos nombres, quien ya visitó vería las fotos viejas. `HERO_BASE` (`HeroSection.tsx`), `HERO_VERSION` (script) y el preload de `index.html` apuntan a `/hero/v2/`.
+  - `scripts/generate-hero-images.mjs`: `blur(0.8)` antes de comprimir, AVIF q50 4:2:0 (antes q55 4:4:4), WebP q65 (antes q68). Las fotos son verticales 3:4 y tienen el doble de píxeles que las anteriores; sin esto el set pesaba 5.6 MB (06-1600.avif = 849 KB).
+  - **Pesos:** foto LCP `01-1080.avif` **63 KB** (antes 107 KB). Set AVIF 1080: 632 KB (antes ~518 KB). Set AVIF 1600: 1.3 MB (lo baja un celular DPR 3; las fotos 02–06 cargan después de `requestIdleCallback`, no bloquean el LCP).
+  - Slideshow, Ken Burns, crossfade, máscara, scrim y copy sin cambios. Se combina sin conflictos con `feat/hero-slogan` (#208).
+  - **Verificación:** `npm run typecheck` ✅ · `npm test` 249/249 ✅ · `npm run build` ✅ · `vite preview` + Playwright a 390×844 (DPR 3) y 1440×900: las 6 fotos responden 200 desde `/hero/v2/` y rotan cada 5 s. `typecheck:functions` lo corre CI (no se tocó `supabase/functions`).
 
 - [2026-10-08] **Limpieza de contenido de blog y gear (decisiones de Frank, aplicada por SQL en vivo).**
   Despublicados (siguen en la DB): historias presentadas como reales que no lo

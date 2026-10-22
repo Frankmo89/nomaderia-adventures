@@ -12,7 +12,11 @@ import sharp from "sharp";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const sourcesDir = path.join(root, "public/hero/sources");
-const outDir = path.join(root, "public/hero");
+// /hero/* is cached `immutable` for a year (public/_headers). New photos MUST
+// land in a new folder, or returning visitors keep the old ones. Bump this
+// together with HERO_BASE in HeroSection.tsx and the preload in index.html.
+const HERO_VERSION = "v2";
+const outDir = path.join(root, "public/hero", HERO_VERSION);
 const WIDTHS = [640, 1080, 1600];
 
 async function main() {
@@ -38,22 +42,26 @@ async function main() {
     const img = sharp(input).rotate(); // honor EXIF
     for (const w of WIDTHS) {
       const base = path.join(outDir, `${id}-${w}`);
+      // blur(0.8) drops sensor noise (phone shots of snow, trees) and halves
+      // the bytes; it is not visible behind the scrim + Ken Burns zoom.
       await img
         .clone()
         .resize({ width: w, withoutEnlargement: true })
-        .avif({ quality: 55, effort: 4 })
+        .blur(0.8)
+        .avif({ quality: 50, effort: 4, chromaSubsampling: "4:2:0" })
         .toFile(`${base}.avif`);
       count++;
       await img
         .clone()
         .resize({ width: w, withoutEnlargement: true })
-        .webp({ quality: 68, effort: 4 })
+        .blur(0.8)
+        .webp({ quality: 65, effort: 4 })
         .toFile(`${base}.webp`);
       count++;
     }
     console.log(`✓ ${id} → ${WIDTHS.join(", ")}px (avif+webp)`);
   }
-  console.log(`Done. Generated ${count} files in public/hero/`);
+  console.log(`Done. Generated ${count} files in public/hero/${HERO_VERSION}/`);
 }
 
 main().catch((err) => {

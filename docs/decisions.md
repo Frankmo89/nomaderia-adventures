@@ -645,6 +645,13 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Decisión:** El pin se lee como "te llevamos a un lugar", funciona a tamaño favicon y conserva nomaderIA con `IA` en fogata. Slogan: "Aquí nadie se pierde… nomás se encuentra." Archivos en `public/` y `docs/brand.md`.
 
 
+### ADR-038 — Fotos del hero en carpeta versionada (`/hero/vN/`)
+- **Fecha:** 2026-10-21
+- **Estado:** Vigente.
+- **Contexto:** `public/_headers` sirve `/hero/*` con `Cache-Control: public, max-age=31536000, immutable`. Al cambiar las 6 fotos placeholder por las de Frank con los mismos nombres (`01-1080.avif`…), el navegador de quien ya visitó no vuelve a pedirlas durante un año.
+- **Decisión:** cada set de fotos vive en una carpeta nueva (`/hero/v2/`, luego `v3`…). Tres lugares se mueven juntos: `HERO_VERSION` en `scripts/generate-hero-images.mjs`, `HERO_BASE` en `HeroSection.tsx` y el preload de la foto 01 en `index.html`. El set anterior se borra en el mismo commit. La regla `immutable` de `_headers` no cambia.
+- **Consecuencias:** cambiar fotos no requiere purgar caché en Cloudflare. Si alguien cambia una foto sin subir la versión, el cambio no llega a visitantes que ya tienen la vieja en caché: el README de `public/hero/` lo explica.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
