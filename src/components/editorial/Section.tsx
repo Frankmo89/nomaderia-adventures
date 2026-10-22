@@ -8,6 +8,8 @@ interface SectionProps {
   className?: string;
   innerClassName?: string;
   variant?: SectionVariant;
+  /** Optional anchor id (e.g. "faq" for /#faq links). */
+  id?: string;
 }
 
 const variantClasses: Record<SectionVariant, string> = {
@@ -16,9 +18,9 @@ const variantClasses: Record<SectionVariant, string> = {
   walnut: "bg-walnut text-[#FAFAFA]",
 };
 
-const Section = ({ children, className, innerClassName, variant = "default" }: SectionProps) => {
+const Section = ({ children, className, innerClassName, variant = "default", id }: SectionProps) => {
   return (
-    <section className={cn("section-editorial", variantClasses[variant], className)}>
+    <section id={id} className={cn("section-editorial", variantClasses[variant], className)}>
       <div className={cn("container mx-auto px-5", innerClassName)}>{children}</div>
     </section>
   );

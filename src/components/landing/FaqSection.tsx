@@ -62,7 +62,7 @@ const FaqSection = () => {
   );
 
   return (
-    <Section className="relative overflow-hidden bg-cloud py-16 sm:py-24">
+    <Section id="faq" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
       <JsonLd data={faqJsonLd} />
       <div className="mx-auto max-w-2xl">
         <Reveal className="mb-10 text-center sm:mb-14">

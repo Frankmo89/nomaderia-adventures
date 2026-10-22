@@ -12,6 +12,20 @@
 
 ---
 
+## Changelog 2026-10-16 — Hero del home: slogan + CTA al quiz (rama `feat/hero-slogan`)
+
+- [x] **[2026-10-16] Hero con el slogan de marca.** Solo `src/components/landing/HeroSection.tsx`. H1 «Aquí nadie se pierde… / *nomás se encuentra.*» (U+2026; misma tipografía, la 2.ª línea en el ámbar itálico que tenía «Aventura»). Subtítulo: «Te armo tu viaje a un parque nacional: ruta día por día, equipo y presupuesto, a tu nivel. $49.» (sin «Todo en español.»).
+- [x] **CTAs.** Botón principal naranja `bg-hero-accent` (#D97706) «Encuentra tu parque →» → `/#quiz` (mismo destino que el navbar «Descubre Tu Aventura»; no hay ruta `/quiz`, el quiz es la sección `#quiz` del home). Se quitó «Explorar Destinos»: el navbar ya enlaza `/destinos` en desktop y en el menú móvil.
+- [x] **Link de dudas sin WhatsApp (follow-up, mismo PR).** Frank: WhatsApp es solo para clientes que ya pagaron (ADR-030). Antes de comprar, las dudas las responde el asistente IA. El asistente **no está en producción**: en el bundle vivo de nomaderia.com (`App--Wy7oWUV.js`), `isConciergeEnabled` compila a `function Br(e=void 0){…}`, o sea que el build no trae `VITE_CONCIERGE_ENABLED` y el launcher no se monta. Por eso el hero usa la alternativa: link de texto «¿Dudas? Lee las preguntas frecuentes» → `/#faq` (`min-h-[44px]`). Se añadió `id="faq"` a `FaqSection` (prop `id` opcional nueva en `src/components/editorial/Section.tsx`; el contenido del FAQ no cambió). Se quitaron del hero el link de WhatsApp y su evento GA `cta_itinerario_whatsapp_click`. No se tocaron el flag, su default, `PrePurchaseDoubt.tsx` ni el concierge.
+- [x] **Tracking.** `logEvent("hero_cta_click", { cta: "quiz" | "faq" })` (`src/lib/events.ts`, tabla `events`).
+- [x] **[2026-10-16] Logo y H1 conectados (follow-up, mismo PR).**
+  - **Un solo color cálido.** La línea 2 del H1 pasó de dorado `#FCD34D` a fogata `#D97706`, el `fill` exacto de «IA» en `public/brand/nomaderia-horizontal*.svg` (lo mismo dice `docs/brand.md`). El botón usa el token `--hero-accent: 32 95% 44%`, que renderiza ≈`#DB7706`, y no se tocó.
+  - **Scrim más oscuro para cumplir AA texto grande (≥3:1).** Antes era `transparent 40% → rgba(10,25,10,0.6) 70% → 0.88`, con un peor caso de ≈1.0:1. Ahora es `rgba(10,25,10,0.3) 0% → 0.84 24% → 0.84 75% → 0.92 100%`. Medido pixel a pixel detrás de la línea 2 (sin text-shadow), en las 6 fotos de la rotación a 375×667, 375×812, 768×1024, 1280×800 y 1440×900: el peor pixel da **3.54:1**. Precio: las fotos se ven más oscuras.
+  - **Un solo borde izquierdo.** El contenido del hero usa la misma caja que el navbar (`container mx-auto px-5`): logo, H1, subtítulo, botón, link FAQ y línea de confianza quedan en x=20 px a 375, 768 y 1280, y en x=40 px a 1440.
+  - **Línea de confianza.** Se quitó la píldora gris de arriba del H1. Ahora va debajo del link del FAQ, en una sola línea `text-white/80` con escudo: «Agente de Viajes Certificado (TAP) · Itinerario en menos de 48 h».
+  - **ADR-032 actualizado:** WhatsApp solo para clientes que ya pagaron; coincide con ADR-030.
+- **Verificación:** `npm run typecheck`, `tsc --noEmit`, `npm run typecheck:functions`, `npm run build`, `npm test` (249/249) y eslint en los archivos tocados. Playwright a 375×667 y 375×812: H1, subtítulo, botón y link caben en la primera pantalla (a 375×667 el link de dudas termina en y≈500 px). El clic lleva a `/#faq` y la sección queda arriba.
+
 ## Changelog 2026-10-05 (noche): tarifas como datos, diversidad, tarjeta de producto, regla estricta (PR #204, draft, ADR-037)
 
 Rama `feat/concierge-flag-exam`. No se mergeó nada y `VITE_CONCIERGE_ENABLED` sigue apagado. No se tocó Stripe, auth, rutas ni las queries/RPC (`match_knowledge_chunks` sigue igual, con 8 y 0.4). La abstención y el candado de cifras no cambian.
@@ -265,7 +279,7 @@ referenciar esta lista primero.
 - [ ] **El Pin — Facebook Sharing Debugger (después del deploy de PR #199).** Volver a scrapear `https://nomaderia.com` para que WhatsApp, Facebook e iMessage tomen `og-image.png`.
 - [ ] **El Pin — iPhone Safari, pestaña privada (después del deploy).** Confirmar favicon y el logo del navbar (sobre el hero y ya scrolleado).
 - [ ] **El Pin — fotos de perfil.** Cambiar la foto en Instagram, Facebook, TikTok y WhatsApp Business (los PNG están en el kit, carpeta `redes/` / `logos/`, no en el repo).
-- [ ] **Copy follow-up (PR aparte, no este).** El Hero "Tu Concierge de Aventuras en Español" y otros taglines con "primer/primera" y "en español" chocan con `docs/brand.md` (no usar "tu primer parque" ni "en español" en titulares). No se tocó en #199.
+- [ ] **Copy follow-up (PR aparte, no este).** El Hero "Tu Concierge de Aventuras en Español" y otros taglines con "primer/primera" y "en español" chocan con `docs/brand.md` (no usar "tu primer parque" ni "en español" en titulares). No se tocó en #199. **[2026-10-16] Hero del home: hecho** (`feat/hero-slogan`). Quedan las frases de abajo («Copy / share previews» → «Frases viejas fuera del hero»).
 
 - [ ] **Stripe Dashboard — Success URL del Payment Link $49 vivo → `https://nomaderia.com/gracias`.** Link: `https://buy.stripe.com/28EaEX2Nc4nZ5vS3I6aAw01` (no el link retirado de $29). El frontend ya tiene `/gracias`. Sin Success URL, Stripe no redirige tras pagar. No cambiar price/product. Webhook + `orders` (resto de T06) sigue aparte.
 - [ ] **Stripe — desactivar el Payment Link $29 retirado** después del deploy del fix de botones. URL: `https://buy.stripe.com/00w9AT9bA2fR8I4bayaAw00` ("Acceso de Fundador", alerta Yosemite). El único link vivo es Itinerario Completo $49.
@@ -615,6 +629,28 @@ Pendiente real:
 - [x] **Claims AI / números.** ConciergeLauncher desmontado de `App.tsx`; Preview IA oculto en quiz (se conserva ranking top-3 + “% compatible”). “63 parques” se mantiene. SocialProof oculto (sin clientes reales aún). “100%” solo donde dice “100% en español”. TAP / The Travel Institute se mantiene.
 - [ ] **Mercado México en CMS (humano).** SQL listo en `docs/sql/draft-mexico-blog-posts.sql` (4 posts → `is_published=false`). Frank debe correrlo en SQL Editor. Orphan `DidYouKnowSection` aún tiene copy México/CDMX si se remonta.
 - [ ] **Handle redes `@nomaderia.mx`.** Footer/JSON-LD apuntan Instagram/TikTok `.mx` mientras el producto es EE. UU. — confirmar branding intencional.
+
+- [ ] **Frases viejas fuera del hero (encontradas 2026-10-16, no se tocaron).** Hay que decidir el copy con Frank (`docs/brand.md` §Slogan):
+  - Correos (Edge Functions, hay que desplegarlas después): «Tu Primera Aventura Te Está Esperando» en `supabase/functions/send-quiz-email/index.ts:106`, `send-quiz-results/index.ts:91`, `send-welcome-email/index.ts:130` y `send-drip-emails/index.ts:66,166`.
+  - Prompts IA: «Todo en español.» en `supabase/functions/generate-blog-draft/index.ts:183`, `generate-gear-draft/index.ts:180` y `discover-permit-windows/index.ts:83`. Es una instrucción interna al modelo, no copy visible; probablemente se queda.
+  - Sitio: «Planear tu primer parque no debería sentirse así» (`src/components/landing/PainContrast.tsx:84`); «todo en español» (`src/components/landing/FaqSection.tsx:23`); «tu primera aventura» (`src/pages/BlogListing.tsx:34,41,56`, `src/pages/BlogPostDetail.tsx:196`, `src/pages/SobreNosotros.tsx:44`, `src/components/landing/BlogPreview.tsx:82`).
+  - Relacionado (no es match exacto): la meta description del home en `src/pages/Index.tsx` termina en «En español.». `index.html` (title/description/OG/Twitter) no tiene ninguna de las frases y no hay Pages Functions (`functions/`) que sobreescriban el OG.
+  - El navbar todavía dice «Descubre Tu Aventura» (CTA al quiz, desktop y móvil). No es una frase prohibida, pero ya no va con el slogan. El nav quedó fuera de alcance en este PR.
+
+- [ ] **FRANK — fuente del H1 del hero (decisión pendiente).** Se comparó Playfair Display (actual, commiteado) con Oswald 700 (la fuente del logo). Los screenshots se compartieron en el chat. Oswald solo carga 500 y 600 (no bloqueante, en `index.html`). Si Frank elige Oswald, hay que cargar el peso 700 en el request crítico de fuentes (ojo con el LCP del H1) y cambiar `font-serif` → `font-condensed` en el H1. `docs/design-system.md` dice que Playfair va en secciones claras y Oswald sobre fotos, así que hay que actualizar ese doc en el mismo PR.
+- [ ] **Hero desktop: el H1 se parte en 3 líneas.** A 1280 px, «Aquí nadie se pierde…» se parte en dos por `max-w-2xl` + `lg:text-7xl`. Decidir con Frank si se ensancha la columna o se baja el tamaño.
+- [ ] **Point the Hero doubts link to the AI assistant once it passes the exam.** Cuando Frank prenda `VITE_CONCIERGE_ENABLED=true` en Cloudflare Pages (después de aceptar `eval/report.md`, ADR-035), cambiar el link del hero de «¿Dudas? Lee las preguntas frecuentes» (`/#faq`) a «¿Dudas? Pregúntale a nuestro asistente», con `openConcierge("hero_dudas")` de `@/lib/open-concierge` y `logEvent("hero_cta_click", { cta: "assistant" })`.
+- [ ] **Links a WhatsApp que un visitante ve antes de pagar (encontrados 2026-10-16, no se tocaron).** Chocan con ADR-030 («WhatsApp solo para clientes que ya pagaron»). ADR-032 todavía dice «WhatsApp = dudas / post-pago»: hay que alinear esa ADR con Frank. Con el flag apagado (producción), cada `PrePurchaseDoubtLink`/`PrePurchaseDoubtButton` pinta «¿Dudas? Escríbenos» → `wa.me` (`src/components/PrePurchaseDoubt.tsx:58,97`, URL `QUESTIONS_WHATSAPP_URL` en `src/config/pricing.ts:50`):
+  - `src/pages/Servicios.tsx:206` (hero de /servicios, botón) y `:331` (tarjeta de producto)
+  - `src/components/landing/PremiumItinerarySection.tsx:235` (home y /destinos/:slug)
+  - `src/components/landing/PainContrast.tsx:151` (home)
+  - `src/components/landing/QuizSection.tsx:590` (resultados del quiz)
+  - `src/pages/DestinationDetail.tsx:957` (sidebar de reserva)
+  - `src/components/StickyMobileCTA.tsx:45` (barra fija móvil en /destinos/:slug)
+  - `src/components/ArticleWhatsAppCTA.tsx:49` (blog posts y /destinos/:slug)
+  - `src/components/destinations/ParkAlertsBanner.tsx:93` («Pregúntame por WhatsApp»)
+  - Correo a leads del quiz (todavía no pagaron): `supabase/functions/send-quiz-email/index.ts:89,189` «¿Dudas antes de comprar? Escríbenos por WhatsApp». Hay que desplegar la función después.
+  - Texto sin link: el FAQ del home (`FaqSection.tsx:43`) dice «escríbenos por WhatsApp» y `PRE_PURCHASE_DOUBT_COPY` («WhatsApp antes de comprar es solo para dudas.») sale en /privacidad, /terminos y en los resultados del quiz.
 
 ### Calidad / mantenimiento (tareas separadas)
 - [ ] **Mapa interactivo real en /destinos — sigue diferido (research Mobbin, reconfirmado 2026-07):** el tinte decorativo por estado ya se implementó ([2026-07] `USStateTintMap`, ver changelog) en el slot `children` de `PageHeader` — sin pines, sin coordenadas, plano. `useDestinationsMapData()` en `src/hooks/use-destinations.ts` sigue **sin usarse**, expuesto tal cual (`{id, title, slug, region, difficulty_level, latitude, longitude}`, 63/63 destinos con `latitude`/`longitude` pobladas) para el día que se justifique un mapa interactivo real tipo Airbnb (tiles + lista sincronizada). Research de Mobbin reconfirmado: ningún competidor premium usa mapa ilustrado estático con 60+ pines individuales a este nivel de densidad — no construir esa variante. Si el mapa interactivo se justifica por datos de conversión, ir directo a esa implementación (Mapbox/Leaflet + `useDestinationsMapData()`) en vez de una capa intermedia de pines. `parseNpsLatLong()` en `src/lib/parse-nps-lat-long.ts` (con tests) queda como utilidad documentada/fallback para ese trabajo futuro, sin usarse hoy.
