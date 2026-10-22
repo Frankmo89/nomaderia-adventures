@@ -741,3 +741,11 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   sin que nada fallara. Fix: resolver el slug desde `destinations` por
   `park_code` (ADR-029). Lección: un campo vacío que "nunca falla" puede ser un
   bug silencioso — contrastar el contrato documentado contra la DB real.
+- **tailwind-merge borra colores junto a utilidades propias `text-*`:** `cn()`
+  pasa todo por tailwind-merge, que lee cualquier `text-<algo>` desconocido como
+  color de texto. `cn("text-white/90 text-shadow-hero")` devolvía solo
+  `text-shadow-hero`, y los links del navbar quedaban oscuros sobre el hero
+  sin que nada fallara. Fix: registrar la utilidad como grupo propio con
+  `extendTailwindMerge` en `src/lib/utils.ts` (test en `utils.test.ts`).
+  Lección: toda clase propia con prefijo de Tailwind (`text-`, `bg-`, `shadow-`)
+  que pase por `cn()` necesita su grupo en esa config.
