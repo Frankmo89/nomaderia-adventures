@@ -662,6 +662,19 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   3. El contraste se mide, no se estima: por cada foto y tamaño de pantalla, captura con el texto transparente (fondo) y con el texto magenta (máscara de glifos), sin text-shadow, y se calcula el contraste WCAG en cada pixel de glifo. Umbrales: H1 ≥3:1 (texto grande), el resto ≥4.5:1. Resultado 2026-10-21: 0 fallas en 6 fotos × 8 tamaños; peor pixel del H1 fogata 3.32.
 - **Consecuencias:** al cambiar fotos u orden, repetir la medición (sobre todo fotos con nieve o cielo blanco). Si una foto falla, subir el oscuro en ese tramo o cambiar el orden; no volver a la manta uniforme.
 
+### ADR-040 — Parques en la landing: «ruta + vidrio», ordenados por distancia desde San Diego
+- **Fecha:** 2026-10-22
+- **Estado:** Vigente. Reemplaza las pestañas por dificultad de `DestinationsCatalog`.
+- **Contexto:** Frank vio las tarjetas de parques «muy básicas». Además había dos bugs: `useDestinations()` no ordena, así que los 3 parques del home salían al azar, y la fila de abajo de las tarjetas se cortaba (cuerpo `h-full` dentro de una tarjeta `h-full` con `overflow-hidden`). Frank eligió el diseño «3 + 5» del canvas: ruta punteada desde San Diego + tarjetas de foto con panel de vidrio.
+- **Decisión:**
+  1. Los parques salen por horas en carro desde San Diego (`drive_time_from_san_diego`), el más cercano primero; empates por nivel y luego A–Z. Solo cuenta un manejo directo: «3 horas en coche a Ventura» (Channel Islands, luego barco), «Sin carretera…» y «Vuelo vía…» no entran a la ruta. El parseo y las etiquetas viven en `src/lib/landing-parks.ts` (con test sobre valores reales); si un dato no se lee limpio, la etiqueta no sale en vez de inventarla. Hoy (63 publicados): Joshua Tree 3 h, Saguaro 5.5 h, Kings Canyon 6 h.
+  2. Query nueva `useLandingParks()` en `use-destinations.ts`; `useDestinations()` no se tocó.
+  3. Celular: carrusel horizontal con snap; desktop (`lg`): 3 columnas bajo una sola ruta. Cada tarjeta es un solo link a la guía (nombre accesible = «Ver guía de X»).
+  4. Vidrio: panel `forest-dark` 70% + blur 16 px; pill de nivel 65% + blur 12 px; sin `backdrop-filter`, 85%. Contraste en el peor caso (foto blanca detrás, sin contar el blur): texto del panel 5.9:1, línea del estado (90%) 5.2:1, pill 5.0:1. Todo ≥4.5.
+  5. Sin fogata (#D97706): el canvas la usaba en el eyebrow y en los puntos de la ruta; en código van `cloud` y `green` (regla: fogata solo en el Hero).
+  6. Sin filtros. El canvas de desktop traía «Más cerca / Fácil / Sin permiso / Con niños», pero los 3 más cercanos pasan los cuatro: los botones no cambiarían nada. Los filtros viven en `/destinos`.
+- **Consecuencias:** si cambia el formato de `drive_time_from_san_diego`, revisar `parseDriveFromSanDiego` (un parque que no se lee sale de la ruta, no rompe). Para filtros en el home, que filtren por algo que cambie las 3 tarjetas (p. ej. tramos de horas), no por atributos que los cercanos ya cumplen.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
@@ -775,3 +788,11 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   `src/lib/hero-routes.ts` con test y un comentario de por qué cada ruta está o
   no está. Lección: si una página cambia lo que hay arriba (foto, banda oscura,
   `pt-*`), revisar `hero-routes.ts` en el mismo PR.
+- **Scroll snap: un área de snap más ancha que la pantalla deja frenar en cualquier lado:**
+  en el carrusel de parques, `snap-start` en el contenedor de toda la pista
+  (1228 px en un celular de 390) hacía que Chrome se detuviera a 14 px de la
+  tarjeta (scroll 348 en vez de 362). Además, la tarjeta final con `snap-start`
+  quedaba fuera del rango de scroll y nunca se veía entera. Fix: el primer
+  punto de snap es el nodo «San Diego» (chico) y la tarjeta final usa
+  `snap-end` con `scroll-px-5`. Lección: probar el snap con `scrollTo` y leer
+  `scrollLeft`; a ojo parece bien.
