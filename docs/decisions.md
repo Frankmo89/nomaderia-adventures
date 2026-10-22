@@ -749,3 +749,12 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   `extendTailwindMerge` en `src/lib/utils.ts` (test en `utils.test.ts`).
   Lección: toda clase propia con prefijo de Tailwind (`text-`, `bg-`, `shadow-`)
   que pase por `cn()` necesita su grupo en esa config.
+- **RLS: un `UPDATE` desde PostgREST también pasa por las policies de `SELECT`:**
+  PostgREST arma `UPDATE … RETURNING`, y con `RETURNING` Postgres exige que la
+  fila **nueva** pase una policy de lectura. En `media_slider` la única lectura
+  era `is_active = true`, así que poner `is_active = false` fallaba con «new row
+  violates row-level security policy» (el patrón "soft delete" de siempre).
+  Fix: policy de lectura para admins (`has_role`). Lección: si una columna
+  esconde filas en la policy pública, quien edita esa columna necesita su
+  propia policy de lectura. Y en un `catch`, un error de Supabase no es
+  `instanceof Error`: usar `errorMessage()` de `src/lib/error-message.ts`.

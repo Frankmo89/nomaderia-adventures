@@ -17,6 +17,7 @@ import {
 } from "@/hooks/use-media";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { errorMessage } from "@/lib/error-message";
 import {
   DndContext,
   type DragEndEvent,
@@ -195,7 +196,7 @@ const AdminGallery = () => {
       toast({ title: "Archivo subido correctamente" });
       load();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error desconocido";
+      const msg = errorMessage(err);
       toast({ title: "Error al subir", description: msg, variant: "destructive" });
     } finally {
       setUploading(false);
@@ -208,7 +209,7 @@ const AdminGallery = () => {
       await toggleMediaActive(id, currentActive);
       setItems((prev) => prev.map((i) => i.id === id ? { ...i, is_active: !currentActive } : i));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error desconocido";
+      const msg = errorMessage(err);
       toast({ title: "Error", description: msg, variant: "destructive" });
     }
   };
@@ -219,7 +220,7 @@ const AdminGallery = () => {
       toast({ title: "Archivo eliminado" });
       load();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error desconocido";
+      const msg = errorMessage(err);
       toast({ title: "Error al eliminar", description: msg, variant: "destructive" });
     }
   };
