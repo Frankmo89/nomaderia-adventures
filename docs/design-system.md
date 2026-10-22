@@ -150,7 +150,8 @@ Hacerlos sentir intencionales, no clip-art decorativo:
 Variante oscura de 4.1, solo para la sección «¿A cuántas horas está tu próximo parque?» sobre `forest-dark`.
 - **Forma:** foto a todo lo alto (500 px celular, 540 px desktop), radio 24 px. Panel de vidrio abajo, a 10–12 px de los bordes, radio 18 px.
 - **Vidrio:** `forest-dark` al 70% + `backdrop-blur-lg`, borde 1 px `cloud/20`. Pill de nivel al 65% + `backdrop-blur-md`. Sin soporte de `backdrop-filter`: 85% sin blur. Texto blanco ≥4.5:1 aunque la foto sea blanca; no bajar estas opacidades sin volver a medir.
-- **Tipo:** nombre del parque y título de la sección en Oswald (regla de pareo: Oswald sobre oscuro). Datos en Inter 600 con íconos de línea 18 px.
+- **Tipo:** nombre del parque y título de la sección en Oswald (regla de pareo: Oswald sobre oscuro). Datos en Inter 600 con íconos de línea 18 px; bajo 380 px de ancho bajan a 13 px con íconos de 16 px para que días y entrada quepan en una fila.
+- **«No te pierdas»:** debajo de los datos, tras una línea `cloud/20`: etiqueta Oswald mayúsculas con estrella y la frase de `signature_experience` en Inter 400.
 - **Ruta:** línea punteada `cloud/35`, nodo de inicio `cloud`, nodos de parque `green` con borde `cloud` de 3 px. Nada en fogata.
 - **CTA:** pill `cloud` con texto `ink` («Ver guía →»; desde `xl`, «Ver guía de X →»). Toda la tarjeta es el link.
 - **Origen (ADR-041):** al lado del eyebrow, pill chico «📍 Cambiar» (borde `cloud/30`, 32 px de alto, área de toque de 48 px). Abre un formulario en línea: etiqueta visible, campo de código postal en pill (`cloud/10`) y botón `cloud` «Ver mi ruta». Las horas estimadas llevan «≈» y una nota `cloud/80` bajo la ruta; las reales desde San Diego van sin «≈».

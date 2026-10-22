@@ -108,7 +108,7 @@ export interface LandingPark {
   entrance_fee_usd: number | null;
   entrance_fee_type: string | null;
   requires_permit: boolean | null;
-  signature_hikes: unknown;
+  signature_experience: string | null;
   latitude: number | null;
   longitude: number | null;
 }
@@ -127,7 +127,7 @@ export function useLandingParks() {
       const { data, error } = await supabase
         .from("destinations")
         .select(
-          "id, title, slug, region, difficulty_level, days_needed, hero_image_url, drive_time_from_san_diego, best_season, entrance_fee_usd, entrance_fee_type, requires_permit, signature_hikes, latitude, longitude"
+          "id, title, slug, region, difficulty_level, days_needed, hero_image_url, drive_time_from_san_diego, best_season, entrance_fee_usd, entrance_fee_type, requires_permit, signature_experience, latitude, longitude"
         )
         .eq("is_published", true);
       if (error) throw error;

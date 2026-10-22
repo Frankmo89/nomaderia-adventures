@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   daysLabel,
   entranceFeeLabel,
-  firstEasyTrail,
+  highlightLine,
   parkShortName,
   parseDriveFromSanDiego,
   shortBestSeason,
@@ -57,22 +57,14 @@ describe("daysLabel", () => {
   });
 });
 
-describe("firstEasyTrail", () => {
-  it("takes the first kid-friendly hike", () => {
-    const hikes = [
-      { nombre: "Bright Angel Trail", distancia_km: 15.6, tipo: "ida y vuelta", apto_ninos: false },
-      { nombre: "Rim Trail", distancia_km: 21, tipo: "ida y vuelta", apto_ninos: true },
-    ];
-    expect(firstEasyTrail(hikes)).toBe("Rim Trail, 21 km ida y vuelta");
-    expect(firstEasyTrail([{ nombre: "Hidden Valley Nature Trail", distancia_km: 1.6, tipo: "circuito", apto_ninos: true }])).toBe(
-      "Hidden Valley Nature Trail, 1.6 km en circuito",
+describe("highlightLine", () => {
+  it("keeps the sentence as written, on one line", () => {
+    expect(highlightLine("El cielo estrellado desde Cholla Cactus Garden — cero contaminación lumínica.")).toBe(
+      "El cielo estrellado desde Cholla Cactus Garden — cero contaminación lumínica.",
     );
-  });
-
-  it("leaves out the distance when it is 0 and returns null when none fits", () => {
-    expect(firstEasyTrail([{ nombre: "Tour en barco", distancia_km: 0, tipo: "ida y vuelta", apto_ninos: true }])).toBe("Tour en barco");
-    expect(firstEasyTrail([{ nombre: "Angels Landing", apto_ninos: false }])).toBeNull();
-    expect(firstEasyTrail(null)).toBeNull();
+    expect(highlightLine("  Ver el atardecer\n entre cactus  ")).toBe("Ver el atardecer entre cactus");
+    expect(highlightLine("   ")).toBeNull();
+    expect(highlightLine(null)).toBeNull();
   });
 });
 
