@@ -64,28 +64,14 @@ export function daysLabel(raw: string | null | undefined): string | null {
   return raw.trim().replace(/(\d)\s*-\s*(\d)/g, "$1–$2");
 }
 
-interface Hike {
-  nombre?: unknown;
-  distancia_km?: unknown;
-  tipo?: unknown;
-  apto_ninos?: unknown;
-}
-
 /**
- * The first hike marked kid-friendly, as one line:
- * "Hidden Valley Nature Trail, 1.6 km en circuito". None marked → null.
+ * The park's one must-do moment (destinations.signature_experience), trimmed
+ * and on one line: "El cielo estrellado desde Cholla Cactus Garden — …".
+ * Shown under a "No te pierdas" label, so its own capital letter stays.
  */
-export function firstEasyTrail(hikes: unknown): string | null {
-  if (!Array.isArray(hikes)) return null;
-  const hike = (hikes as Hike[]).find(
-    (h) => h && (h.apto_ninos === true || h.apto_ninos === "true") && typeof h.nombre === "string",
-  );
-  if (!hike) return null;
-  const name = String(hike.nombre).trim();
-  const km = Number(hike.distancia_km);
-  const kind = hike.tipo === "circuito" ? "en circuito" : hike.tipo === "ida y vuelta" ? "ida y vuelta" : "";
-  if (!Number.isFinite(km) || km <= 0) return name;
-  return `${name}, ${km} km${kind ? ` ${kind}` : ""}`;
+export function highlightLine(raw: string | null | undefined): string | null {
+  const text = raw?.replace(/\s+/g, " ").trim();
+  return text ? text : null;
 }
 
 /**

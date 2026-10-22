@@ -718,6 +718,8 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-10-22] **Tarjetas de parques del home: «No te pierdas» en vez de «Primer sendero» (ADR-040 punto 7).** Frank: «la información de primer sendero no tiene sentido». Ahora cada tarjeta dice qué no perderse, con `signature_experience` (p. ej. Joshua Tree: «El cielo estrellado desde Cholla Cactus Garden — cero contaminación lumínica.»). `useLandingParks()` pide `signature_experience` en vez de `signature_hikes`; `firstEasyTrail` se borró y entró `highlightLine` (con test). Bajo 380 px los datos bajan a 13 px para que días y entrada quepan en una fila: en 360 px se ven 170 px de foto arriba del panel (119 px sin el ajuste; 139 px con «Primer sendero»). **Verificación:** `npm run typecheck` ✅ · `npm test` 275/275 ✅ · `npm run build` ✅ · eslint ✅ · Playwright a 360, 390, 1024 y 1280 px: el panel cabe en todas.
+
 - [2026-10-22] **Ruta de parques desde tu código postal (ADR-041).** Frank: «¿y si la persona no es de San Diego?». Nuevo «Desde San Diego · Cambiar» en la sección de parques del home.
   - La persona escribe su código postal y la ruta se reordena desde ahí, con horas estimadas («≈ 2.5 h», redondeadas hacia arriba) y una nota que dice que son en línea recta. San Diego y su área (≤0.5 h, p. ej. Chula Vista) siguen con las horas reales.
   - Hawái, territorios y Alaska: mensaje que manda al quiz. Código inexistente o con menos de 5 dígitos: mismo texto de error que el quiz.

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, Car, Footprints, Loader2, MapPin, Sun, Ticket, type LucideIcon } from "lucide-react";
+import { CalendarDays, Car, Loader2, MapPin, Star, Sun, Ticket, type LucideIcon } from "lucide-react";
 import Reveal from "@/components/editorial/Reveal";
 import { CardImage } from "@/components/shared/CardImage";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { trackEvent } from "@/lib/analytics";
 import { logEvent } from "@/lib/events";
 import { formatRegionDisplay } from "@/lib/regions";
 import { resizedImageUrl } from "@/lib/resized-image";
-import { daysLabel, entranceFeeLabel, firstEasyTrail, parkShortName, shortBestSeason } from "@/lib/landing-parks";
+import { daysLabel, entranceFeeLabel, highlightLine, parkShortName, shortBestSeason } from "@/lib/landing-parks";
 import {
   SAN_DIEGO_ORIGIN,
   isOffRouteZip,
@@ -57,7 +57,7 @@ interface RouteStop {
   state: string;
   level: string | null;
   facts: { icon: LucideIcon; text: string; wide?: boolean }[];
-  trail: string | null;
+  highlight: string | null;
 }
 
 function toRouteStop(park: LandingPark, drive: DriveFromOrigin): RouteStop {
@@ -75,7 +75,7 @@ function toRouteStop(park: LandingPark, drive: DriveFromOrigin): RouteStop {
     state: formatRegionDisplay(park.region),
     level: LEVEL_LABEL[park.difficulty_level] ?? null,
     facts,
-    trail: firstEasyTrail(park.signature_hikes),
+    highlight: highlightLine(park.signature_experience),
   };
 }
 
@@ -125,30 +125,33 @@ const ParkStop = ({ stop }: { stop: RouteStop }) => {
           </div>
 
           <div id={detailsId} className="flex flex-col gap-3.5">
+            {/* Under 380 px (common Android widths) the type and icons step down so
+                days and fee share a row and the photo stays visible. */}
             {stop.facts.length > 0 && (
-              <ul className="flex flex-wrap gap-x-5 gap-y-2.5">
+              <ul className="flex flex-wrap gap-x-3 gap-y-2.5 min-[380px]:gap-x-5">
                 {stop.facts.map(({ icon: Icon, text, wide }) => (
                   <li
                     key={text}
                     className={cn(
-                      "flex items-center gap-2 text-sm font-semibold lg:text-[0.9375rem]",
+                      "flex items-center gap-1.5 text-[0.8125rem] font-semibold min-[380px]:gap-2 min-[380px]:text-sm lg:text-[0.9375rem]",
                       wide ? "basis-full" : "whitespace-nowrap",
                     )}
                   >
-                    <Icon aria-hidden="true" className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+                    <Icon aria-hidden="true" className="h-4 w-4 shrink-0 min-[380px]:h-[18px] min-[380px]:w-[18px]" strokeWidth={2} />
                     {text}
                   </li>
                 ))}
               </ul>
             )}
 
-            {stop.trail && (
-              <p className="flex items-start gap-2 border-t border-cloud/20 pt-3 text-sm leading-5 lg:text-[0.9375rem] lg:leading-[1.375rem]">
-                <Footprints aria-hidden="true" className="mt-px h-[18px] w-[18px] shrink-0" strokeWidth={2} />
-                <span>
-                  <span className="font-semibold">Primer sendero:</span> {stop.trail}
-                </span>
-              </p>
+            {stop.highlight && (
+              <div className="border-t border-cloud/20 pt-3">
+                <p className="flex items-center gap-1.5 font-condensed text-[0.75rem] font-semibold uppercase leading-4 tracking-[0.08em] text-cloud/85 lg:text-[0.8125rem]">
+                  <Star aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                  No te pierdas
+                </p>
+                <p className="mt-1 text-sm leading-5 lg:text-[0.9375rem] lg:leading-[1.375rem]">{stop.highlight}</p>
+              </div>
             )}
           </div>
 
