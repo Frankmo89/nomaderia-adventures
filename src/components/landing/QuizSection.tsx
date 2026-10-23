@@ -642,7 +642,7 @@ const QuizResults = ({
  * public/video/* is cached immutable: a new cut goes in a new folder and this
  * path moves with it (scripts/generate-quiz-video.sh, public/video/README.md).
  */
-const QUIZ_VIDEO_BASE = "/video/v2/quiz-gc";
+const QUIZ_VIDEO_BASE = "/video/v3/quiz-parks";
 const QUIZ_POSTER_SRCSET = `${QUIZ_VIDEO_BASE}-720.webp 720w, ${QUIZ_VIDEO_BASE}-1080.webp 1080w`;
 
 /** Opaque card: dark text inside never sits on the video. */
@@ -793,7 +793,7 @@ const QuizBackdropShell = ({ children, intro = false }: { children: ReactNode; i
         className={cn(
           "pointer-events-none absolute inset-x-0",
           intro
-            ? "bottom-0 h-[64%] bg-gradient-to-t from-forest-dark from-30% via-forest-dark/80 via-60% to-transparent"
+            ? "bottom-0 h-[66%] bg-gradient-to-t from-forest-dark from-30% via-forest-dark/85 via-60% to-transparent"
             : "top-0 h-[28rem] bg-gradient-to-b from-forest-dark/80 via-forest-dark/55 to-transparent",
         )}
       />
