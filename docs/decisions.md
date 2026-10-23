@@ -654,7 +654,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-039 — Hero: luz dirigida y contraste medido sobre las fotos reales
 - **Fecha:** 2026-10-21
-- **Estado:** Vigente. Reemplaza el scrim uniforme de #208.
+- **Estado:** Reemplazada por ADR-045 (el texto ya no va sobre la foto). La regla de medir contraste pixel a pixel sigue para cualquier texto sobre foto. Reemplazaba el scrim uniforme de #208.
 - **Contexto:** #208 puso 84% forest sobre toda la foto para que la línea fogata (#D97706) pasara AA texto grande (≥3:1). Pasaba, pero las fotos de Frank se veían opacas y el hero no daba ganas de ir. `docs/design-system.md` ya decía «scrim: nunca una caja plana».
 - **Decisión:**
   1. Oscuro solo donde va el texto. Menos de `lg`: empieza en `--hero-text-top` (posición real del bloque de texto, medida con ResizeObserver) y deja limpia la foto de arriba. `lg`+: degradado a la izquierda hasta `--hero-col-right` (borde de la columna: `container` + `px-5` + `max-w`); la mitad derecha queda limpia.
@@ -730,6 +730,18 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   4. La fila fija se pega a 76 px (la altura real del navbar), no a 64 px: con `top-16` sus 12 px de arriba quedaban detrás del navbar.
   5. Contraste: «Filtros» ≥13.2 en las 4 paletas; título y subtítulo no bajan (día: ≥7.8 / ≥5.6).
 - **Consecuencias:** la cabecera mide 368 px en celular y 456 desde 640 px (antes 300/384 más la fila del buscador de 64 px). Si se agrega otro control a la cabecera, cuidar que el oscurecido de la paleta de día lo siga cubriendo.
+
+### ADR-045 — Hero del home: una foto arriba, el texto abajo sobre claro
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente. Reemplaza ADR-039 y el carrusel de 6 fotos con barras tipo historias.
+- **Contexto:** Frank, en su iPhone: «no me gusta como se ve eso que va cambiando de foto, siento que ya se ve muy encimado todo». Sobre la foto iban 6 barras, la etiqueta del lugar, un H1 de 3 líneas, el subtítulo, el botón, el enlace a preguntas y la línea de confianza; la foto cambiaba cada 5 s y, para que el texto se leyera, llevaba oscuro encima. Se le mostraron 3 maquetas (una foto fija con el mismo diseño; foto arriba y texto abajo; tarjeta de vidrio) y eligió la segunda.
+- **Decisión:**
+  1. Una sola foto, fija (`HERO_PHOTO`, hoy 02 Joshua Tree), sin oscuro encima ni Ken Burns. Se van las barras, los temporizadores y el evento `hero_photo_select`.
+  2. Celular y tablet: la foto llena ~56 % de la pantalla detrás del navbar transparente (franja oscura arriba solo para el logo) y termina en la cresta de `hero-mask.svg`; debajo, sobre `cloud`, el H1 en `ink` con «nomás se encuentra.» en `green` (la fogata sobre claro da 2.96:1, no pasa ni texto grande), el subtítulo en `slate`, el botón fogata, el enlace a preguntas en `green` y la línea de confianza en `slate`.
+  3. Desde `lg`: texto a la izquierda y la foto en un marco alto con esquinas de 32 px a la derecha. Las fotos son verticales (3:4), así que se ven casi completas (antes se recortaban a lo ancho). Como el texto va sobre claro, el navbar del home empieza sólido desde `lg` (`hasHeroForPath("/", { desktop: true })` es `false`); debajo de `lg` sigue transparente sobre la foto.
+  4. Antes de la franja oscura de «La promesa» va el divisor `layered` en `cloud`.
+  5. LCP: el preload de `index.html` sigue en la foto 02, con `imagesizes` igual a `HERO_SIZES` (`(min-width: 1024px) 44vw, 100vw`).
+- **Consecuencias:** cambiar la foto = mover `HERO_PHOTO` y el preload juntos (ADR-038 sigue para las carpetas). El texto ya no depende de cada foto, así que no hay que volver a medir contraste al cambiarla; sí la etiqueta del lugar. Pendiente de decisión de Frank: el botón fogata con texto blanco da 3.2:1 (pide 4.5:1 a ese tamaño).
 
 ## Lecciones técnicas (bugs no obvios)
 

@@ -13,6 +13,12 @@ describe("hasHeroForPath", () => {
     expect(hasHeroForPath("/destinos/yosemite")).toBe(false);
   });
 
+  it("starts solid on the home page from lg up (text on light, ADR-045)", () => {
+    expect(hasHeroForPath("/", { desktop: true })).toBe(false);
+    expect(hasHeroForPath("/", { desktop: false })).toBe(true);
+    expect(hasHeroForPath("/destinos", { desktop: true })).toBe(true);
+  });
+
   it("is false on article pages and unknown routes", () => {
     expect(hasHeroForPath("/blog/mi-primer-viaje")).toBe(false);
     expect(hasHeroForPath("/gear/botas")).toBe(false);

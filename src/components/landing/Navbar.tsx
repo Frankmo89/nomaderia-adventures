@@ -29,6 +29,23 @@ const SCROLL_DIRECTION_SLOP_PX = 6;
 const SCROLL_TOP_BAND_PX = 160;
 const SCROLL_TOP_IDLE_MS = 3000;
 
+/** True from Tailwind's lg breakpoint (1024px) up; follows window resizes. */
+function useIsDesktop(): boolean {
+  const query = "(min-width: 1024px)";
+  const [desktop, setDesktop] = useState(
+    () => typeof window !== "undefined" && window.matchMedia?.(query).matches === true,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return;
+    const onChange = (e: MediaQueryListEvent) => setDesktop(e.matches);
+    setDesktop(mq.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+  return desktop;
+}
+
 function hiddenZoneUnderButton(): boolean {
   const vh = window.innerHeight;
   return Array.from(document.querySelectorAll<HTMLElement>("[data-hide-scroll-top]")).some((el) => {
@@ -49,7 +66,8 @@ const navLinks = [
 const Navbar = () => {
   const { pathname } = useLocation();
   const isHomepage = pathname === "/";
-  const hasHero = hasHeroForPath(pathname);
+  const isDesktop = useIsDesktop();
+  const hasHero = hasHeroForPath(pathname, { desktop: isDesktop });
 
   // Refs keep the closures in useMotionValueEvent always current on route changes
   const isHomepageRef = useRef(isHomepage);

@@ -19,6 +19,14 @@ const DARK_BAND_ROUTES = new Set([
   "/sobre-nosotros",
 ]);
 
-export function hasHeroForPath(pathname: string): boolean {
+/**
+ * The home hero is photo-on-top below lg (dark band behind the navbar) but
+ * text-on-light beside a framed photo from lg up (ADR-045), so on desktop
+ * the home navbar starts solid.
+ */
+const LIGHT_ON_DESKTOP = new Set(["/"]);
+
+export function hasHeroForPath(pathname: string, { desktop = false }: { desktop?: boolean } = {}): boolean {
+  if (desktop && LIGHT_ON_DESKTOP.has(pathname)) return false;
   return DARK_BAND_ROUTES.has(pathname);
 }
