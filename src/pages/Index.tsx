@@ -108,6 +108,8 @@ const Index = () => {
       <JsonLd data={organizationLd} />
       <HeroSection />
       <LazyBlock>
+        {/* Hero ends on cloud (ADR-045): crest into the dark promise band. */}
+        <SectionDivider variant="layered" fill="#FBFAF7" />
         <PromiseSection />
         <SectionDivider variant="simple" fill="#1C1917" />
       </LazyBlock>

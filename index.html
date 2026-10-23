@@ -42,14 +42,14 @@
       onload="this.onload=null;this.rel='stylesheet'"
     />
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" /></noscript>
-    <!-- LCP hero photo = first slide in HeroSection (02, Joshua Tree) — AVIF preferred; imagesrcset for responsive preload -->
+    <!-- LCP hero photo = HERO_PHOTOS[0] in HeroSection (02, Joshua Tree) — AVIF preferred; imagesizes matches HERO_SIZES -->
     <link
       rel="preload"
       as="image"
       type="image/avif"
       href="/hero/v2/02-1080.avif"
       imagesrcset="/hero/v2/02-640.avif 640w, /hero/v2/02-1080.avif 1080w, /hero/v2/02-1600.avif 1600w"
-      imagesizes="100vw"
+      imagesizes="(min-width: 1024px) 44vw, 100vw"
       fetchpriority="high"
     />
     <!-- Oswald (font-condensed labels below the fold) — non-render-blocking -->

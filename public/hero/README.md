@@ -3,11 +3,12 @@
 **6** fotos de Frank servidas como AVIF + WebP responsivos en
 `public/hero/v2/` (`NN-640|1080|1600.{avif,webp}`):
 
-El **orden** en el hero lo pone `HERO_SLIDES` en `HeroSection.tsx` (hoy:
-02 → 04 → 03 → 01 → 05 → 06). La primera foto es la imagen LCP: el preload
-de `index.html` apunta a su id. Si cambias el orden, cambia también el preload.
-En celular solo se ve limpia la parte de **arriba** de la foto (el texto
-ocupa el resto), así que la primera necesita un arriba fuerte.
+El hero pasa las 6 fotos con un fundido cada 6 s, sin barras (ADR-045). El
+**orden** lo pone `HERO_PHOTOS` en `HeroSection.tsx` (hoy 02 → 04 → 03 → 01 →
+05 → 06). La primera es la imagen LCP: el preload de `index.html` apunta a su
+id; si cambias la primera, cambia también el preload. Las fotos son
+verticales (3:4): en celular llenan la mitad de arriba de la pantalla y en
+computadora van en un marco alto a la derecha, así que se ven casi completas.
 
 | ID | Foto |
 |----|------|
