@@ -642,7 +642,7 @@ const QuizResults = ({
  * public/video/* is cached immutable: a new cut goes in a new folder and this
  * path moves with it (scripts/generate-quiz-video.sh, public/video/README.md).
  */
-const QUIZ_VIDEO_BASE = "/video/v1/quiz-gc";
+const QUIZ_VIDEO_BASE = "/video/v2/quiz-gc";
 const QUIZ_POSTER_SRCSET = `${QUIZ_VIDEO_BASE}-720.webp 720w, ${QUIZ_VIDEO_BASE}-1080.webp 1080w`;
 
 /** Opaque card: dark text inside never sits on the video. */
@@ -659,12 +659,16 @@ function prefersSaveData(): boolean {
 }
 
 /**
- * Muted, looping, decorative. It downloads and plays only while the section is
- * on screen; reduced motion or save-data gets the still poster instead. A
- * pause button keeps it within WCAG 2.2.2 (moving content over 5 s).
+ * Muted (the files carry no audio track), looping, decorative. It downloads
+ * and plays only while the section is on screen; reduced motion or save-data
+ * gets the still poster instead.
+ *
+ * Pause control: Frank does not want a visible play/pause button over the
+ * cover. It stays for keyboard users (shown on focus), and the OS "reduce
+ * motion" setting stops the video for everyone who asks for less motion.
  *
  * iOS in Low Power Mode refuses autoplay. A tap anywhere on the page is a user
- * gesture, so the first tap starts it (and the button shows ▶ until then).
+ * gesture, so the first tap starts it.
  */
 const QuizBackdropVideo = () => {
   const reduceMotion = useReducedMotion();
@@ -755,7 +759,7 @@ const QuizBackdropVideo = () => {
         type="button"
         onClick={toggle}
         aria-label={playing ? "Pausar el video de fondo" : "Reproducir el video de fondo"}
-        className="absolute right-4 top-12 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-cloud/30 bg-forest-dark/70 text-cloud transition-colors hover:bg-forest-dark/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cloud sm:right-6 sm:top-20"
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:right-4 focus-visible:top-12 focus-visible:z-20 focus-visible:inline-flex focus-visible:h-11 focus-visible:w-11 focus-visible:items-center focus-visible:justify-center focus-visible:rounded-full focus-visible:bg-forest-dark/80 focus-visible:text-cloud focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cloud sm:focus-visible:right-6 sm:focus-visible:top-20"
       >
         {playing ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
       </button>
@@ -764,7 +768,7 @@ const QuizBackdropVideo = () => {
 };
 
 /**
- * "intro": the video is the cover. Tall section, light tint, dark only at the
+ * "intro": the video is the cover. Tall section, no tint, dark only at the
  * bottom behind the title and the start button (Cleo, Centr, How We Feel quiz
  * intros on Mobbin). "questions": darker top behind the header, opaque card.
  * Both render the same element tree, so the video keeps playing between them.
@@ -776,20 +780,20 @@ const QuizBackdropShell = ({ children, intro = false }: { children: ReactNode; i
       className={cn(
         "relative overflow-hidden bg-forest-dark",
         intro
-          ? "flex min-h-[88vh] flex-col justify-end pb-24 pt-32 supports-[height:100svh]:min-h-[88svh] sm:pb-32"
+          ? "flex min-h-[88vh] flex-col justify-end pb-20 pt-32 supports-[height:100svh]:min-h-[88svh] sm:pb-28"
           : "pb-20 pt-24 sm:pb-28 sm:pt-32",
       )}
     >
       <QuizBackdropVideo />
       {/* Light, not a blanket: a soft tint everywhere, dark only behind the
           text, solid at the bottom so the dark ridge below carries on. */}
-      <div aria-hidden="true" className={cn("pointer-events-none absolute inset-0", intro ? "bg-forest-dark/15" : "bg-forest-dark/35")} />
+      {!intro && <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-forest-dark/35" />}
       <div
         aria-hidden="true"
         className={cn(
           "pointer-events-none absolute inset-x-0",
           intro
-            ? "bottom-0 h-[72%] bg-gradient-to-t from-forest-dark from-25% via-forest-dark/80 to-transparent"
+            ? "bottom-0 h-[64%] bg-gradient-to-t from-forest-dark from-30% via-forest-dark/80 via-60% to-transparent"
             : "top-0 h-[28rem] bg-gradient-to-b from-forest-dark/80 via-forest-dark/55 to-transparent",
         )}
       />
@@ -812,12 +816,10 @@ const QUIZ_BADGE =
 /** Cover before the first question: title, one line and a single start button. */
 const QuizIntro = ({ questions, onStart }: { questions: number; onStart: () => void }) => (
   <Reveal className="text-center">
-    <div className={cn(QUIZ_BADGE, "mb-5")}>
-      <Sparkles className="h-3.5 w-3.5" />
-      Cuestionario personalizado · unos minutos
-    </div>
-    <h2 className="font-serif text-4xl font-bold leading-tight text-cloud sm:text-5xl md:text-6xl">¿No Sabes A Dónde Ir?</h2>
-    <p className="mx-auto mt-3 max-w-md text-base text-cloud sm:text-lg">
+    <h2 className="font-serif text-4xl font-bold leading-tight text-cloud [text-shadow:0_2px_18px_rgba(20,32,26,0.6)] sm:text-5xl md:text-6xl">
+      ¿No Sabes A Dónde Ir?
+    </h2>
+    <p className="mx-auto mt-3 max-w-md text-base text-cloud [text-shadow:0_1px_12px_rgba(20,32,26,0.7)] sm:text-lg">
       Responde {questions} preguntas y te decimos tu destino ideal
     </p>
     <button

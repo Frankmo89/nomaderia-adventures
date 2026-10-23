@@ -2,12 +2,13 @@
 
 | Archivo | Qué es |
 |---------|--------|
-| `v1/quiz-gc-720.mp4` | Fondo del cuestionario en celular (720×1280, ~1.3 MB) |
-| `v1/quiz-gc-1080.mp4` | Fondo del cuestionario desde 768 px (1080×1920, ~2.5 MB) |
-| `v1/quiz-gc-*.webp` | Póster (primer cuadro) y la imagen fija para quien pide menos movimiento o ahorro de datos |
+| `v2/quiz-gc-720.mp4` | Fondo del cuestionario en celular (720×998, ~1.5 MB, sin audio) |
+| `v2/quiz-gc-1080.mp4` | Fondo del cuestionario desde 768 px (1080×1498, ~2.6 MB, sin audio) |
+| `v2/quiz-gc-*.webp` | Póster (primer cuadro) y la imagen fija para quien pide menos movimiento o ahorro de datos |
 
-Es Frank caminando un sendero del Gran Cañón: 9.5 s de su video, a 0.85× y con
-un fundido de 0.8 s entre el final y el inicio para que el loop no brinque.
+Es Frank caminando un sendero del Gran Cañón: 9.5 s de su video sin el cielo de
+arriba, con color más vivo, a 0.85× y con un fundido de 0.8 s entre el final y
+el inicio para que el loop no brinque. `v1` (sin recorte ni color) se borró.
 
 ## Cambiar el video
 
