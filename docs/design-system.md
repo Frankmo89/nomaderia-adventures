@@ -162,6 +162,7 @@ Ilustración en silueta, no foto: la única de este tipo en el sitio, para una c
 - **Siluetas:** formas planas reconocibles (Half Dome, sequoias, Delicate Arch, el faro de Acadia…), sin contornos ni texto. Para sumar un parque, dibujarlo en la tesela de íconos de `src/lib/park-scene-tiles.ts` sin pasar de la altura de Half Dome.
 - **Movimiento:** calmado pero visible (la cresta ~40 px/s, los íconos ~17 px/s en celular). Quieto con «reducir movimiento», detenido fuera de pantalla.
 - **Texto:** el título y el subtítulo solo van sobre cielo oscuro; ninguna figura, nube ni estrella pasa detrás de ellos. Si una paleta aclara el cielo, lleva oscurecido radial detrás del texto y se vuelve a medir.
+- **Buscador (ADR-044):** bajo el subtítulo, pill `cloud` de 48 px con lupa `sage` y texto `ink` de 16 px; a su lado «Filtros» en vidrio (`forest-dark/70` + `backdrop-blur-md`, borde `cloud/25`), solo ícono en celular.
 
 ---
 

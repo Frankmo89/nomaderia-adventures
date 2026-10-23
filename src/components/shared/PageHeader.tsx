@@ -8,6 +8,8 @@ interface PageHeaderProps {
   subtitle?: string;
   eyebrow?: string;
   children?: ReactNode;
+  /** Controls under the subtitle, such as the park search on Destinos. */
+  actions?: ReactNode;
 }
 
 // Color-block header band for content-listing pages that have no photo hero
@@ -23,15 +25,15 @@ interface PageHeaderProps {
 // uppercase) but in `text-mist` instead of `text-green` — green measures
 // ~2.7:1 against forest-dark (fails WCAG), mist measures ~14.5:1, matching
 // this component's own subtitle color on the same dark surface.
-const PageHeader = ({ title, subtitle, eyebrow, children }: PageHeaderProps) => {
+const PageHeader = ({ title, subtitle, eyebrow, children, actions }: PageHeaderProps) => {
   return (
     <section
       className={cn(
         "relative overflow-hidden bg-forest-dark",
         // With `children` (ParkTrailScene on Destinos) the headline sits just
         // under the fixed navbar and the bottom padding leaves room for the
-        // scene, whose tallest shapes stop ~8px below the subtitle: 116px on
-        // phones, 142px from 640px up (ADR-043).
+        // scene, whose tallest shapes stop below the last line (subtitle or
+        // `actions`): they reach 116px on phones, 142px from 640px up (ADR-043).
         children ? "pt-[100px] pb-32 sm:pt-32 sm:pb-40" : "pt-28 sm:pt-36 pb-14 sm:pb-20"
       )}
     >
@@ -61,6 +63,7 @@ const PageHeader = ({ title, subtitle, eyebrow, children }: PageHeaderProps) => 
             {subtitle}
           </p>
         )}
+        {actions && <div className="mt-5 sm:mt-6">{actions}</div>}
       </div>
     </section>
   );
