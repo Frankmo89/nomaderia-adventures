@@ -521,7 +521,7 @@ const QuizResults = ({
   const topDestination = results[0];
   const alternatives = results.slice(1);
   return (
-    <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
+    <section id="quiz" data-hide-scroll-top className="relative overflow-hidden bg-cloud py-16 sm:py-24">
       <CelebrationParticles />
       <div className="absolute inset-0 opacity-[0.04] bg-cover bg-center pointer-events-none"
         style={{ backgroundImage: `url(https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=60)` }} />
@@ -853,6 +853,7 @@ const QuizBackdropShell = ({ children, intro = false }: { children: ReactNode; i
   <>
     <section
       id="quiz"
+      data-hide-scroll-top
       className={cn(
         "relative overflow-hidden bg-forest-dark",
         intro
