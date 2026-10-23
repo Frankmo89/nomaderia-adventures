@@ -633,17 +633,30 @@ const QuizResults = ({
 // --- Video backdrop (questions + loading) ---
 
 /**
- * The questions and the loading state sit on Frank's video walking a Grand
- * Canyon trail (ADR-042): the dark beat between "La diferencia" (light) and
- * the insurance band (green wash), so the home no longer reads as one white
- * wall. Results keep the light background: the buy button lives there and
- * was not touched.
+ * The questions and the loading state sit on Frank's videos walking four
+ * parks, one loop (ADR-042): the dark beat between "La diferencia" (light)
+ * and the insurance band (green wash), so the home no longer reads as one
+ * white wall. Results keep the light background: the buy button lives there
+ * and was not touched.
  *
  * public/video/* is cached immutable: a new cut goes in a new folder and this
  * path moves with it (scripts/generate-quiz-video.sh, public/video/README.md).
  */
 const QUIZ_VIDEO_BASE = "/video/v3/quiz-parks";
 const QUIZ_POSTER_SRCSET = `${QUIZ_VIDEO_BASE}-720.webp 720w, ${QUIZ_VIDEO_BASE}-1080.webp 1080w`;
+
+/**
+ * Each size ships as H.264 (every browser) and AV1 (~35% smaller at the same
+ * quality). Codec strings match the encoded levels; bitrates are the files'
+ * averages, so MediaCapabilities answers for these exact files.
+ */
+const QUIZ_VIDEO_FILES = {
+  720: { height: 998, av1Codec: "av01.0.05M.08", av1Bitrate: 665_000 },
+  1080: { height: 1498, av1Codec: "av01.0.08M.08", av1Bitrate: 1_160_000 },
+} as const;
+
+/** Start downloading this far before the section reaches the screen. */
+const QUIZ_VIDEO_PRELOAD_MARGIN = "600px 0px";
 
 /** Opaque card: dark text inside never sits on the video. */
 const QUIZ_CARD = "rounded-2xl border border-white/60 bg-cloud p-6 shadow-2xl shadow-forest-dark/50 sm:p-8";
@@ -659,9 +672,37 @@ function prefersSaveData(): boolean {
 }
 
 /**
- * Muted (the files carry no audio track), looping, decorative. It downloads
- * and plays only while the section is on screen; reduced motion or save-data
- * gets the still poster instead.
+ * The lightest file this device plays without draining the battery: AV1 only
+ * where MediaCapabilities says it decodes in hardware ("powerEfficient"),
+ * H.264 everywhere else. 1080 wide from 768 px up, 720 below.
+ */
+async function pickQuizVideoSrc(): Promise<string> {
+  const width = window.matchMedia("(min-width: 768px)").matches ? 1080 : 720;
+  const h264 = `${QUIZ_VIDEO_BASE}-${width}.mp4`;
+  const file = QUIZ_VIDEO_FILES[width];
+  try {
+    if (!navigator.mediaCapabilities?.decodingInfo) return h264;
+    const info = await navigator.mediaCapabilities.decodingInfo({
+      type: "file",
+      video: {
+        contentType: `video/mp4; codecs="${file.av1Codec}"`,
+        width,
+        height: file.height,
+        bitrate: file.av1Bitrate,
+        framerate: 24,
+      },
+    });
+    return info.supported && info.powerEfficient ? `${QUIZ_VIDEO_BASE}-${width}-av1.mp4` : h264;
+  } catch {
+    return h264;
+  }
+}
+
+/**
+ * Muted (the files carry no audio track), looping, decorative. The file is
+ * chosen up front, starts downloading when the section is about one screen
+ * away, plays while the section is on screen and pauses when it leaves.
+ * Reduced motion or save-data gets the still poster instead.
  *
  * Pause control: Frank does not want a visible play/pause button over the
  * cover. It stays for keyboard users (shown on focus), and the OS "reduce
@@ -674,22 +715,58 @@ const QuizBackdropVideo = () => {
   const reduceMotion = useReducedMotion();
   const [saveData] = useState(prefersSaveData);
   const [playing, setPlaying] = useState(false);
+  const [src, setSrc] = useState<string | null>(null);
+  const [near, setNear] = useState(false);
   const userPaused = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const still = reduceMotion || saveData;
 
+  // Pick the file now; hand it (and the poster) to the <video> once the
+  // section is near, so a visitor who never scrolls this far downloads nothing.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || still) return;
+    let cancelled = false;
+    let near = false;
+    let picked: string | null = null;
+    const load = () => {
+      if (!cancelled && near && picked) setSrc(picked);
+    };
+    void pickQuizVideoSrc().then((choice) => {
+      picked = choice;
+      load();
+    });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        near = true;
+        setNear(true);
+        load();
+        observer.disconnect();
+      },
+      { rootMargin: QUIZ_VIDEO_PRELOAD_MARGIN },
+    );
+    observer.observe(video);
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [still]);
+
+  // Play while on screen.
   useEffect(() => {
     const video = videoRef.current;
     if (!video || still) return;
     video.muted = true; // iOS autoplays only when the property is set
     let visible = false;
     const tryPlay = () => {
-      if (visible && !userPaused.current) void video.play().catch(() => undefined);
+      if (visible && !userPaused.current && video.currentSrc) void video.play().catch(() => undefined);
     };
     const onPlaying = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     video.addEventListener("playing", onPlaying);
     video.addEventListener("pause", onPause);
+    video.addEventListener("canplay", tryPlay);
     const observer = new IntersectionObserver(
       ([entry]) => {
         visible = entry.isIntersecting;
@@ -708,6 +785,7 @@ const QuizBackdropVideo = () => {
       observer.disconnect();
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("pause", onPause);
+      video.removeEventListener("canplay", tryPlay);
       document.removeEventListener("touchend", onGesture);
       document.removeEventListener("click", onGesture);
     };
@@ -743,18 +821,16 @@ const QuizBackdropVideo = () => {
     <>
       <video
         ref={videoRef}
+        src={src ?? undefined}
         muted
         loop
         playsInline
-        preload="none"
-        poster={`${QUIZ_VIDEO_BASE}-720.webp`}
+        preload={src ? "auto" : "none"}
+        poster={near ? `${QUIZ_VIDEO_BASE}-720.webp` : undefined}
         aria-hidden="true"
         tabIndex={-1}
         className="absolute inset-0 h-full w-full object-cover object-center"
-      >
-        <source src={`${QUIZ_VIDEO_BASE}-1080.mp4`} type="video/mp4" media="(min-width: 768px)" />
-        <source src={`${QUIZ_VIDEO_BASE}-720.mp4`} type="video/mp4" />
-      </video>
+      />
       <button
         type="button"
         onClick={toggle}

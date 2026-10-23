@@ -2,8 +2,10 @@
 
 | Archivo | Qué es |
 |---------|--------|
-| `v3/quiz-parks-720.mp4` | Fondo del cuestionario en celular (720×998, ~2.0 MB, sin audio) |
-| `v3/quiz-parks-1080.mp4` | Fondo del cuestionario desde 768 px (1080×1498, ~3.7 MB, sin audio) |
+| `v3/quiz-parks-720.mp4` | Celular, H.264 (720×998, ~2.0 MB, sin audio) |
+| `v3/quiz-parks-720-av1.mp4` | Celular, AV1 (~1.4 MB) — solo si el equipo lo decodifica por hardware |
+| `v3/quiz-parks-1080.mp4` | Desde 768 px, H.264 (1080×1498, ~3.7 MB, sin audio) |
+| `v3/quiz-parks-1080-av1.mp4` | Desde 768 px, AV1 (~2.4 MB) — solo si el equipo lo decodifica por hardware |
 | `v3/quiz-parks-*.webp` | Póster (primer cuadro) y la imagen fija para quien pide menos movimiento o ahorro de datos |
 
 Es Frank caminando en 4 parques, ~4 s cada uno, en un loop de 16.7 s:
@@ -11,7 +13,8 @@ Gran Cañón → Joshua Tree (Cholla) → Yosemite (nieve) → Joshua Tree (Arch
 Cada clip va sin el cielo de arriba, con color más vivo, a 0.85× y con fundidos
 de 0.8 s entre clips y del último al primero, para que el loop no brinque.
 El orden, los cortes y el color de cada clip están en
-`scripts/quiz-video-clips.tsv`.
+`scripts/quiz-video-clips.tsv`. `QuizSection` elige AV1 o H.264 con
+`navigator.mediaCapabilities` y no baja nada hasta que la sección está cerca.
 
 ## Cambiar el video
 

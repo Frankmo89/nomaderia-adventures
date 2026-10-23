@@ -13,8 +13,10 @@
 #
 # Steps per clip: cut, crop to the same shape (78% of the height), grade,
 # slow to 0.85x, 24 fps. Then cross-fade each clip into the next (0.8 s) and
-# the last into the first, so the loop has no jump. Output: two H.264 files
-# (phone, desktop) with no audio track and a WebP poster for each.
+# the last into the first, so the loop has no jump. Output, all without an
+# audio track: H.264 for every browser and AV1 (~35% smaller at the same
+# SSIM) for browsers that decode it in hardware, phone and desktop sizes,
+# plus a WebP poster for each size. QuizSection picks the file.
 # public/video/* is cached immutable: a new cut goes in a new folder and
 # QUIZ_VIDEO_BASE in src/components/landing/QuizSection.tsx moves with it.
 set -euo pipefail
@@ -69,6 +71,9 @@ ffmpeg -v error -i "$TMP/chain.mp4" -filter_complex \
   "[0:v]trim=start=$FADE,setpts=PTS-STARTPTS[a];[0:v]trim=end=$FADE,setpts=PTS-STARTPTS[b];[a][b]xfade=transition=fade:duration=$FADE:offset=$offset,format=yuv420p[v]" \
   -map "[v]" -c:v libx264 -crf 10 -preset fast -y "$TMP/loop.mp4"
 
+# Keep the master loop when asked (handy to try encoder settings).
+[[ -n "${LOOP_OUT:-}" ]] && cp "$TMP/loop.mp4" "$LOOP_OUT"
+
 # 4. Delivery files: 720 wide for phones, 1080 wide from 768 px up.
 encode() { # width crf
   ffmpeg -v error -i "$TMP/loop.mp4" -an -vf "scale=$1:-2:flags=lanczos" \
@@ -77,8 +82,17 @@ encode() { # width crf
   # Poster = first frame, so nothing jumps when the video starts.
   ffmpeg -v error -i "$OUT/$NAME-$1.mp4" -frames:v 1 -c:v libwebp -quality 60 -y "$OUT/$NAME-$1.webp"
 }
+# AV1 at the same SSIM as the H.264 files (measured 2026-10-22: phone
+# 0.89, desktop 0.90). Codec strings in QuizSection match these levels.
+encode_av1() { # width crf
+  ffmpeg -v error -i "$TMP/loop.mp4" -an -vf "scale=$1:-2:flags=lanczos" \
+    -c:v libsvtav1 -preset 6 -crf "$2" -svtav1-params loglevel=0 -pix_fmt yuv420p \
+    -movflags +faststart -y "$OUT/$NAME-$1-av1.mp4" 2>/dev/null
+}
 encode 720 34
 encode 1080 35
+encode_av1 720 59
+encode_av1 1080 60
 
 ls -l "$OUT"
 echo "loop length: $(duration "$OUT/$NAME-720.mp4") s"
