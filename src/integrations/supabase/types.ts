@@ -48,6 +48,7 @@ export type Database = {
           generated_at: string
           id: string
           model: string | null
+          rag_meta: Json | null
           sources: Json
           verify_flags: Json
         }
@@ -57,6 +58,7 @@ export type Database = {
           generated_at?: string
           id?: string
           model?: string | null
+          rag_meta?: Json | null
           sources?: Json
           verify_flags?: Json
         }
@@ -66,6 +68,7 @@ export type Database = {
           generated_at?: string
           id?: string
           model?: string | null
+          rag_meta?: Json | null
           sources?: Json
           verify_flags?: Json
         }
@@ -377,6 +380,7 @@ export type Database = {
           nearest_town: string | null
           nonresident_surcharge: number | null
           not_ideal_if: string[] | null
+          nps_description: string | null
           nps_url: string | null
           official_name: string | null
           park_code: string | null
@@ -393,6 +397,7 @@ export type Database = {
           research_status: string | null
           rv_max_length_ft: number | null
           safety_markdown: string | null
+          season_short: string | null
           season_to_avoid: string | null
           seasonal_closures: string | null
           short_description: string | null
@@ -475,6 +480,7 @@ export type Database = {
           nearest_town?: string | null
           nonresident_surcharge?: number | null
           not_ideal_if?: string[] | null
+          nps_description?: string | null
           nps_url?: string | null
           official_name?: string | null
           park_code?: string | null
@@ -491,6 +497,7 @@ export type Database = {
           research_status?: string | null
           rv_max_length_ft?: number | null
           safety_markdown?: string | null
+          season_short?: string | null
           season_to_avoid?: string | null
           seasonal_closures?: string | null
           short_description?: string | null
@@ -573,6 +580,7 @@ export type Database = {
           nearest_town?: string | null
           nonresident_surcharge?: number | null
           not_ideal_if?: string[] | null
+          nps_description?: string | null
           nps_url?: string | null
           official_name?: string | null
           park_code?: string | null
@@ -589,6 +597,7 @@ export type Database = {
           research_status?: string | null
           rv_max_length_ft?: number | null
           safety_markdown?: string | null
+          season_short?: string | null
           season_to_avoid?: string | null
           seasonal_closures?: string | null
           short_description?: string | null
@@ -638,6 +647,33 @@ export type Database = {
           metadata?: Json | null
           sent_at?: string
           status?: string | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string | null
+          payload: Json
+          session_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          payload?: Json
+          session_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          payload?: Json
+          session_id?: string
+          type?: string
         }
         Relationships: []
       }
@@ -774,31 +810,43 @@ export type Database = {
           content: string
           created_at: string | null
           embedding: string | null
+          fetched_at: string | null
           id: string
+          kind: string | null
           metadata: Json | null
+          park_code: string | null
           source_field: string
           source_id: string
           source_table: string
+          source_url: string | null
         }
         Insert: {
           content: string
           created_at?: string | null
           embedding?: string | null
+          fetched_at?: string | null
           id?: string
+          kind?: string | null
           metadata?: Json | null
+          park_code?: string | null
           source_field: string
           source_id: string
           source_table: string
+          source_url?: string | null
         }
         Update: {
           content?: string
           created_at?: string | null
           embedding?: string | null
+          fetched_at?: string | null
           id?: string
+          kind?: string | null
           metadata?: Json | null
+          park_code?: string | null
           source_field?: string
           source_id?: string
           source_table?: string
+          source_url?: string | null
         }
         Relationships: []
       }
@@ -820,8 +868,50 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          quiz_answers: Json
+          selected_destination_id: string | null
+          selected_park_code: string | null
+          session_id: string | null
+          top_park_codes: string[]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          quiz_answers?: Json
+          selected_destination_id?: string | null
+          selected_park_code?: string | null
+          session_id?: string | null
+          top_park_codes?: string[]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          quiz_answers?: Json
+          selected_destination_id?: string | null
+          selected_park_code?: string | null
+          session_id?: string | null
+          top_park_codes?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_selected_destination_id_fkey"
+            columns: ["selected_destination_id"]
+            isOneToOne: false
+            referencedRelation: "destinations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_slider: {
         Row: {
+          caption: string | null
           created_at: string
           display_order: number | null
           id: string
@@ -829,8 +919,11 @@ export type Database = {
           media_type: string
           public_url: string
           storage_path: string
+          web_storage_path: string | null
+          web_url: string | null
         }
         Insert: {
+          caption?: string | null
           created_at?: string
           display_order?: number | null
           id?: string
@@ -838,8 +931,11 @@ export type Database = {
           media_type: string
           public_url: string
           storage_path: string
+          web_storage_path?: string | null
+          web_url?: string | null
         }
         Update: {
+          caption?: string | null
           created_at?: string
           display_order?: number | null
           id?: string
@@ -847,6 +943,8 @@ export type Database = {
           media_type?: string
           public_url?: string
           storage_path?: string
+          web_storage_path?: string | null
+          web_url?: string | null
         }
         Relationships: []
       }
@@ -871,6 +969,69 @@ export type Database = {
           id?: string
           source?: string | null
           unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
+      park_fees: {
+        Row: {
+          annual_park_pass: number | null
+          entrance_fee_required: boolean
+          fetched_at: string
+          issues: string[]
+          min_paying_age: number | null
+          motorcycle: number | null
+          nonresident_fee: number | null
+          nonresident_fee_on_page: boolean
+          nonresident_list_url: string
+          on_nonresident_list: boolean | null
+          park_code: string
+          park_name: string
+          parse_ok: boolean
+          per_person: number | null
+          source_url: string
+          updated_at: string
+          valid_days: number | null
+          vehicle: number | null
+        }
+        Insert: {
+          annual_park_pass?: number | null
+          entrance_fee_required: boolean
+          fetched_at: string
+          issues?: string[]
+          min_paying_age?: number | null
+          motorcycle?: number | null
+          nonresident_fee?: number | null
+          nonresident_fee_on_page?: boolean
+          nonresident_list_url: string
+          on_nonresident_list?: boolean | null
+          park_code: string
+          park_name: string
+          parse_ok?: boolean
+          per_person?: number | null
+          source_url: string
+          updated_at?: string
+          valid_days?: number | null
+          vehicle?: number | null
+        }
+        Update: {
+          annual_park_pass?: number | null
+          entrance_fee_required?: boolean
+          fetched_at?: string
+          issues?: string[]
+          min_paying_age?: number | null
+          motorcycle?: number | null
+          nonresident_fee?: number | null
+          nonresident_fee_on_page?: boolean
+          nonresident_list_url?: string
+          on_nonresident_list?: boolean | null
+          park_code?: string
+          park_name?: string
+          parse_ok?: boolean
+          per_person?: number | null
+          source_url?: string
+          updated_at?: string
+          valid_days?: number | null
+          vehicle?: number | null
         }
         Relationships: []
       }
@@ -945,7 +1106,7 @@ export type Database = {
           },
         ]
       }
-      park_trails: {
+      park_things_to_do: {
         Row: {
           coordinates: Json | null
           created_at: string
@@ -993,7 +1154,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "park_trails_destination_id_fkey"
+            foreignKeyName: "park_things_to_do_destination_id_fkey"
             columns: ["destination_id"]
             isOneToOne: false
             referencedRelation: "destinations"
@@ -1001,7 +1162,7 @@ export type Database = {
           },
         ]
       }
-      park_trails_sync_state: {
+      park_things_to_do_sync_state: {
         Row: {
           created_at: string
           destination_id: string
@@ -1031,13 +1192,58 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "park_trails_sync_state_destination_id_fkey"
+            foreignKeyName: "park_things_to_do_sync_state_destination_id_fkey"
             columns: ["destination_id"]
             isOneToOne: false
             referencedRelation: "destinations"
             referencedColumns: ["id"]
           },
         ]
+      }
+      pass_rules: {
+        Row: {
+          available_to: string
+          covers_nonresident_fee: boolean
+          covers_vehicle_and_passengers: boolean
+          evidence: string
+          fetched_at: string
+          label_es: string
+          parse_ok: boolean
+          pass_code: string
+          per_person_additional_adults: number | null
+          price: number | null
+          source_url: string
+          updated_at: string
+        }
+        Insert: {
+          available_to: string
+          covers_nonresident_fee?: boolean
+          covers_vehicle_and_passengers?: boolean
+          evidence?: string
+          fetched_at: string
+          label_es: string
+          parse_ok?: boolean
+          pass_code: string
+          per_person_additional_adults?: number | null
+          price?: number | null
+          source_url: string
+          updated_at?: string
+        }
+        Update: {
+          available_to?: string
+          covers_nonresident_fee?: boolean
+          covers_vehicle_and_passengers?: boolean
+          evidence?: string
+          fetched_at?: string
+          label_es?: string
+          parse_ok?: boolean
+          pass_code?: string
+          per_person_additional_adults?: number | null
+          price?: number | null
+          source_url?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       permit_alerts: {
         Row: {
@@ -1375,6 +1581,10 @@ export type Database = {
         Args: { p_source_id: string; p_source_table: string }
         Returns: undefined
       }
+      request_nps_pages_ingest: {
+        Args: { p_park_codes?: string[] }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin"
@@ -1394,12 +1604,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1423,11 +1633,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1448,11 +1658,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1473,11 +1683,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1490,11 +1700,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1511,3 +1721,4 @@ export const Constants = {
     },
   },
 } as const
+
