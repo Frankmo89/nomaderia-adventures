@@ -16,6 +16,27 @@ const INNER_PAGE_SCROLL_THRESHOLD_PX = 40;
 
 // Which routes start with a transparent navbar: see src/lib/hero-routes.ts.
 
+/**
+ * "Back to top" shows only when it helps and never on top of a form:
+ *  - past the first screen, and only after scrolling UP (going back is the
+ *    intent; while reading down it would just cover the page);
+ *  - never while an element marked `data-hide-scroll-top` (the quiz) sits in
+ *    the bottom band where the button lives, so it can't cover "Continuar";
+ *  - it leaves again after a few idle seconds (not while hovered or focused),
+ *    so it doesn't sit on the text being read.
+ */
+const SCROLL_DIRECTION_SLOP_PX = 6;
+const SCROLL_TOP_BAND_PX = 160;
+const SCROLL_TOP_IDLE_MS = 3000;
+
+function hiddenZoneUnderButton(): boolean {
+  const vh = window.innerHeight;
+  return Array.from(document.querySelectorAll<HTMLElement>("[data-hide-scroll-top]")).some((el) => {
+    const r = el.getBoundingClientRect();
+    return r.top < vh && r.bottom > vh - SCROLL_TOP_BAND_PX;
+  });
+}
+
 const navLinks = [
   { label: "Destinos", href: "/destinos" },
   { label: "Guía de Equipo", href: "/gear" },
@@ -39,6 +60,9 @@ const Navbar = () => {
   // Hero-less pages always render solid; hero pages start transparent (over the hero)
   const [scrolled, setScrolled] = useState(!hasHero);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const lastScrollY = useRef(0);
+  const scrollTopButton = useRef<HTMLButtonElement>(null);
+  const scrollTopTimer = useRef<number | undefined>(undefined);
   const [open, setOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const { scrollY } = useScroll();
@@ -50,8 +74,27 @@ const Navbar = () => {
       const threshold = isHomepageRef.current ? HOMEPAGE_SCROLL_THRESHOLD_PX : INNER_PAGE_SCROLL_THRESHOLD_PX;
       setScrolled(latest > threshold);
     }
-    setShowScrollTop(latest > window.innerHeight);
+    const delta = latest - lastScrollY.current;
+    if (Math.abs(delta) >= SCROLL_DIRECTION_SLOP_PX) {
+      lastScrollY.current = latest;
+      window.clearTimeout(scrollTopTimer.current);
+      if (delta < 0 && latest > window.innerHeight && !hiddenZoneUnderButton()) {
+        setShowScrollTop(true);
+        const hideWhenIdle = () => {
+          if (scrollTopButton.current?.matches(":hover, :focus-visible")) {
+            scrollTopTimer.current = window.setTimeout(hideWhenIdle, SCROLL_TOP_IDLE_MS);
+          } else {
+            setShowScrollTop(false);
+          }
+        };
+        scrollTopTimer.current = window.setTimeout(hideWhenIdle, SCROLL_TOP_IDLE_MS);
+      } else {
+        setShowScrollTop(false);
+      }
+    }
   });
+
+  useEffect(() => () => window.clearTimeout(scrollTopTimer.current), []);
 
   // Re-evaluate immediately on SPA route navigation
   useEffect(() => {
@@ -62,6 +105,13 @@ const Navbar = () => {
     const threshold = isHomepage ? HOMEPAGE_SCROLL_THRESHOLD_PX : INNER_PAGE_SCROLL_THRESHOLD_PX;
     setScrolled(scrollY.get() > threshold);
   }, [pathname, hasHero, isHomepage, scrollY]);
+
+  // A new page starts without the "back to top" button.
+  useEffect(() => {
+    window.clearTimeout(scrollTopTimer.current);
+    setShowScrollTop(false);
+    lastScrollY.current = scrollY.get();
+  }, [pathname, scrollY]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -244,15 +294,17 @@ const Navbar = () => {
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
+            ref={scrollTopButton}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.92 }}
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={() => window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" })}
+            aria-label="Volver arriba"
             className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 left-6 z-[1200] bg-green hover:bg-green-dark text-white rounded-full p-3.5 shadow-lg shadow-green/30 transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
           >
-            <ArrowUp className="h-5 w-5" />
+            <ArrowUp className="h-5 w-5" aria-hidden="true" />
           </motion.button>
         )}
       </AnimatePresence>
