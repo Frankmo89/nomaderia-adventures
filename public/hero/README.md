@@ -3,17 +3,17 @@
 **6** fotos de Frank servidas como AVIF + WebP responsivos en
 `public/hero/v2/` (`NN-640|1080|1600.{avif,webp}`):
 
-El hero muestra **una sola foto**, sin carrusel (ADR-045): `HERO_PHOTO` en
-`HeroSection.tsx` (hoy 02). Es la imagen LCP: el preload de `index.html`
-apunta a su id. Si la cambias, cambia también el preload. Las otras cinco
-quedan aquí para cuando se quiera cambiar. Las fotos son verticales (3:4): en
-celular llenan la mitad de arriba de la pantalla y en computadora van en un
-marco alto a la derecha, así que se ven casi completas.
+El hero pasa las 6 fotos con un fundido cada 6 s, sin barras (ADR-045). El
+**orden** lo pone `HERO_PHOTOS` en `HeroSection.tsx` (hoy 02 → 04 → 03 → 01 →
+05 → 06). La primera es la imagen LCP: el preload de `index.html` apunta a su
+id; si cambias la primera, cambia también el preload. Las fotos son
+verticales (3:4): en celular llenan la mitad de arriba de la pantalla y en
+computadora van en un marco alto a la derecha, así que se ven casi completas.
 
 | ID | Foto |
 |----|------|
 | 01 | Grand Canyon — amanecer junto a O'Neill Butte |
-| 02 | Joshua Tree — yuca y rocas (la del hero, LCP) |
+| 02 | Joshua Tree — yuca y rocas (primera, LCP) |
 | 03 | Yosemite — carretera con nieve y túnel |
 | 04 | Grand Canyon — sendero con excursionista |
 | 05 | Joshua Tree — Skull Rock |

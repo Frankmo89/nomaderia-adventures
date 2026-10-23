@@ -733,15 +733,15 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-045 — Hero del home: una foto arriba, el texto abajo sobre claro
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente. Reemplaza ADR-039 y el carrusel de 6 fotos con barras tipo historias.
+- **Estado:** Vigente. Reemplaza ADR-039 y las barras tipo historias del carrusel.
 - **Contexto:** Frank, en su iPhone: «no me gusta como se ve eso que va cambiando de foto, siento que ya se ve muy encimado todo». Sobre la foto iban 6 barras, la etiqueta del lugar, un H1 de 3 líneas, el subtítulo, el botón, el enlace a preguntas y la línea de confianza; la foto cambiaba cada 5 s y, para que el texto se leyera, llevaba oscuro encima. Se le mostraron 3 maquetas (una foto fija con el mismo diseño; foto arriba y texto abajo; tarjeta de vidrio) y eligió la segunda.
 - **Decisión:**
-  1. Una sola foto, fija (`HERO_PHOTO`, hoy 02 Joshua Tree), sin oscuro encima ni Ken Burns. Se van las barras, los temporizadores y el evento `hero_photo_select`.
+  1. Las 6 fotos de Frank siguen pasando (Frank: «quiero que se cambie»), pero en calma: fundido de 1.2 s cada 6 s, sin barras, sin Ken Burns y sin oscuro encima; la etiqueta del lugar cambia con la foto. Se detiene fuera de pantalla y con el cursor encima; con «reducir movimiento» se queda la primera. Botón de pausa solo para teclado (aparece al enfocarlo), como el video del cuestionario (ADR-042): mismo riesgo aceptado frente a WCAG 2.2.2. La primera (02, Joshua Tree) es la LCP; las otras 5 se montan cuando el navegador queda libre. Se va el evento `hero_photo_select` (no hay barras que tocar).
   2. Celular y tablet: la foto llena ~56 % de la pantalla detrás del navbar transparente (franja oscura arriba solo para el logo) y termina en la cresta de `hero-mask.svg`; debajo, sobre `cloud`, el H1 en `ink` con «nomás se encuentra.» en `green` (la fogata sobre claro da 2.96:1, no pasa ni texto grande), el subtítulo en `slate`, el botón fogata, el enlace a preguntas en `green` y la línea de confianza en `slate`.
   3. Desde `lg`: texto a la izquierda y la foto en un marco alto con esquinas de 32 px a la derecha. Las fotos son verticales (3:4), así que se ven casi completas (antes se recortaban a lo ancho). Como el texto va sobre claro, el navbar del home empieza sólido desde `lg` (`hasHeroForPath("/", { desktop: true })` es `false`); debajo de `lg` sigue transparente sobre la foto.
   4. Antes de la franja oscura de «La promesa» va el divisor `layered` en `cloud`.
   5. LCP: el preload de `index.html` sigue en la foto 02, con `imagesizes` igual a `HERO_SIZES` (`(min-width: 1024px) 44vw, 100vw`).
-- **Consecuencias:** cambiar la foto = mover `HERO_PHOTO` y el preload juntos (ADR-038 sigue para las carpetas). El texto ya no depende de cada foto, así que no hay que volver a medir contraste al cambiarla; sí la etiqueta del lugar. Pendiente de decisión de Frank: el botón fogata con texto blanco da 3.2:1 (pide 4.5:1 a ese tamaño).
+- **Consecuencias:** cambiar fotos u orden = editar `HERO_PHOTOS` y, si cambia la primera, el preload (ADR-038 sigue para las carpetas). El texto ya no va sobre las fotos, así que no hay que volver a medir su contraste al cambiarlas; sí revisar que el logo blanco se lea sobre el cielo de cada una en celular. Pendiente de decisión de Frank: el botón fogata con texto blanco da 3.2:1 (pide 4.5:1 a ese tamaño).
 
 ## Lecciones técnicas (bugs no obvios)
 
