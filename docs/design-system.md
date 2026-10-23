@@ -158,10 +158,10 @@ Variante oscura de 4.1, solo para la sección «¿A cuántas horas está tu pró
 
 ### 4.7 Escena del excursionista (cabecera de /destinos, ADR-043)
 Ilustración en silueta, no foto: la única de este tipo en el sitio, para una cabecera ancha que un video vertical no llena.
-- **Paleta (de oscuro a claro):** cresta y excursionista `#0D1A14`, pinos `#16332A`, íconos de parques `#22473A`, cordilleras `#3A6E55` con nieve `#7FAE95`; cielo de `forest-dark` a `#5E9C7A` en el horizonte. Luna y estrellas `cloud`. Nada en fogata ni terracota.
-- **Siluetas:** formas planas reconocibles (Half Dome, sequoias, Delicate Arch, saguaro…), sin contornos ni texto. Para sumar un parque, dibujarlo en la tesela de íconos de `src/lib/park-scene-tiles.ts` sin pasar de la altura de Half Dome.
-- **Movimiento:** lento y calmado (la cresta ~30 px/s, los íconos ~10 px/s). Quieto con «reducir movimiento», detenido fuera de pantalla.
-- **Texto:** el título y el subtítulo solo van sobre cielo oscuro; ninguna figura ni estrella pasa detrás de ellos.
+- **Paletas por hora (`SCENE_PALETTES`):** noche (la de marca: cresta `#0D1A14`, pinos `#16332A`, íconos `#22473A`, cordilleras `#3A6E55`, cielo de `forest-dark` a `#5E9C7A`, luna y estrellas), amanecer y atardecer (cielo índigo a durazno/rosa, siluetas azul-verde o ciruela, sol bajo detrás de las cordilleras) y día (cielo azul, nubes blancas, sol alto, siluetas verdes). Los cielos cálidos son propios de la escena: nunca fogata ni terracota. En todas, la franja de arriba es oscura (navbar y título blancos).
+- **Siluetas:** formas planas reconocibles (Half Dome, sequoias, Delicate Arch, el faro de Acadia…), sin contornos ni texto. Para sumar un parque, dibujarlo en la tesela de íconos de `src/lib/park-scene-tiles.ts` sin pasar de la altura de Half Dome.
+- **Movimiento:** calmado pero visible (la cresta ~40 px/s, los íconos ~17 px/s en celular). Quieto con «reducir movimiento», detenido fuera de pantalla.
+- **Texto:** el título y el subtítulo solo van sobre cielo oscuro; ninguna figura, nube ni estrella pasa detrás de ellos. Si una paleta aclara el cielo, lleva oscurecido radial detrás del texto y se vuelve a medir.
 
 ---
 

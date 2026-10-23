@@ -1,15 +1,40 @@
-import { useEffect, useRef, useState } from "react";
-import { SCENE_COLORS, SCENE_TILE_URLS } from "@/lib/park-scene-tiles";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  SCENE_PALETTES,
+  scenePhaseForHour,
+  sceneTileUrls,
+  type ScenePhase,
+} from "@/lib/park-scene-tiles";
 
 // Header scene for /destinos (ADR-043), drawn in code: a hiker walks along a
-// ridge at night while park landmarks drift past in four layers (far ranges,
+// ridge while park landmarks drift past in four layers (far ranges,
 // landmarks, pines, the ridge). Each layer slides one tile per loop, so the
 // seam never shows; nearer layers move faster. Styles and keyframes live in
 // src/index.css under `.trail-scene`.
 //
+// The palette follows the visitor's clock (dawn, day, dusk, night). For
+// previews, `?escena=amanecer|dia|atardecer|noche` forces one.
+//
 // Decorative only (aria-hidden). It stops when off screen and stands still
-// with "reduce motion". Everything stays below the subtitle, so the title and
-// subtitle only ever sit on dark sky.
+// with "reduce motion". Everything stays below the subtitle, and the sky stays
+// dark behind the title, subtitle and navbar in every palette.
+
+const PHASE_PARAM: Record<string, ScenePhase> = {
+  amanecer: "dawn",
+  dia: "day",
+  atardecer: "dusk",
+  noche: "night",
+};
+
+function currentPhase(): ScenePhase {
+  try {
+    const forced = new URLSearchParams(window.location.search).get("escena");
+    if (forced && PHASE_PARAM[forced]) return PHASE_PARAM[forced];
+  } catch {
+    // No URL access: fall back to the clock.
+  }
+  return scenePhaseForHour(new Date().getHours());
+}
 
 /**
  * Star positions as [left %, top %]. None sits behind the title or subtitle
@@ -21,9 +46,9 @@ const STARS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 /** The hiker: legs, arm and pole swing (keyframes in index.css). */
-const Hiker = () => (
+const Hiker = ({ color }: { color: string }) => (
   <svg className="trail-scene__hiker" viewBox="0 0 60 100" focusable="false">
-    <g fill={SCENE_COLORS.ridge} stroke={SCENE_COLORS.ridge} strokeLinecap="round" strokeLinejoin="round">
+    <g fill={color} stroke={color} strokeLinecap="round" strokeLinejoin="round">
       <g className="trail-scene__leg trail-scene__leg--back">
         <path fill="none" strokeWidth="7" d="M30,57 L30,77" />
         <g className="trail-scene__shin">
@@ -57,6 +82,9 @@ const Hiker = () => (
 const ParkTrailScene = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [offscreen, setOffscreen] = useState(false);
+  const [phase] = useState(currentPhase);
+  const palette = SCENE_PALETTES[phase];
+  const tiles = useMemo(() => sceneTileUrls(palette), [palette]);
 
   useEffect(() => {
     const el = ref.current;
@@ -66,22 +94,45 @@ const ParkTrailScene = () => {
     return () => io.disconnect();
   }, []);
 
+  const [s0, s1, s2, s3, s4] = palette.sky;
+  const vars = {
+    "--trail-sky": `linear-gradient(to bottom, ${s0} 0%, ${s1} 38%, ${s2} 58%, ${s3} 82%, ${s4} 100%)`,
+    "--trail-glow": palette.glow,
+    "--trail-orb": palette.orb.color,
+    "--trail-orb-glow": palette.orb.glow,
+    "--trail-stars": String(palette.stars),
+    "--trail-rim": palette.rim,
+    "--trail-scrim": palette.scrim,
+  } as CSSProperties;
+
   return (
-    <div ref={ref} aria-hidden="true" className="trail-scene" data-paused={offscreen ? "" : undefined}>
+    <div
+      ref={ref}
+      aria-hidden="true"
+      className="trail-scene"
+      data-phase={phase}
+      data-paused={offscreen ? "" : undefined}
+      style={vars}
+    >
       <div className="trail-scene__glow" />
-      {STARS.map(([left, top], i) => (
-        <span
-          key={`${left}-${top}`}
-          className="trail-scene__star"
-          style={{ left: `${left}%`, top: `${top}%`, animationDelay: `${-i * 0.7}s` }}
-        />
-      ))}
-      <div className="trail-scene__moon" />
-      <div className="trail-scene__layer trail-scene__far" style={{ backgroundImage: SCENE_TILE_URLS.far }} />
-      <div className="trail-scene__layer trail-scene__landmarks" style={{ backgroundImage: SCENE_TILE_URLS.landmarks }} />
-      <div className="trail-scene__layer trail-scene__trees" style={{ backgroundImage: SCENE_TILE_URLS.trees }} />
-      <Hiker />
-      <div className="trail-scene__layer trail-scene__ridge" style={{ backgroundImage: SCENE_TILE_URLS.ridge }} />
+      <div className="trail-scene__scrim" />
+      {palette.stars > 0 &&
+        STARS.map(([left, top], i) => (
+          <span
+            key={`${left}-${top}`}
+            className="trail-scene__star"
+            style={{ left: `${left}%`, top: `${top}%`, animationDelay: `${-i * 0.7}s` }}
+          />
+        ))}
+      <div className={`trail-scene__orb trail-scene__orb--${palette.orb.position}`} />
+      {palette.clouds && (
+        <div className="trail-scene__layer trail-scene__clouds" style={{ backgroundImage: tiles.clouds }} />
+      )}
+      <div className="trail-scene__layer trail-scene__far" style={{ backgroundImage: tiles.far }} />
+      <div className="trail-scene__layer trail-scene__landmarks" style={{ backgroundImage: tiles.landmarks }} />
+      <div className="trail-scene__layer trail-scene__trees" style={{ backgroundImage: tiles.trees }} />
+      <Hiker color={palette.ridge} />
+      <div className="trail-scene__layer trail-scene__ridge" style={{ backgroundImage: tiles.ridge }} />
     </div>
   );
 };
