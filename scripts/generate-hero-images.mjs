@@ -14,7 +14,7 @@ const root = path.resolve(__dirname, "..");
 const sourcesDir = path.join(root, "public/hero/sources");
 // /hero/* is cached `immutable` for a year (public/_headers). New photos MUST
 // land in a new folder, or returning visitors keep the old ones. Bump this
-// together with HERO_BASE in src/lib/hero-photos.ts and the preload in index.html.
+// together with HERO_BASE in HeroSection.tsx and the preload in index.html.
 const HERO_VERSION = "v2";
 const outDir = path.join(root, "public/hero", HERO_VERSION);
 const WIDTHS = [640, 1080, 1600];

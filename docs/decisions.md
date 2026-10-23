@@ -649,7 +649,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Fecha:** 2026-10-21
 - **Estado:** Vigente.
 - **Contexto:** `public/_headers` sirve `/hero/*` con `Cache-Control: public, max-age=31536000, immutable`. Al cambiar las 6 fotos placeholder por las de Frank con los mismos nombres (`01-1080.avif`…), el navegador de quien ya visitó no vuelve a pedirlas durante un año.
-- **Decisión:** cada set de fotos vive en una carpeta nueva (`/hero/v2/`, luego `v3`…). Tres lugares se mueven juntos: `HERO_VERSION` en `scripts/generate-hero-images.mjs`, `HERO_BASE` (desde ADR-042 en `src/lib/hero-photos.ts`) y el preload de la foto 01 en `index.html`. El set anterior se borra en el mismo commit. La regla `immutable` de `_headers` no cambia.
+- **Decisión:** cada set de fotos vive en una carpeta nueva (`/hero/v2/`, luego `v3`…). Tres lugares se mueven juntos: `HERO_VERSION` en `scripts/generate-hero-images.mjs`, `HERO_BASE` en `HeroSection.tsx` y el preload de la foto 01 en `index.html`. El set anterior se borra en el mismo commit. La regla `immutable` de `_headers` no cambia.
 - **Consecuencias:** cambiar fotos no requiere purgar caché en Cloudflare. Si alguien cambia una foto sin subir la versión, el cambio no llega a visitantes que ya tienen la vieja en caché: el README de `public/hero/` lo explica.
 
 ### ADR-039 — Hero: luz dirigida y contraste medido sobre las fotos reales
@@ -689,17 +689,18 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   6. Evento `landing_origin_set` (`events` + GA4/Pixel) con `zip3` y `result` (`zip` / `san_diego_area` / `off_route`), igual que el quiz guarda `zip3`. Sirve para ver cuántas visitas no son de San Diego.
 - **Consecuencias:** las horas desde otro código son orientativas; nunca mostrarlas sin «≈» ni sin la nota. Si alguien reporta un error grande, no meter correcciones a mano por parque: el arreglo de fondo es una tabla de tiempos reales por carretera (requiere un servicio de rutas). El motor no se toca aquí (ADR-026); si cambia la fórmula upstream, la ruta la hereda.
 
-### ADR-042 — El cuestionario del home va sobre una foto de Frank
+### ADR-042 — El cuestionario del home va sobre un video de Frank caminando
 - **Fecha:** 2026-10-22
 - **Estado:** Vigente.
-- **Contexto:** Frank: entre «La diferencia Nomaderia» y el cuestionario «está todo muy blanco y se ve mal». Las dos secciones eran `bg-cloud` con `py-16`/`py-24` y quedaban ~130 px de blanco entre el botón de compra y el cuestionario. De parques (oscuro) al seguro (verde claro) todo se leía como una pared blanca. Eligió la opción 1 de 4: el cuestionario sobre foto.
+- **Contexto:** Frank: entre «La diferencia Nomaderia» y el cuestionario «está todo muy blanco y se ve mal». Las dos secciones eran `bg-cloud` con `py-16`/`py-24` y quedaban ~130 px de blanco entre el botón de compra y el cuestionario. De parques (oscuro) al seguro (verde claro) todo se leía como una pared blanca. Eligió poner el cuestionario sobre una foto y, al verla, mandó 4 videos suyos caminando y pidió uno de fondo.
 - **Decisión:**
-  1. Las vistas de preguntas y de carga van sobre la foto 01 (Grand Canyon al amanecer), con la tarjeta del cuestionario opaca (`bg-cloud`, antes `bg-card/50` con blur) para que el texto oscuro nunca quede sobre la foto. Encabezado en `cloud`; la pastilla «Cuestionario personalizado» en vidrio oscuro.
-  2. Scrim «luz, no manta» (ADR-039): tinte `forest-dark/35` en toda la foto, degradado más oscuro arriba detrás del encabezado y sólido abajo para que la cresta oscura siguiente continúe sin línea. Cresta `cloud` arriba (de «La diferencia» a la foto) y cresta `forest-dark` abajo (de la foto al seguro), dentro de `QuizSection`, así solo aparecen cuando la foto está.
-  3. Contraste medido pixel a pixel con el texto oculto (peor pixel detrás de cada texto, 360/390/1024/1280 px): título 5.3–9.7, subtítulo 5.8–9.7, pastilla 5.0–11.5. Todo ≥4.5.
-  4. Los resultados se quedan en `bg-cloud`: ahí está el botón de compra y su texto (links verdes, notas `stone-500`) no pasa contraste sobre oscuro. Cambiarlos es otro PR.
-  5. Las rutas de las fotos pasan a `src/lib/hero-photos.ts` (`HERO_BASE`, `heroSrcSet`), que usan el hero y el cuestionario: un solo lugar al cambiar de carpeta (ADR-038). La foto 01 ya la baja el hero (4.ª del slideshow) con los mismos `sizes`, así que en el home sale de caché.
-- **Consecuencias:** al cambiar las fotos del hero, revisar que la 01 siga funcionando detrás del encabezado del cuestionario (repetir la medición). No volver a una tarjeta translúcida sobre la foto.
+  1. Las vistas de preguntas y de carga van sobre su video del Gran Cañón (sendero en el borde, `public/video/v1/`), con la tarjeta del cuestionario opaca (`bg-cloud`, antes `bg-card/50` con blur) para que el texto oscuro nunca quede sobre el video. Encabezado en `cloud`; la pastilla «Cuestionario personalizado» en vidrio oscuro.
+  2. El video: 9.5 s del original a 0.85× y con fundido de 0.8 s entre final e inicio (loop sin brinco). H.264 sin audio: 720×1280 (~1.3 MB) en celular, 1080×1920 (~2.5 MB) desde 768 px; póster WebP = primer cuadro. Lo genera `scripts/generate-quiz-video.sh` (ffmpeg); el original no se sube. `/video/*` con caché `immutable` y carpeta versionada, como `/hero/*` (ADR-038).
+  3. Carga y reproducción: `preload="none"`; se reproduce solo mientras la sección está en pantalla (IntersectionObserver) y se pausa al salir. Con «reducir movimiento» o ahorro de datos (`navigator.connection.saveData`) no hay video: se ve el póster fijo. Botón de pausa (WCAG 2.2.2: movimiento de más de 5 s).
+  4. Scrim «luz, no manta» (ADR-039): tinte `forest-dark/35`, degradado más oscuro arriba detrás del encabezado y sólido abajo para que la cresta oscura siguiente continúe sin línea. Cresta `cloud` arriba y `forest-dark` abajo, dentro de `QuizSection`, así solo aparecen con el video.
+  5. Contraste medido pixel a pixel con el texto oculto, en 4 cuadros del video (0, 3, 6 y 9 s) × 360/390/1024/1280 px: título ≥6.5, subtítulo ≥5.6, pastilla ≥4.8. Todo ≥4.5.
+  6. Los resultados se quedan en `bg-cloud`: ahí está el botón de compra y su texto (links verdes, notas `stone-500`) no pasa contraste sobre oscuro. Cambiarlos es otro PR.
+- **Consecuencias:** al cambiar el video, repetir la medición en varios cuadros (el cielo cambia mientras camina). No volver a una tarjeta translúcida sobre el fondo. Si el peso pesa en datos móviles, bajar primero el 720 (CRF 30 → 32) antes de quitar el video.
 
 ## Lecciones técnicas (bugs no obvios)
 

@@ -2,12 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { MapPin, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { logEvent } from "@/lib/events";
-import { heroFallbackSrc, heroSrcSet } from "@/lib/hero-photos";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
 /**
- * Frank's own photos (paths in src/lib/hero-photos.ts).
+ * Frank's own photos (public/hero/v2/).
  * /hero/* is cached immutable — new photos go in a new folder (v3, …) and
  * HERO_BASE, the index.html preload and the script move together.
  * `place` only names the park: never a trail or viewpoint we have not checked.
@@ -16,6 +15,7 @@ import { useFeaturedHeroPark } from "@/hooks/use-destinations";
  * clean, so slide 1 needs a strong top: Joshua Tree (also the closest park to
  * SoCal). Slide 1 is the LCP image — keep the index.html preload on its id.
  */
+const HERO_BASE = "/hero/v2";
 const HERO_SLIDES = [
   { id: "02", place: "Joshua Tree · California" },
   { id: "04", place: "Grand Canyon · Arizona" },
@@ -24,6 +24,7 @@ const HERO_SLIDES = [
   { id: "05", place: "Joshua Tree · California" },
   { id: "06", place: "Yosemite · California" },
 ] as const;
+const HERO_WIDTHS = [640, 1080, 1600] as const;
 const HERO_SIZES = "100vw";
 const SLIDE_DURATION = 5000;
 /** Fogata — the exact fill of "IA" in /brand/nomaderia-horizontal*.svg. */
@@ -106,6 +107,12 @@ const HERO_CSS = `
 }
 `;
 
+function heroSrcSet(id: string, ext: "avif" | "webp"): string {
+  return HERO_WIDTHS.map((w) => `${HERO_BASE}/${id}-${w}.${ext} ${w}w`).join(
+    ", ",
+  );
+}
+
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
@@ -151,7 +158,7 @@ function HeroSlide({ id, active, priority, index }: HeroSlideProps) {
           sizes={HERO_SIZES}
         />
         <img
-          src={heroFallbackSrc(id)}
+          src={`${HERO_BASE}/${id}-1080.webp`}
           alt=""
           width={1600}
           height={900}

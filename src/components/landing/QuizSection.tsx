@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
 import { STRIPE_AND_DOUBT_COPY } from "@/lib/concierge-flag";
 import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motion";
@@ -7,7 +7,7 @@ import {
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
   Mail, Loader2, HeartPulse, Backpack, Tent, MapPin,
   Users, BedDouble, Baby, UserRound, Hotel, Home, Car, Plane, HelpCircle,
-  CreditCard,
+  CreditCard, Pause, Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizPreview, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
 import SectionDivider from "@/components/landing/SectionDivider";
-import { heroFallbackSrc, heroSrcSet } from "@/lib/hero-photos";
 import { isIslandZip, isValidZipFormat, lookupZip, preloadZipTable } from "@/lib/zip-centroids";
 import {
   DRIVE_HOUR_OPTIONS,
@@ -630,41 +629,117 @@ const QuizResults = ({
   );
 };
 
-// --- Photo backdrop (questions + loading) ---
+// --- Video backdrop (questions + loading) ---
 
 /**
- * The questions and the loading state sit on one of Frank's photos (ADR-042):
- * the dark beat between "La diferencia" (light) and the insurance band
- * (green wash), so the home no longer reads as one white wall. Results keep
- * the light background: the buy button lives there and was not touched.
+ * The questions and the loading state sit on Frank's video walking a Grand
+ * Canyon trail (ADR-042): the dark beat between "La diferencia" (light) and
+ * the insurance band (green wash), so the home no longer reads as one white
+ * wall. Results keep the light background: the buy button lives there and
+ * was not touched.
+ *
+ * public/video/* is cached immutable: a new cut goes in a new folder and this
+ * path moves with it (scripts/generate-quiz-video.sh, public/video/README.md).
  */
-const QUIZ_PHOTO_ID = "01"; // Grand Canyon at sunrise, by O'Neill Butte
+const QUIZ_VIDEO_BASE = "/video/v1/quiz-gc";
+const QUIZ_POSTER_SRCSET = `${QUIZ_VIDEO_BASE}-720.webp 720w, ${QUIZ_VIDEO_BASE}-1080.webp 1080w`;
 
-/** Opaque card: dark text inside never sits on the photo. */
+/** Opaque card: dark text inside never sits on the video. */
 const QUIZ_CARD = "rounded-2xl border border-white/60 bg-cloud p-6 shadow-2xl shadow-forest-dark/50 sm:p-8";
 
-const QuizPhotoShell = ({ children }: { children: ReactNode }) => (
+/** Browser asked to save data (Chrome on Android "Lite mode", etc.). */
+function prefersSaveData(): boolean {
+  try {
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
+    return nav.connection?.saveData === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Muted, looping, decorative. It downloads and plays only while the section is
+ * on screen; reduced motion or save-data gets the still poster instead. A
+ * pause button keeps it within WCAG 2.2.2 (moving content over 5 s).
+ */
+const QuizBackdropVideo = () => {
+  const reduceMotion = useReducedMotion();
+  const [saveData] = useState(prefersSaveData);
+  const [paused, setPaused] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const still = reduceMotion || saveData;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || still) return;
+    video.muted = true; // iOS autoplays only when the property is set
+    if (paused) {
+      video.pause();
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) void video.play().catch(() => undefined);
+        else video.pause();
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [paused, still]);
+
+  if (still) {
+    return (
+      <img
+        src={`${QUIZ_VIDEO_BASE}-720.webp`}
+        srcSet={QUIZ_POSTER_SRCSET}
+        sizes="100vw"
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
+    );
+  }
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        muted
+        loop
+        playsInline
+        preload="none"
+        poster={`${QUIZ_VIDEO_BASE}-720.webp`}
+        aria-hidden="true"
+        tabIndex={-1}
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      >
+        <source src={`${QUIZ_VIDEO_BASE}-1080.mp4`} type="video/mp4" media="(min-width: 768px)" />
+        <source src={`${QUIZ_VIDEO_BASE}-720.mp4`} type="video/mp4" />
+      </video>
+      <button
+        type="button"
+        onClick={() => setPaused((p) => !p)}
+        aria-label={paused ? "Reproducir el video de fondo" : "Pausar el video de fondo"}
+        className="absolute right-4 top-12 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-cloud/30 bg-forest-dark/70 text-cloud transition-colors hover:bg-forest-dark/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cloud sm:right-6 sm:top-20"
+      >
+        {paused ? <Play className="h-4 w-4" aria-hidden="true" /> : <Pause className="h-4 w-4" aria-hidden="true" />}
+      </button>
+    </>
+  );
+};
+
+const QuizBackdropShell = ({ children }: { children: ReactNode }) => (
   <>
     <section id="quiz" className="relative overflow-hidden bg-forest-dark pb-20 pt-24 sm:pb-28 sm:pt-32">
-      <picture>
-        <source type="image/avif" srcSet={heroSrcSet(QUIZ_PHOTO_ID, "avif")} sizes="100vw" />
-        <source type="image/webp" srcSet={heroSrcSet(QUIZ_PHOTO_ID, "webp")} sizes="100vw" />
-        <img
-          src={heroFallbackSrc(QUIZ_PHOTO_ID)}
-          alt=""
-          width={1600}
-          height={2133}
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
-      </picture>
+      <QuizBackdropVideo />
       {/* Light, not a blanket: a soft tint everywhere, darker behind the
           header text, solid at the bottom so the dark ridge below carries on. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-forest-dark/35" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[28rem] bg-gradient-to-b from-forest-dark/80 via-forest-dark/55 to-transparent" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-forest-dark from-35% to-transparent" />
-      {/* "La diferencia" (cloud) drops onto the photo as a ridge. */}
+      {/* "La diferencia" (cloud) drops onto the video as a ridge. */}
       <div className="absolute inset-x-0 top-0">
         <SectionDivider variant="layered" fill="#FBFAF7" />
       </div>
@@ -770,11 +845,11 @@ const QuizSection = () => {
   };
 
   if (loading && !showResults) return (
-    <QuizPhotoShell>
+    <QuizBackdropShell>
       <div className={QUIZ_CARD}>
         <QuizLoading />
       </div>
-    </QuizPhotoShell>
+    </QuizBackdropShell>
   );
 
   if (showResults) return (
@@ -795,7 +870,7 @@ const QuizSection = () => {
   );
 
   return (
-    <QuizPhotoShell>
+    <QuizBackdropShell>
         {/* Section header — light text on the photo */}
         <Reveal className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 rounded-full border border-cloud/30 bg-forest-dark/70 px-4 py-1.5 text-sm text-cloud mb-4 supports-[backdrop-filter]:bg-forest-dark/55 supports-[backdrop-filter]:backdrop-blur-md">
@@ -1116,7 +1191,7 @@ const QuizSection = () => {
             </motion.div>
           </AnimatePresence>
         </div>
-    </QuizPhotoShell>
+    </QuizBackdropShell>
   );
 };
 
