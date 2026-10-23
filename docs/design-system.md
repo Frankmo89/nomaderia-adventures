@@ -156,6 +156,13 @@ Variante oscura de 4.1, solo para la sección «¿A cuántas horas está tu pró
 - **CTA:** pill `cloud` con texto `ink` («Ver guía →»; desde `xl`, «Ver guía de X →»). Toda la tarjeta es el link.
 - **Origen (ADR-041):** al lado del eyebrow, pill chico «📍 Cambiar» (borde `cloud/30`, 32 px de alto, área de toque de 48 px). Abre un formulario en línea: etiqueta visible, campo de código postal en pill (`cloud/10`) y botón `cloud` «Ver mi ruta». Las horas estimadas llevan «≈» y una nota `cloud/80` bajo la ruta; las reales desde San Diego van sin «≈».
 
+### 4.7 Escena del excursionista (cabecera de /destinos, ADR-043)
+Ilustración en silueta, no foto: la única de este tipo en el sitio, para una cabecera ancha que un video vertical no llena.
+- **Paleta (de oscuro a claro):** cresta y excursionista `#0D1A14`, pinos `#16332A`, íconos de parques `#22473A`, cordilleras `#3A6E55` con nieve `#7FAE95`; cielo de `forest-dark` a `#5E9C7A` en el horizonte. Luna y estrellas `cloud`. Nada en fogata ni terracota.
+- **Siluetas:** formas planas reconocibles (Half Dome, sequoias, Delicate Arch, saguaro…), sin contornos ni texto. Para sumar un parque, dibujarlo en la tesela de íconos de `src/lib/park-scene-tiles.ts` sin pasar de la altura de Half Dome.
+- **Movimiento:** lento y calmado (la cresta ~30 px/s, los íconos ~10 px/s). Quieto con «reducir movimiento», detenido fuera de pantalla.
+- **Texto:** el título y el subtítulo solo van sobre cielo oscuro; ninguna figura ni estrella pasa detrás de ellos.
+
 ---
 
 ## 5. Resumen de tokens (para Tailwind config)

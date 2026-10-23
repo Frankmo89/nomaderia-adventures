@@ -17,7 +17,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import PageHeader from "@/components/shared/PageHeader";
 import { CardImage } from "@/components/shared/CardImage";
-import USStateTintMap from "@/components/destinations/USStateTintMap";
+import ParkTrailScene from "@/components/destinations/ParkTrailScene";
 import { DistanceFromYou } from "@/components/destinations/DistanceFromYou";
 import { OriginPicker } from "@/components/destinations/OriginPicker";
 import { useCanonical, usePageMeta } from "@/hooks/use-seo";
@@ -322,7 +322,7 @@ const Destinations = () => {
       <Navbar />
 
       <PageHeader title="Destinos" subtitle="63 parques nacionales · guías en español">
-        <USStateTintMap />
+        <ParkTrailScene />
       </PageHeader>
 
       {/* Sticky container: search bar + difficulty tabs */}

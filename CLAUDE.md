@@ -122,7 +122,7 @@ src/
 │   └── admin/                # Panel protegido (Supabase Auth + rol admin, DARK)
 ├── components/
 │   ├── landing/              # Secciones de homepage (Navbar, Hero, Quiz, Footer, etc.)
-│   ├── destinations/         # Secciones de /destinos/:slug (TrailsSection, ParkAlertsBanner, ParkWeatherCard, HowToGetThere, etc.)
+│   ├── destinations/         # Secciones de /destinos/:slug (TrailsSection, ParkAlertsBanner, ParkWeatherCard, HowToGetThere, etc.) + ParkTrailScene (cabecera animada de /destinos, ADR-043)
 │   ├── ConciergeLauncher.tsx # Launcher global del Concierge IA (montado en App.tsx, persiste entre rutas)
 │   └── ui/                   # shadcn/ui — NO editar manualmente
 ├── config/
@@ -145,6 +145,7 @@ src/
 │   ├── quiz-ranking.ts       # Adaptador quiz → motor de ranking vendorizado (@engine, ADR-026)
 │   ├── landing-parks.ts      # Etiquetas de las tarjetas de parques del home (ADR-040)
 │   ├── landing-origin.ts     # Origen de la ruta del home: San Diego (horas reales) o código postal (≈ motor) (ADR-041)
+│   ├── park-scene-tiles.ts   # Teselas SVG de la escena del excursionista en /destinos (ADR-043)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
 └── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts
