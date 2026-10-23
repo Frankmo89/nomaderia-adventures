@@ -16,7 +16,7 @@ interface PageHeaderProps {
 // (Mobbin research: "peso visual" sin mapa vía tipografía oversized + bloque
 // de color, en vez de mapa ilustrado estático).
 // `children` renders as an absolutely-positioned background layer behind the
-// headline (see USStateTintMap on Destinos) — pages that don't pass children
+// headline (see ParkTrailScene on Destinos) — pages that don't pass children
 // render exactly as before.
 // `eyebrow` reuses the site's established Oswald label treatment (see
 // SocialProof/BlogPreview/GearPreview: font-condensed text-xs tracking-[0.08em]
@@ -27,12 +27,12 @@ const PageHeader = ({ title, subtitle, eyebrow, children }: PageHeaderProps) => 
   return (
     <section
       className={cn(
-        "relative overflow-hidden bg-forest-dark pb-14 sm:pb-20",
-        // `children` (USStateTintMap on Destinos) renders as an absolute layer
-        // starting below the fixed navbar (see its own top-16 offset) — extra
-        // top padding here gives it enough section height to render fully
-        // visible instead of being squeezed/clipped against that offset.
-        children ? "pt-36 sm:pt-44" : "pt-28 sm:pt-36"
+        "relative overflow-hidden bg-forest-dark",
+        // With `children` (ParkTrailScene on Destinos) the headline sits just
+        // under the fixed navbar and the bottom padding leaves room for the
+        // scene, whose tallest shapes stop ~8px below the subtitle: 116px on
+        // phones, 142px from 640px up (ADR-043).
+        children ? "pt-[100px] pb-32 sm:pt-32 sm:pb-40" : "pt-28 sm:pt-36 pb-14 sm:pb-20"
       )}
     >
       {children}

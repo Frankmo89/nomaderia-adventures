@@ -264,3 +264,130 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* /destinos header scene (ADR-043, src/components/destinations/ParkTrailScene.tsx).
+   Colors come from the palette as --trail-* variables. Each layer is 2 tiles
+   wide on phones (a tile is wider than the screen) and 4 from 640 px up; one
+   loop slides it exactly one tile. Durations keep the parallax: ridge 1x,
+   pines ~0.55x, landmarks ~0.4x, far ranges ~0.1x. The ridge matches the
+   hiker's stride (0.8 s step cycle) so his boots don't slide. */
+.trail-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--trail-sky);
+}
+.trail-scene__glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 40% at 50% 90%, var(--trail-glow), transparent 72%);
+}
+.trail-scene__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--trail-scrim);
+}
+.trail-scene__star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 9999px;
+  background: #fbfaf7;
+  opacity: var(--trail-stars);
+  animation: trail-twinkle 4s ease-in-out infinite;
+}
+.trail-scene__orb {
+  position: absolute;
+  border-radius: 9999px;
+  background: var(--trail-orb);
+}
+.trail-scene__orb--high {
+  top: 96px;
+  right: 13%;
+  width: 22px;
+  height: 22px;
+  box-shadow: 0 0 18px 6px var(--trail-orb-glow), 0 0 60px 24px var(--trail-orb-glow);
+}
+/* Low suns sit behind the far ranges, at the edges and with a tight glow so
+   it never reaches the subtitle. */
+.trail-scene__orb--low-left,
+.trail-scene__orb--low-right {
+  top: 66%;
+  width: 28px;
+  height: 28px;
+  box-shadow: 0 0 14px 5px var(--trail-orb-glow);
+}
+.trail-scene__orb--low-left { left: 8%; }
+.trail-scene__orb--low-right { right: 9%; }
+.trail-scene__layer {
+  position: absolute;
+  left: 0;
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  background-size: auto 100%;
+  animation: trail-drift-2 linear infinite;
+}
+/* Clouds stay below the subtitle (phones: from 184 px down; 640+: 236 px). */
+.trail-scene__clouds { bottom: 80px; height: 36px; width: calc(36px * 40 * 2); animation-duration: 420s; }
+.trail-scene__far { bottom: 30px; height: 96px; width: calc(96px * 16 * 2); animation-duration: 360s; }
+.trail-scene__landmarks { bottom: 22px; height: 112px; width: calc(112px * 58 / 3 * 2); animation-duration: 123s; }
+.trail-scene__trees { bottom: 14px; height: 62px; width: calc(62px * 15 * 2); animation-duration: 40s; }
+.trail-scene__ridge { bottom: 0; height: 32px; width: calc(32px * 40 * 2); animation-duration: 30.4s; }
+.trail-scene__hiker {
+  position: absolute;
+  left: 18%;
+  bottom: 22px;
+  height: 50px;
+  width: 30px;
+  overflow: visible;
+  /* Faint rim light so he still reads in front of the dark pines. */
+  filter: drop-shadow(0 0 1px var(--trail-rim));
+}
+.trail-scene__leg,
+.trail-scene__shin,
+.trail-scene__arm,
+.trail-scene__upper {
+  transform-box: view-box;
+}
+.trail-scene__leg { transform-origin: 30px 57px; animation: trail-thigh 0.8s ease-in-out infinite; }
+.trail-scene__shin { transform-origin: 30px 77px; animation: trail-shin 0.8s linear infinite; }
+.trail-scene__arm { transform-origin: 33px 34px; animation: trail-arm 0.8s ease-in-out infinite; }
+.trail-scene__upper { animation: trail-bob 0.4s ease-in-out infinite; }
+.trail-scene__leg--back,
+.trail-scene__leg--back .trail-scene__shin { animation-delay: -0.4s; }
+@media (min-width: 640px) {
+  .trail-scene__layer { animation-name: trail-drift-4; }
+  .trail-scene__clouds { bottom: 104px; height: 44px; width: calc(44px * 40 * 4); }
+  .trail-scene__far { bottom: 38px; height: 124px; width: calc(124px * 16 * 4); }
+  .trail-scene__landmarks { bottom: 30px; height: 134px; width: calc(134px * 58 / 3 * 4); }
+  .trail-scene__trees { bottom: 18px; height: 84px; width: calc(84px * 15 * 4); }
+  .trail-scene__ridge { height: 42px; width: calc(42px * 40 * 4); }
+  .trail-scene__hiker { bottom: 29px; height: 66px; width: 39.6px; }
+  .trail-scene__orb--high { top: 110px; width: 30px; height: 30px; }
+  .trail-scene__orb--low-left,
+  .trail-scene__orb--low-right { width: 36px; height: 36px; }
+}
+.trail-scene[data-paused] *,
+.trail-scene[data-paused] .trail-scene__layer {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trail-scene *,
+  .trail-scene .trail-scene__layer {
+    animation: none !important;
+  }
+}
+@keyframes trail-drift-2 { to { transform: translateX(-50%); } }
+@keyframes trail-drift-4 { to { transform: translateX(-25%); } }
+@keyframes trail-twinkle { 50% { transform: scale(0.4); } }
+@keyframes trail-thigh { 0%, 100% { transform: rotate(-24deg); } 50% { transform: rotate(22deg); } }
+@keyframes trail-shin {
+  0%, 100% { transform: rotate(2deg); }
+  40% { transform: rotate(8deg); }
+  55% { transform: rotate(30deg); }
+  75% { transform: rotate(50deg); }
+  92% { transform: rotate(6deg); }
+}
+@keyframes trail-arm { 0%, 100% { transform: rotate(16deg); } 50% { transform: rotate(-14deg); } }
+@keyframes trail-bob { 0%, 100% { transform: translateY(1.2px); } 50% { transform: translateY(-0.6px); } }
