@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -228,6 +228,41 @@ const Destinations = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showStates, setShowStates] = useState(false);
 
+  // The search lives in the header. Once it scrolls away, a search button
+  // shows at the start of the sticky filter row and brings it back.
+  const heroSearchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [heroSearchVisible, setHeroSearchVisible] = useState(true);
+  useEffect(() => {
+    const el = heroSearchRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    // Hidden once it is under the navbar (76px) and the sticky row (~44px).
+    const io = new IntersectionObserver(([entry]) => setHeroSearchVisible(entry.isIntersecting), {
+      rootMargin: "-120px 0px 0px 0px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const smoothScroll = () =>
+    typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth";
+
+  function backToSearch() {
+    window.scrollTo({ top: 0, behavior: smoothScroll() });
+    searchInputRef.current?.focus({ preventScroll: true });
+  }
+
+  // On phones the keyboard covers the lower half: lift the search to just
+  // under the navbar so the first results show beneath it.
+  function liftSearchOnPhones() {
+    const el = heroSearchRef.current;
+    if (!el || !window.matchMedia?.("(max-width: 767px)").matches) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - 84;
+    if (window.scrollY < top) window.scrollTo({ top, behavior: smoothScroll() });
+  }
+
   // Precompute haversine distance for each park
   const parksWithDist = useMemo<ParkWithDist[]>(
     () =>
@@ -321,37 +356,60 @@ const Destinations = () => {
     <main className="bg-background min-h-screen">
       <Navbar />
 
-      <PageHeader title="Destinos" subtitle="63 parques nacionales · guías en español">
+      <PageHeader
+        title="Destinos"
+        subtitle="63 parques nacionales · guías en español"
+        actions={
+          <div ref={heroSearchRef} className="mx-auto flex max-w-xl items-center gap-2">
+            <div className="relative flex-1">
+              <label htmlFor="park-search" className="sr-only">
+                Buscar parque
+              </label>
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sage"
+              />
+              <Input
+                id="park-search"
+                ref={searchInputRef}
+                type="search"
+                placeholder="Busca un parque…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={liftSearchOnPhones}
+                className="h-12 rounded-full border-0 bg-cloud pl-11 pr-4 text-base text-ink shadow-lg shadow-forest-dark/30 placeholder:text-slate/80 focus-visible:ring-2 focus-visible:ring-green focus-visible:ring-offset-0"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setSheetOpen(true)}
+              className="flex h-12 shrink-0 items-center gap-2 rounded-full border border-cloud/25 bg-forest-dark/70 px-4 text-sm font-medium text-cloud backdrop-blur-md transition-colors hover:bg-forest-dark/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cloud"
+            >
+              <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
+              <span className="sr-only sm:not-sr-only">Filtros</span>
+            </button>
+          </div>
+        }
+      >
         <ParkTrailScene />
       </PageHeader>
 
-      {/* Sticky container: search bar + difficulty tabs */}
-      <div className="sticky top-16 z-30 bg-background shadow-[0_1px_0_0_rgb(0_0_0/0.06)]">
-        {/* Search + Filtros button */}
-        <div className="container mx-auto px-5 py-3 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              type="search"
-              placeholder="Buscar parque..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-10 text-sm"
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 gap-1.5 shrink-0"
-            onClick={() => setSheetOpen(true)}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            <span className="hidden xs:inline sm:inline">Filtros</span>
-          </Button>
-        </div>
-
+      {/* Sticky container: difficulty tabs + quick filters. Sticks right under
+          the 76px navbar (top-16 left its top 12px hidden behind it). */}
+      <div className="sticky top-[76px] z-30 bg-background shadow-[0_1px_0_0_rgb(0_0_0/0.06)]">
         {/* Difficulty tabs + quick-filter chips — scrollable horizontally */}
-        <div className="flex overflow-x-auto border-t border-stone-100 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {!heroSearchVisible && (
+            <button
+              type="button"
+              onClick={backToSearch}
+              aria-label={search ? `Buscar parque: ${search}` : "Buscar parque"}
+              className="flex-none self-center ml-3 mr-1 flex h-9 max-w-[9rem] items-center gap-1.5 rounded-full border border-stone-200 bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-green-wash"
+            >
+              <Search aria-hidden="true" className="h-4 w-4 shrink-0" />
+              {search && <span className="truncate">“{search}”</span>}
+            </button>
+          )}
           {TABS.map((tab) => (
             <button
               key={tab.value}

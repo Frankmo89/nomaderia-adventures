@@ -719,6 +719,18 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   8. **Neblina entre capas y luz del faro**, tomadas de dos pruebas que Frank hizo con Grok y Gemini (video). La base de las cordilleras, los íconos y los pinos se funde en el color del horizonte, así las capas se separan como cerros con bruma; de noche, amanecer y atardecer el faro de Acadia echa dos haces tenues. Los videos de IA no sirven como archivo: 1280×720 (16:9 para una franja de ~4:1), ~2.5 MB, con pista de audio, sin capas para el paralaje, objetos que se duplican (Grok) y el último cuadro no cierra con el primero (SSIM 0.80, salto visible en cada vuelta). Gemini además escribió los códigos hex del prompt como texto en el video: a un modelo de video, los colores se le describen con palabras.
 - **Consecuencias:** al mover una figura, cambiar alturas de capa o tocar una paleta, volver a medir que nada cruce el subtítulo y el contraste de esa paleta (el día es el caso justo). Si cambia el tamaño del excursionista o la duración de su paso, recalcular la duración de la cresta (velocidad = zancada / medio ciclo). En pantallas anchas se repite parte de la tira de íconos; si molesta, ensanchar la tesela en vez de agrandar la capa.
 
+### ADR-044 — /destinos: el buscador va dentro de la cabecera
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente.
+- **Contexto:** con la escena de ADR-043 terminada, el siguiente paso con más valor era de venta, no de decoración: llevar a la persona a su parque más rápido. El buscador y «Filtros» vivían en una fila fija bajo la cabecera, con `text-sm` (iOS hace zoom al enfocar campos de menos de 16 px).
+- **Decisión:**
+  1. El campo de búsqueda (pill `cloud`, 48 px, `text-base`) y el botón «Filtros» (vidrio oscuro; solo ícono en celular) van en la cabecera, bajo el subtítulo, con `PageHeader` `actions`. La fila fija se queda con dificultad y filtros rápidos; la lista empieza a la misma altura que antes.
+  2. Cuando el buscador sale de la vista, al inicio de la fila fija aparece un botón de búsqueda (con lo que se escribió, entre comillas) que regresa arriba y enfoca el campo.
+  3. En celular, al enfocar el campo la página sube para dejarlo bajo el navbar: el teclado ya no tapa los primeros resultados.
+  4. La fila fija se pega a 76 px (la altura real del navbar), no a 64 px: con `top-16` sus 12 px de arriba quedaban detrás del navbar.
+  5. Contraste: «Filtros» ≥13.2 en las 4 paletas; título y subtítulo no bajan (día: ≥7.8 / ≥5.6).
+- **Consecuencias:** la cabecera mide 368 px en celular y 456 desde 640 px (antes 300/384 más la fila del buscador de 64 px). Si se agrega otro control a la cabecera, cuidar que el oscurecido de la paleta de día lo siga cubriendo.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
