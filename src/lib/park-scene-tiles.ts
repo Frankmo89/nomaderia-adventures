@@ -139,6 +139,17 @@ function cloudsTile(C: ScenePalette): string {
   return svg("clouds", `<g fill="${C.clouds.color}" fill-opacity="${C.clouds.opacity}"><clipPath id="c"><rect width="2400" height="52"/></clipPath><g clip-path="url(#c)">${body}</g></g>`);
 }
 
+/**
+ * Mist at the foot of a layer: a band that fades in toward the base, in the
+ * sky's horizon color, so each layer parts from the next like hills in haze.
+ */
+function haze(C: ScenePalette, layer: SceneLayer, from: number, to: number, opacity: number): string {
+  const { width, height } = SCENE_TILES[layer];
+  // Full strength from `to` down to the tile's base, so no edge shows.
+  const full = ((to - from) / (height - from)).toFixed(2);
+  return `<defs><linearGradient id="hz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.sky[3]}" stop-opacity="0"/><stop offset="${full}" stop-color="${C.sky[3]}" stop-opacity="${opacity}"/><stop offset="1" stop-color="${C.sky[3]}" stop-opacity="${opacity}"/></linearGradient></defs><rect x="0" y="${from}" width="${width}" height="${height - from}" fill="url(#hz)"/>`;
+}
+
 /** Distant ranges: Mount Rainier, the Tetons and a second snowy peak. */
 function farTile(C: ScenePalette): string {
   const range =
@@ -152,7 +163,7 @@ function farTile(C: ScenePalette): string {
   ];
   return svg(
     "far",
-    `<path fill="${C.far}" d="${range}"/>${snow.map((d) => `<path fill="${C.snow}" d="${d}"/>`).join("")}`,
+    `<path fill="${C.far}" d="${range}"/>${snow.map((d) => `<path fill="${C.snow}" d="${d}"/>`).join("")}${haze(C, "far", 120, 232, 0.5)}`,
   );
 }
 
@@ -264,7 +275,7 @@ function landmarksTile(C: ScenePalette): string {
   at(0, `<rect x="3870" y="250" width="600" height="50" fill="${C.water}"/><path fill="none" stroke="${C.accent}" stroke-opacity="0.35" stroke-width="1.5" stroke-linecap="round" d="M3890,262 L3916,262 M3962,270 L4000,270 M4060,259 L4084,259 M4150,266 L4190,266 M4262,272 L4290,272 M4330,262 L4352,262 M4420,268 L4450,268"/>`);
   at(0, `<path d="M3905,254 L3908,200 C3910,186 3918,180 3926,182 L3934,196 L3938,254 Z"/><path d="M3958,254 L3962,222 C3964,214 3972,212 3978,216 L3986,230 L3990,254 Z"/><path d="M4010,254 L4013,196 C4016,186 4026,182 4036,186 L4042,200 L4046,254 Z"/>` + pine(3920, 184, 22, 10) + pine(3928, 186, 16, 8) + pine(4024, 188, 24, 11) + pine(4034, 189, 18, 8));
   at(0, `<path d="M4090,254 C4095,236 4110,222 4130,218 L4200,214 C4220,214 4238,222 4246,236 L4250,254 L4232,254 C4230,242 4224,236 4214,236 C4204,236 4198,242 4196,254 Z"/>`);
-  at(0, `<path d="M4290,256 L4296,236 L4320,226 L4360,222 L4400,224 L4430,234 L4446,256 Z"/><path d="M4330,224 L4332,188 L4344,188 L4346,224 Z"/><rect x="4328" y="176" width="20" height="12" rx="1"/><path d="M4325,177 L4338,166 L4351,177 Z"/><path d="M4346,224 L4346,206 L4366,196 L4386,206 L4386,224 Z"/>` + (C.lamp ? `<circle cx="4338" cy="182" r="4" fill="${C.lamp}"/><circle cx="4338" cy="182" r="14" fill="${C.lamp}" fill-opacity="0.18" filter="url(#steam)"/>` : ""));
+  at(0, `<path d="M4290,256 L4296,236 L4320,226 L4360,222 L4400,224 L4430,234 L4446,256 Z"/><path d="M4330,224 L4332,188 L4344,188 L4346,224 Z"/><rect x="4328" y="176" width="20" height="12" rx="1"/><path d="M4325,177 L4338,166 L4351,177 Z"/><path d="M4346,224 L4346,206 L4366,196 L4386,206 L4386,224 Z"/>` + (C.lamp ? `<circle cx="4338" cy="182" r="4" fill="${C.lamp}"/><circle cx="4338" cy="182" r="14" fill="${C.lamp}" fill-opacity="0.18" filter="url(#steam)"/><path fill="${C.lamp}" fill-opacity="0.1" filter="url(#steam)" d="M4338,180 L4176,166 L4176,198 Z M4338,180 L4500,164 L4500,200 Z"/>` : ""));
   // Everglades: two sabal palms and a great blue heron.
   const palm = (x: number, h: number, lean: number) => {
     const tx = x + lean, ty = 262 - h;
@@ -282,7 +293,7 @@ function landmarksTile(C: ScenePalette): string {
 
   return svg(
     "landmarks",
-    `<defs><filter id="steam" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter></defs><g fill="${C.landmarks}">${g.join("")}</g>`,
+    `<defs><filter id="steam" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter></defs><g fill="${C.landmarks}">${g.join("")}</g>${haze(C, "landmarks", 190, 268, 0.42)}`,
   );
 }
 
@@ -316,7 +327,7 @@ function treesTile(C: ScenePalette): string {
     }
     x += 60 + rand() * 170;
   }
-  return svg("trees", `<g fill="${C.trees}">${g.join("")}</g>`);
+  return svg("trees", `<g fill="${C.trees}">${g.join("")}</g>${haze(C, "trees", 96, 150, 0.3)}`);
 }
 
 /** The ridge the hiker walks on: crest near y=16, with tufts, stones and cairns. */
