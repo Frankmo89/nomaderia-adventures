@@ -9,6 +9,8 @@ export interface MediaItem {
   display_order: number;
   is_active: boolean;
   created_at: string;
+  /** Park the photo shows, typed in the panel; the home hero shows it. */
+  caption?: string | null;
 }
 
 /**
@@ -87,6 +89,19 @@ export async function uploadMediaItem(file: File): Promise<MediaItem> {
   }
 
   return data as MediaItem;
+}
+
+/**
+ * Set the place shown under a photo in the home hero (ADR-046).
+ * Empty text clears it.
+ */
+export async function updateMediaCaption(id: string, caption: string) {
+  const clean = caption.replace(/\s+/g, " ").trim();
+  const { error } = await supabase
+    .from("media_slider")
+    .update({ caption: clean || null })
+    .eq("id", id);
+  if (error) throw error;
 }
 
 /**

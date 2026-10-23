@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin, Pause, Play, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { logEvent } from "@/lib/events";
+import { heroSlides, nextHeroSlide } from "@/lib/hero-slides";
+import { useHeroGalleryPhotos } from "@/hooks/use-hero-gallery";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 
@@ -14,11 +16,13 @@ import { useFeaturedHeroPark } from "@/hooks/use-destinations";
  *    portrait (3:4), so a tall frame shows them whole. The navbar starts
  *    solid here (see hasHeroForPath).
  *
- * Frank's photos (public/hero/v2/, ADR-038) cross-fade every 6 s, in this
- * order. The first is the LCP image: keep the index.html preload on its id.
- * `place` names only the park, never a trail or viewpoint we have not checked.
+ * Photos cross-fade every 6 s (ADR-046). The first is always the local cover
+ * below (the LCP image: keep the index.html preload on its id). After it come
+ * the photos Frank keeps active in /admin/galeria, in his order, resized by
+ * Supabase; their chip shows the place he typed. With no gallery photos, the
+ * local set below plays. `place` names only the park, never a trail or
+ * viewpoint we have not checked.
  */
-const HERO_BASE = "/hero/v2";
 const HERO_PHOTOS = [
   { id: "02", place: "Joshua Tree · California", alt: "Un árbol de Joshua y rocas bajo cielo azul en Joshua Tree" },
   { id: "04", place: "Grand Canyon · Arizona", alt: "Sendero de roca roja con un excursionista en el Gran Cañón" },
@@ -27,14 +31,9 @@ const HERO_PHOTOS = [
   { id: "05", place: "Joshua Tree · California", alt: "Skull Rock, una roca con forma de calavera, en Joshua Tree" },
   { id: "06", place: "Yosemite · California", alt: "Bosque nevado frente a Yosemite Falls" },
 ] as const;
-const HERO_WIDTHS = [640, 1080, 1600] as const;
 /** Keep in sync with `imagesizes` on the index.html preload. */
 const HERO_SIZES = "(min-width: 1024px) 44vw, 100vw";
 const SLIDE_MS = 6000;
-
-function heroSrcSet(id: string, ext: "avif" | "webp"): string {
-  return HERO_WIDTHS.map((w) => `${HERO_BASE}/${id}-${w}.${ext} ${w}w`).join(", ");
-}
 
 /* Below lg the photos end in the same crest as before (public/hero-mask.svg),
    so the light ground under them reads as land meeting sky. */
@@ -77,15 +76,22 @@ const HeroSection = () => {
   // Intentionally unused for display — leave the Supabase query in place.
   useFeaturedHeroPark();
 
+  // Frank's active gallery photos (ADR-046); local set until they arrive.
+  const { data: gallery, isPending: galleryPending } = useHeroGalleryPhotos();
+  const slides = useMemo(() => heroSlides(HERO_PHOTOS, gallery), [gallery]);
+  const coverOnce = slides.some((slide) => slide.key.startsWith("gallery-"));
+
   const [active, setActive] = useState(0);
-  // Photos 2–6 mount once the main thread is idle, so the first paint only
-  // fetches the LCP photo.
+  // Slides after the cover mount once the main thread is idle, and only the
+  // current and the next one, so a visit downloads what it shows.
   const [restReady, setRestReady] = useState(false);
+  const [seen, setSeen] = useState<ReadonlySet<string>>(() => new Set());
   const [userPaused, setUserPaused] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [onScreen, setOnScreen] = useState(true);
   const reducedMotion = usePrefersReducedMotion();
   const frameRef = useRef<HTMLDivElement>(null);
+  const currentKey = useRef(slides[0].key);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +113,22 @@ const HeroSection = () => {
     };
   }, []);
 
+  // When the gallery list arrives (or changes), keep showing the same photo
+  // if it is still there; otherwise go on to the first gallery photo.
+  useEffect(() => {
+    const at = slides.findIndex((slide) => slide.key === currentKey.current);
+    setActive(at >= 0 ? at : Math.min(1, slides.length - 1));
+  }, [slides]);
+
+  const safeActive = Math.min(active, slides.length - 1);
+  const nextIndex = nextHeroSlide(safeActive, slides.length, coverOnce);
+  const current = slides[safeActive];
+  currentKey.current = current.key;
+
+  useEffect(() => {
+    setSeen((prev) => (prev.has(current.key) ? prev : new Set(prev).add(current.key)));
+  }, [current.key]);
+
   // Only turn while the photos are on screen.
   useEffect(() => {
     const el = frameRef.current;
@@ -117,14 +139,13 @@ const HeroSection = () => {
   }, []);
 
   // One timer per photo. "Reduce motion": the first photo stays.
-  const turning = restReady && !reducedMotion && !userPaused && !hovered && onScreen;
+  const turning =
+    restReady && !galleryPending && !reducedMotion && !userPaused && !hovered && onScreen && slides.length > 1;
   useEffect(() => {
     if (!turning) return;
-    const t = window.setTimeout(() => setActive((i) => (i + 1) % HERO_PHOTOS.length), SLIDE_MS);
+    const t = window.setTimeout(() => setActive(nextIndex), SLIDE_MS);
     return () => window.clearTimeout(t);
-  }, [active, turning]);
-
-  const current = HERO_PHOTOS[active];
+  }, [safeActive, nextIndex, turning]);
 
   return (
     <section className="relative bg-cloud lg:pt-[76px]">
@@ -138,30 +159,39 @@ const HeroSection = () => {
             onMouseLeave={() => setHovered(false)}
             className="hero-photo-frame relative h-[56svh] min-h-[380px] max-h-[600px] overflow-hidden bg-forest-dark lg:h-[min(72vh,680px)] lg:max-h-none lg:rounded-[2rem] lg:shadow-[0_24px_60px_-20px_rgba(20,32,26,0.35)]"
           >
-            {HERO_PHOTOS.map((photo, i) => {
-              const first = i === 0;
-              if (!first && !restReady) return null;
-              const shown = i === active;
+            {slides.map((slide, i) => {
+              const cover = i === 0;
+              // Wait for the gallery list before fetching a second photo, so a
+              // local one is not downloaded only to be replaced.
+              const mounted =
+                cover || (restReady && !galleryPending && (seen.has(slide.key) || i === safeActive || i === nextIndex));
+              if (!mounted) return null;
+              const shown = i === safeActive;
+              const img = (
+                <img
+                  src={slide.src}
+                  srcSet={slide.local ? undefined : slide.srcSet}
+                  sizes={slide.local ? undefined : HERO_SIZES}
+                  alt={slide.alt}
+                  width={1080}
+                  height={1440}
+                  decoding={cover ? "sync" : "async"}
+                  loading="eager"
+                  fetchPriority={cover ? "high" : "low"}
+                  className="absolute inset-0 h-full w-full object-cover object-[center_30%]"
+                  style={{ filter: "saturate(1.08) contrast(1.03)" }}
+                />
+              );
               return (
                 <picture
-                  key={photo.id}
+                  key={slide.key}
                   aria-hidden={!shown}
                   className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
                   style={{ opacity: shown ? 1 : 0 }}
                 >
-                  <source type="image/avif" srcSet={heroSrcSet(photo.id, "avif")} sizes={HERO_SIZES} />
-                  <source type="image/webp" srcSet={heroSrcSet(photo.id, "webp")} sizes={HERO_SIZES} />
-                  <img
-                    src={`${HERO_BASE}/${photo.id}-1080.webp`}
-                    alt={photo.alt}
-                    width={1080}
-                    height={1440}
-                    decoding={first ? "sync" : "async"}
-                    loading="eager"
-                    fetchPriority={first ? "high" : "low"}
-                    className="absolute inset-0 h-full w-full object-cover object-[center_30%]"
-                    style={{ filter: "saturate(1.08) contrast(1.03)" }}
-                  />
+                  {slide.local && <source type="image/avif" srcSet={slide.local.avif} sizes={HERO_SIZES} />}
+                  {slide.local && <source type="image/webp" srcSet={slide.local.webp} sizes={HERO_SIZES} />}
+                  {img}
                 </picture>
               );
             })}
@@ -170,12 +200,14 @@ const HeroSection = () => {
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-forest-dark/50 to-transparent lg:hidden"
             />
-            <p className="absolute bottom-[19%] left-5 inline-flex items-center gap-1.5 rounded-full bg-forest-dark/75 px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm lg:bottom-5">
-              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span key={current.id} className="hero-place">
-                {current.place}
-              </span>
-            </p>
+            {current.place && (
+              <p className="absolute bottom-[19%] left-5 inline-flex items-center gap-1.5 rounded-full bg-forest-dark/75 px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm lg:bottom-5">
+                <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span key={current.key} className="hero-place">
+                  {current.place}
+                </span>
+              </p>
+            )}
             {/* Pause for keyboard users (WCAG 2.2.2); hidden until focused, as
                 in the quiz video (ADR-042). The mouse pauses by hovering. */}
             {!reducedMotion && (

@@ -741,7 +741,19 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   3. Desde `lg`: texto a la izquierda y la foto en un marco alto con esquinas de 32 px a la derecha. Las fotos son verticales (3:4), así que se ven casi completas (antes se recortaban a lo ancho). Como el texto va sobre claro, el navbar del home empieza sólido desde `lg` (`hasHeroForPath("/", { desktop: true })` es `false`); debajo de `lg` sigue transparente sobre la foto.
   4. Antes de la franja oscura de «La promesa» va el divisor `layered` en `cloud`.
   5. LCP: el preload de `index.html` sigue en la foto 02, con `imagesizes` igual a `HERO_SIZES` (`(min-width: 1024px) 44vw, 100vw`).
-- **Consecuencias:** cambiar fotos u orden = editar `HERO_PHOTOS` y, si cambia la primera, el preload (ADR-038 sigue para las carpetas). El texto ya no va sobre las fotos, así que no hay que volver a medir su contraste al cambiarlas; sí revisar que el logo blanco se lea sobre el cielo de cada una en celular. Pendiente de decisión de Frank: el botón fogata con texto blanco da 3.2:1 (pide 4.5:1 a ese tamaño).
+- **Consecuencias:** las fotos que pasan después de la portada salen de la Galería del panel (ADR-046); `HERO_PHOTOS` queda como portada y respaldo. Cambiar la portada = editar `HERO_PHOTOS[0]` y el preload (ADR-038 sigue para las carpetas). El texto ya no va sobre las fotos, así que no hay que volver a medir su contraste al cambiarlas; sí revisar que el logo blanco se lea sobre el cielo de cada una en celular. Pendiente de decisión de Frank: el botón fogata con texto blanco da 3.2:1 (pide 4.5:1 a ese tamaño).
+
+### ADR-046 — El hero del home pasa las fotos activas de la Galería del panel
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente. Completa ADR-045.
+- **Contexto:** Frank quiere que el hero muestre «las que yo elijo desde la administración en galería» (`media_slider`, `/admin/galeria`): 11 imágenes activas, originales del iPhone de 0.2 a 3.4 MB.
+- **Decisión:**
+  1. El hero arranca con la foto local 02 (la LCP, con preload; abre igual de rápido) y luego pasa las imágenes activas de la Galería en el orden del panel; la portada no se repite. Si la Galería no tiene imágenes activas o la consulta falla, pasa el set local de `public/hero/v2/`.
+  2. Las fotos de la Galería se piden achicadas por Supabase (`/storage/v1/render/image/…?width=640|1080|1440&quality=70`, el mismo `resizedImageUrl` del boletín): nunca el original.
+  3. Solo baja la foto actual y la siguiente, y la segunda espera a saber la lista de la Galería.
+  4. Nueva columna `media_slider.caption`: el lugar que Frank escribe en el panel («Lugar»); el hero lo muestra en la etiqueta. Sin lugar, la foto va sin etiqueta.
+- **Lección:** se aplicaron también `web_url` y `web_storage_path` para guardar copias ligeras hechas en el panel, porque se supuso que el plan gratis de Supabase no achicaba fotos. Los logs dicen otra cosa: `render/image` responde 200/304 en este proyecto. Antes de asumir un límite de plan, revisar los logs (`edge_logs`). Las dos columnas quedan vacías; borrarlas pide confirmación de Frank (el borrado se canceló sin ella).
+- **Consecuencias:** cambiar fotos del hero ya no pide deploy: se activan, ordenan y nombran en el panel. Revisar en celular que el logo blanco se lea sobre el cielo de cada foto nueva.
 
 ## Lecciones técnicas (bugs no obvios)
 
