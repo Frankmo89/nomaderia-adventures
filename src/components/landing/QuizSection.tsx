@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PrePurchaseDoubtLink } from "@/components/PrePurchaseDoubt";
 import { STRIPE_AND_DOUBT_COPY } from "@/lib/concierge-flag";
 import { motion, AnimatePresence, useReducedMotion, PanInfo } from "framer-motion";
@@ -7,7 +7,7 @@ import {
   ChevronLeft, ArrowRight, Sparkles, DollarSign, Wallet, TrendingUp,
   Mail, Loader2, HeartPulse, Backpack, Tent, MapPin,
   Users, BedDouble, Baby, UserRound, Hotel, Home, Car, Plane, HelpCircle,
-  CreditCard,
+  CreditCard, Pause, Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { useQuiz } from "@/hooks/use-quiz";
 import type { QuizDestination, QuizPreview, QuizStep } from "@/hooks/use-quiz";
 import { cn } from "@/lib/utils";
+import SectionDivider from "@/components/landing/SectionDivider";
 import { isIslandZip, isValidZipFormat, lookupZip, preloadZipTable } from "@/lib/zip-centroids";
 import {
   DRIVE_HOUR_OPTIONS,
@@ -27,6 +28,7 @@ import {
     buildStripePaymentLink,
 } from "@/config/pricing";
 import { trackEvent } from "@/lib/analytics";
+import { logEvent } from "@/lib/events";
 import Reveal from "@/components/editorial/Reveal";
 import { resizedImageUrl } from "@/lib/resized-image";
 
@@ -628,6 +630,284 @@ const QuizResults = ({
   );
 };
 
+// --- Video backdrop (questions + loading) ---
+
+/**
+ * The questions and the loading state sit on Frank's videos walking four
+ * parks, one loop (ADR-042): the dark beat between "La diferencia" (light)
+ * and the insurance band (green wash), so the home no longer reads as one
+ * white wall. Results keep the light background: the buy button lives there
+ * and was not touched.
+ *
+ * public/video/* is cached immutable: a new cut goes in a new folder and this
+ * path moves with it (scripts/generate-quiz-video.sh, public/video/README.md).
+ */
+const QUIZ_VIDEO_BASE = "/video/v3/quiz-parks";
+const QUIZ_POSTER_SRCSET = `${QUIZ_VIDEO_BASE}-720.webp 720w, ${QUIZ_VIDEO_BASE}-1080.webp 1080w`;
+
+/**
+ * Each size ships as H.264 (every browser) and AV1 (~35% smaller at the same
+ * quality). Codec strings match the encoded levels; bitrates are the files'
+ * averages, so MediaCapabilities answers for these exact files.
+ */
+const QUIZ_VIDEO_FILES = {
+  720: { height: 998, av1Codec: "av01.0.05M.08", av1Bitrate: 665_000 },
+  1080: { height: 1498, av1Codec: "av01.0.08M.08", av1Bitrate: 1_160_000 },
+} as const;
+
+/** Start downloading this far before the section reaches the screen. */
+const QUIZ_VIDEO_PRELOAD_MARGIN = "600px 0px";
+
+/** Opaque card: dark text inside never sits on the video. */
+const QUIZ_CARD = "rounded-2xl border border-white/60 bg-cloud p-6 shadow-2xl shadow-forest-dark/50 sm:p-8";
+
+/** Browser asked to save data (Chrome on Android "Lite mode", etc.). */
+function prefersSaveData(): boolean {
+  try {
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
+    return nav.connection?.saveData === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The lightest file this device plays without draining the battery: AV1 only
+ * where MediaCapabilities says it decodes in hardware ("powerEfficient"),
+ * H.264 everywhere else. 1080 wide from 768 px up, 720 below.
+ */
+async function pickQuizVideoSrc(): Promise<string> {
+  const width = window.matchMedia("(min-width: 768px)").matches ? 1080 : 720;
+  const h264 = `${QUIZ_VIDEO_BASE}-${width}.mp4`;
+  const file = QUIZ_VIDEO_FILES[width];
+  try {
+    if (!navigator.mediaCapabilities?.decodingInfo) return h264;
+    const info = await navigator.mediaCapabilities.decodingInfo({
+      type: "file",
+      video: {
+        contentType: `video/mp4; codecs="${file.av1Codec}"`,
+        width,
+        height: file.height,
+        bitrate: file.av1Bitrate,
+        framerate: 24,
+      },
+    });
+    return info.supported && info.powerEfficient ? `${QUIZ_VIDEO_BASE}-${width}-av1.mp4` : h264;
+  } catch {
+    return h264;
+  }
+}
+
+/**
+ * Muted (the files carry no audio track), looping, decorative. The file is
+ * chosen up front, starts downloading when the section is about one screen
+ * away, plays while the section is on screen and pauses when it leaves.
+ * Reduced motion or save-data gets the still poster instead.
+ *
+ * Pause control: Frank does not want a visible play/pause button over the
+ * cover. It stays for keyboard users (shown on focus), and the OS "reduce
+ * motion" setting stops the video for everyone who asks for less motion.
+ *
+ * iOS in Low Power Mode refuses autoplay. A tap anywhere on the page is a user
+ * gesture, so the first tap starts it.
+ */
+const QuizBackdropVideo = () => {
+  const reduceMotion = useReducedMotion();
+  const [saveData] = useState(prefersSaveData);
+  const [playing, setPlaying] = useState(false);
+  const [src, setSrc] = useState<string | null>(null);
+  const [near, setNear] = useState(false);
+  const userPaused = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const still = reduceMotion || saveData;
+
+  // Pick the file now; hand it (and the poster) to the <video> once the
+  // section is near, so a visitor who never scrolls this far downloads nothing.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || still) return;
+    let cancelled = false;
+    let near = false;
+    let picked: string | null = null;
+    const load = () => {
+      if (!cancelled && near && picked) setSrc(picked);
+    };
+    void pickQuizVideoSrc().then((choice) => {
+      picked = choice;
+      load();
+    });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        near = true;
+        setNear(true);
+        load();
+        observer.disconnect();
+      },
+      { rootMargin: QUIZ_VIDEO_PRELOAD_MARGIN },
+    );
+    observer.observe(video);
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [still]);
+
+  // Play while on screen.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || still) return;
+    video.muted = true; // iOS autoplays only when the property is set
+    let visible = false;
+    const tryPlay = () => {
+      if (visible && !userPaused.current && video.currentSrc) void video.play().catch(() => undefined);
+    };
+    const onPlaying = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    video.addEventListener("playing", onPlaying);
+    video.addEventListener("pause", onPause);
+    video.addEventListener("canplay", tryPlay);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        if (visible) tryPlay();
+        else video.pause();
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(video);
+    const onGesture = () => {
+      if (video.paused) tryPlay();
+    };
+    document.addEventListener("touchend", onGesture, { passive: true });
+    document.addEventListener("click", onGesture);
+    return () => {
+      observer.disconnect();
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("pause", onPause);
+      video.removeEventListener("canplay", tryPlay);
+      document.removeEventListener("touchend", onGesture);
+      document.removeEventListener("click", onGesture);
+    };
+  }, [still]);
+
+  const toggle = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (playing) {
+      userPaused.current = true;
+      video.pause();
+    } else {
+      userPaused.current = false;
+      void video.play().catch(() => undefined);
+    }
+  };
+
+  if (still) {
+    return (
+      <img
+        src={`${QUIZ_VIDEO_BASE}-720.webp`}
+        srcSet={QUIZ_POSTER_SRCSET}
+        sizes="100vw"
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
+    );
+  }
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        src={src ?? undefined}
+        muted
+        loop
+        playsInline
+        preload={src ? "auto" : "none"}
+        poster={near ? `${QUIZ_VIDEO_BASE}-720.webp` : undefined}
+        aria-hidden="true"
+        tabIndex={-1}
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={playing ? "Pausar el video de fondo" : "Reproducir el video de fondo"}
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:right-4 focus-visible:top-12 focus-visible:z-20 focus-visible:inline-flex focus-visible:h-11 focus-visible:w-11 focus-visible:items-center focus-visible:justify-center focus-visible:rounded-full focus-visible:bg-forest-dark/80 focus-visible:text-cloud focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cloud sm:focus-visible:right-6 sm:focus-visible:top-20"
+      >
+        {playing ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
+      </button>
+    </>
+  );
+};
+
+/**
+ * "intro": the video is the cover. Tall section, no tint, dark only at the
+ * bottom behind the title and the start button (Cleo, Centr, How We Feel quiz
+ * intros on Mobbin). "questions": darker top behind the header, opaque card.
+ * Both render the same element tree, so the video keeps playing between them.
+ */
+const QuizBackdropShell = ({ children, intro = false }: { children: ReactNode; intro?: boolean }) => (
+  <>
+    <section
+      id="quiz"
+      className={cn(
+        "relative overflow-hidden bg-forest-dark",
+        intro
+          ? "flex min-h-[88vh] flex-col justify-end pb-20 pt-32 supports-[height:100svh]:min-h-[88svh] sm:pb-28"
+          : "pb-20 pt-24 sm:pb-28 sm:pt-32",
+      )}
+    >
+      <QuizBackdropVideo />
+      {/* Light, not a blanket: a soft tint everywhere, dark only behind the
+          text, solid at the bottom so the dark ridge below carries on. */}
+      {!intro && <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-forest-dark/35" />}
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-x-0",
+          intro
+            ? "bottom-0 h-[66%] bg-gradient-to-t from-forest-dark from-30% via-forest-dark/85 via-60% to-transparent"
+            : "top-0 h-[28rem] bg-gradient-to-b from-forest-dark/80 via-forest-dark/55 to-transparent",
+        )}
+      />
+      {!intro && (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-forest-dark from-35% to-transparent" />
+      )}
+      {/* "La diferencia" (cloud) drops onto the video as a ridge. */}
+      <div className="absolute inset-x-0 top-0">
+        <SectionDivider variant="layered" fill="#FBFAF7" />
+      </div>
+      <div className="container relative z-10 mx-auto max-w-2xl px-5">{children}</div>
+    </section>
+    <SectionDivider variant="layered" fill="#14201A" />
+  </>
+);
+
+const QUIZ_BADGE =
+  "inline-flex items-center gap-2 rounded-full border border-cloud/30 bg-forest-dark/80 px-4 py-1.5 text-sm text-cloud supports-[backdrop-filter]:bg-forest-dark/65 supports-[backdrop-filter]:backdrop-blur-md";
+
+/** Cover before the first question: title, one line and a single start button. */
+const QuizIntro = ({ questions, onStart }: { questions: number; onStart: () => void }) => (
+  <Reveal className="text-center">
+    <h2 className="font-serif text-4xl font-bold leading-tight text-cloud [text-shadow:0_2px_18px_rgba(20,32,26,0.6)] sm:text-5xl md:text-6xl">
+      ¿No Sabes A Dónde Ir?
+    </h2>
+    <p className="mx-auto mt-3 max-w-md text-base text-cloud [text-shadow:0_1px_12px_rgba(20,32,26,0.7)] sm:text-lg">
+      Responde {questions} preguntas y te decimos tu destino ideal
+    </p>
+    <button
+      type="button"
+      onClick={onStart}
+      className="mt-8 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-cloud px-8 text-lg font-semibold text-ink shadow-2xl shadow-forest-dark/50 transition-all duration-200 hover:bg-white active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cloud focus-visible:ring-offset-4 focus-visible:ring-offset-forest-dark"
+    >
+      Empezar <ArrowRight className="h-5 w-5" aria-hidden="true" />
+    </button>
+  </Reveal>
+);
+
 // --- Main component ---
 const QuizSection = () => {
   const {
@@ -661,6 +941,18 @@ const QuizSection = () => {
   const [groupKids, setGroupKids] = useState(false);
   const [groupOlderAdults, setGroupOlderAdults] = useState(false);
   const [groupVisitorsAbroad, setGroupVisitorsAbroad] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const showIntro = !introDone && step === 0 && Object.keys(answers).length === 0;
+
+  const startQuiz = () => {
+    setIntroDone(true);
+    logEvent("quiz_intro_start");
+    trackEvent("quiz_intro_start");
+    requestAnimationFrame(() =>
+      cardRef.current?.scrollIntoView({ block: "start", behavior: reduceMotion ? "auto" : "smooth" }),
+    );
+  };
 
   useEffect(() => {
     if (isQuizDone && !showResults && !loading) {
@@ -724,15 +1016,11 @@ const QuizSection = () => {
   };
 
   if (loading && !showResults) return (
-    <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/6 blur-3xl" />
-        <div className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-secondary/6 blur-3xl" />
-      </div>
-      <div className="container mx-auto px-5 max-w-2xl relative z-10">
+    <QuizBackdropShell>
+      <div className={QUIZ_CARD}>
         <QuizLoading />
       </div>
-    </section>
+    </QuizBackdropShell>
   );
 
   if (showResults) return (
@@ -752,33 +1040,31 @@ const QuizSection = () => {
     />
   );
 
-  return (
-    <section id="quiz" className="relative overflow-hidden bg-cloud py-16 sm:py-24">
-      {/* Atmospheric glow blobs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/6 blur-3xl" />
-        <div className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] rounded-full bg-secondary/6 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] rounded-full bg-accent/4 blur-3xl" />
-      </div>
+  if (showIntro) return (
+    <QuizBackdropShell intro>
+      <QuizIntro questions={steps.length} onStart={startQuiz} />
+    </QuizBackdropShell>
+  );
 
-      <div className="container mx-auto px-5 max-w-2xl relative z-10">
-        {/* Section header */}
+  return (
+    <QuizBackdropShell>
+        {/* Section header — light text on the video */}
         <Reveal className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-2 bg-green-wash border border-green/20 rounded-full px-4 py-1.5 text-sm text-green mb-4">
+          <div className={cn(QUIZ_BADGE, "mb-4")}>
             <Sparkles className="h-3.5 w-3.5" />
             Cuestionario personalizado · unos minutos
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-cloud mb-2">
             ¿No Sabes A Dónde Ir?
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <p className="text-cloud text-sm sm:text-base">
             Responde {steps.length} preguntas y te decimos tu destino ideal
           </p>
         </Reveal>
 
 
-        {/* Glass card */}
-        <div className="bg-card/50 backdrop-blur-md border border-border/70 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-background/60">
+        {/* Question card — opaque on the video */}
+        <div ref={cardRef} className={cn(QUIZ_CARD, "scroll-mt-24")}>
           {/* Linear progress bar — pinned to top of card */}
           <div className="h-[3px] rounded-full bg-stone/20 mb-5 overflow-hidden">
             <motion.div
@@ -1082,8 +1368,7 @@ const QuizSection = () => {
             </motion.div>
           </AnimatePresence>
         </div>
-      </div>
-    </section>
+    </QuizBackdropShell>
   );
 };
 
