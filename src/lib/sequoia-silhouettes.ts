@@ -59,14 +59,14 @@ function limb(y0: number, length: number, thick: number): string {
  * of sky (sequoia foliage grows in clumps along nearly level limbs).
  */
 function canopyShape(): GroveShape {
-  const mass = "M0,0 L200,0 L200,4 L150,8 L100,12 L50,18 L0,24 Z";
+  // Deep enough at the middle (x 200) that the two corners meet with no gap.
+  const mass = "M0,0 L200,0 L200,16 L150,14 L100,16 L50,20 L0,26 Z";
   const limbs = [limb(34, 176, 4), limb(78, 136, 3.5), limb(118, 92, 3)];
   // [cx, cy, rx, ry] along each limb, sitting on and hanging below it.
   const clumps: [number, number, number, number][] = [
     [26, 30, 30, 17], [70, 28, 28, 15], [114, 24, 26, 14], [154, 22, 24, 12], [186, 20, 16, 9],
     [20, 74, 26, 16], [60, 72, 25, 14], [98, 68, 22, 13], [132, 64, 16, 9],
     [16, 114, 22, 14], [52, 112, 20, 12], [86, 108, 14, 8],
-    [10, 146, 14, 11],
   ];
   return {
     width: 200,

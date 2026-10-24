@@ -70,19 +70,14 @@ const FOREST_CSS = `
 .grove-veil {
   background: linear-gradient(to bottom, #6e9a82 0%, #8db09c 45%, #c3d8cb 100%);
 }
+/* A ray: a long wedge from the sun's centre (its left middle), turned by its angle. */
 .grove-ray {
   position: absolute;
-  top: -10%;
-  height: 130%;
-  transform-origin: top center;
-  transform: rotate(22deg);
-  background: linear-gradient(
-    to bottom,
-    rgba(251, 250, 247, 0),
-    rgba(251, 250, 247, 0.5) 20%,
-    rgba(251, 250, 247, 0.4) 55%,
-    rgba(251, 250, 247, 0)
-  );
+  left: 0;
+  width: 150vw;
+  transform-origin: 0 50%;
+  clip-path: polygon(0 46%, 100% 0, 100% 100%, 0 54%);
+  background: linear-gradient(to right, rgba(251, 250, 247, 0.6), rgba(251, 250, 247, 0.25) 45%, rgba(251, 250, 247, 0) 90%);
 }
 .grove-needle { position: absolute; width: 2px; height: 2px; border-radius: 9999px; background: #fbfaf7; opacity: 0; }
 .promise-mist {
@@ -117,11 +112,12 @@ const FOREST_CSS = `
 }
 `;
 
-/** Rays through the trunks from the top right, on the sun's side: where each starts (% from the right) and its width. */
+/** Rays fanning out from the low sun across the clearing: angle (180° points left) and how wide each opens (vh). */
 const RAYS = [
-  { right: -8, width: 18 },
-  { right: 6, width: 7 },
-  { right: 16, width: 12 },
+  { angle: 160, spread: 16 },
+  { angle: 174, spread: 9 },
+  { angle: 188, spread: 14 },
+  { angle: 203, spread: 8 },
 ] as const;
 
 /** Needles drifting down in the light (fixed positions, no randomness). */
@@ -210,6 +206,7 @@ const PromiseSection = () => {
     farTrunks: useRef<HTMLDivElement>(null),
     mid: useRef<HTMLDivElement>(null),
     rays: useRef<HTMLDivElement>(null),
+    fan: useRef<HTMLDivElement>(null),
     backL: useRef<HTMLDivElement>(null),
     backR: useRef<HTMLDivElement>(null),
     midL: useRef<HTMLDivElement>(null),
@@ -249,6 +246,7 @@ const PromiseSection = () => {
     };
     const moves: { ref: Ref; at: (p: number) => string }[] = [
       { ref: r.sun, at: (p) => px(-24 * p, 145 * p) },
+      { ref: r.fan, at: (p) => px(-24 * p, 145 * p) },
       { ref: r.far, at: (p) => px(0, 46 * p) },
       // Far trunks wait low behind the treelines while the promise shows, then rise (% of their box).
       { ref: r.farTrunks, at: (p) => `translate3d(0, ${(36 * (1 - span(p, 0.3, 0.7))).toFixed(2)}%, 0)` },
@@ -259,9 +257,10 @@ const PromiseSection = () => {
       { ref: r.midR, at: midTrunk(1) },
       { ref: r.foreL, at: foreTrunk(-1) },
       { ref: r.foreR, at: foreTrunk(1) },
-      { ref: r.canopyL, at: canopy(45, 0.12, 0.8, 0.12) },
-      { ref: r.canopyR, at: canopy(45, 0.12, 0.8, 0.12) },
-      // The floor (half the stage) shows only its 90 px hill, then rises to fill the bottom.
+      // The front tier comes all the way down, so the canopy still closes the frame as the scene leaves.
+      { ref: r.canopyL, at: canopy(45, 0.12, 1, 0.12) },
+      { ref: r.canopyR, at: canopy(45, 0.12, 1, 0.12) },
+      // The floor (56 % of the stage) shows only its 90 px hill, then rises to fill the bottom.
       {
         ref: r.floor,
         at: (p) => {
@@ -341,11 +340,21 @@ const PromiseSection = () => {
             <div className="promise-line h-full bg-[#6E9A82]" style={{ ...MID, transform: "translate(2px, -3px)" }} />
             <div className="promise-line h-full bg-[#4F7F66]" style={MID} />
           </div>
-          {/* Light through the trunks, with needles drifting down in it. */}
+          {/* Light from the sun through the trunks, with needles drifting down in it. */}
           <div ref={r.rays} className="absolute inset-0 overflow-hidden opacity-0 will-change-[opacity]">
-            {RAYS.map((ray) => (
-              <span key={ray.right} className="grove-ray" style={{ right: `${ray.right}%`, width: `${ray.width}%` }} />
-            ))}
+            {/* Pinned to the sun's centre; it follows the sun down. */}
+            <div
+              ref={r.fan}
+              className="absolute right-[calc(16%+32px)] top-[calc(58%+32px)] h-0 w-0 will-change-transform sm:right-[calc(16%+48px)] sm:top-[calc(58%+48px)]"
+            >
+              {RAYS.map((ray) => (
+                <span
+                  key={ray.angle}
+                  className="grove-ray"
+                  style={{ top: `${-ray.spread / 2}vh`, height: `${ray.spread}vh`, transform: `rotate(${ray.angle}deg)` }}
+                />
+              ))}
+            </div>
             {NEEDLES.map((n, i) => (
               <span key={i} className="grove-needle" style={{ left: `${n.left}%`, top: `${n.top}%`, animationDelay: `${n.delay}s` }} />
             ))}
@@ -380,7 +389,7 @@ const PromiseSection = () => {
           {/* The forest floor; at the end it rises into the park cards below. */}
           <div
             ref={r.floor}
-            className="absolute inset-x-0 bottom-0 h-1/2 will-change-transform"
+            className="absolute inset-x-0 bottom-0 h-[56%] will-change-transform"
             style={{ transform: "translate3d(0, calc(100% - 90px), 0)" }}
           >
             <div className="promise-line h-full bg-forest-dark" style={NEAR} />
