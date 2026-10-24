@@ -135,7 +135,8 @@ src/
 │   ├── use-quiz.ts           # useQuiz() — estado + submit del quiz
 │   ├── use-seo.ts            # useCanonical() + useJsonLd() + usePageMeta()
 │   ├── use-public-stats.ts   # usePublicStats() — conteos reales (destinos, posts)
-│   └── use-media.ts          # useMediaSlider() + upload/toggle/delete helpers
+│   ├── use-media.ts          # useMediaSlider() + upload/toggle/delete/caption helpers
+│   └── use-hero-gallery.ts   # useHeroGalleryPhotos() — fotos activas de la Galería para el hero (ADR-046)
 ├── integrations/supabase/
 │   ├── client.ts             # Cliente Supabase (instancia única)
 │   └── types.ts              # Tipos auto-generados (NO editar — regenerar con CLI)
@@ -146,6 +147,8 @@ src/
 │   ├── landing-parks.ts      # Etiquetas de las tarjetas de parques del home (ADR-040)
 │   ├── landing-origin.ts     # Origen de la ruta del home: San Diego (horas reales) o código postal (≈ motor) (ADR-041)
 │   ├── park-scene-tiles.ts   # Teselas SVG de la escena del excursionista en /destinos (ADR-043)
+│   ├── hero-slides.ts        # Fotos del hero: portada local + Galería achicada por Supabase (ADR-046)
+│   ├── hero-ridges.ts        # Siluetas de la cordillera donde termina la foto del hero en celular (ADR-048)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
 └── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts

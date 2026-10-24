@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Upload, Trash2, Image, Film, GripVertical, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import {
   uploadMediaItem,
   toggleMediaActive,
   deleteMediaItem,
+  updateMediaCaption,
 } from "@/hooks/use-media";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -44,9 +46,10 @@ interface SortableCardProps {
   index: number;
   onToggle: (id: string, isActive: boolean) => void;
   onDelete: (id: string, storagePath: string) => void;
+  onCaption: (id: string, caption: string) => void;
 }
 
-const SortableCard = ({ item, index, onToggle, onDelete }: SortableCardProps) => {
+const SortableCard = ({ item, index, onToggle, onDelete, onCaption }: SortableCardProps) => {
   const {
     attributes,
     listeners,
@@ -114,6 +117,27 @@ const SortableCard = ({ item, index, onToggle, onDelete }: SortableCardProps) =>
         </button>
       </div>
 
+      {item.media_type === "image" && (
+        <div className="px-3 pt-3">
+          <label htmlFor={`caption-${item.id}`} className="text-xs font-medium text-muted-foreground">
+            Lugar (se ve en la foto del inicio)
+          </label>
+          <Input
+            id={`caption-${item.id}`}
+            defaultValue={item.caption ?? ""}
+            placeholder="Ej. Joshua Tree · California"
+            maxLength={60}
+            className="mt-1 h-9 text-sm"
+            onBlur={(e) => {
+              if (e.currentTarget.value.trim() !== (item.caption ?? "")) onCaption(item.id, e.currentTarget.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
+          />
+        </div>
+      )}
+
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Switch
@@ -174,7 +198,7 @@ const AdminGallery = () => {
   const load = async () => {
     const { data, error } = await supabase
       .from("media_slider")
-      .select("id, media_type, public_url, storage_path, display_order, is_active, created_at")
+      .select("id, media_type, public_url, storage_path, display_order, is_active, created_at, caption")
       .order("display_order", { ascending: true });
     if (error) {
       toast({ title: "Error al cargar", description: error.message, variant: "destructive" });
@@ -211,6 +235,17 @@ const AdminGallery = () => {
     } catch (err: unknown) {
       const msg = errorMessage(err);
       toast({ title: "Error", description: msg, variant: "destructive" });
+    }
+  };
+
+  const handleCaption = async (id: string, caption: string) => {
+    try {
+      await updateMediaCaption(id, caption);
+      const clean = caption.replace(/\s+/g, " ").trim() || null;
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, caption: clean } : i)));
+      toast({ title: clean ? "Lugar guardado" : "Lugar borrado" });
+    } catch (err: unknown) {
+      toast({ title: "Error al guardar el lugar", description: errorMessage(err), variant: "destructive" });
     }
   };
 
@@ -369,6 +404,7 @@ const AdminGallery = () => {
                   index={idx}
                   onToggle={handleToggle}
                   onDelete={handleDelete}
+                  onCaption={handleCaption}
                 />
               ))}
             </div>

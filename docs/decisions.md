@@ -733,7 +733,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-045 — Hero del home: una foto arriba, el texto abajo sobre claro
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente. Reemplaza ADR-039 y las barras tipo historias del carrusel.
+- **Estado:** Reemplazada en celular y tablet por ADR-047 (foto a pantalla completa). Siguen vigentes el ritmo de las fotos (punto 1) y el navbar sólido desde `lg` (punto 3). Reemplazaba ADR-039 y las barras tipo historias del carrusel.
 - **Contexto:** Frank, en su iPhone: «no me gusta como se ve eso que va cambiando de foto, siento que ya se ve muy encimado todo». Sobre la foto iban 6 barras, la etiqueta del lugar, un H1 de 3 líneas, el subtítulo, el botón, el enlace a preguntas y la línea de confianza; la foto cambiaba cada 5 s y, para que el texto se leyera, llevaba oscuro encima. Se le mostraron 3 maquetas (una foto fija con el mismo diseño; foto arriba y texto abajo; tarjeta de vidrio) y eligió la segunda.
 - **Decisión:**
   1. Las 6 fotos de Frank siguen pasando (Frank: «quiero que se cambie»), pero en calma: fundido de 1.2 s cada 6 s, sin barras, sin Ken Burns y sin oscuro encima; la etiqueta del lugar cambia con la foto. Se detiene fuera de pantalla y con el cursor encima; con «reducir movimiento» se queda la primera. Botón de pausa solo para teclado (aparece al enfocarlo), como el video del cuestionario (ADR-042): mismo riesgo aceptado frente a WCAG 2.2.2. La primera (02, Joshua Tree) es la LCP; las otras 5 se montan cuando el navegador queda libre. Se va el evento `hero_photo_select` (no hay barras que tocar).
@@ -741,7 +741,55 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   3. Desde `lg`: texto a la izquierda y la foto en un marco alto con esquinas de 32 px a la derecha. Las fotos son verticales (3:4), así que se ven casi completas (antes se recortaban a lo ancho). Como el texto va sobre claro, el navbar del home empieza sólido desde `lg` (`hasHeroForPath("/", { desktop: true })` es `false`); debajo de `lg` sigue transparente sobre la foto.
   4. Antes de la franja oscura de «La promesa» va el divisor `layered` en `cloud`.
   5. LCP: el preload de `index.html` sigue en la foto 02, con `imagesizes` igual a `HERO_SIZES` (`(min-width: 1024px) 44vw, 100vw`).
-- **Consecuencias:** cambiar fotos u orden = editar `HERO_PHOTOS` y, si cambia la primera, el preload (ADR-038 sigue para las carpetas). El texto ya no va sobre las fotos, así que no hay que volver a medir su contraste al cambiarlas; sí revisar que el logo blanco se lea sobre el cielo de cada una en celular. Pendiente de decisión de Frank: el botón fogata con texto blanco da 3.2:1 (pide 4.5:1 a ese tamaño).
+- **Consecuencias:** las fotos que pasan después de la portada salen de la Galería del panel (ADR-046); `HERO_PHOTOS` queda como portada y respaldo. Cambiar la portada = editar `HERO_PHOTOS[0]` y el preload (ADR-038 sigue para las carpetas). El texto ya no va sobre las fotos, así que no hay que volver a medir su contraste al cambiarlas; sí revisar que el logo blanco se lea sobre el cielo de cada una en celular. Pendiente de decisión de Frank: el botón fogata con texto blanco da 3.2:1 (pide 4.5:1 a ese tamaño).
+
+### ADR-046 — El hero del home pasa las fotos activas de la Galería del panel
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente, salvo el punto 5 (fotos completas sobre copia desenfocada), que reemplaza ADR-047. Completa ADR-045.
+- **Contexto:** Frank quiere que el hero muestre «las que yo elijo desde la administración en galería» (`media_slider`, `/admin/galeria`): 11 imágenes activas, originales del iPhone de 0.2 a 3.4 MB.
+- **Decisión:**
+  1. El hero arranca con la foto local 02 (la LCP, con preload; abre igual de rápido) y luego pasa las imágenes activas de la Galería en el orden del panel; la portada no se repite. Si la Galería no tiene imágenes activas o la consulta falla, pasa el set local de `public/hero/v2/`.
+  2. Las fotos de la Galería se piden achicadas por Supabase (`/storage/v1/render/image/…?width=640|1080|1440&quality=70`, el mismo `resizedImageUrl` del boletín): nunca el original.
+  3. Solo baja la foto actual y la siguiente, y la segunda espera a saber la lista de la Galería.
+  4. Nueva columna `media_slider.caption`: el lugar que Frank escribe en el panel («Lugar»); el hero lo muestra en la etiqueta. Sin lugar, la foto va sin etiqueta.
+  5. **Las fotos nunca se recortan** (Frank, al verlas: «muchas de las fotos se cortan y pierden todo el sentido»). Cada foto se ve completa (`object-contain`) sobre una copia de sí misma desenfocada que llena el marco (misma descarga). En celular la foto completa queda arriba de la cresta; el marco mide `min(58svh, 133vw, 640px)` (casi 3:4, el formato del iPhone), así que las verticales casi no dejan bandas y las horizontales muestran bandas desenfocadas arriba y abajo.
+- **Lección:** se aplicaron también `web_url` y `web_storage_path` para guardar copias ligeras hechas en el panel, porque se supuso que el plan gratis de Supabase no achicaba fotos. Los logs dicen otra cosa: `render/image` responde 200/304 en este proyecto. Antes de asumir un límite de plan, revisar los logs (`edge_logs`). Las dos columnas quedan vacías; borrarlas pide confirmación de Frank (el borrado se canceló sin ella).
+- **Consecuencias:** cambiar fotos del hero ya no pide deploy: se activan, ordenan y nombran en el panel. Revisar en celular que el logo blanco se lea sobre el cielo de cada foto nueva.
+
+### ADR-047 — Hero del home: la foto es la pantalla (estilo historia)
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente, salvo el punto 2 (el oscuro liso detrás del texto), que reemplaza ADR-048. Reemplaza el diseño de celular de ADR-045 y el punto 5 de ADR-046.
+- **Contexto:** con las fotos de la Galería, el marco de ADR-045 (foto arriba con cresta, texto abajo sobre claro) y las fotos completas sobre una copia desenfocada (ADR-046 punto 5) no convencieron a Frank: «no me gustó como se ve, tiene cero diseño». Sus fotos son verticales de iPhone (de 0.39 a 0.58 de ancho por alto), casi la forma de la pantalla del celular (0.46). Se le mostraron 3 maquetas y eligió la 1: la foto a pantalla completa, como una historia de Instagram, con el texto abajo.
+- **Decisión:**
+  1. Celular y tablet (menos de 1024 px): la sección mide `100svh` (mínimo 540 px) y la foto la llena (`object-cover`), detrás del navbar transparente. Arriba solo una sombra suave para el logo blanco (`forest-dark/55` a transparente en 144 px). El texto va abajo: etiqueta del lugar, H1 blanco con «nomás se encuentra.» en fogata, subtítulo `white/90`, botón fogata y línea de confianza `white/80`. El enlace a preguntas frecuentes se oculta debajo de 640 px (la sección de preguntas sigue más abajo).
+  2. El oscuro detrás del texto (`.hero-scrim`) empieza 9 rem arriba del bloque de texto y lo sigue sin importar el alto de la pantalla: transparente → 0.5 → 0.86 donde empieza la etiqueta → 0.94 → `#14201A` sólido al final. Así la franja oscura de «La promesa» sigue sin línea, y el divisor `cloud` de `Index.tsx` queda solo desde `lg`.
+  3. La fila de la etiqueta guarda su alto aunque una foto no tenga lugar, para que el texto no salte al cambiar de foto.
+  4. Contraste medido pixel a pixel sin sombra de texto (bg/fg, percentil 2), a 375, 390, 430 y 768 px: sobre una foto blanca pura, H1 11.6, fogata 3.8 (pide 3, texto grande), subtítulo 10.8, confianza 10.4, etiqueta 8.2, preguntas 12.3; sobre las 6 fotos locales, todo igual o mejor. El oscuro basta para cualquier foto que Frank suba; no hay que volver a medir al cambiar fotos.
+  5. Desde `lg`: texto a la izquierda sobre `cloud` (H1 `ink`, «nomás se encuentra.» en `green`, navbar sólido) y la foto en un marco 3:5 de `min(76vh, 700px)` de alto con esquinas de 32 px. Detrás, la foto siguiente inclinada −6° como una pila de fotos impresas (mismas URLs que el frente: no baja nada extra); se desplaza 7 % a la izquierda en `lg` y 12 % desde `xl` para no tocar el texto en 1024 px.
+  6. `HERO_SIZES` y el `imagesizes` del preload pasan a `(min-width: 1024px) 420px, 100vw`.
+- **Consecuencias:** las fotos se recortan un poco para llenar la pantalla. Las verticales de iPhone pierden un borde fino; las 3:4 locales pierden los lados en celular (por eso la portada local se eligió con el motivo al centro). Si una foto de Frank pierde lo importante, la salida es otra foto, no volver al desenfoque. `public/hero-mask.svg` ya no lo usa el hero (sigue en `_headers`); se puede borrar en un PR aparte.
+
+### ADR-048 — La foto del hero termina en una cordillera (celular)
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente, salvo el efecto de scroll del punto 3, que reemplaza ADR-049. Reemplaza el punto 2 de ADR-047.
+- **Contexto:** al ver la foto a pantalla completa, Frank extrañó la cresta que separaba la foto del texto (ADR-045): «no quiero que se pierda esa división, me gusta mucho, o algo más montañoso o un efecto estaría genial». Un primer intento con cordilleras de `forest-dark` translúcido no se distinguía sobre las fotos.
+- **Decisión:**
+  1. Debajo de 1024 px la foto termina en tres capas planas, al estilo de la escena de `/destinos` (ADR-043): picos lejanos en verde pino (`#2F5E4A`, 0.86), una cordillera media más oscura (`#1E3D30`, 0.95) y lomas al frente en `forest-dark` con pinos, donde se para el texto. Siluetas en `src/lib/hero-ridges.ts` (1024 de ancho, 1 unidad = 1 px, recortadas desde el centro con `xMidYMax slice`, así los picos no se aplastan en ningún celular).
+  2. Cada capa es un color plano recortado con su silueta como `mask` (arriba) y sólido abajo, y baja hasta el final detrás del texto: las capas se suman sin línea y terminan en `#14201A`, igual que «La promesa». Van ancladas al bloque de texto, así siguen al texto en cualquier alto de pantalla.
+  3. Efectos, todos apagados con «reducir movimiento»: la cordillera lejana y la media suben al cargar (1.1 s); una neblina pasa despacio entre ellas (70 s por vuelta, en pausa fuera de pantalla); y donde el navegador tiene animaciones ligadas al scroll (`animation-timeline: scroll()`), la cordillera lejana baja más despacio que la página y la foto un poco más, como profundidad. Sin JavaScript para el scroll; donde no hay soporte, simplemente no se mueven.
+  4. Contraste medido sin sombra de texto sobre una foto blanca pura: H1 16.8, fogata 5.3, subtítulo 13.8, confianza 11.1, etiqueta 12.5. Detrás del texto ya no se ve la foto.
+- **Consecuencias:** en celular la foto se ve en la parte de arriba (unos 45 % de la pantalla en un iPhone 14; menos en un iPhone SE). Las cordilleras son decoración; cambiar su forma = editar `hero-ridges.ts` (las pruebas revisan que cada silueta quede dentro de su franja y que la lejana quede más alta que la media y esta que el frente). Escritorio sin cambios.
+
+### ADR-049 — Hero en celular: la foto arriba del texto y profundidad al hacer scroll
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente. Completa ADR-048.
+- **Contexto:** en su iPhone, con fotos de la Galería, Frank veía casi solo cielo: la foto llenaba la pantalla detrás del texto, así que su centro quedaba tapado por las montañas y el texto. Pidió «sube más la foto» y un efecto de scroll como el de Save.design (en Mobbin: un paisaje que una ventana oscura va cubriendo al bajar).
+- **Decisión:**
+  1. Debajo de 1024 px la foto ocupa solo el espacio arriba del texto (`flex-1`), no la pantalla entera: su centro queda arriba de las montañas. La etiqueta del lugar pasa a la foto, debajo del logo, como la ubicación de una historia; se va la fila vacía que quedaba cuando una foto no tenía lugar.
+  2. Cordilleras más bajas (136, 92 y 52 px en vez de 160, 104 y 60) para dejar más foto.
+  3. Profundidad al hacer scroll, en JavaScript para que funcione en cualquier iPhone (la versión anterior con `animation-timeline` solo corría en iOS 26): la foto va al 40 % de la velocidad de la página y se acerca un poco (hasta 6 %), la cordillera lejana se queda atrás un 16 %, la media un 7 %, y las lomas con el texto van con la página. Resultado: la tierra sube sobre la foto, como la ventana de Save.design, y las cordilleras cercanas tapan a las lejanas. Un solo listener pasivo de scroll y una escritura de `transform` por capa por cuadro; deja de escribir cuando el hero sale de pantalla. Apagado con «reducir movimiento» y desde `lg`.
+  4. Sin Framer Motion en el hero: cargarlo haría esperar al H1 (lección de PR #194).
+- **Consecuencias:** el botón sigue en la primera pantalla (579 px de 667 en iPhone SE; 756 de 844 en iPhone 14). Ajustar el efecto = cambiar las tres velocidades en `parallaxLayers` de `HeroSection.tsx`. Escritorio sin cambios.
 
 ## Lecciones técnicas (bugs no obvios)
 

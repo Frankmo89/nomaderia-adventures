@@ -123,6 +123,21 @@ created_at      timestamptz
 unsubscribed_at timestamptz NULL                 → NULL = activo; timestamp = baja (edge function `unsubscribe`, token HMAC firmado con CRON_SECRET)
 ```
 
+### `media_slider` — Galería Multimedia (`/admin/galeria`)
+```
+id               uuid PK
+storage_path     text                → archivo en el bucket público `media_gallery` (original del celular)
+public_url       text                → URL pública del original (los sitios piden copias chicas vía render/image, ver src/lib/resized-image.ts)
+media_type       text                → "image" | "video"
+display_order    int                 → orden que Frank arrastra en el panel
+is_active        boolean             → solo las activas salen en el sitio (policy «Media pública»)
+caption          text NULL           → lugar de la foto («Joshua Tree · California»); el hero del home lo muestra (ADR-046)
+web_url          text NULL           → sin uso (plan descartado del 2026-10-23); se puede borrar con OK de Frank
+web_storage_path text NULL           → sin uso, ídem
+created_at       timestamptz
+```
+Lo usan el hero del home (imágenes activas, ADR-046), el fondo del boletín y el slideshow de `/servicios`.
+
 ### `itinerary_requests`
 ```
 id                uuid PK
