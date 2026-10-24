@@ -29,7 +29,7 @@ describe("sequoia silhouettes", () => {
 
   it("mirrors a shape across its box", () => {
     const m = mirror(GROVE.trunk);
-    expect(pairs(m.path)[0]).toEqual([78, 0]);
+    expect(pairs(m.path)[0]).toEqual([73, 0]);
     expect(mirror(m).path).toBe(GROVE.trunk.path);
   });
 

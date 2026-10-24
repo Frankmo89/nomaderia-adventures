@@ -64,8 +64,8 @@ const FOREST_CSS = `
 }
 /* Far trunks rise out of the mist and fade into the sky above. */
 .grove-fade {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 30%, #000 62%);
-  mask-image: linear-gradient(to bottom, transparent 30%, #000 62%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 28%, #000 52%);
+  mask-image: linear-gradient(to bottom, transparent 28%, #000 52%);
 }
 .grove-veil {
   background: linear-gradient(to bottom, #6e9a82 0%, #8db09c 45%, #c3d8cb 100%);
@@ -75,7 +75,7 @@ const FOREST_CSS = `
   top: -10%;
   height: 130%;
   transform-origin: top center;
-  transform: rotate(26deg);
+  transform: rotate(22deg);
   background: linear-gradient(
     to bottom,
     rgba(251, 250, 247, 0),
@@ -117,11 +117,11 @@ const FOREST_CSS = `
 }
 `;
 
-/** Rays through the trunks: where each starts (% from the right) and its width. */
+/** Rays through the trunks from the top right, on the sun's side: where each starts (% from the right) and its width. */
 const RAYS = [
-  { right: 16, width: 13 },
-  { right: 33, width: 6 },
-  { right: 44, width: 10 },
+  { right: -8, width: 18 },
+  { right: 6, width: 7 },
+  { right: 16, width: 12 },
 ] as const;
 
 /** Needles drifting down in the light (fixed positions, no randomness). */
@@ -142,9 +142,10 @@ const FAR_TRUNKS = [
 ] as const;
 
 /**
- * A sequoia trunk with its bark grooves and a lit face on the side that
- * faces the clearing: the trunk in its light colour, then the trunk itself
- * moved `dx` px away from the clearing on top.
+ * A sequoia trunk with a lit face on the side that faces the clearing: the
+ * trunk in its light colour, then the trunk itself moved `dx` px away from
+ * the clearing on top. Only the front trunks carry bark grooves (on every
+ * trunk they read as a barcode).
  */
 const Trunk = ({
   side,
@@ -159,7 +160,7 @@ const Trunk = ({
   side: "l" | "r";
   fill: string;
   lit: string;
-  groove: string;
+  groove?: string;
   dx: number;
   className?: string;
   style?: CSSProperties;
@@ -169,7 +170,7 @@ const Trunk = ({
     <div className="grove-shape" style={{ ...TRUNK[side], backgroundColor: lit }} />
     <div className="absolute inset-0" style={{ transform: `translateX(${side === "l" ? -dx : dx}px)` }}>
       <div className="grove-shape" style={{ ...TRUNK[side], backgroundColor: fill }} />
-      <div className="grove-shape" style={{ ...GROOVES[side], backgroundColor: groove }} />
+      {groove && <div className="grove-shape" style={{ ...GROOVES[side], backgroundColor: groove }} />}
     </div>
   </div>
 );
@@ -249,7 +250,8 @@ const PromiseSection = () => {
     const moves: { ref: Ref; at: (p: number) => string }[] = [
       { ref: r.sun, at: (p) => px(-24 * p, 145 * p) },
       { ref: r.far, at: (p) => px(0, 46 * p) },
-      { ref: r.farTrunks, at: (p) => px(0, (1 - span(p, 0.1, 0.6)) * 120 - span(p, 0.6, 1) * 30) },
+      // Far trunks wait low behind the treelines while the promise shows, then rise (% of their box).
+      { ref: r.farTrunks, at: (p) => `translate3d(0, ${(36 * (1 - span(p, 0.3, 0.7))).toFixed(2)}%, 0)` },
       { ref: r.mid, at: (p) => px(0, 24 * p - span(p, 0.65, 1) * 38) },
       { ref: r.backL, at: canopy(55, 0.35, 0.85, 0.08) },
       { ref: r.backR, at: canopy(55, 0.35, 0.85, 0.08) },
@@ -274,6 +276,8 @@ const PromiseSection = () => {
       { ref: r.sun, at: (p) => 1 - 0.65 * span(p, 0.7, 0.98) },
       { ref: r.rays, at: (p) => span(p, 0.12, 0.38) * (1 - 0.8 * span(p, 0.78, 0.98)) },
       { ref: r.text, at: (p) => 1 - span(p, 0.28, 0.4) },
+      // …and fade at the end, so the closing frame is not a row of stripes.
+      { ref: r.farTrunks, at: (p) => 1 - 0.7 * span(p, 0.75, 1) },
     ];
     return { moves, fades };
   }, [r]);
@@ -320,14 +324,13 @@ const PromiseSection = () => {
             <div className="promise-line h-full bg-[#B3CBBD]" style={{ ...FAR, transform: "translate(2px, -3px)" }} />
             <div className="promise-line h-full bg-[#8DB09C]" style={FAR} />
           </div>
-          <div ref={r.farTrunks} className="grove-fade absolute inset-0 will-change-transform">
+          <div ref={r.farTrunks} className="grove-fade absolute inset-x-0 -bottom-[25%] top-0 will-change-transform">
             {FAR_TRUNKS.map((t) => (
               <Trunk
                 key={t.left}
                 side={t.left < 50 ? "l" : "r"}
                 fill="#6E9A82"
                 lit="#8DB09C"
-                groove="#6E9A82"
                 dx={2}
                 style={{ left: `${t.left}%`, width: `${t.width}%` }}
               />
@@ -351,8 +354,8 @@ const PromiseSection = () => {
           <Canopy side="l" fill="#2F5E4A" lit="#4F7F66" innerRef={r.backL} className="left-[12%] h-[26%] w-[56%] lg:left-[18%] lg:h-[30%] lg:w-[36%]" />
           <Canopy side="r" fill="#2F5E4A" lit="#4F7F66" innerRef={r.backR} className="right-[12%] h-[26%] w-[56%] lg:right-[18%] lg:h-[30%] lg:w-[36%]" />
           {/* Giant trunks: a middle pair that steps in, a front pair at the edges. */}
-          <Trunk side="l" fill="#3E6E57" lit="#6E9A82" groove="#2F5E4A" dx={4} innerRef={r.midL} className="left-[6%] w-[30%] lg:left-[9%] lg:w-[13%]" />
-          <Trunk side="r" fill="#3E6E57" lit="#6E9A82" groove="#2F5E4A" dx={4} innerRef={r.midR} className="right-[6%] w-[30%] lg:right-[9%] lg:w-[13%]" />
+          <Trunk side="l" fill="#3E6E57" lit="#6E9A82" dx={4} innerRef={r.midL} className="left-[6%] w-[30%] lg:left-[9%] lg:w-[13%]" />
+          <Trunk side="r" fill="#3E6E57" lit="#6E9A82" dx={4} innerRef={r.midR} className="right-[6%] w-[30%] lg:right-[9%] lg:w-[13%]" />
           <Trunk
             side="l"
             fill="#1E3D30"
