@@ -216,6 +216,28 @@ serve(async (req) => {
       });
     }
 
+    // Idempotent fast-path: hero ours + no nps.gov in gallery → do nothing.
+    const earlyPlan = planMirrorWrite({
+      currentHero: dest.hero_image_url,
+      currentGallery: dest.gallery_images,
+      goodCandidateCount: 0,
+      supabaseUrl: SUPABASE_URL,
+    });
+    if (earlyPlan.noop) {
+      const response: MirrorResponse = {
+        slug,
+        hero: "kept",
+        gallery: earlyPlan.keepGalleryUrls.length,
+        skipped: [],
+        dry_run: dryRun,
+        message: "already on our Storage",
+      };
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const npsImages = await fetchParkImages(NPS_API_KEY, dest.park_code);
     const { good, skipped } = await downloadAndFilter(npsImages);
 
@@ -245,10 +267,18 @@ serve(async (req) => {
     // dry_run: download+check only — no upload, no DB write.
     if (dryRun) {
       const wouldUpload = plan.uploadCandidateIndexes.length;
-      const galleryCount =
-        plan.heroStatus === "kept"
-          ? plan.keepGalleryUrls.length + wouldUpload
-          : plan.keepGalleryUrls.length + Math.max(0, wouldUpload - 1);
+      let galleryCount: number;
+      if (plan.galleryReplaceNpsOnly) {
+        // Ours stay; each nps.gov slot becomes one upload (or drops if none).
+        galleryCount =
+          plan.keepGalleryUrls.length +
+          Math.min(wouldUpload, plan.npsGallerySlots);
+      } else if (plan.heroStatus === "kept") {
+        galleryCount = plan.keepGalleryUrls.length;
+      } else {
+        galleryCount =
+          plan.keepGalleryUrls.length + Math.max(0, wouldUpload - 1);
+      }
       const response: MirrorResponse = {
         slug,
         hero: plan.heroStatus,
@@ -305,7 +335,10 @@ serve(async (req) => {
       heroStatus: plan.heroStatus,
       keepHeroUrl: plan.keepHeroUrl,
       keepGalleryUrls: plan.keepGalleryUrls,
+      currentGalleryUrls: plan.currentGalleryUrls,
+      galleryReplaceNpsOnly: plan.galleryReplaceNpsOnly,
       uploadedUrls,
+      supabaseUrl: SUPABASE_URL,
     });
 
     if (!assembled.hero) {

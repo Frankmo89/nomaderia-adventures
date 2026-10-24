@@ -7,7 +7,7 @@ export const MIN_IMAGE_BYTES = 20 * 1024;
 /** Cap per park (edge time limit + gallery size). */
 export const MAX_PARK_IMAGES = 6;
 
-/** Storage bucket that holds destination photos. */
+/** Storage bucket that holds mirrored NPS destination photos. */
 export const DESTINATIONS_BUCKET = "destinations";
 
 /** Public object path prefix inside the destinations bucket for mirrored NPS photos. */
@@ -28,11 +28,12 @@ export interface NpsImageMeta {
 }
 
 /**
- * True when `url` is a public object in this project's `destinations` Storage bucket.
- * Shape: `{SUPABASE_URL}/storage/v1/object/public/destinations/...`
- * Also accepts the `/storage/v1/object/sign/destinations/` form just in case.
+ * True when `url` is a public or signed Storage object on this project's Supabase host,
+ * regardless of bucket (`destinations`, `destinations_media`, etc.).
+ * Shape: `{SUPABASE_URL}/storage/v1/object/public/<bucket>/...`
+ * Also accepts `/storage/v1/object/sign/<bucket>/...`.
  */
-export function isOurDestinationsStorageUrl(
+export function isOurStorageUrl(
   url: string | null | undefined,
   supabaseUrl: string,
 ): boolean {
@@ -43,9 +44,23 @@ export function isOurDestinationsStorageUrl(
     if (u.host !== base.host) return false;
     const path = u.pathname;
     return (
-      path.includes(`/storage/v1/object/public/${DESTINATIONS_BUCKET}/`) ||
-      path.includes(`/storage/v1/object/sign/${DESTINATIONS_BUCKET}/`)
+      path.includes("/storage/v1/object/public/") ||
+      path.includes("/storage/v1/object/sign/")
     );
+  } catch {
+    return false;
+  }
+}
+
+/** @deprecated Prefer isOurStorageUrl — kept as alias for older call sites. */
+export const isOurDestinationsStorageUrl = isOurStorageUrl;
+
+/** True when the URL is hosted on nps.gov (structured_data or otherwise). */
+export function isNpsGovUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === "nps.gov" || host.endsWith(".nps.gov");
   } catch {
     return false;
   }
@@ -91,20 +106,41 @@ export type HeroMirrorStatus = "replaced" | "kept" | "missing";
 
 export interface MirrorPlan {
   heroStatus: HeroMirrorStatus;
-  /** Candidate indices (into the good-candidates array) to upload for hero+gallery. Empty if leave-alone. */
+  /**
+   * Candidate indices (into the good-candidates array) to upload.
+   * Empty when noop / leave-alone / no candidates needed.
+   */
   uploadCandidateIndexes: number[];
-  /** Final hero URL to write (existing Storage URL, or null if missing / leave alone). */
+  /** Existing Storage hero to keep (when heroStatus is "kept"). */
   keepHeroUrl: string | null;
-  /** Existing gallery URLs that already point at our Storage (preserved). */
+  /**
+   * Current gallery URLs in order. Used with `galleryReplaceNpsOnly` to rebuild
+   * the gallery by swapping only nps.gov slots.
+   */
+  currentGalleryUrls: string[];
+  /** Existing gallery URLs that already point at our Storage (preserved, in order). */
   keepGalleryUrls: string[];
-  /** Leave the destinations row untouched (no working photo to write). */
+  /** Number of nps.gov gallery slots that need a replacement upload. */
+  npsGallerySlots: number;
+  /**
+   * When true: hero is ours and gallery has nps.gov entries — replace only those
+   * slots; do not append leftover uploads; never put hero into gallery.
+   */
+  galleryReplaceNpsOnly: boolean;
+  /** Leave the destinations row untouched (noop or no working photo). */
   leaveRowAlone: boolean;
+  /**
+   * Fully done: hero ours + no nps.gov in gallery. Caller must skip download,
+   * upload, and DB write.
+   */
+  noop: boolean;
   needsManualPhoto: boolean;
 }
 
 /**
  * Plan what to write given current DB URLs and how many good NPS candidates we have.
- * Never replaces a URL that already points at our Storage.
+ * Never replaces a URL that already points at our Storage (any bucket).
+ * Idempotent: a second plan on an already-mirrored row is a noop.
  */
 export function planMirrorWrite(opts: {
   currentHero: string | null | undefined;
@@ -112,78 +148,150 @@ export function planMirrorWrite(opts: {
   goodCandidateCount: number;
   supabaseUrl: string;
 }): MirrorPlan {
-  const heroOurs = isOurDestinationsStorageUrl(opts.currentHero, opts.supabaseUrl);
+  const heroOurs = isOurStorageUrl(opts.currentHero, opts.supabaseUrl);
   const gallery = (opts.currentGallery ?? []).filter(Boolean);
   const keepGalleryUrls = gallery.filter((u) =>
-    isOurDestinationsStorageUrl(u, opts.supabaseUrl),
+    isOurStorageUrl(u, opts.supabaseUrl),
   );
+  const npsGallerySlots = gallery.filter((u) => isNpsGovUrl(u)).length;
+  const galleryHasNps = npsGallerySlots > 0;
 
-  if (opts.goodCandidateCount === 0) {
-    if (heroOurs) {
-      return {
-        heroStatus: "kept",
-        uploadCandidateIndexes: [],
-        keepHeroUrl: opts.currentHero ?? null,
-        keepGalleryUrls,
-        leaveRowAlone: true,
-        needsManualPhoto: false,
-      };
-    }
-    return {
-      heroStatus: "missing",
-      uploadCandidateIndexes: [],
-      keepHeroUrl: null,
-      keepGalleryUrls,
-      leaveRowAlone: true,
-      needsManualPhoto: true,
-    };
-  }
-
-  // We have at least one good candidate to upload.
-  const indexes = Array.from({ length: opts.goodCandidateCount }, (_, i) => i);
-
-  if (heroOurs) {
+  // Bug 2 fix: already fully on our Storage → do nothing.
+  if (heroOurs && !galleryHasNps) {
     return {
       heroStatus: "kept",
-      uploadCandidateIndexes: indexes,
+      uploadCandidateIndexes: [],
       keepHeroUrl: opts.currentHero ?? null,
+      currentGalleryUrls: gallery,
       keepGalleryUrls,
-      leaveRowAlone: false,
+      npsGallerySlots: 0,
+      galleryReplaceNpsOnly: false,
+      leaveRowAlone: true,
+      noop: true,
       needsManualPhoto: false,
     };
   }
 
+  // Hero ours but some gallery still on nps.gov → replace only those slots.
+  if (heroOurs && galleryHasNps) {
+    const need = Math.min(opts.goodCandidateCount, npsGallerySlots);
+    const indexes = Array.from({ length: need }, (_, i) => i);
+    if (opts.goodCandidateCount === 0) {
+      // Cannot replace yet; leave row alone (keep Frank's hero + our gallery).
+      return {
+        heroStatus: "kept",
+        uploadCandidateIndexes: [],
+        keepHeroUrl: opts.currentHero ?? null,
+        currentGalleryUrls: gallery,
+        keepGalleryUrls,
+        npsGallerySlots,
+        galleryReplaceNpsOnly: true,
+        leaveRowAlone: true,
+        noop: false,
+        needsManualPhoto: false,
+      };
+    }
+    return {
+      heroStatus: "kept",
+      uploadCandidateIndexes: indexes,
+      keepHeroUrl: opts.currentHero ?? null,
+      currentGalleryUrls: gallery,
+      keepGalleryUrls,
+      npsGallerySlots,
+      galleryReplaceNpsOnly: true,
+      leaveRowAlone: false,
+      noop: false,
+      needsManualPhoto: false,
+    };
+  }
+
+  if (opts.goodCandidateCount === 0) {
+    return {
+      heroStatus: "missing",
+      uploadCandidateIndexes: [],
+      keepHeroUrl: null,
+      currentGalleryUrls: gallery,
+      keepGalleryUrls,
+      npsGallerySlots,
+      galleryReplaceNpsOnly: false,
+      leaveRowAlone: true,
+      noop: false,
+      needsManualPhoto: true,
+    };
+  }
+
+  // Hero is nps.gov (or other non-Storage) → full replace with uploads.
+  const indexes = Array.from({ length: opts.goodCandidateCount }, (_, i) => i);
   return {
     heroStatus: "replaced",
     uploadCandidateIndexes: indexes,
     keepHeroUrl: null,
+    currentGalleryUrls: gallery,
     keepGalleryUrls,
+    npsGallerySlots,
+    galleryReplaceNpsOnly: false,
     leaveRowAlone: false,
+    noop: false,
     needsManualPhoto: false,
   };
 }
 
 /**
  * After uploads, assemble the final hero + gallery URLs.
- * `uploadedUrls` are in candidate order (index 0 = first good NPS image).
+ * Never puts the hero URL into gallery_images.
  */
 export function assembleMirroredUrls(opts: {
   heroStatus: HeroMirrorStatus;
   keepHeroUrl: string | null;
   keepGalleryUrls: string[];
+  currentGalleryUrls?: string[];
+  galleryReplaceNpsOnly?: boolean;
   uploadedUrls: string[];
+  supabaseUrl?: string;
 }): { hero: string | null; gallery: string[] } {
-  if (opts.heroStatus === "kept") {
-    // All uploads go to gallery; preserve existing Storage gallery entries first.
-    const gallery = dedupeUrls([...opts.keepGalleryUrls, ...opts.uploadedUrls]);
-    return { hero: opts.keepHeroUrl, gallery };
+  if (opts.galleryReplaceNpsOnly && opts.heroStatus === "kept") {
+    const hero = opts.keepHeroUrl;
+    const uploads = [...opts.uploadedUrls];
+    const out: string[] = [];
+    for (const u of opts.currentGalleryUrls ?? []) {
+      if (isNpsGovUrl(u)) {
+        const next = uploads.shift();
+        if (next && next !== hero) out.push(next);
+        continue;
+      }
+      if (opts.supabaseUrl ? isOurStorageUrl(u, opts.supabaseUrl) : true) {
+        if (u !== hero) out.push(u);
+      } else if (u !== hero) {
+        // Non-nps external: keep as-is (only nps.gov slots are replaced).
+        out.push(u);
+      }
+    }
+    return { hero, gallery: dedupeUrls(out) };
   }
-  if (opts.heroStatus === "replaced" && opts.uploadedUrls.length > 0) {
-    const [hero, ...rest] = opts.uploadedUrls;
-    const gallery = dedupeUrls([...opts.keepGalleryUrls, ...rest]);
+
+  if (opts.heroStatus === "kept") {
+    // Noop / leave-alone path — preserve gallery as kept Storage URLs only.
+    const hero = opts.keepHeroUrl;
+    const gallery = dedupeUrls(
+      opts.keepGalleryUrls.filter((u) => u && u !== hero),
+    );
     return { hero, gallery };
   }
-  return { hero: opts.keepHeroUrl, gallery: opts.keepGalleryUrls };
+
+  if (opts.heroStatus === "replaced" && opts.uploadedUrls.length > 0) {
+    const [hero, ...rest] = opts.uploadedUrls;
+    const gallery = dedupeUrls(
+      [...opts.keepGalleryUrls, ...rest].filter((u) => u && u !== hero),
+    );
+    return { hero, gallery };
+  }
+
+  return {
+    hero: opts.keepHeroUrl,
+    gallery: dedupeUrls(
+      opts.keepGalleryUrls.filter((u) => u && u !== opts.keepHeroUrl),
+    ),
+  };
 }
 
 function dedupeUrls(urls: string[]): string[] {

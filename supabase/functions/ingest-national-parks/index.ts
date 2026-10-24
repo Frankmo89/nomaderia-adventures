@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAdmin } from "../_shared/admin-auth.ts";
-import { isOurDestinationsStorageUrl } from "../_shared/mirror-park-images.ts";
+import { isOurStorageUrl } from "../_shared/mirror-park-images.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -257,13 +257,13 @@ serve(async (req) => {
       if (existingRow) {
         // UPDATE — never touch: slug, title, is_published, research_status, or any Spanish-curated column.
         // ADR-057: never overwrite hero_image_url / gallery_images when they already
-        // point at our Storage bucket (Frank's photos or mirrored NPS copies).
-        const heroIsOurs = isOurDestinationsStorageUrl(
+        // point at our Supabase Storage (any bucket) (Frank's photos or mirrored NPS copies).
+        const heroIsOurs = isOurStorageUrl(
           existingRow.hero_image_url,
           SUPABASE_URL,
         );
         const galleryIsOurs = (existingRow.gallery_images ?? []).some((u) =>
-          isOurDestinationsStorageUrl(u, SUPABASE_URL),
+          isOurStorageUrl(u, SUPABASE_URL),
         );
         const updatePayload: Record<string, unknown> = {
           official_name: park.fullName,

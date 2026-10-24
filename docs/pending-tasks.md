@@ -15,11 +15,17 @@
 ## Pendiente humano — Fotos de parques en Storage (ADR-057)
 
 - [ ] **FRANK: desplegar** `mirror-park-images` vía Actions → `deploy-edge-functions.yml` (`workflow_dispatch`) **después** de mergear el PR de la función a `main`. El token de `gh` del agente no tiene scope `workflow`, así que no puede dispararlo.
-- [ ] **FRANK: dry-run desde `/admin` → Diagnóstico** → «Copiar fotos a Nomaderia» (primero dry_run; revisar el reporte).
+- [ ] **FRANK: dry-run desde `/admin` → Diagnóstico** → «Copiar fotos a Nomaderia» (solo parques con URL nps.gov; primero dry_run; revisar el reporte).
 - [ ] **FRANK: run real** tras confirmar el dry-run (mismo botón, o por parque en filas ámbar/rojas).
 - [ ] **FRANK: verificar `/destinos` en iPhone** — las tarjetas no deben caer al fallback oscuro.
 - [ ] Confirmar que el secret `NPS_API_KEY` sigue en Supabase Edge Functions → Secrets (ya lo usa `ingest-national-parks`).
 - [ ] No volver a correr `scripts/fix-dead-images.ts` para reintroducir URLs de nps.gov.
+
+## Changelog 2026-10-24 (b) — Fix Storage detection + idempotencia mirror
+
+- [x] `isOurStorageUrl`: cualquier bucket en el host del proyecto (p. ej. `destinations_media` de Kings Canyon / Redwood).
+- [x] Mirror idempotente: hero nuestra + galería sin nps.gov → noop; si hay nps.gov en galería → solo esos slots; nunca hero en `gallery_images`.
+- [x] Ingest guard usa el mismo check «cualquier Storage nuestro».
 
 ## Changelog 2026-10-24 — Fotos de parques → Storage (ADR-057, Draft PR1)
 
