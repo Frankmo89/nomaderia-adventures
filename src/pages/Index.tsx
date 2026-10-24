@@ -22,6 +22,7 @@ const BlogPreview = lazyWithRetry(() => import("@/components/landing/BlogPreview
 const TravelInsuranceSection = lazyWithRetry(() => import("@/components/landing/TravelInsuranceSection"));
 const PremiumItinerarySection = lazyWithRetry(() => import("@/components/landing/PremiumItinerarySection"));
 const NewsletterSignup = lazyWithRetry(() => import("@/components/landing/NewsletterSignup"));
+const NightCamp = lazyWithRetry(() => import("@/components/landing/NightCamp"));
 const Footer = lazyWithRetry(() => import("@/components/landing/Footer"));
 const SectionDivider = lazyWithRetry(() => import("@/components/landing/SectionDivider"));
 
@@ -139,8 +140,9 @@ const Index = () => {
         <GearPreview />
         <BlogPreview />
         <NewsletterSignup />
-        <SectionDivider variant="simple" fill="#14201A" />
-        <Footer />
+        {/* The trip ends at camp (ADR-053): its last hill is the footer's colour. */}
+        <NightCamp />
+        <Footer flush />
       </LazyBlock>
     </main>
   );

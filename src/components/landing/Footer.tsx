@@ -2,10 +2,25 @@ import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Instagram, Facebook } from "lucide-react";
 import Logo from "@/components/brand/Logo";
+import { cn } from "@/lib/utils";
 
-const Footer = forwardRef<HTMLElement>((_, ref) => {
+interface FooterProps {
+  /**
+   * The home ends in the night camp scene (ADR-053), whose last hill is the
+   * footer's colour: no gap, no rounded top, no border there.
+   */
+  flush?: boolean;
+}
+
+const Footer = forwardRef<HTMLElement, FooterProps>(({ flush = false }, ref) => {
   return (
-    <footer ref={ref} className="mt-10 rounded-t-[2.5rem] border-t border-mist/15 bg-forest-dark py-12 text-mist sm:mt-14">
+    <footer
+      ref={ref}
+      className={cn(
+        "bg-forest-dark py-12 text-mist",
+        !flush && "mt-10 rounded-t-[2.5rem] border-t border-mist/15 sm:mt-14",
+      )}
+    >
       <div className="container mx-auto px-5 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between items-start gap-8">
           {/* Brand */}

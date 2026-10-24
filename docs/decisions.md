@@ -815,6 +815,17 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Lección:** un contenedor con scroll de lado (`overflow-x: auto`) también recorta arriba y abajo. El carro y las píldoras sobresalen de la fila de 24 px y salían cortados en el iPhone de Frank («se ve cortado el carro»). El carrusel lleva 12 px de aire arriba (`pt-3`) que se recuperan con `-mt-3`, así el diseño no se mueve.
 - **Consecuencias:** si se agrega una parada a la ruta, basta con marcar su punto con `data-route-node`. No cambia el orden de los parques ni las horas (ADR-040/041).
 
+### ADR-053 — El home termina en una noche de campamento
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente.
+- **Contexto:** Frank, al final del home: «¿cómo terminamos esta parte con este tipo de efectos? ¿Qué hace falta?». Entre el boletín (foto oscura) y el footer quedaba una franja blanca: el footer tiene `mt-10` y esquinas redondeadas, y el divisor `simple #14201A` no la tapaba.
+- **Decisión:**
+  1. `NightCamp` entre el boletín y el footer: cielo de noche con estrellas que titilan y una estrella fugaz cada 9 s, una luna, la cordillera del hero a lo lejos (`HERO_RIDGES.back`), una hilera de pinos (`FOREST.mid`) y una casa de campaña iluminada por dentro sobre la última loma (`FOREST.near`). Paleta de noche de `/destinos` (cielo `#14201A` → `#4E8A6A`, pinos `#16332A`, luna `#F4F1E8`); la cordillera en `#2F5E4A`. Sin fogata: el ámbar sigue solo en el hero.
+  2. La historia del home queda completa: el día empieza en la foto del hero y pasa por el bosque, la carretera y el cañón hasta terminar de noche en el campamento.
+  3. La loma es `forest-dark`, el color del footer. `Footer` recibe `flush` (sin margen, sin esquinas redondeadas, sin borde) y el home lo usa así; las demás páginas no cambian. Se quitó el divisor `simple #14201A`.
+  4. Efecto con `useScrollDepth`: la luna sube y la cordillera y los pinos se quedan atrás mientras la escena aparece. La escena está al final de la página y nunca pasa de media pantalla, así que el avance se mide en lo que ya entró (0 → 1 en el 80 % de una pantalla), no en `progress`. Estrellas y estrella fugaz: apagadas con «reducir movimiento».
+- **Consecuencias:** sin fotos en la Galería, el boletín termina claro y la noche empezaría con un corte; hoy la Galería tiene fotos activas.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
