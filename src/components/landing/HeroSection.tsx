@@ -1,9 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { MapPin, Pause, Play, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { logEvent } from "@/lib/events";
-import { heroSlides, nextHeroSlide, type HeroSlide } from "@/lib/hero-slides";
+import {
+  STORY_TAP_SLOP,
+  heroSlides,
+  nextHeroSlide,
+  prevHeroSlide,
+  seededRandom,
+  storyStep,
+  type HeroSlide,
+  type StoryDirection,
+} from "@/lib/hero-slides";
 import { HERO_RIDGES, ridgeMaskUrl, type HeroRidge } from "@/lib/hero-ridges";
+import { cn } from "@/lib/utils";
 import { useHeroGalleryPhotos } from "@/hooks/use-hero-gallery";
 import { useScrollDepth, type DepthLayer, type ScrollDepth } from "@/hooks/use-scroll-depth";
 // Kept in place per perf task: query may stay unused for display.
@@ -23,12 +33,17 @@ import { useFeaturedHeroPark } from "@/hooks/use-destinations";
  * Photos fill their frame (object-cover). The frame has the shape of the
  * phone shots Frank uploads, so they lose only a thin edge.
  *
- * Photos cross-fade every 6 s (ADR-046). The first is always the local cover
- * below (the LCP image: keep the index.html preload on its id). After it come
- * the photos Frank keeps active in /admin/galeria, in his order, resized by
- * Supabase; their chip shows the place he typed. With no gallery photos, the
- * local set below plays. `place` names only the park, never a trail or
- * viewpoint we have not checked.
+ * Photos play as stories (ADR-057, after ADR-046): thin bars at the top fill
+ * over 6 s each, then the photo cross-fades to the next while it zooms in
+ * slowly. Tap the right side or swipe left for the next one, tap the left
+ * side or swipe right to go back, press and hold to pause; scrolling works
+ * as usual. On load the first photo settles from a slight zoom while the
+ * ranges rise. The first photo is always the local cover below (the LCP
+ * image: keep the index.html preload on its id). After it come up to six of
+ * the photos Frank keeps active in /admin/galeria, drawn at random per visit
+ * and resized by Supabase; their chip shows the place he typed. With no
+ * gallery photos, the local set below plays. `place` names only the park,
+ * never a trail or viewpoint we have not checked.
  */
 const HERO_PHOTOS = [
   { id: "02", place: "Joshua Tree · California", alt: "Un árbol de Joshua y rocas bajo cielo azul en Joshua Tree" },
@@ -41,6 +56,12 @@ const HERO_PHOTOS = [
 /** Keep in sync with `imagesizes` on the index.html preload. */
 const HERO_SIZES = "(min-width: 1024px) 420px, 100vw";
 const SLIDE_MS = 6000;
+/** Cross-fade between photos; keep in sync with `duration-[1200ms]` below. */
+const FADE_MS = 1200;
+/** Photos per visit: the cover and six from the gallery (ADR-057). */
+const STORY_MAX = 7;
+/** A press this long pauses the photos instead of stepping. */
+const HOLD_MS = 220;
 
 /* Phones: the range the photo ends in (ADR-048), flat like the /destinos
    scene: far peaks in pine green (#2F5E4A), a darker middle range (#1E3D30),
@@ -100,6 +121,42 @@ const HERO_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .hero-place { animation: none; }
 }
+/* Stories (ADR-057). Bars: a faint track per photo; the current one fills
+   (it ends the photo: see onAnimationEnd), the ones before stay full. */
+.hero-story-bar {
+  position: relative;
+  flex: 1 1 0;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgba(251, 250, 247, 0.3);
+  box-shadow: 0 0 2px rgba(20, 32, 26, 0.3);
+}
+.hero-story-fill {
+  position: absolute;
+  inset: 0;
+  background: rgba(251, 250, 247, 0.9);
+  transform-origin: left;
+}
+.hero-story-run { animation: hero-story-fill linear both; }
+@keyframes hero-story-fill {
+  from { transform: scaleX(0); }
+}
+/* The photo settles from a slight zoom on load; each photo then zooms in
+   slowly while it shows and fades out (Ken Burns). */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-land { animation: hero-land 0.75s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .hero-kb { animation: hero-kb linear forwards; transform-origin: 50% 60%; }
+}
+@keyframes hero-land {
+  from { scale: 1.06; }
+}
+@keyframes hero-kb {
+  to { transform: scale(1.04); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-story-run { animation: none; }
+}
 `;
 
 const ridgeStyle = (ridge: HeroRidge) =>
@@ -149,6 +206,7 @@ function HeroPhoto({
         height={1440}
         decoding={cover ? "sync" : "async"}
         loading="eager"
+        draggable={false}
         fetchPriority={cover ? "high" : "low"}
         className={className}
         style={style}
@@ -163,10 +221,23 @@ const HeroSection = () => {
 
   // Frank's active gallery photos (ADR-046); local set until they arrive.
   const { data: gallery, isPending: galleryPending } = useHeroGalleryPhotos();
-  const slides = useMemo(() => heroSlides(HERO_PHOTOS, gallery), [gallery]);
+  // A new draw per visit; the seed keeps it when the list refetches.
+  const [seed] = useState(() => Math.floor(Math.random() * 2 ** 32));
+  const slides = useMemo(
+    () => heroSlides(HERO_PHOTOS, gallery, { max: STORY_MAX, random: seededRandom(seed) }),
+    [gallery, seed],
+  );
   const coverOnce = slides.some((slide) => slide.key.startsWith("gallery-"));
 
   const [active, setActive] = useState(0);
+  // Bumped when a tap starts the same photo over, to restart its bar.
+  const [restart, setRestart] = useState(0);
+  const [held, setHeld] = useState(false);
+  // The photo fading out keeps its slow zoom until it is gone.
+  const [leavingKey, setLeavingKey] = useState<string | null>(null);
+  const shownKey = useRef<string | null>(null);
+  const press = useRef<{ id: number; x: number; y: number; held: boolean; timer: number } | null>(null);
+  const lastPointer = useRef("mouse");
   // Slides after the cover mount once the main thread is idle, and only the
   // current and the next one, so a visit downloads what it shows.
   const [restReady, setRestReady] = useState(false);
@@ -234,6 +305,8 @@ const HeroSection = () => {
 
   useEffect(() => {
     setSeen((prev) => (prev.has(current.key) ? prev : new Set(prev).add(current.key)));
+    if (shownKey.current && shownKey.current !== current.key) setLeavingKey(shownKey.current);
+    shownKey.current = current.key;
   }, [current.key]);
 
   // Only turn while the photos are on screen.
@@ -245,14 +318,67 @@ const HeroSection = () => {
     return () => io.disconnect();
   }, []);
 
-  // One timer per photo. "Reduce motion": the first photo stays.
+  // The current bar's fill is the timer: when it ends, the next photo shows,
+  // and pausing it (hold, hover, off screen) pauses the photo too. "Reduce
+  // motion": no fill, so the first photo stays until a tap.
   const turning =
-    restReady && !galleryPending && !reducedMotion && !userPaused && !hovered && onScreen && slides.length > 1;
-  useEffect(() => {
-    if (!turning) return;
-    const t = window.setTimeout(() => setActive(nextIndex), SLIDE_MS);
-    return () => window.clearTimeout(t);
-  }, [safeActive, nextIndex, turning]);
+    restReady &&
+    !galleryPending &&
+    !reducedMotion &&
+    !userPaused &&
+    !hovered &&
+    !held &&
+    onScreen &&
+    slides.length > 1;
+  const playState = turning ? "running" : "paused";
+
+  const step = (direction: StoryDirection, via: string) => {
+    const target = direction === "next" ? nextIndex : prevHeroSlide(safeActive);
+    if (target === safeActive) setRestart((n) => n + 1);
+    else setActive(target);
+    setRestReady(true);
+    logEvent("hero_story_step", { direction, via, from: safeActive, count: slides.length });
+  };
+
+  // Press on the photo: tap a side or swipe to step, hold to pause. The
+  // browser keeps vertical scrolling (touch-action: pan-y) and cancels the
+  // press when it scrolls.
+  const endPress = () => {
+    const p = press.current;
+    if (!p) return;
+    window.clearTimeout(p.timer);
+    press.current = null;
+    setHeld(false);
+  };
+  const onPressStart = (e: ReactPointerEvent<HTMLDivElement>) => {
+    lastPointer.current = e.pointerType;
+    if (e.button !== 0 || slides.length < 2 || (e.target as Element).closest("a, button")) return;
+    endPress();
+    const p = { id: e.pointerId, x: e.clientX, y: e.clientY, held: false, timer: 0 };
+    p.timer = window.setTimeout(() => {
+      p.held = true;
+      setHeld(true);
+    }, HOLD_MS);
+    press.current = p;
+  };
+  const onPressMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const p = press.current;
+    if (!p || p.id !== e.pointerId || p.held) return;
+    // Moving means a swipe, not a hold.
+    if (Math.abs(e.clientX - p.x) >= STORY_TAP_SLOP || Math.abs(e.clientY - p.y) >= STORY_TAP_SLOP) {
+      window.clearTimeout(p.timer);
+    }
+  };
+  const onPressEnd = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const p = press.current;
+    if (!p || p.id !== e.pointerId) return;
+    endPress();
+    // A hold only pauses; and the list may still change while it loads.
+    if (p.held || galleryPending) return;
+    const box = e.currentTarget.getBoundingClientRect();
+    const move = storyStep({ dx: e.clientX - p.x, dy: e.clientY - p.y, x: e.clientX - box.left, width: box.width });
+    if (move) step(move.direction, e.pointerType === "mouse" ? "click" : move.kind);
+  };
 
   return (
     <section ref={sectionRef} className="relative flex h-[100svh] min-h-[540px] flex-col overflow-hidden bg-forest-dark lg:block lg:h-auto lg:min-h-0 lg:overflow-visible lg:bg-cloud lg:pt-[76px]">
@@ -292,44 +418,88 @@ const HeroSection = () => {
               })}
             </div>
           )}
+          {/* Mouse hover pauses (pointer events: iOS sends mouseenter on a
+              tap, which would pause the photos for good). */}
           <div
             ref={frameRef}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            className="relative h-full w-full overflow-hidden bg-forest-dark lg:aspect-[3/5] lg:h-[min(76vh,700px)] lg:w-auto lg:rounded-[2rem] lg:shadow-[0_24px_60px_-20px_rgba(20,32,26,0.35)]"
+            onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(true)}
+            onPointerLeave={(e) => {
+              if (e.pointerType === "mouse") setHovered(false);
+            }}
+            onPointerDown={onPressStart}
+            onPointerMove={onPressMove}
+            onPointerUp={onPressEnd}
+            onPointerCancel={endPress}
+            onContextMenu={(e) => {
+              // A long press on a phone is a pause, not "save image".
+              if (lastPointer.current !== "mouse") e.preventDefault();
+            }}
+            className="relative h-full w-full touch-pan-y touch-pinch-zoom select-none overflow-hidden bg-forest-dark [-webkit-touch-callout:none] lg:aspect-[3/5] lg:h-[min(76vh,700px)] lg:w-auto lg:rounded-[2rem] lg:shadow-[0_24px_60px_-20px_rgba(20,32,26,0.35)]"
           >
-            {slides.map((slide, i) => {
-              const cover = i === 0;
-              // Wait for the gallery list before fetching a second photo, so a
-              // local one is not downloaded only to be replaced.
-              const mounted =
-                cover || (restReady && !galleryPending && (seen.has(slide.key) || i === safeActive || i === nextIndex));
-              if (!mounted) return null;
-              const shown = i === safeActive;
-              return (
-                <div
-                  key={slide.key}
-                  aria-hidden={!shown}
-                  className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
-                  style={{ opacity: shown ? 1 : 0 }}
-                >
-                  {/* Phones: framed at 65 % of its height, so what the
-                      mountains would cover moves up into view (ADR-049). */}
-                  <HeroPhoto
-                    slide={slide}
-                    cover={cover}
-                    alt={slide.alt}
-                    className="absolute inset-0 h-full w-full object-cover object-[center_65%] lg:object-center"
-                    style={{ filter: "saturate(1.06) contrast(1.03)" }}
-                  />
-                </div>
-              );
-            })}
+            <div className="hero-land absolute inset-0">
+              {slides.map((slide, i) => {
+                const cover = i === 0;
+                // Wait for the gallery list before fetching a second photo, so a
+                // local one is not downloaded only to be replaced.
+                const mounted =
+                  cover || (restReady && !galleryPending && (seen.has(slide.key) || i === safeActive || i === nextIndex));
+                if (!mounted) return null;
+                const shown = i === safeActive;
+                const zooming = shown || slide.key === leavingKey;
+                return (
+                  <div
+                    key={slide.key}
+                    aria-hidden={!shown}
+                    className={cn("absolute inset-0 transition-opacity duration-[1200ms] ease-in-out", zooming && "hero-kb")}
+                    style={{
+                      opacity: shown ? 1 : 0,
+                      animationDuration: `${SLIDE_MS + FADE_MS}ms`,
+                      animationPlayState: playState,
+                    }}
+                  >
+                    {/* Phones: framed at 65 % of its height, so what the
+                        mountains would cover moves up into view (ADR-049). */}
+                    <HeroPhoto
+                      slide={slide}
+                      cover={cover}
+                      alt={slide.alt}
+                      className="absolute inset-0 h-full w-full object-cover object-[center_65%] lg:object-center"
+                      style={{ filter: "saturate(1.06) contrast(1.03)" }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
             {/* Keeps the white logo and menu readable over the sky (phones). */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-forest-dark/55 to-transparent lg:hidden"
             />
+            {/* Story bars, one per photo. Hidden until the gallery list is
+                known, so their number does not change in view. */}
+            {slides.length > 1 && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-5 top-2 flex gap-1 transition-opacity duration-500 lg:top-4"
+                style={{ opacity: galleryPending ? 0 : 1 }}
+              >
+                {slides.map((slide, i) => (
+                  <div key={slide.key} className="hero-story-bar">
+                    {i < safeActive && <div className="hero-story-fill" />}
+                    {i === safeActive && (
+                      <div
+                        key={restart}
+                        className="hero-story-fill hero-story-run"
+                        style={{ animationDuration: `${SLIDE_MS}ms`, animationPlayState: playState }}
+                        onAnimationEnd={(e) => {
+                          if (e.target === e.currentTarget) setActive(nextIndex);
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
             {/* Place of the photo: under the logo on phones (like the
                 location on a story), bottom-left of the frame on lg+. */}
             {current.place && (
@@ -388,7 +558,7 @@ const HeroSection = () => {
             <div className="mt-5 flex flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:items-center sm:gap-6">
               <Link
                 to="/#quiz"
-                onClick={() => logEvent("hero_cta_click", { cta: "quiz" })}
+                onClick={() => logEvent("hero_cta_click", { cta: "quiz", photos_seen: seen.size })}
                 className="inline-flex min-h-[48px] items-center justify-center whitespace-nowrap rounded-full bg-hero-accent px-8 py-4 text-base font-semibold text-white shadow-lg shadow-hero-accent/25 transition-colors [text-shadow:none] hover:bg-hero-accent/90"
               >
                 Encuentra tu parque →
