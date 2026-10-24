@@ -56,13 +56,38 @@ const HERO_CSS = `
   left: 0;
   right: 0;
   bottom: 0;
-  -webkit-mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
-  mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
+  -webkit-mask: var(--ridge) top / 100% calc(var(--ridge-h) * var(--ridge-k, 1)) no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) * var(--ridge-k, 1) + 1px) no-repeat;
+  mask: var(--ridge) top / 100% calc(var(--ridge-h) * var(--ridge-k, 1)) no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) * var(--ridge-k, 1) + 1px) no-repeat;
 }
-.hero-ridge-back { top: -7.5rem; background: rgba(47, 94, 74, 0.86); }
-.hero-ridge-mid { top: -3.75rem; background: rgba(30, 61, 48, 0.95); }
+/* Haze in the valley: each far layer gets lighter toward its foot. The
+   walls and Half Dome are lit from the left (late sun): a lighter copy sits
+   behind each, and the layer itself is moved 3 px right and 2 px down, so a
+   thin lit edge shows on the faces turned to the sun. The moved layer is
+   8 px wider each side so no lit strip shows at the screen edges. */
+.hero-ridge-far, .hero-ridge-far-lit { top: calc(-9.375rem * var(--ridge-k, 1)); }
+.hero-ridge-far-lit { background: rgba(214, 228, 216, 0.95); }
+.hero-ridge-far {
+  left: -8px;
+  right: -8px;
+  translate: 3px 2px;
+  background: linear-gradient(to bottom, rgba(122, 160, 138, 0.94) 0, rgba(156, 186, 167, 0.94) 6.5rem);
+}
+.hero-ridge-back, .hero-ridge-back-lit { top: calc(-10.625rem * var(--ridge-k, 1)); }
+.hero-ridge-back-lit { background: rgba(108, 150, 127, 0.96); }
+.hero-ridge-back {
+  left: -8px;
+  right: -8px;
+  translate: 3px 2px;
+  background: linear-gradient(to bottom, rgba(47, 94, 74, 0.96) 0, rgba(47, 94, 74, 0.96) 5rem, rgba(78, 122, 100, 0.96) 10rem);
+}
+.hero-ridge-mid { top: calc(-5rem * var(--ridge-k, 1)); background: rgba(30, 61, 48, 0.96); }
+/* Short phones (iPhone SE): the valley at 80 %, so the photo keeps its room.
+   With "slice", a shorter mask scales the whole drawing down evenly. */
+@media (max-height: 720px) {
+  .hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.8; }
+}
 .hero-ridge-front {
   top: -2rem;
   background: linear-gradient(to bottom, rgba(20, 32, 26, 0.96) 0, #14201a 3rem);
@@ -104,9 +129,11 @@ const HERO_CSS = `
 
 const ridgeStyle = (ridge: HeroRidge) =>
   ({ "--ridge": ridgeMaskUrl(ridge), "--ridge-h": `${ridge.height / 16}rem` }) as CSSProperties;
-// Far range: Yosemite Valley, El Capitan and Half Dome (ADR-058).
-const RIDGE_BACK = ridgeStyle(HERO_RIDGES.yosemite);
-const RIDGE_MID = ridgeStyle(HERO_RIDGES.mid);
+// Yosemite Valley from Tunnel View (ADR-048 point 5): Half Dome far, El
+// Capitan and Cathedral Rocks as the walls, a pine forest in front.
+const RIDGE_FAR = ridgeStyle(HERO_RIDGES.valleyFar);
+const RIDGE_BACK = ridgeStyle(HERO_RIDGES.valleyWalls);
+const RIDGE_MID = ridgeStyle(HERO_RIDGES.valleyPines);
 const RIDGE_FRONT = ridgeStyle(HERO_RIDGES.front);
 
 function usePrefersReducedMotion(): boolean {
@@ -179,13 +206,14 @@ const HeroSection = () => {
   const frameRef = useRef<HTMLDivElement>(null);
   const currentKey = useRef(slides[0].key);
   const photosRef = useRef<HTMLDivElement>(null);
+  const farRef = useRef<HTMLDivElement>(null);
   const rangeRef = useRef<HTMLDivElement>(null);
   const midRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   // Phones: scroll depth (ADR-049). While the hero scrolls away, the photo
-  // lags at 40 % of the scroll and zooms in a little, the far range lags 16 %,
-  // the middle range 7 %, and the front hills with the text move with the
-  // page, so the land climbs over the photo and the near ranges over the far
+  // lags at 40 % of the scroll and zooms in a little, Half Dome lags 24 %, the
+  // valley walls 16 %, the pines 7 %, and the front hills with the text move
+  // with the page, so the land climbs over the photo and the near ranges over the far
   // ones. Off with "reduce motion" and from lg up (no range on desktop).
   const depthLayers = useMemo<readonly DepthLayer[]>(() => {
     const scrolled = ({ entered, viewport }: ScrollDepth) => Math.min(Math.max(entered - viewport, 0), viewport * 1.2);
@@ -195,6 +223,7 @@ const HeroSection = () => {
         ref: photosRef,
         transform: (d) => `${lag(0.4)(d)} scale(${(1 + (0.06 * scrolled(d)) / d.viewport).toFixed(4)})`,
       },
+      { ref: farRef, transform: lag(0.24) },
       { ref: rangeRef, transform: lag(0.16) },
       { ref: midRef, transform: lag(0.07) },
     ];
@@ -362,9 +391,16 @@ const HeroSection = () => {
               its front hills. Anchored to the text, so it follows the copy on
               any screen height. */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 lg:hidden">
-            <div ref={rangeRef} className="hero-range absolute inset-0 will-change-transform">
-              <div className="hero-ridge hero-ridge-back" style={RIDGE_BACK} />
+            {/* Half Dome far away, with the mist in the valley in front of it. */}
+            <div ref={farRef} className="hero-range absolute inset-0 will-change-transform">
+              <div className="hero-ridge hero-ridge-far-lit" style={RIDGE_FAR} />
+              <div className="hero-ridge hero-ridge-far" style={RIDGE_FAR} />
               <div className="hero-mist" style={{ animationPlayState: onScreen ? "running" : "paused" }} />
+            </div>
+            {/* El Capitan and Cathedral Rocks. */}
+            <div ref={rangeRef} className="hero-range absolute inset-0 will-change-transform">
+              <div className="hero-ridge hero-ridge-back-lit" style={RIDGE_BACK} />
+              <div className="hero-ridge hero-ridge-back" style={RIDGE_BACK} />
             </div>
             <div ref={midRef} className="hero-ridge hero-ridge-mid will-change-transform" style={RIDGE_MID} />
             <div className="hero-ridge hero-ridge-front" style={RIDGE_FRONT} />

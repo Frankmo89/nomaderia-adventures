@@ -21,23 +21,40 @@ describe("hero ridges", () => {
     expect(peak(HERO_RIDGES.mid)).toBeLessThan(peak(HERO_RIDGES.front));
   });
 
-  it("Half Dome is the hero's highest point and a 375 px phone shows it whole", () => {
-    const { yosemite, mid } = HERO_RIDGES;
-    const nums = numbers(yosemite.path);
-    // x,y pairs, curve handles included (they bound the curve).
-    const points: [number, number][] = [];
-    for (let i = 0; i < nums.length; i += 2) points.push([nums[i], nums[i + 1]]);
-    const top = Math.min(...points.map(([, y]) => y));
-    const summit = points.filter(([, y]) => y === top).map(([x]) => x);
-    // The phone shows the middle 375 of the 1024 units.
-    const [left, right] = [(1024 - 375) / 2, (1024 + 375) / 2];
-    expect(Math.min(...summit)).toBeGreaterThan(left + 20);
-    expect(Math.max(...summit)).toBeLessThan(right - 20);
-    // Everything off the dome sits well below it.
-    const offDome = points.filter(([x]) => x < 540 || x > 700).map(([, y]) => y);
-    expect(Math.min(...offDome)).toBeGreaterThan(top + 30);
-    // It rises above the middle range, measured from the text line.
-    expect(top - yosemite.height).toBeLessThan(Math.min(...ys(mid.path)) - mid.height);
+  // x,y pairs of a path, curve handles included (they bound the curve).
+  const points = (path: string) => {
+    const nums = numbers(path);
+    const out: [number, number][] = [];
+    for (let i = 0; i < nums.length; i += 2) out.push([nums[i], nums[i + 1]]);
+    return out;
+  };
+  // The phone shows the middle 375 of the 1024 units.
+  const [left, right] = [(1024 - 375) / 2, (1024 + 375) / 2];
+
+  it("Half Dome rises in the middle of the valley, whole on a 375 px phone", () => {
+    const far = points(HERO_RIDGES.valleyFar.path);
+    const top = Math.min(...far.map(([, y]) => y));
+    const summit = far.filter(([, y]) => y === top).map(([x]) => x);
+    expect(Math.min(...summit)).toBeGreaterThan(left + 100);
+    expect(Math.max(...summit)).toBeLessThan(right - 100);
+    // The valley walls leave the V open in front of it (only the floor there).
+    const walls = points(HERO_RIDGES.valleyWalls.path).filter(([x]) => x > 485 && x < 565);
+    expect(walls.length).toBeGreaterThan(0);
+    expect(Math.min(...walls.map(([, y]) => y))).toBeGreaterThanOrEqual(186);
+  });
+
+  it("El Capitan and Cathedral Rocks frame the V on a 375 px phone", () => {
+    const walls = points(HERO_RIDGES.valleyWalls.path);
+    const highest = (from: number, to: number) => Math.min(...walls.filter(([x]) => x >= from && x <= to).map(([, y]) => y));
+    expect(highest(left, 445)).toBeLessThan(20); // El Capitan
+    expect(highest(600, right)).toBeLessThan(40); // Cathedral Rocks and spires
+  });
+
+  it("the pine line is a forest, not a few trees", () => {
+    const { path, height } = HERO_RIDGES.valleyPines;
+    const tops = points(path).filter(([, y]) => y < 40);
+    expect(tops.length).toBeGreaterThan(60);
+    expect(Math.min(...ys(path))).toBeGreaterThan(height / 4);
   });
 
   it("builds a CSS url with an encoded SVG", () => {
