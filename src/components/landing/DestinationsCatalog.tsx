@@ -5,6 +5,7 @@ import Reveal from "@/components/editorial/Reveal";
 import { CardImage } from "@/components/shared/CardImage";
 import { Input } from "@/components/ui/input";
 import { useLandingParks, type LandingPark } from "@/hooks/use-destinations";
+import { useRouteCar } from "@/hooks/use-route-car";
 import { trackEvent } from "@/lib/analytics";
 import { logEvent } from "@/lib/events";
 import { formatRegionDisplay } from "@/lib/regions";
@@ -33,7 +34,24 @@ import { cn } from "@/lib/utils";
  * that white text passes AA even over a white photo, and it falls back to
  * a near-solid panel where backdrop-filter is not supported.
  * Fogata (#D97706) stays out: it belongs to the Hero only.
+ *
+ * A car drives the route (ADR-051): on phones it follows the swipe and parks
+ * on each stop as its card snaps in, leaving a solid trail; the card it is
+ * parked at stays bright and the others dim a little. On desktop it drives
+ * from the origin to the last stop as the route scrolls into view.
  */
+
+/* The car bobs while it moves (not with "reduce motion"). */
+const ROUTE_CSS = `
+@keyframes route-car-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -2px; }
+}
+.route-car[data-driving] .route-car-body { animation: route-car-bob 0.32s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .route-car[data-driving] .route-car-body { animation: none; }
+}
+`;
 
 const LEVEL_LABEL: Record<string, string> = {
   easy: "Fácil",
@@ -79,20 +97,27 @@ function toRouteStop(park: LandingPark, drive: DriveFromOrigin): RouteStop {
   };
 }
 
-const ParkStop = ({ stop }: { stop: RouteStop }) => {
+const ParkStop = ({ stop, active, parked }: { stop: RouteStop; active: boolean; parked: boolean }) => {
   const ctaId = useId();
   const detailsId = useId();
   const { park } = stop;
 
   return (
     <li className="flex w-[min(300px,calc(100vw-96px))] flex-none snap-start flex-col gap-3 lg:w-auto lg:gap-7">
-      {/* Route stop: node + drive time. The pill hides the dashed line behind it. */}
+      {/* Route stop: node + drive time. The pill hides the dashed line behind
+          it, and turns light while the car is parked here. */}
       <div className="flex h-6 items-center gap-2.5 lg:h-16 lg:flex-col lg:justify-start lg:gap-1.5 lg:pt-0.5">
-        <span aria-hidden="true" className={cn(NODE, "h-[18px] w-[18px] border-[3px] border-cloud bg-green")} />
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-forest-dark px-2.5 py-0.5 font-condensed text-lg font-semibold leading-6 text-cloud">
-          <Car aria-hidden="true" className="h-[18px] w-[18px] lg:hidden" strokeWidth={2} />
+        <span data-route-node aria-hidden="true" className={cn(NODE, "h-[18px] w-[18px] border-[3px] border-cloud bg-green")} />
+        <span
+          className={cn(
+            "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 font-condensed text-lg font-semibold leading-6 transition-colors duration-300",
+            parked ? "bg-cloud text-ink" : "bg-forest-dark text-cloud",
+          )}
+        >
           {stop.drive}
-          <span className="font-sans text-[0.8125rem] font-normal text-cloud/80 lg:text-sm">en carro</span>
+          <span className={cn("font-sans text-[0.8125rem] font-normal lg:text-sm", parked ? "text-ink/75" : "text-cloud/80")}>
+            en carro
+          </span>
         </span>
       </div>
 
@@ -100,7 +125,10 @@ const ParkStop = ({ stop }: { stop: RouteStop }) => {
         to={`/destinos/${park.slug}`}
         aria-labelledby={ctaId}
         aria-describedby={detailsId}
-        className="group relative block h-[500px] overflow-hidden rounded-3xl bg-spruce outline-none focus-visible:ring-2 focus-visible:ring-cloud focus-visible:ring-offset-4 focus-visible:ring-offset-forest-dark lg:h-[540px]"
+        className={cn(
+          "group relative block h-[500px] origin-top overflow-hidden rounded-3xl bg-spruce outline-none transition-[opacity,transform] duration-300 focus-visible:ring-2 focus-visible:ring-cloud focus-visible:ring-offset-4 focus-visible:ring-offset-forest-dark lg:h-[540px] lg:scale-100 lg:opacity-100",
+          !active && "opacity-60 motion-safe:scale-[0.97]",
+        )}
       >
         <CardImage
           src={park.hero_image_url ? resizedImageUrl(park.hero_image_url, 720) : undefined}
@@ -338,6 +366,16 @@ const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
   const { data: parks = [], isLoading, error } = useLandingParks();
   const [origin, setOrigin] = useState<RouteOrigin>(initialOrigin);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const carRef = useRef<HTMLDivElement>(null);
+  const carBodyRef = useRef<HTMLSpanElement>(null);
+  const trailRef = useRef<HTMLDivElement>(null);
+  const routeKey =
+    isLoading || error ? "" : `${origin.kind === "zip" ? origin.zip : "san-diego"}:${parks.map((p) => p.id).join(",")}`;
+  const car = useRouteCar(
+    { track: trackRef, scroller: scrollerRef, car: carRef, carBody: carBodyRef, trail: trailRef },
+    routeKey,
+  );
 
   // A new origin is a new route: start the phone carousel from the beginning.
   useEffect(() => {
@@ -381,21 +419,27 @@ const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
 
   return (
     <SectionShell>
+      <style>{ROUTE_CSS}</style>
       <Heading eyebrow={<OriginControl origin={origin} onChange={changeOrigin} />} />
 
       {stops.length > 0 && (
         <Reveal delay={0.1}>
           {/* Phone: the track scrolls sideways and bleeds to the screen edge. */}
           <div ref={scrollerRef} className="-mx-5 snap-x snap-mandatory overflow-x-auto scroll-px-5 pb-2 [scrollbar-color:rgba(251,250,247,0.3)_transparent] lg:mx-0 lg:overflow-visible lg:pb-0">
-            <div className="relative w-max px-5 lg:w-full lg:px-0">
-              {/* The route: dashed line, the origin at the start. */}
+            <div ref={trackRef} className="relative w-max px-5 lg:w-full lg:px-0">
+              {/* The route: dashed line, the trail the car leaves (solid), the origin at the start. */}
               <div aria-hidden="true" className="pointer-events-none absolute left-[30px] right-5 top-[11px] border-t-2 border-dashed border-cloud/35 lg:left-[11px] lg:right-[11px]" />
+              <div
+                ref={trailRef}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-0 top-[11px] h-[2px] origin-left scale-x-0 rounded-full bg-cloud shadow-[0_0_8px_rgba(251,250,247,0.55)]"
+              />
               <div aria-hidden="true" className="absolute left-5 top-0 flex snap-start flex-col items-start gap-2 lg:left-0">
-                <span className={cn(NODE, "h-[22px] w-[22px] bg-cloud")} />
+                <span data-route-node className={cn(NODE, "h-[22px] w-[22px] bg-cloud")} />
                 <span className={ROUTE_LABEL}>{startLabel}</span>
               </div>
               <div aria-hidden="true" className="absolute right-0 top-0 hidden flex-col items-end gap-2 lg:flex">
-                <span className={cn(NODE, "h-[22px] w-[22px] border-[3px] border-cloud bg-green")} />
+                <span data-route-node className={cn(NODE, "h-[22px] w-[22px] border-[3px] border-cloud bg-green")} />
                 <span className={ROUTE_LABEL}>{total} parques</span>
               </div>
 
@@ -403,14 +447,19 @@ const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
                 aria-label={`Parques ordenados por distancia en carro desde ${origin.kind === "san-diego" ? "San Diego" : `el código postal ${origin.zip}`}`}
                 className="relative flex gap-3.5 pl-[54px] lg:grid lg:grid-cols-3 lg:gap-6 lg:pl-0"
               >
-                {stops.map((stop) => (
-                  <ParkStop key={stop.park.id} stop={stop} />
+                {stops.map((stop, i) => (
+                  <ParkStop
+                    key={stop.park.id}
+                    stop={stop}
+                    active={Math.max(car.stop - 1, 0) === i}
+                    parked={car.parked && car.stop === i + 1}
+                  />
                 ))}
 
                 {/* Phone only: the route keeps going. Desktop has the button below. */}
                 <li className="flex w-[210px] flex-none snap-end flex-col gap-3 lg:hidden">
                   <div className="flex h-6 items-center">
-                    <span aria-hidden="true" className={cn(NODE, "h-[22px] w-[22px] border-[3px] border-cloud bg-green")} />
+                    <span data-route-node aria-hidden="true" className={cn(NODE, "h-[22px] w-[22px] border-[3px] border-cloud bg-green")} />
                   </div>
                   <Link
                     to="/destinos"
@@ -425,6 +474,20 @@ const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
                   </Link>
                 </li>
               </ol>
+
+              {/* The car: a light badge riding the line, above the stops. */}
+              <div
+                ref={carRef}
+                aria-hidden="true"
+                className="route-car pointer-events-none absolute left-0 top-[-4px] z-10 -ml-[15px] will-change-transform"
+              >
+                <span
+                  ref={carBodyRef}
+                  className="route-car-body grid h-[30px] w-[30px] place-items-center rounded-full bg-cloud text-green shadow-[0_2px_10px_rgba(0,0,0,0.4)] transition-transform duration-200"
+                >
+                  <Car className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                </span>
+              </div>
             </div>
           </div>
           {estimated && (

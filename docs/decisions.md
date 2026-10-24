@@ -803,6 +803,17 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Lección:** los troncos de los pinos a tamaño chico, con un fondo de otro color detrás, se leen como una línea punteada. El último piso de ramas va casi al ras del suelo (3 % de la altura).
 - **Consecuencias:** cambiar el bosque = regenerar las siluetas (el generador en Python está en el PR #224) o mover las velocidades en `PromiseSection.tsx`.
 
+### ADR-051 — Un carro recorre la ruta de parques del home
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente. Completa ADR-040 y ADR-041.
+- **Contexto:** Frank, sobre la ruta punteada de «¿A cuántas horas está tu próximo parque?»: «quiero que la línea del carro tenga también algún efecto padre cuando lo deslizas».
+- **Decisión:**
+  1. Un carro (insignia `cloud` con el ícono `Car` en `green`) va sobre la línea y deja detrás un trazo sólido; lo que falta sigue punteado.
+  2. Celular: lo mueve el deslizamiento de las tarjetas. Llega a cada parada justo cuando su tarjeta queda en su lugar (snap), avanza en línea recta entre paradas, voltea al deslizar de regreso y se mece mientras se mueve. La parada donde está estacionado pone su píldora de horas en claro; la tarjeta de esa parada queda brillante y las otras bajan a 60 % de opacidad (y 97 % de tamaño, salvo con «reducir movimiento»). La píldora ya no lleva su propio carrito: ahora el carro es uno solo.
+  3. Desde `lg`: lo mueve el scroll de la página, del origen a la última parada mientras la ruta pasa del 80 % al 35 % de la altura de la pantalla. Sin atenuar tarjetas.
+  4. Hook `useRouteCar` (`src/hooks/use-route-car.ts`): las paradas son los elementos con `data-route-node` (los ocultos no cuentan), medidos de nuevo cuando cambia el tamaño; una escritura por cuadro; React solo se entera cuando cambia la parada. `carOnRoute` y `nearestStop` son puros y con pruebas.
+- **Consecuencias:** si se agrega una parada a la ruta, basta con marcar su punto con `data-route-node`. No cambia el orden de los parques ni las horas (ADR-040/041).
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
