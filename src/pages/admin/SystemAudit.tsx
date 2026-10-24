@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { isOurDestinationsStorageUrl } from "@shared/mirror-park-images";
+import { isNpsGovUrl, isOurStorageUrl } from "@shared/mirror-park-images";
 
 type CheckStatus = "pending" | "ok" | "error";
 
@@ -380,7 +380,7 @@ const SystemAudit = () => {
       const results: ImageCheckResult[] = [];
       for (const item of work) {
         const loads = await probeImageUrl(item.url);
-        const inOurStorage = isOurDestinationsStorageUrl(item.url, SUPABASE_URL);
+        const inOurStorage = isOurStorageUrl(item.url, SUPABASE_URL);
         results.push({
           ...item,
           status: classifyUrl(loads, inOurStorage),
@@ -464,9 +464,18 @@ const SystemAudit = () => {
   };
 
   const handleCopyAllPhotos = async () => {
-    let slugs = imageCheck.parks.map((p) => p.slug);
-    if (slugs.length === 0) {
-      // Fetch parks if the image check has not run yet.
+    // Only parks that still depend on nps.gov (amber) or have dead URLs (red).
+    // Never loop all 63 — Kings Canyon / Redwood (our Storage) must be skipped.
+    let slugs = Array.from(
+      new Set(
+        imageCheck.results
+          .filter((r) => r.status === "amber" || r.status === "error")
+          .map((r) => r.parkSlug),
+      ),
+    );
+
+    if (slugs.length === 0 && imageCheck.results.length === 0) {
+      // No check yet — probe URLs first to discover which parks need mirroring.
       const { data, error } = await supabase
         .from("destinations")
         .select("title, slug, hero_image_url, gallery_images")
@@ -484,8 +493,33 @@ const SystemAudit = () => {
         return;
       }
       const parks = data as DestinationRow[];
+      const need: string[] = [];
+      for (const park of parks) {
+        const urls = [
+          park.hero_image_url,
+          ...(park.gallery_images ?? []),
+        ].filter((u): u is string => !!u);
+        const hasNpsOrUnknown = urls.some(
+          (u) => isNpsGovUrl(u) || !isOurStorageUrl(u, SUPABASE_URL),
+        );
+        if (hasNpsOrUnknown) need.push(park.slug);
+      }
       setImageCheck((prev) => ({ ...prev, parks }));
-      slugs = parks.map((p) => p.slug);
+      slugs = need;
+    }
+
+    if (slugs.length === 0) {
+      setMirrorRun({
+        phase: "error",
+        currentSlug: "",
+        done: 0,
+        total: 0,
+        results: [],
+        error:
+          "Ningún parque necesita copia: no hay URLs de nps.gov (ámbar/rojo). Ejecuta «Verificar Imágenes» si aún no lo hiciste.",
+        dryRun: true,
+      });
+      return;
     }
     await runMirrorForSlugs(slugs, true);
   };
@@ -676,7 +710,8 @@ const SystemAudit = () => {
             <p className="text-xs text-muted-foreground">
               Revisa <code className="font-mono bg-muted px-1 rounded">hero_image_url</code> y{" "}
               <code className="font-mono bg-muted px-1 rounded">gallery_images</code> de cada parque.
-              Verde = en nuestro Storage. Ámbar = depende de nps.gov. Rojo = no carga.
+              Verde = en nuestro Storage (cualquier bucket). Ámbar = depende de nps.gov. Rojo = no carga.
+              «Copiar fotos a Nomaderia» solo corre parques ámbar/rojo.
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <Button
