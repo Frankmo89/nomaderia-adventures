@@ -2,7 +2,7 @@ import { useEffect, type RefObject } from "react";
 
 /**
  * Scroll depth (parallax) for layered scenes: the home hero's mountains
- * (ADR-049) and the promise forest (ADR-050). Each layer gets a CSS transform
+ * (ADR-049), the promise forest (ADR-050) and the canyon (ADR-052). Each layer gets a CSS transform
  * computed from how far its section has crossed the screen. One passive
  * scroll listener, one transform write per layer per frame, nothing written
  * while the section is off screen. Plain JS (no Framer Motion), so it runs on
@@ -16,6 +16,8 @@ export interface ScrollDepth {
   progress: number;
   /** Screen height in px. */
   viewport: number;
+  /** The section's own height in px. */
+  height: number;
 }
 
 export interface DepthLayer {
@@ -28,7 +30,7 @@ export function scrollDepth(top: number, height: number, viewport: number): Scro
   const entered = viewport - top;
   const span = viewport + height;
   const progress = span > 0 ? Math.min(Math.max(entered / span, 0), 1) : 0;
-  return { entered, progress, viewport };
+  return { entered, progress, viewport, height };
 }
 
 interface Options {

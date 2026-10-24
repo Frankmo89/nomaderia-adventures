@@ -47,6 +47,16 @@ export const CANYON = {
     height: 400,
     path: "M0,400 L0,40 L30,42 L36,96 L52,100 L58,170 L74,176 L82,250 L98,258 L106,330 L122,342 L128,400 Z",
   },
+  /**
+   * The canyon mouth (left side; mirrored for the right): a cliff that
+   * covers almost the whole half, with a ragged inner edge. The two nearly
+   * meet at the start, leaving a slit of light; scrolling opens them.
+   */
+  gate: {
+    width: 200,
+    height: 400,
+    path: "M0,400 L0,34 L22,30 L40,22 L62,30 L84,24 L108,18 L132,28 L156,20 L178,30 L186,64 L195,112 L188,160 L197,214 L190,268 L199,326 L193,400 Z",
+  },
 } as const satisfies Record<string, CanyonShape>;
 
 /** The same shape seen from the other side (x → width − x). Straight segments only. */
