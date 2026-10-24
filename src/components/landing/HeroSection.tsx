@@ -61,18 +61,18 @@ const HERO_CSS = `
   mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
     linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
 }
-.hero-ridge-back { top: -8.5rem; background: rgba(47, 94, 74, 0.86); }
-.hero-ridge-mid { top: -5.75rem; background: rgba(30, 61, 48, 0.95); }
+.hero-ridge-back { top: -5.75rem; background: rgba(47, 94, 74, 0.86); }
+.hero-ridge-mid { top: -3.75rem; background: rgba(30, 61, 48, 0.95); }
 .hero-ridge-front {
-  top: -3.25rem;
-  background: linear-gradient(to bottom, rgba(20, 32, 26, 0.96) 0, #14201a 3.5rem);
+  top: -2rem;
+  background: linear-gradient(to bottom, rgba(20, 32, 26, 0.96) 0, #14201a 3rem);
 }
 .hero-mist {
   position: absolute;
   left: 0;
-  top: -7.25rem;
+  top: -5rem;
   width: 200%;
-  height: 4.5rem;
+  height: 3.5rem;
   background-image:
     radial-gradient(ellipse 18% 42% at 14% 58%, rgba(234, 240, 236, 0.26), transparent 72%),
     radial-gradient(ellipse 14% 34% at 38% 40%, rgba(234, 240, 236, 0.18), transparent 70%),
@@ -313,11 +313,13 @@ const HeroSection = () => {
                   className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
                   style={{ opacity: shown ? 1 : 0 }}
                 >
+                  {/* Phones: framed at 65 % of its height, so what the
+                      mountains would cover moves up into view (ADR-049). */}
                   <HeroPhoto
                     slide={slide}
                     cover={cover}
                     alt={slide.alt}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="absolute inset-0 h-full w-full object-cover object-[center_65%] lg:object-center"
                     style={{ filter: "saturate(1.06) contrast(1.03)" }}
                   />
                 </div>
