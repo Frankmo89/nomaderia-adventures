@@ -24,7 +24,7 @@ describe("hero ridges", () => {
   it("builds a CSS url with an encoded SVG", () => {
     const url = ridgeMaskUrl(HERO_RIDGES.mid);
     expect(url.startsWith('url("data:image/svg+xml,')).toBe(true);
-    expect(decodeURIComponent(url.slice(24, -2))).toContain('viewBox="0 0 1024 92"');
+    expect(decodeURIComponent(url.slice(24, -2))).toContain('viewBox="0 0 1024 72"');
     expect(url).not.toMatch(/[<>]/);
   });
 });
