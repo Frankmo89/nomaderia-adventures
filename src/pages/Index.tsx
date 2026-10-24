@@ -108,16 +108,18 @@ const Index = () => {
       <JsonLd data={organizationLd} />
       <HeroSection />
       <LazyBlock>
-        {/* Below lg the hero already ends in solid forest-dark (ADR-047), so
-            only the desktop hero (on cloud) needs the crest into the promise. */}
+        {/* The promise is a light forest between two dark sections (ADR-050).
+            Into it: the hero's dark land below lg, its cloud ground from lg. */}
+        <div className="lg:hidden">
+          <SectionDivider variant="layered" fill="#14201A" />
+        </div>
         <div className="hidden lg:block">
           <SectionDivider variant="layered" fill="#FBFAF7" />
         </div>
         <PromiseSection />
-        <SectionDivider variant="simple" fill="#1C1917" />
       </LazyBlock>
       <LazyBlock>
-        <SectionDivider variant="layered" fill="#FBFAF7" />
+        {/* No divider: the promise's forest floor is already forest-dark. */}
         <DestinationsCatalog limit={3} />
         <SectionDivider variant="layered" fill="#14201A" />
       </LazyBlock>
