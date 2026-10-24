@@ -3,6 +3,7 @@ import { MapPin, Pause, Play, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { logEvent } from "@/lib/events";
 import { heroSlides, nextHeroSlide, type HeroSlide } from "@/lib/hero-slides";
+import { HERO_RIDGES, ridgeMaskUrl, type HeroRidge } from "@/lib/hero-ridges";
 import { useHeroGalleryPhotos } from "@/hooks/use-hero-gallery";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
@@ -10,9 +11,11 @@ import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 /**
  * Home hero (ADR-047): the photo is the screen.
  *  - Phones and tablets: story-style. The photo fills the whole screen behind
- *    the transparent navbar; the text sits at the bottom on a dark fade that
- *    ends in solid forest-dark, so the dark promise band below follows with
- *    no seam. The top stays clear except a faint shade for the white logo.
+ *    the transparent navbar and ends in a mountain range (ADR-048): far peaks,
+ *    a middle range with drifting mist, then front hills with pines that the
+ *    text stands on. They darken to solid forest-dark at the bottom, so the
+ *    dark promise band below follows with no seam. The top stays clear except
+ *    a faint shade for the white logo.
  *  - lg+: text on the left on the light ground, the photo in a tall frame on
  *    the right with the same vertical shape. The navbar starts solid here
  *    (see hasHeroForPath).
@@ -38,20 +41,73 @@ const HERO_PHOTOS = [
 const HERO_SIZES = "(min-width: 1024px) 420px, 100vw";
 const SLIDE_MS = 6000;
 
-/* The fade behind the text on phones starts 9rem above the text block, so it
-   follows the text however tall the screen or the copy is: dark from the chip
-   down (≥ 0.86, measured on snow), solid forest-dark at the very bottom. */
+/* Phones: the range the photo ends in (ADR-048), flat like the /destinos
+   scene: far peaks in pine green (#2F5E4A), a darker middle range (#1E3D30),
+   front hills in forest-dark. Each layer is cut by its silhouette (top band)
+   and solid below, and runs down behind the text, so the layers add up there
+   with no seam: behind the text the photo is gone (≥ 0.99 dark).
+   Effects, all off with "reduce motion": the far and middle ranges rise in on
+   load; mist drifts between them; where the browser supports scroll-driven
+   animations, the far range sinks slower than the page as you scroll (depth),
+   and the photo a little more. */
 const HERO_CSS = `
-.hero-scrim {
-  background: linear-gradient(
-    to bottom,
-    rgba(20, 32, 26, 0) 0,
-    rgba(20, 32, 26, 0.5) 4.5rem,
-    rgba(20, 32, 26, 0.86) 9rem,
-    rgba(20, 32, 26, 0.94) 70%,
-    #14201a 100%
-  );
+.hero-ridge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  -webkit-mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
+  mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
 }
+.hero-ridge-back { top: -10rem; background: rgba(47, 94, 74, 0.86); }
+.hero-ridge-mid { top: -6.5rem; background: rgba(30, 61, 48, 0.95); }
+.hero-ridge-front {
+  top: -3.75rem;
+  background: linear-gradient(to bottom, rgba(20, 32, 26, 0.96) 0, #14201a 4rem);
+}
+.hero-mist {
+  position: absolute;
+  left: 0;
+  top: -8.5rem;
+  width: 200%;
+  height: 5.5rem;
+  background-image:
+    radial-gradient(ellipse 18% 42% at 14% 58%, rgba(234, 240, 236, 0.26), transparent 72%),
+    radial-gradient(ellipse 14% 34% at 38% 40%, rgba(234, 240, 236, 0.18), transparent 70%),
+    radial-gradient(ellipse 20% 46% at 66% 62%, rgba(234, 240, 236, 0.22), transparent 72%),
+    radial-gradient(ellipse 12% 30% at 88% 44%, rgba(234, 240, 236, 0.16), transparent 70%);
+  background-size: 50% 100%;
+  background-repeat: repeat-x;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-range { animation: hero-range-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .hero-ridge-mid { animation: hero-range-in 1.1s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .hero-mist { animation: hero-mist 70s linear infinite; }
+}
+@keyframes hero-range-in {
+  from { opacity: 0; translate: 0 28px; }
+}
+@keyframes hero-mist {
+  to { transform: translateX(-50%); }
+}
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) and (max-width: 1023px) {
+    .hero-ridge-back {
+      animation: hero-sink-far linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+    .hero-photos {
+      animation: hero-sink-photo linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+  }
+}
+@keyframes hero-sink-far { to { transform: translateY(3.5rem); } }
+@keyframes hero-sink-photo { to { transform: translateY(18vh); } }
 @keyframes hero-place-in {
   from { opacity: 0; transform: translateY(3px); }
   to { opacity: 1; transform: none; }
@@ -61,6 +117,12 @@ const HERO_CSS = `
   .hero-place { animation: none; }
 }
 `;
+
+const ridgeStyle = (ridge: HeroRidge) =>
+  ({ "--ridge": ridgeMaskUrl(ridge), "--ridge-h": `${ridge.height / 16}rem` }) as CSSProperties;
+const RIDGE_BACK = ridgeStyle(HERO_RIDGES.back);
+const RIDGE_MID = ridgeStyle(HERO_RIDGES.mid);
+const RIDGE_FRONT = ridgeStyle(HERO_RIDGES.front);
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -191,7 +253,7 @@ const HeroSection = () => {
       <style>{HERO_CSS}</style>
       <div className="lg:container lg:mx-auto lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-16 lg:px-5 lg:py-12 xl:gap-24">
         {/* Photos: the whole screen on phones, a tall frame on lg+. */}
-        <div className="absolute inset-0 lg:relative lg:inset-auto lg:order-2">
+        <div className="hero-photos absolute inset-0 lg:relative lg:inset-auto lg:order-2">
           {/* lg+: the next photo waits behind, tilted, like a stack of prints.
               Same URLs as the front, so the browser fetches nothing extra. */}
           {slides.length > 1 && (
@@ -281,7 +343,17 @@ const HeroSection = () => {
 
         {/* Text — same left edge as the navbar (`container px-5`). */}
         <div className="relative lg:order-1">
-          <div aria-hidden="true" className="hero-scrim pointer-events-none absolute inset-x-0 -top-36 bottom-0 lg:hidden" />
+          {/* Phones: the mountain range the photo ends in; the text stands on
+              its front hills. Anchored to the text, so it follows the copy on
+              any screen height. */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 lg:hidden">
+            <div className="hero-range absolute inset-0">
+              <div className="hero-ridge hero-ridge-back" style={RIDGE_BACK} />
+              <div className="hero-mist" style={{ animationPlayState: onScreen ? "running" : "paused" }} />
+            </div>
+            <div className="hero-ridge hero-ridge-mid" style={RIDGE_MID} />
+            <div className="hero-ridge hero-ridge-front" style={RIDGE_FRONT} />
+          </div>
           <div className="container relative mx-auto px-5 pb-10 sm:pb-14 lg:mx-0 lg:max-w-none lg:p-0 [text-shadow:0_1px_12px_rgba(20,32,26,0.5)] lg:[text-shadow:none]">
             {/* Place of the photo on phones. Its row keeps its height when a
                 photo has no place, so the text never jumps. */}

@@ -758,7 +758,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-047 — Hero del home: la foto es la pantalla (estilo historia)
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente. Reemplaza el diseño de celular de ADR-045 y el punto 5 de ADR-046.
+- **Estado:** Vigente, salvo el punto 2 (el oscuro liso detrás del texto), que reemplaza ADR-048. Reemplaza el diseño de celular de ADR-045 y el punto 5 de ADR-046.
 - **Contexto:** con las fotos de la Galería, el marco de ADR-045 (foto arriba con cresta, texto abajo sobre claro) y las fotos completas sobre una copia desenfocada (ADR-046 punto 5) no convencieron a Frank: «no me gustó como se ve, tiene cero diseño». Sus fotos son verticales de iPhone (de 0.39 a 0.58 de ancho por alto), casi la forma de la pantalla del celular (0.46). Se le mostraron 3 maquetas y eligió la 1: la foto a pantalla completa, como una historia de Instagram, con el texto abajo.
 - **Decisión:**
   1. Celular y tablet (menos de 1024 px): la sección mide `100svh` (mínimo 540 px) y la foto la llena (`object-cover`), detrás del navbar transparente. Arriba solo una sombra suave para el logo blanco (`forest-dark/55` a transparente en 144 px). El texto va abajo: etiqueta del lugar, H1 blanco con «nomás se encuentra.» en fogata, subtítulo `white/90`, botón fogata y línea de confianza `white/80`. El enlace a preguntas frecuentes se oculta debajo de 640 px (la sección de preguntas sigue más abajo).
@@ -768,6 +768,17 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   5. Desde `lg`: texto a la izquierda sobre `cloud` (H1 `ink`, «nomás se encuentra.» en `green`, navbar sólido) y la foto en un marco 3:5 de `min(76vh, 700px)` de alto con esquinas de 32 px. Detrás, la foto siguiente inclinada −6° como una pila de fotos impresas (mismas URLs que el frente: no baja nada extra); se desplaza 7 % a la izquierda en `lg` y 12 % desde `xl` para no tocar el texto en 1024 px.
   6. `HERO_SIZES` y el `imagesizes` del preload pasan a `(min-width: 1024px) 420px, 100vw`.
 - **Consecuencias:** las fotos se recortan un poco para llenar la pantalla. Las verticales de iPhone pierden un borde fino; las 3:4 locales pierden los lados en celular (por eso la portada local se eligió con el motivo al centro). Si una foto de Frank pierde lo importante, la salida es otra foto, no volver al desenfoque. `public/hero-mask.svg` ya no lo usa el hero (sigue en `_headers`); se puede borrar en un PR aparte.
+
+### ADR-048 — La foto del hero termina en una cordillera (celular)
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente. Reemplaza el punto 2 de ADR-047.
+- **Contexto:** al ver la foto a pantalla completa, Frank extrañó la cresta que separaba la foto del texto (ADR-045): «no quiero que se pierda esa división, me gusta mucho, o algo más montañoso o un efecto estaría genial». Un primer intento con cordilleras de `forest-dark` translúcido no se distinguía sobre las fotos.
+- **Decisión:**
+  1. Debajo de 1024 px la foto termina en tres capas planas, al estilo de la escena de `/destinos` (ADR-043): picos lejanos en verde pino (`#2F5E4A`, 0.86), una cordillera media más oscura (`#1E3D30`, 0.95) y lomas al frente en `forest-dark` con pinos, donde se para el texto. Siluetas en `src/lib/hero-ridges.ts` (1024 de ancho, 1 unidad = 1 px, recortadas desde el centro con `xMidYMax slice`, así los picos no se aplastan en ningún celular).
+  2. Cada capa es un color plano recortado con su silueta como `mask` (arriba) y sólido abajo, y baja hasta el final detrás del texto: las capas se suman sin línea y terminan en `#14201A`, igual que «La promesa». Van ancladas al bloque de texto, así siguen al texto en cualquier alto de pantalla.
+  3. Efectos, todos apagados con «reducir movimiento»: la cordillera lejana y la media suben al cargar (1.1 s); una neblina pasa despacio entre ellas (70 s por vuelta, en pausa fuera de pantalla); y donde el navegador tiene animaciones ligadas al scroll (`animation-timeline: scroll()`), la cordillera lejana baja más despacio que la página y la foto un poco más, como profundidad. Sin JavaScript para el scroll; donde no hay soporte, simplemente no se mueven.
+  4. Contraste medido sin sombra de texto sobre una foto blanca pura: H1 16.8, fogata 5.3, subtítulo 13.8, confianza 11.1, etiqueta 12.5. Detrás del texto ya no se ve la foto.
+- **Consecuencias:** en celular la foto se ve en la parte de arriba (unos 45 % de la pantalla en un iPhone 14; menos en un iPhone SE). Las cordilleras son decoración; cambiar su forma = editar `hero-ridges.ts` (las pruebas revisan que cada silueta quede dentro de su franja y que la lejana quede más alta que la media y esta que el frente). Escritorio sin cambios.
 
 ## Lecciones técnicas (bugs no obvios)
 
