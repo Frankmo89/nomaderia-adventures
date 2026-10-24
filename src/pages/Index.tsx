@@ -140,9 +140,10 @@ const Index = () => {
         <GearPreview />
         <BlogPreview />
         <NewsletterSignup />
-        {/* The trip ends at camp (ADR-053): its last hill is the footer's colour. */}
-        <NightCamp />
-        <Footer flush />
+        {/* The trip ends at camp (ADR-053): the footer sits on the night sky. */}
+        <NightCamp>
+          <Footer flush />
+        </NightCamp>
       </LazyBlock>
     </main>
   );

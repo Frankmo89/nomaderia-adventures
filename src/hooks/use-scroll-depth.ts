@@ -16,6 +16,8 @@ export interface ScrollDepth {
   progress: number;
   /** Screen height in px. */
   viewport: number;
+  /** The section's own height in px. */
+  height: number;
 }
 
 export interface DepthLayer {
@@ -28,7 +30,7 @@ export function scrollDepth(top: number, height: number, viewport: number): Scro
   const entered = viewport - top;
   const span = viewport + height;
   const progress = span > 0 ? Math.min(Math.max(entered / span, 0), 1) : 0;
-  return { entered, progress, viewport };
+  return { entered, progress, viewport, height };
 }
 
 interface Options {
@@ -36,12 +38,14 @@ interface Options {
   enabled: boolean;
   /** Media query the effect is limited to; omit for every width. */
   media?: string;
+  /** Called on each written frame, for effects that are not a transform (opacity, colour). */
+  onFrame?: (depth: ScrollDepth) => void;
 }
 
 export function useScrollDepth(
   targetRef: RefObject<HTMLElement>,
   layers: readonly DepthLayer[],
-  { enabled, media }: Options,
+  { enabled, media, onFrame }: Options,
 ): void {
   useEffect(() => {
     const query = media ? window.matchMedia?.(media) : null;
@@ -62,6 +66,7 @@ export function useScrollDepth(
         const el = layer.ref.current;
         if (el) el.style.transform = layer.transform(depth);
       }
+      onFrame?.(depth);
     };
     const onScroll = () => {
       if (!frame) frame = window.requestAnimationFrame(write);
@@ -95,5 +100,5 @@ export function useScrollDepth(
       if (frame) window.cancelAnimationFrame(frame);
       clear();
     };
-  }, [targetRef, layers, enabled, media]);
+  }, [targetRef, layers, enabled, media, onFrame]);
 }
