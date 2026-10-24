@@ -815,6 +815,20 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Lección:** un contenedor con scroll de lado (`overflow-x: auto`) también recorta arriba y abajo. El carro y las píldoras sobresalen de la fila de 24 px y salían cortados en el iPhone de Frank («se ve cortado el carro»). El carrusel lleva 12 px de aire arriba (`pt-3`) que se recuperan con `-mt-3`, así el diseño no se mueve.
 - **Consecuencias:** si se agrega una parada a la ruta, basta con marcar su punto con `data-route-node`. No cambia el orden de los parques ni las horas (ADR-040/041).
 
+### ADR-052 — Paso por el cañón entre el seguro de viaje y las preguntas frecuentes
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente.
+- **Contexto:** Frank, sobre la cresta entre el bloque del seguro y «Preguntas frecuentes»: «¿puedes poner un efecto de scroll como un cañón, como adentro del Gran Cañón, como que vas pasando por un cañón?».
+- **Decisión:**
+  1. `CanyonPassage` reemplaza el divisor `layered #E8F1EA`, sin texto (`aria-hidden`). El cielo arranca en el `green-wash` del seguro, así que no hay corte arriba. Abajo termina en un borde ondulado color `cloud`, el fondo de las preguntas frecuentes.
+  2. Un cañón visto desde adentro, en siluetas planas con los mismos verdes de la cordillera del hero y del bosque: borde lejano de mesetas `#B3CBBD`, dos *buttes* `#8DB09C`, paredes medias `#4F7F66`, paredes cercanas `#1E3D30` con pinos en sus escalones y un río color `mist`. La primera versión llevaba franjas de roca roja (estratos). Frank pidió «que respetara los colores que usamos, que se vea más silueta, como los pinos o como las montañas», así que se quitaron.
+  3. Formas en `src/lib/canyon-silhouettes.ts`, solo con segmentos rectos, para que el lado derecho sea el izquierdo reflejado (`mirrorShape`). Cada forma es una `mask` estirada a su caja.
+  4. **Inmersivo** (Frank: «que sienta que te estás metiendo al cañón»): la escena es un escenario de pantalla completa (`sticky`, `100svh`) dentro de una sección de `180svh` (`170vh` desde `lg`), así que se queda fija mientras la página baja casi una pantalla más. Las paredes cercanas suben todo el alto de la pantalla (estás entre ellas); el resto del cañón conserva sus proporciones abajo (máximo `165vw` de alto), para que nunca quede apretado. En ese tramo las paredes cercanas pasan junto a ti y salen por los lados, las medias se abren y crecen, y los *buttes*, el río y el borde lejano se acercan. Para que una pared salga de la pantalla tiene que moverse más de lo que crece (escala 2.1 → se mueve 150 % de su ancho).
+  - Se probó una «entrada» al frente (dos acantilados `forest-dark` casi cerrados que se abrían): Frank, al verla, «no me gustó, se mira mal, muy chico el cañón». Tapaba el cañón con una pared oscura y dejaba solo una rendija; se quitó. Lección: lo inmersivo viene de que la escena llene la pantalla y se mueva contigo, no de esconderla.
+  5. Con «reducir movimiento» no hay escenario fijo ni entrada: es una franja quieta de 400 px (460 en tablet, 520 desde `lg`).
+  6. `useScrollDepth` ahora también da `height` (el alto de la sección), para medir el avance mientras el escenario está fijo.
+- **Consecuencias:** cambiar el cañón es cambiar las formas o las velocidades en `CanyonPassage.tsx`.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
