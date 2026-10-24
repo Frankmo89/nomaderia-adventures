@@ -137,7 +137,7 @@ src/
 │   ├── use-public-stats.ts   # usePublicStats() — conteos reales (destinos, posts)
 │   ├── use-media.ts          # useMediaSlider() + upload/toggle/delete/caption helpers
 │   ├── use-hero-gallery.ts   # useHeroGalleryPhotos() — fotos activas de la Galería para el hero (ADR-046)
-│   ├── use-scroll-depth.ts   # useScrollDepth() — profundidad al hacer scroll (hero y «La promesa», ADR-049/050)
+│   ├── use-scroll-depth.ts   # useScrollDepth() — profundidad al hacer scroll (hero, «La promesa», cañón, campamento; ADR-049–053)
 │   └── use-route-car.ts      # useRouteCar() — el carro que recorre la ruta de parques del home (ADR-051)
 ├── integrations/supabase/
 │   ├── client.ts             # Cliente Supabase (instancia única)
@@ -152,6 +152,7 @@ src/
 │   ├── hero-slides.ts        # Fotos del hero: portada local + Galería achicada por Supabase (ADR-046)
 │   ├── hero-ridges.ts        # Siluetas de la cordillera donde termina la foto del hero en celular (ADR-048)
 │   ├── forest-silhouettes.ts # Siluetas de pinos del bosque de «La promesa» (ADR-050)
+│   ├── canyon-silhouettes.ts # Formas del paso por el cañón antes de las preguntas frecuentes (ADR-052)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
 └── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts

@@ -2,7 +2,8 @@ import { useEffect, type RefObject } from "react";
 
 /**
  * Scroll depth (parallax) for layered scenes: the home hero's mountains
- * (ADR-049) and the promise forest (ADR-050). Each layer gets a CSS transform
+ * (ADR-049), the promise forest (ADR-050), the canyon (ADR-052) and the night
+ * camp (ADR-053). Each layer gets a CSS transform
  * computed from how far its section has crossed the screen. One passive
  * scroll listener, one transform write per layer per frame, nothing written
  * while the section is off screen. Plain JS (no Framer Motion), so it runs on
