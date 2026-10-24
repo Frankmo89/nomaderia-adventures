@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 import { requireAdmin } from "../_shared/admin-auth.ts";
+import { isOurDestinationsStorageUrl } from "../_shared/mirror-park-images.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -63,6 +64,8 @@ interface ExistingRow {
   id: string;
   slug: string;
   is_published: boolean;
+  hero_image_url: string | null;
+  gallery_images: string[] | null;
 }
 
 // ---------- Helpers ----------
@@ -240,7 +243,7 @@ serve(async (req) => {
       // Check if this park already exists in destinations
       const { data: existing, error: selectErr } = await db
         .from("destinations")
-        .select("id, slug, is_published")
+        .select("id, slug, is_published, hero_image_url, gallery_images")
         .eq("park_code", park.parkCode)
         .maybeSingle();
 
@@ -252,26 +255,43 @@ serve(async (req) => {
       const existingRow = existing as ExistingRow | null;
 
       if (existingRow) {
-        // UPDATE — never touch: slug, title, is_published, research_status, or any Spanish-curated column
+        // UPDATE — never touch: slug, title, is_published, research_status, or any Spanish-curated column.
+        // ADR-057: never overwrite hero_image_url / gallery_images when they already
+        // point at our Storage bucket (Frank's photos or mirrored NPS copies).
+        const heroIsOurs = isOurDestinationsStorageUrl(
+          existingRow.hero_image_url,
+          SUPABASE_URL,
+        );
+        const galleryIsOurs = (existingRow.gallery_images ?? []).some((u) =>
+          isOurDestinationsStorageUrl(u, SUPABASE_URL),
+        );
+        const updatePayload: Record<string, unknown> = {
+          official_name: park.fullName,
+          nps_description: park.description,
+          designation: park.designation,
+          country: "Estados Unidos",
+          region: park.states,
+          latitude,
+          longitude,
+          entrance_fee_usd,
+          entrance_fee_type,
+          nps_url: park.url,
+          experience_type: "parque-nacional",
+          has_nonresident_surcharge: hasSurcharge,
+          nonresident_surcharge: hasSurcharge ? SURCHARGE_AMOUNT : 0,
+        };
+        if (!heroIsOurs) {
+          updatePayload.hero_image_url = heroUrl;
+        }
+        // If any gallery slot is already Storage, leave the whole gallery alone
+        // (partial overwrite would drop Frank's photos). Same if hero is Storage
+        // and gallery empty — do not reintroduce nps.gov into gallery.
+        if (!galleryIsOurs && !heroIsOurs) {
+          updatePayload.gallery_images = galleryUrls.length > 0 ? galleryUrls : null;
+        }
         const { error: updateErr } = await db
           .from("destinations")
-          .update({
-            official_name: park.fullName,
-            nps_description: park.description,
-            designation: park.designation,
-            country: "Estados Unidos",
-            region: park.states,
-            latitude,
-            longitude,
-            entrance_fee_usd,
-            entrance_fee_type,
-            nps_url: park.url,
-            experience_type: "parque-nacional",
-            hero_image_url: heroUrl,
-            gallery_images: galleryUrls.length > 0 ? galleryUrls : null,
-            has_nonresident_surcharge: hasSurcharge,
-            nonresident_surcharge: hasSurcharge ? SURCHARGE_AMOUNT : 0,
-          })
+          .update(updatePayload)
           .eq("park_code", park.parkCode);
 
         if (updateErr) {
