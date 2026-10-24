@@ -12,9 +12,10 @@ import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 /**
  * Home hero (ADR-047): the photo is the screen.
  *  - Phones and tablets: story-style. The photo fills the whole screen behind
- *    the transparent navbar and ends in a mountain range (ADR-048): far peaks,
- *    a middle range with drifting mist, then front hills with pines that the
- *    text stands on. They darken to solid forest-dark at the bottom, so the
+ *    the transparent navbar and ends in Yosemite Valley (ADR-048): Half Dome
+ *    far away with mist, El Capitan and Cathedral Rocks, the valley's forest,
+ *    then front hills, and dark ground under the text. They darken to solid
+ *    forest-dark at the bottom, so the
  *    dark promise band below follows with no seam. The top stays clear except
  *    a faint shade for the white logo.
  *  - lg+: text on the left on the light ground, the photo in a tall frame on
@@ -67,12 +68,12 @@ const HERO_CSS = `
    thin lit edge shows on the faces turned to the sun. The moved layer is
    8 px wider each side so no lit strip shows at the screen edges. */
 .hero-ridge-far, .hero-ridge-far-lit { top: calc(-9.375rem * var(--ridge-k, 1)); }
-.hero-ridge-far-lit { background: rgba(214, 228, 216, 0.95); }
+.hero-ridge-far-lit { background: rgba(176, 202, 186, 0.95); }
 .hero-ridge-far {
   left: -8px;
   right: -8px;
   translate: 3px 2px;
-  background: linear-gradient(to bottom, rgba(122, 160, 138, 0.94) 0, rgba(156, 186, 167, 0.94) 6.5rem);
+  background: linear-gradient(to bottom, rgba(88, 132, 109, 0.92) 0, rgba(118, 156, 135, 0.92) 6.5rem);
 }
 .hero-ridge-back, .hero-ridge-back-lit { top: calc(-10.625rem * var(--ridge-k, 1)); }
 .hero-ridge-back-lit { background: rgba(108, 150, 127, 0.96); }
@@ -83,12 +84,12 @@ const HERO_CSS = `
   background: linear-gradient(to bottom, rgba(47, 94, 74, 0.96) 0, rgba(47, 94, 74, 0.96) 5rem, rgba(78, 122, 100, 0.96) 10rem);
 }
 .hero-ridge-mid { top: calc(-5rem * var(--ridge-k, 1)); background: rgba(30, 61, 48, 0.96); }
-/* The valley at 90 % (75 % on short phones, iPhone SE), so the photo keeps
+/* The valley at 75 % (65 % on short phones, iPhone SE), so the photo keeps
    its room next to the space above the headline. With "slice", a shorter
    mask scales the whole drawing down evenly. */
-.hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.9; }
+.hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.75; }
 @media (max-height: 720px) {
-  .hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.75; }
+  .hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.65; }
 }
 .hero-ridge-front {
   top: -2rem;
@@ -135,7 +136,7 @@ const ridgeStyle = (ridge: HeroRidge) =>
 // Capitan and Cathedral Rocks as the walls, a pine forest in front.
 const RIDGE_FAR = ridgeStyle(HERO_RIDGES.valleyFar);
 const RIDGE_BACK = ridgeStyle(HERO_RIDGES.valleyWalls);
-const RIDGE_MID = ridgeStyle(HERO_RIDGES.valleyPines);
+const RIDGE_MID = ridgeStyle(HERO_RIDGES.valleyCanopy);
 const RIDGE_FRONT = ridgeStyle(HERO_RIDGES.frontHills);
 
 function usePrefersReducedMotion(): boolean {
@@ -214,7 +215,7 @@ const HeroSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
   // Phones: scroll depth (ADR-049). While the hero scrolls away, the photo
   // lags at 40 % of the scroll and zooms in a little, Half Dome lags 24 %, the
-  // valley walls 16 %, the pines 7 %, and the front hills with the text move
+  // valley walls 16 %, the forest 7 %, and the front hills with the text move
   // with the page, so the land climbs over the photo and the near ranges over the far
   // ones. Off with "reduce motion" and from lg up (no range on desktop).
   const depthLayers = useMemo<readonly DepthLayer[]>(() => {

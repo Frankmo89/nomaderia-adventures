@@ -50,11 +50,15 @@ describe("hero ridges", () => {
     expect(highest(600, right)).toBeLessThan(40); // Cathedral Rocks and spires
   });
 
-  it("the pine line is a forest, not a few trees", () => {
-    const { path, height } = HERO_RIDGES.valleyPines;
-    const tops = points(path).filter(([, y]) => y < 40);
-    expect(tops.length).toBeGreaterThan(60);
-    expect(Math.min(...ys(path))).toBeGreaterThan(height / 4);
+  it("the valley floor is one low canopy line, no single trees", () => {
+    const { path, height } = HERO_RIDGES.valleyCanopy;
+    const line = points(path).slice(1, -1);
+    // No spikes: neighbouring treetops never differ by more than a few units.
+    for (let i = 1; i < line.length; i++) expect(Math.abs(line[i][1] - line[i - 1][1])).toBeLessThan(8);
+    // It dips in the middle of the V so Half Dome's base shows.
+    const y = (from: number, to: number) => line.filter(([x]) => x >= from && x <= to).map(([, v]) => v);
+    expect(Math.min(...y(520, 570))).toBeGreaterThan(Math.max(...y(300, 360)));
+    expect(Math.min(...ys(path))).toBeGreaterThan(height / 3);
   });
 
   it("builds a CSS url with an encoded SVG", () => {

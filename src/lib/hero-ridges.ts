@@ -15,38 +15,39 @@ export interface HeroRidge {
 }
 
 /**
- * A line of pines, generated so it stays even: tops 24–44 units above a base
- * at 66, taller toward the edges (nearer), two tiers each. Deterministic, so
- * the mask never changes between builds.
+ * The forest on the valley floor seen from far away (ADR-048 point 5): one
+ * low canopy line, no single trees. Two shoulders, higher on the left at El
+ * Capitan's foot, dip in the middle so Half Dome's base shows; the edge has
+ * a small, uneven roughness so it reads as treetops, not as clouds or a
+ * row of pines. Deterministic, so the mask never changes between builds.
  */
-function pineLine(): HeroRidge {
+function canopyLine(): HeroRidge {
   const height = 84;
-  const base = 66;
-  const round = (v: number) => Math.round(v * 10) / 10;
-  const x01 = (v: number) => round(Math.min(Math.max(v, 0), 1024));
+  // Control points of the line (x, y), joined with cosine easing.
+  const shape: [number, number][] = [
+    [0, 50], [170, 44], [330, 36], [430, 40], [490, 52], [545, 60], [600, 54], [660, 42], [760, 38], [900, 45], [1024, 50],
+  ];
+  const at = (x: number) => {
+    const k = shape.findIndex(([px]) => px >= x);
+    if (k <= 0) return shape[0][1];
+    const [x0, y0] = shape[k - 1];
+    const [x1, y1] = shape[k];
+    const t = (1 - Math.cos(((x - x0) / (x1 - x0)) * Math.PI)) / 2;
+    return y0 + (y1 - y0) * t;
+  };
   const noise = (i: number, k: number) => {
     const v = Math.sin(i * k) * 43758.5453;
     return v - Math.floor(v);
   };
-  const points: string[] = [`M0,${height}`, `L0,${base}`];
-  for (let x = 6, i = 1; x < 1024; i++) {
-    const edge = Math.abs(x - 512) / 512;
-    const h = 24 + 12 * edge + 8 * noise(i, 12.9898);
-    const w = 6 + 3 * noise(i, 78.233) + 2 * edge;
-    const top = base - h;
-    const tier = top + h * 0.5;
-    points.push(
-      `L${x01(x - w)},${base}`,
-      `L${x01(x - 0.38 * w)},${round(tier)}`,
-      `L${x01(x - 0.62 * w)},${round(tier)}`,
-      `L${x01(x)},${round(top)}`,
-      `L${x01(x + 0.62 * w)},${round(tier)}`,
-      `L${x01(x + 0.38 * w)},${round(tier)}`,
-      `L${x01(x + w)},${base}`,
-    );
-    x += w * 1.3;
+  const round = (v: number) => Math.round(v * 10) / 10;
+  const points: string[] = [`M0,${height}`];
+  for (let x = 0, i = 1; x <= 1024; i++) {
+    // Treetops: a little up or down, now and then one a bit taller.
+    const rough = (noise(i, 12.9898) - 0.5) * 3 - (noise(i, 78.233) > 0.82 ? 3 : 0);
+    points.push(`L${round(x)},${round(at(x) + rough)}`);
+    x = x >= 1024 ? 1025 : Math.min(1024, x + 5 + 4 * noise(i, 39.425));
   }
-  points.push(`L1024,${base}`, `L1024,${height} Z`);
+  points.push(`L1024,${height} Z`);
   return { height, path: points.join(" ") };
 }
 
@@ -72,8 +73,8 @@ export const HERO_RIDGES = {
     height: 190,
     path: "M0,190 L0,48 L40,44 L80,40 L120,36 L160,32 L200,28 L240,24 L280,20 L320,16 L356,12 L386,10 L410,10 L424,12 L434,16 L441,24 L445,34 L448,46 L451,62 L454,82 L457,104 L461,128 L466,152 L472,174 L480,186 L520,188 L566,188 L572,178 L578,160 L584,140 L589,120 L593,102 L597,88 L601,77 L607,68 L614,62 L624,58 L632,58 L638,52 L646,47 L656,44 L664,44 L668,46 L671,44 L674,26 L677,44 L682,45 L685,32 L688,45 L698,47 L710,49 L724,51 L744,54 L770,58 L800,64 L840,74 L880,84 L920,94 L960,102 L1024,110 L1024,190 Z",
   },
-  /** Near: the valley floor's pine forest. */
-  valleyPines: pineLine(),
+  /** Near: the valley floor's forest, as one low canopy line. */
+  valleyCanopy: canopyLine(),
   /** Far range: sharp granite peaks, the highest just right of center (night camp). */
   back: { height: 104, path: "M0,104 L0,60 L40,51 L84,62 L140,38 L170,46 L214,22 L246,34 L290,26 L330,48 L372,40 L404,57 L450,39 L486,20 L512,27 L560,4 L600,23 L628,18 L668,42 L700,35 L742,55 L786,32 L818,40 L860,16 L900,34 L944,30 L990,52 L1024,46 L1024,104 Z" },
   /** Middle range: rounder shoulders. */
@@ -83,7 +84,7 @@ export const HERO_RIDGES = {
     height: 44,
     path: "M0,44 L0,29 C18,28 54,21 90,22 C126,23 144,32 180,32 C216,32 234,22 270,21 C306,20 326,30 360,29 C394,28 408,18 440,18 C472,18 488,27 520,28 C552,29 566,21 600,22 C634,23 654,33 690,32 C726,31 744,20 780,19 C816,18 834,28 870,29 C906,30 929,23 960,22 C991,21 1011,25 1024,26 L1024,44 Z M250,5 L254.2,13.1 L252.3,13.1 L255.7,19.8 L250.9,19.8 L250.9,25 L249.1,25 L249.1,19.8 L244.3,19.8 L247.7,13.1 L245.8,13.1 Z M266,11 L268.8,16.4 L267.5,16.4 L269.8,20.8 L266.6,20.8 L266.6,25 L265.4,25 L265.4,20.8 L262.2,20.8 L264.5,16.4 L263.2,16.4 Z M612,4 L616.4,12.5 L614.4,12.5 L618.0,19.6 L613.0,19.6 L613.0,25 L611.0,25 L611.0,19.6 L606.0,19.6 L609.6,12.5 L607.6,12.5 Z M630,12 L633.0,17.9 L631.6,17.9 L634.1,22.7 L630.7,22.7 L630.7,27 L629.3,27 L629.3,22.7 L625.9,22.7 L628.4,17.9 L627.0,17.9 Z M700,20 L702.5,24.9 L701.4,24.9 L703.5,29.0 L700.6,29.0 L700.6,33 L699.4,33 L699.4,29.0 L696.5,29.0 L698.6,24.9 L697.5,24.9 Z M452,6 L455.2,12.3 L453.8,12.3 L456.4,17.5 L452.7,17.5 L452.7,22 L451.3,22 L451.3,17.5 L447.6,17.5 L450.2,12.3 L448.8,12.3 Z M150,16 L153.0,21.9 L151.6,21.9 L154.1,26.7 L150.7,26.7 L150.7,31 L149.3,31 L149.3,26.7 L145.9,26.7 L148.4,21.9 L147.0,21.9 Z M830,9 L833.7,16.2 L832.0,16.2 L835.0,22.1 L830.8,22.1 L830.8,27 L829.2,27 L829.2,22.1 L825.0,22.1 L828.0,16.2 L826.3,16.2 Z M846,16 L848.3,20.5 L847.3,20.5 L849.1,24.2 L846.5,24.2 L846.5,28 L845.5,28 L845.5,24.2 L842.9,24.2 L844.7,20.5 L843.7,20.5 Z",
   },
-  /** The same front hills without their pines: the hero has a forest just behind them (ADR-048 point 5). */
+  /** The same front hills without their pines, so the hero's edge above the headline stays clean (ADR-048 point 5). */
   frontHills: { height: 44, path: "M0,44 L0,29 C18,28 54,21 90,22 C126,23 144,32 180,32 C216,32 234,22 270,21 C306,20 326,30 360,29 C394,28 408,18 440,18 C472,18 488,27 520,28 C552,29 566,21 600,22 C634,23 654,33 690,32 C726,31 744,20 780,19 C816,18 834,28 870,29 C906,30 929,23 960,22 C991,21 1011,25 1024,26 L1024,44 Z" },
 } as const satisfies Record<string, HeroRidge>;
 
