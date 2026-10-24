@@ -1,5 +1,5 @@
 // supabase/functions/_shared/mirror-park-images.ts
-// Pure helpers for mirror-park-images (ADR-038). Shared by Deno edge + Vitest (@shared).
+// Pure helpers for mirror-park-images (ADR-057). Shared by Deno edge + Vitest (@shared).
 
 /** Minimum download size — tiny files are usually broken/placeholder. */
 export const MIN_IMAGE_BYTES = 20 * 1024;
