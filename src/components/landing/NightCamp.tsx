@@ -10,8 +10,8 @@ import { FOREST, silhouetteMaskUrl, type Silhouette } from "@/lib/forest-silhoue
  * (as in the Duna and Corgi footers on Mobbin). The day starts in the hero's
  * photo and goes through the forest, the road and the canyon; here the sun
  * has just set. Same flat silhouettes as the other scenes: the hero's range,
- * a line of pines, the last hill and, on a knoll, a tent, a lantern and a
- * hiker sitting out under the sky.
+ * a line of pines, the last hill and, on a knoll, the camp: a tent, a
+ * lantern and a few pines (no people: Frank wants just the camp).
  *
  * Scroll effect (useScrollDepth), over the last scroll of the page: the
  * sunset glow behind the range fades into night, the stars come out one by
@@ -177,8 +177,8 @@ const NightCamp = ({ children }: { children: ReactNode }) => {
         <div ref={pinesRef} className="night-line h-[140px] bg-[#16332A] will-change-transform lg:h-[160px]" style={PINES} />
         <div className="night-line h-[70px] bg-forest-dark" style={HILL} />
 
-        {/* The camp: a knoll with a tent, a lantern, two pines and a hiker
-            looking at the sky, drawn together so the tent sits on the ground. */}
+        {/* The camp: a knoll with a tent, a lantern and three pines, drawn
+            together so the tent sits on the ground. */}
         <svg
           viewBox="0 0 360 150"
           className="absolute bottom-0 left-1/2 h-[150px] w-[360px] -translate-x-1/2 lg:left-[30%] lg:h-[175px] lg:w-[420px]"
@@ -201,6 +201,7 @@ const NightCamp = ({ children }: { children: ReactNode }) => {
           <g fill="#14201A">
             <path d={PINE_PATH} transform="translate(286 44) scale(1.25)" />
             <path d={PINE_PATH} transform="translate(318 66) scale(0.85)" />
+            <path d={PINE_PATH} transform="translate(84 62) scale(0.8)" />
           </g>
           {/* Tent */}
           <path d="M146,96 L184,42 L222,96 Z" fill="#0D1A14" />
@@ -208,13 +209,6 @@ const NightCamp = ({ children }: { children: ReactNode }) => {
           {/* Lantern on a pole */}
           <path d="M246,98 L246,58" stroke="#0D1A14" strokeWidth="2.5" />
           <path d="M240,56 L252,56" stroke="#0D1A14" strokeWidth="2" />
-          {/* Hiker sitting on the knoll, looking up */}
-          <g fill="#0D1A14">
-            <circle cx="104" cy="70" r="6" />
-            <path d="M98,77 L110,77 L113,94 L96,94 Z" />
-            <path d="M110,88 L128,90 L130,98 L112,98 Z" />
-            <path d="M92,79 L99,79 L99,92 L90,92 Z" />
-          </g>
           {/* What lights up: the tent door and the lantern. */}
           <g ref={lampRef} fill="#F4F1E8" style={{ opacity: reducedMotion ? 1 : 0 }}>
             <path d="M176,96 L184,66 L192,96 Z" opacity="0.92" />
