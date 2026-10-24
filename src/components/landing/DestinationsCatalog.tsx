@@ -424,8 +424,10 @@ const DestinationsCatalog = ({ limit = 3 }: DestinationsCatalogProps) => {
 
       {stops.length > 0 && (
         <Reveal delay={0.1}>
-          {/* Phone: the track scrolls sideways and bleeds to the screen edge. */}
-          <div ref={scrollerRef} className="-mx-5 snap-x snap-mandatory overflow-x-auto scroll-px-5 pb-2 [scrollbar-color:rgba(251,250,247,0.3)_transparent] lg:mx-0 lg:overflow-visible lg:pb-0">
+          {/* Phone: the track scrolls sideways and bleeds to the screen edge. A
+              sideways scroller also clips top and bottom, so it gets 12 px of
+              room above (pulled back up with -mt-3) for the car and the pills. */}
+          <div ref={scrollerRef} className="-mx-5 -mt-3 snap-x snap-mandatory overflow-x-auto scroll-px-5 pb-2 pt-3 [scrollbar-color:rgba(251,250,247,0.3)_transparent] lg:mx-0 lg:mt-0 lg:overflow-visible lg:pb-0 lg:pt-0">
             <div ref={trackRef} className="relative w-max px-5 lg:w-full lg:px-0">
               {/* The route: dashed line, the trail the car leaves (solid), the origin at the start. */}
               <div aria-hidden="true" className="pointer-events-none absolute left-[30px] right-5 top-[11px] border-t-2 border-dashed border-cloud/35 lg:left-[11px] lg:right-[11px]" />

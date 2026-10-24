@@ -812,6 +812,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   2. Celular: lo mueve el deslizamiento de las tarjetas. Llega a cada parada justo cuando su tarjeta queda en su lugar (snap), avanza en línea recta entre paradas, voltea al deslizar de regreso y se mece mientras se mueve. La parada donde está estacionado pone su píldora de horas en claro; la tarjeta de esa parada queda brillante y las otras bajan a 60 % de opacidad (y 97 % de tamaño, salvo con «reducir movimiento»). La píldora ya no lleva su propio carrito: ahora el carro es uno solo.
   3. Desde `lg`: lo mueve el scroll de la página, del origen a la última parada mientras la ruta pasa del 80 % al 35 % de la altura de la pantalla. Sin atenuar tarjetas.
   4. Hook `useRouteCar` (`src/hooks/use-route-car.ts`): las paradas son los elementos con `data-route-node` (los ocultos no cuentan), medidos de nuevo cuando cambia el tamaño; una escritura por cuadro; React solo se entera cuando cambia la parada. `carOnRoute` y `nearestStop` son puros y con pruebas.
+- **Lección:** un contenedor con scroll de lado (`overflow-x: auto`) también recorta arriba y abajo. El carro y las píldoras sobresalen de la fila de 24 px y salían cortados en el iPhone de Frank («se ve cortado el carro»). El carrusel lleva 12 px de aire arriba (`pt-3`) que se recuperan con `-mt-3`, así el diseño no se mueve.
 - **Consecuencias:** si se agrega una parada a la ruta, basta con marcar su punto con `data-route-node`. No cambia el orden de los parques ni las horas (ADR-040/041).
 
 ## Lecciones técnicas (bugs no obvios)
