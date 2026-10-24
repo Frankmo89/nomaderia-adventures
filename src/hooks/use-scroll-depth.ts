@@ -2,7 +2,8 @@ import { useEffect, type RefObject } from "react";
 
 /**
  * Scroll depth (parallax) for layered scenes: the home hero's mountains
- * (ADR-049), the promise forest (ADR-050) and the canyon (ADR-052). Each layer gets a CSS transform
+ * (ADR-049), the promise forest (ADR-050), the canyon (ADR-052) and the night
+ * camp (ADR-053). Each layer gets a CSS transform
  * computed from how far its section has crossed the screen. One passive
  * scroll listener, one transform write per layer per frame, nothing written
  * while the section is off screen. Plain JS (no Framer Motion), so it runs on
@@ -38,12 +39,14 @@ interface Options {
   enabled: boolean;
   /** Media query the effect is limited to; omit for every width. */
   media?: string;
+  /** Called on each written frame, for effects that are not a transform (opacity, colour). */
+  onFrame?: (depth: ScrollDepth) => void;
 }
 
 export function useScrollDepth(
   targetRef: RefObject<HTMLElement>,
   layers: readonly DepthLayer[],
-  { enabled, media }: Options,
+  { enabled, media, onFrame }: Options,
 ): void {
   useEffect(() => {
     const query = media ? window.matchMedia?.(media) : null;
@@ -64,6 +67,7 @@ export function useScrollDepth(
         const el = layer.ref.current;
         if (el) el.style.transform = layer.transform(depth);
       }
+      onFrame?.(depth);
     };
     const onScroll = () => {
       if (!frame) frame = window.requestAnimationFrame(write);
@@ -97,5 +101,5 @@ export function useScrollDepth(
       if (frame) window.cancelAnimationFrame(frame);
       clear();
     };
-  }, [targetRef, layers, enabled, media]);
+  }, [targetRef, layers, enabled, media, onFrame]);
 }

@@ -137,7 +137,7 @@ src/
 │   ├── use-public-stats.ts   # usePublicStats() — conteos reales (destinos, posts)
 │   ├── use-media.ts          # useMediaSlider() + upload/toggle/delete/caption helpers
 │   ├── use-hero-gallery.ts   # useHeroGalleryPhotos() — fotos activas de la Galería para el hero (ADR-046)
-│   ├── use-scroll-depth.ts   # useScrollDepth() — profundidad al hacer scroll (hero, «La promesa», cañón; ADR-049/050/052)
+│   ├── use-scroll-depth.ts   # useScrollDepth() — profundidad al hacer scroll (hero, «La promesa», cañón, campamento; ADR-049–053)
 │   └── use-route-car.ts      # useRouteCar() — el carro que recorre la ruta de parques del home (ADR-051)
 ├── integrations/supabase/
 │   ├── client.ts             # Cliente Supabase (instancia única)

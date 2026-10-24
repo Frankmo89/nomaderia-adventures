@@ -829,6 +829,20 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   6. `useScrollDepth` ahora también da `height` (el alto de la sección), para medir el avance mientras el escenario está fijo.
 - **Consecuencias:** cambiar el cañón es cambiar las formas o las velocidades en `CanyonPassage.tsx`.
 
+### ADR-053 — El home termina en una noche de campamento
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente.
+- **Contexto:** Frank, al final del home: «¿cómo terminamos esta parte con este tipo de efectos? ¿Qué hace falta?». Entre el boletín (foto oscura) y el footer quedaba una franja blanca: el footer tiene `mt-10` y esquinas redondeadas, y el divisor `simple #14201A` no la tapaba. La primera versión (una franja de noche arriba del footer) no le convenció: «la casita se ve mal puesta… algo le hace falta, que resalte más el efecto de scroll». En Mobbin (Duna, Corgi, Legend), los footers con paisaje ponen los enlaces sobre el cielo y cierran la página con el paisaje.
+- **Decisión:**
+  1. `NightCamp` envuelve el footer del home: el texto del footer va sobre un cielo de noche y la página termina en un paisaje con la cordillera del hero (`HERO_RIDGES.back`), una hilera de pinos (`FOREST.mid`), la última loma (`FOREST.near`) y un campamento en una lomita: casa de campaña, farol, dos pinos y un excursionista sentado mirando el cielo. El campamento es un solo SVG con su propia loma, para que la casa de campaña quede bien parada en el suelo.
+  2. **Efecto al llegar al final** (los últimos ~420 px de scroll, `useScrollDepth` con `onFrame`): el atardecer de `/destinos` (`#CC7D66` → `#F2B577`) brilla detrás de la cordillera y se apaga en la noche verde, las estrellas salen una por una, la luna sube por detrás de las montañas, la cordillera y los pinos suben a su lugar y, al llegar al fondo, se prenden la casa de campaña y el farol (con un parpadeo suave). Estrella fugaz cada 9 s. Con «reducir movimiento» se ve la noche ya terminada, quieta.
+  3. La historia del home queda completa: de día en la foto del hero, bosque, carretera, cañón y de noche en el campamento.
+  4. `Footer` recibe `flush` (sin fondo propio, sin margen, sin esquinas redondeadas, sin borde) y el home lo usa dentro de `NightCamp`; las demás páginas no cambian. Se quitó el divisor `simple #14201A`.
+  5. `useScrollDepth` ahora acepta `onFrame` para efectos que no son `transform` (opacidad, color) y da `height` (igual que en ADR-052).
+  6. Sin fogata naranja: el ámbar sigue solo en el hero. (El punto naranja del logo es «la fogata al final del día»; poner una fogata aquí pediría el OK de Frank para romper esa regla.) El logo tampoco se usa como luna: `docs/brand.md` prohíbe sombras o brillos en el pin.
+- **Lección:** el atardecer se ponía detrás de la cordillera y ya se había apagado cuando el paisaje entraba a la pantalla. La franja cálida va justo arriba de los picos y el efecto se mide en los últimos píxeles de la página, no en la pantalla entera.
+- **Consecuencias:** sin fotos en la Galería, el boletín termina claro y la noche empezaría con un corte; hoy la Galería tiene fotos activas.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
