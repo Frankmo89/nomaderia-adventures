@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { MapPin, Pause, Play, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { logEvent } from "@/lib/events";
-import { heroSlides, nextHeroSlide } from "@/lib/hero-slides";
+import { heroSlides, nextHeroSlide, type HeroSlide } from "@/lib/hero-slides";
 import { useHeroGalleryPhotos } from "@/hooks/use-hero-gallery";
 // Kept in place per perf task: query may stay unused for display.
 import { useFeaturedHeroPark } from "@/hooks/use-destinations";
@@ -12,9 +12,11 @@ import { useFeaturedHeroPark } from "@/hooks/use-destinations";
  * No dark wash over the photos and no progress bars.
  *  - Phones and tablets: the photos fill the top of the screen behind the
  *    transparent navbar and end in a mountain crest; the text sits under them.
- *  - lg+: text on the left, the photos framed on the right. They are
- *    portrait (3:4), so a tall frame shows them whole. The navbar starts
- *    solid here (see hasHeroForPath).
+ *  - lg+: text on the left, the photos framed on the right. The navbar
+ *    starts solid here (see hasHeroForPath).
+ * Every photo shows whole (object-contain) over a blurred copy of itself that
+ * fills the frame, so portrait, landscape or panoramic shots never lose their
+ * subject to a crop.
  *
  * Photos cross-fade every 6 s (ADR-046). The first is always the local cover
  * below (the LCP image: keep the index.html preload on its id). After it come
@@ -70,6 +72,42 @@ function usePrefersReducedMotion(): boolean {
     return () => mq.removeEventListener?.("change", onChange);
   }, []);
   return reduced;
+}
+
+/** One photo: AVIF/WebP sets for local photos, Supabase-resized for gallery ones. */
+function HeroPhoto({
+  slide,
+  cover,
+  alt,
+  className,
+  style,
+}: {
+  slide: HeroSlide;
+  cover: boolean;
+  alt: string;
+  className: string;
+  style: CSSProperties;
+}) {
+  return (
+    <picture>
+      {slide.local && <source type="image/avif" srcSet={slide.local.avif} sizes={HERO_SIZES} />}
+      {slide.local && <source type="image/webp" srcSet={slide.local.webp} sizes={HERO_SIZES} />}
+      <img
+        src={slide.src}
+        srcSet={slide.local ? undefined : slide.srcSet}
+        sizes={slide.local ? undefined : HERO_SIZES}
+        alt={alt}
+        aria-hidden={alt ? undefined : true}
+        width={1080}
+        height={1440}
+        decoding={cover ? "sync" : "async"}
+        loading="eager"
+        fetchPriority={cover ? "high" : "low"}
+        className={className}
+        style={style}
+      />
+    </picture>
+  );
 }
 
 const HeroSection = () => {
@@ -157,7 +195,7 @@ const HeroSection = () => {
             ref={frameRef}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
-            className="hero-photo-frame relative h-[56svh] min-h-[380px] max-h-[600px] overflow-hidden bg-forest-dark lg:h-[min(72vh,680px)] lg:max-h-none lg:rounded-[2rem] lg:shadow-[0_24px_60px_-20px_rgba(20,32,26,0.35)]"
+            className="hero-photo-frame relative h-[min(58svh,133vw,640px)] min-h-[340px] overflow-hidden bg-forest-dark lg:h-[min(72vh,680px)] lg:min-h-0 lg:rounded-[2rem] lg:shadow-[0_24px_60px_-20px_rgba(20,32,26,0.35)]"
           >
             {slides.map((slide, i) => {
               const cover = i === 0;
@@ -167,32 +205,31 @@ const HeroSection = () => {
                 cover || (restReady && !galleryPending && (seen.has(slide.key) || i === safeActive || i === nextIndex));
               if (!mounted) return null;
               const shown = i === safeActive;
-              const img = (
-                <img
-                  src={slide.src}
-                  srcSet={slide.local ? undefined : slide.srcSet}
-                  sizes={slide.local ? undefined : HERO_SIZES}
-                  alt={slide.alt}
-                  width={1080}
-                  height={1440}
-                  decoding={cover ? "sync" : "async"}
-                  loading="eager"
-                  fetchPriority={cover ? "high" : "low"}
-                  className="absolute inset-0 h-full w-full object-cover object-[center_30%]"
-                  style={{ filter: "saturate(1.08) contrast(1.03)" }}
-                />
-              );
               return (
-                <picture
+                <div
                   key={slide.key}
                   aria-hidden={!shown}
                   className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
                   style={{ opacity: shown ? 1 : 0 }}
                 >
-                  {slide.local && <source type="image/avif" srcSet={slide.local.avif} sizes={HERO_SIZES} />}
-                  {slide.local && <source type="image/webp" srcSet={slide.local.webp} sizes={HERO_SIZES} />}
-                  {img}
-                </picture>
+                  {/* The same photo, blurred, fills the frame behind… */}
+                  <HeroPhoto
+                    slide={slide}
+                    cover={cover}
+                    alt=""
+                    className="absolute inset-0 h-full w-full scale-110 object-cover"
+                    style={{ filter: "blur(28px) saturate(1.1) brightness(0.8)" }}
+                  />
+                  {/* …so the photo itself is never cropped (ADR-046): whole,
+                      above the crest on phones, whole in the frame on lg+. */}
+                  <HeroPhoto
+                    slide={slide}
+                    cover={cover}
+                    alt={slide.alt}
+                    className="absolute inset-x-0 top-0 bottom-[9%] h-[91%] w-full object-contain lg:bottom-0 lg:h-full"
+                    style={{ filter: "saturate(1.08) contrast(1.03)" }}
+                  />
+                </div>
               );
             })}
             {/* Keeps the white logo and menu readable over the sky (phones). */}
