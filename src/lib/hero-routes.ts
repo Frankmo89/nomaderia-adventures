@@ -20,8 +20,8 @@ const DARK_BAND_ROUTES = new Set([
 ]);
 
 /**
- * The home hero is photo-on-top below lg (dark band behind the navbar) but
- * text-on-light beside a framed photo from lg up (ADR-045), so on desktop
+ * The home hero is a full-screen photo below lg (dark band behind the navbar)
+ * but text-on-light beside a framed photo from lg up (ADR-047), so on desktop
  * the home navbar starts solid.
  */
 const LIGHT_ON_DESKTOP = new Set(["/"]);

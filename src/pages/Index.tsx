@@ -108,8 +108,11 @@ const Index = () => {
       <JsonLd data={organizationLd} />
       <HeroSection />
       <LazyBlock>
-        {/* Hero ends on cloud (ADR-045): crest into the dark promise band. */}
-        <SectionDivider variant="layered" fill="#FBFAF7" />
+        {/* Below lg the hero already ends in solid forest-dark (ADR-047), so
+            only the desktop hero (on cloud) needs the crest into the promise. */}
+        <div className="hidden lg:block">
+          <SectionDivider variant="layered" fill="#FBFAF7" />
+        </div>
         <PromiseSection />
         <SectionDivider variant="simple" fill="#1C1917" />
       </LazyBlock>

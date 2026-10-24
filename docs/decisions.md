@@ -733,7 +733,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-045 — Hero del home: una foto arriba, el texto abajo sobre claro
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente. Reemplaza ADR-039 y las barras tipo historias del carrusel.
+- **Estado:** Reemplazada en celular y tablet por ADR-047 (foto a pantalla completa). Siguen vigentes el ritmo de las fotos (punto 1) y el navbar sólido desde `lg` (punto 3). Reemplazaba ADR-039 y las barras tipo historias del carrusel.
 - **Contexto:** Frank, en su iPhone: «no me gusta como se ve eso que va cambiando de foto, siento que ya se ve muy encimado todo». Sobre la foto iban 6 barras, la etiqueta del lugar, un H1 de 3 líneas, el subtítulo, el botón, el enlace a preguntas y la línea de confianza; la foto cambiaba cada 5 s y, para que el texto se leyera, llevaba oscuro encima. Se le mostraron 3 maquetas (una foto fija con el mismo diseño; foto arriba y texto abajo; tarjeta de vidrio) y eligió la segunda.
 - **Decisión:**
   1. Las 6 fotos de Frank siguen pasando (Frank: «quiero que se cambie»), pero en calma: fundido de 1.2 s cada 6 s, sin barras, sin Ken Burns y sin oscuro encima; la etiqueta del lugar cambia con la foto. Se detiene fuera de pantalla y con el cursor encima; con «reducir movimiento» se queda la primera. Botón de pausa solo para teclado (aparece al enfocarlo), como el video del cuestionario (ADR-042): mismo riesgo aceptado frente a WCAG 2.2.2. La primera (02, Joshua Tree) es la LCP; las otras 5 se montan cuando el navegador queda libre. Se va el evento `hero_photo_select` (no hay barras que tocar).
@@ -745,7 +745,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-046 — El hero del home pasa las fotos activas de la Galería del panel
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente. Completa ADR-045.
+- **Estado:** Vigente, salvo el punto 5 (fotos completas sobre copia desenfocada), que reemplaza ADR-047. Completa ADR-045.
 - **Contexto:** Frank quiere que el hero muestre «las que yo elijo desde la administración en galería» (`media_slider`, `/admin/galeria`): 11 imágenes activas, originales del iPhone de 0.2 a 3.4 MB.
 - **Decisión:**
   1. El hero arranca con la foto local 02 (la LCP, con preload; abre igual de rápido) y luego pasa las imágenes activas de la Galería en el orden del panel; la portada no se repite. Si la Galería no tiene imágenes activas o la consulta falla, pasa el set local de `public/hero/v2/`.
@@ -755,6 +755,19 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   5. **Las fotos nunca se recortan** (Frank, al verlas: «muchas de las fotos se cortan y pierden todo el sentido»). Cada foto se ve completa (`object-contain`) sobre una copia de sí misma desenfocada que llena el marco (misma descarga). En celular la foto completa queda arriba de la cresta; el marco mide `min(58svh, 133vw, 640px)` (casi 3:4, el formato del iPhone), así que las verticales casi no dejan bandas y las horizontales muestran bandas desenfocadas arriba y abajo.
 - **Lección:** se aplicaron también `web_url` y `web_storage_path` para guardar copias ligeras hechas en el panel, porque se supuso que el plan gratis de Supabase no achicaba fotos. Los logs dicen otra cosa: `render/image` responde 200/304 en este proyecto. Antes de asumir un límite de plan, revisar los logs (`edge_logs`). Las dos columnas quedan vacías; borrarlas pide confirmación de Frank (el borrado se canceló sin ella).
 - **Consecuencias:** cambiar fotos del hero ya no pide deploy: se activan, ordenan y nombran en el panel. Revisar en celular que el logo blanco se lea sobre el cielo de cada foto nueva.
+
+### ADR-047 — Hero del home: la foto es la pantalla (estilo historia)
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente. Reemplaza el diseño de celular de ADR-045 y el punto 5 de ADR-046.
+- **Contexto:** con las fotos de la Galería, el marco de ADR-045 (foto arriba con cresta, texto abajo sobre claro) y las fotos completas sobre una copia desenfocada (ADR-046 punto 5) no convencieron a Frank: «no me gustó como se ve, tiene cero diseño». Sus fotos son verticales de iPhone (de 0.39 a 0.58 de ancho por alto), casi la forma de la pantalla del celular (0.46). Se le mostraron 3 maquetas y eligió la 1: la foto a pantalla completa, como una historia de Instagram, con el texto abajo.
+- **Decisión:**
+  1. Celular y tablet (menos de 1024 px): la sección mide `100svh` (mínimo 540 px) y la foto la llena (`object-cover`), detrás del navbar transparente. Arriba solo una sombra suave para el logo blanco (`forest-dark/55` a transparente en 144 px). El texto va abajo: etiqueta del lugar, H1 blanco con «nomás se encuentra.» en fogata, subtítulo `white/90`, botón fogata y línea de confianza `white/80`. El enlace a preguntas frecuentes se oculta debajo de 640 px (la sección de preguntas sigue más abajo).
+  2. El oscuro detrás del texto (`.hero-scrim`) empieza 9 rem arriba del bloque de texto y lo sigue sin importar el alto de la pantalla: transparente → 0.5 → 0.86 donde empieza la etiqueta → 0.94 → `#14201A` sólido al final. Así la franja oscura de «La promesa» sigue sin línea, y el divisor `cloud` de `Index.tsx` queda solo desde `lg`.
+  3. La fila de la etiqueta guarda su alto aunque una foto no tenga lugar, para que el texto no salte al cambiar de foto.
+  4. Contraste medido pixel a pixel sin sombra de texto (bg/fg, percentil 2), a 375, 390, 430 y 768 px: sobre una foto blanca pura, H1 11.6, fogata 3.8 (pide 3, texto grande), subtítulo 10.8, confianza 10.4, etiqueta 8.2, preguntas 12.3; sobre las 6 fotos locales, todo igual o mejor. El oscuro basta para cualquier foto que Frank suba; no hay que volver a medir al cambiar fotos.
+  5. Desde `lg`: texto a la izquierda sobre `cloud` (H1 `ink`, «nomás se encuentra.» en `green`, navbar sólido) y la foto en un marco 3:5 de `min(76vh, 700px)` de alto con esquinas de 32 px. Detrás, la foto siguiente inclinada −6° como una pila de fotos impresas (mismas URLs que el frente: no baja nada extra); se desplaza 7 % a la izquierda en `lg` y 12 % desde `xl` para no tocar el texto en 1024 px.
+  6. `HERO_SIZES` y el `imagesizes` del preload pasan a `(min-width: 1024px) 420px, 100vw`.
+- **Consecuencias:** las fotos se recortan un poco para llenar la pantalla. Las verticales de iPhone pierden un borde fino; las 3:4 locales pierden los lados en celular (por eso la portada local se eligió con el motivo al centro). Si una foto de Frank pierde lo importante, la salida es otra foto, no volver al desenfoque. `public/hero-mask.svg` ya no lo usa el hero (sigue en `_headers`); se puede borrar en un PR aparte.
 
 ## Lecciones técnicas (bugs no obvios)
 
