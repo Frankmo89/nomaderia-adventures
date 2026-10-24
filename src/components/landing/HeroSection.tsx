@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { MapPin, Pause, Play, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { logEvent } from "@/lib/events";
@@ -47,9 +47,8 @@ const SLIDE_MS = 6000;
    and solid below, and runs down behind the text, so the layers add up there
    with no seam: behind the text the photo is gone (≥ 0.99 dark).
    Effects, all off with "reduce motion": the far and middle ranges rise in on
-   load; mist drifts between them; where the browser supports scroll-driven
-   animations, the far range sinks slower than the page as you scroll (depth),
-   and the photo a little more. */
+   load and mist drifts between them. Scroll depth (parallax) is set from
+   useHeroParallax below. */
 const HERO_CSS = `
 .hero-ridge {
   position: absolute;
@@ -61,18 +60,18 @@ const HERO_CSS = `
   mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
     linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
 }
-.hero-ridge-back { top: -10rem; background: rgba(47, 94, 74, 0.86); }
-.hero-ridge-mid { top: -6.5rem; background: rgba(30, 61, 48, 0.95); }
+.hero-ridge-back { top: -8.5rem; background: rgba(47, 94, 74, 0.86); }
+.hero-ridge-mid { top: -5.75rem; background: rgba(30, 61, 48, 0.95); }
 .hero-ridge-front {
-  top: -3.75rem;
-  background: linear-gradient(to bottom, rgba(20, 32, 26, 0.96) 0, #14201a 4rem);
+  top: -3.25rem;
+  background: linear-gradient(to bottom, rgba(20, 32, 26, 0.96) 0, #14201a 3.5rem);
 }
 .hero-mist {
   position: absolute;
   left: 0;
-  top: -8.5rem;
+  top: -7.25rem;
   width: 200%;
-  height: 5.5rem;
+  height: 4.5rem;
   background-image:
     radial-gradient(ellipse 18% 42% at 14% 58%, rgba(234, 240, 236, 0.26), transparent 72%),
     radial-gradient(ellipse 14% 34% at 38% 40%, rgba(234, 240, 236, 0.18), transparent 70%),
@@ -92,22 +91,6 @@ const HERO_CSS = `
 @keyframes hero-mist {
   to { transform: translateX(-50%); }
 }
-@supports (animation-timeline: scroll()) {
-  @media (prefers-reduced-motion: no-preference) and (max-width: 1023px) {
-    .hero-ridge-back {
-      animation: hero-sink-far linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 100vh;
-    }
-    .hero-photos {
-      animation: hero-sink-photo linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 100vh;
-    }
-  }
-}
-@keyframes hero-sink-far { to { transform: translateY(3.5rem); } }
-@keyframes hero-sink-photo { to { transform: translateY(18vh); } }
 @keyframes hero-place-in {
   from { opacity: 0; transform: translateY(3px); }
   to { opacity: 1; transform: none; }
@@ -135,6 +118,66 @@ function usePrefersReducedMotion(): boolean {
     return () => mq.removeEventListener?.("change", onChange);
   }, []);
   return reduced;
+}
+
+/**
+ * Phones: scroll depth (ADR-049). While the hero scrolls away, the photo
+ * lags at 40 % of the scroll and zooms in a little, the far range lags 16 %,
+ * the middle range 7 %, and the front hills with the text move with the
+ * page, so the land climbs over the photo and the near ranges over the far
+ * ones, as in a real range.
+ * One passive scroll listener, one transform write per layer per frame; it
+ * stops writing once the hero is off screen. Off with "reduce motion" and
+ * from lg up (the desktop hero has no range).
+ */
+type ParallaxLayer = readonly [RefObject<HTMLDivElement>, number, number];
+
+function useHeroParallax(layers: readonly ParallaxLayer[], reducedMotion: boolean) {
+  useEffect(() => {
+    const phones = window.matchMedia?.("(max-width: 1023px)");
+    if (!phones) return;
+    let frame = 0;
+    let listening = false;
+
+    const write = () => {
+      frame = 0;
+      const vh = window.innerHeight || 1;
+      const y = Math.min(Math.max(window.scrollY, 0), vh * 1.2);
+      for (const [ref, speed, zoom] of layers) {
+        const el = ref.current;
+        if (!el) continue;
+        const scale = zoom ? ` scale(${(1 + (zoom * y) / vh).toFixed(4)})` : "";
+        el.style.transform = `translate3d(0, ${(y * speed).toFixed(1)}px, 0)${scale}`;
+      }
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(write);
+    };
+    const clear = () => {
+      for (const [ref] of layers) if (ref.current) ref.current.style.transform = "";
+    };
+    const sync = () => {
+      const on = phones.matches && !reducedMotion;
+      if (on && !listening) {
+        window.addEventListener("scroll", onScroll, { passive: true });
+        listening = true;
+        write();
+      } else if (!on && listening) {
+        window.removeEventListener("scroll", onScroll);
+        listening = false;
+        clear();
+      }
+    };
+
+    sync();
+    phones.addEventListener?.("change", sync);
+    return () => {
+      phones.removeEventListener?.("change", sync);
+      if (listening) window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+      clear();
+    };
+  }, [layers, reducedMotion]);
 }
 
 /** One photo: AVIF/WebP sets for local photos, Supabase-resized for gallery ones. */
@@ -193,6 +236,18 @@ const HeroSection = () => {
   const reducedMotion = usePrefersReducedMotion();
   const frameRef = useRef<HTMLDivElement>(null);
   const currentKey = useRef(slides[0].key);
+  const photosRef = useRef<HTMLDivElement>(null);
+  const rangeRef = useRef<HTMLDivElement>(null);
+  const midRef = useRef<HTMLDivElement>(null);
+  const parallaxLayers = useMemo<readonly ParallaxLayer[]>(
+    () => [
+      [photosRef, 0.4, 0.06],
+      [rangeRef, 0.16, 0],
+      [midRef, 0.07, 0],
+    ],
+    [],
+  );
+  useHeroParallax(parallaxLayers, reducedMotion);
 
   useEffect(() => {
     let cancelled = false;
@@ -249,11 +304,15 @@ const HeroSection = () => {
   }, [safeActive, nextIndex, turning]);
 
   return (
-    <section className="relative flex h-[100svh] min-h-[540px] flex-col justify-end overflow-hidden bg-forest-dark lg:block lg:h-auto lg:min-h-0 lg:overflow-visible lg:bg-cloud lg:pt-[76px]">
+    <section className="relative flex h-[100svh] min-h-[540px] flex-col overflow-hidden bg-forest-dark lg:block lg:h-auto lg:min-h-0 lg:overflow-visible lg:bg-cloud lg:pt-[76px]">
       <style>{HERO_CSS}</style>
-      <div className="lg:container lg:mx-auto lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-16 lg:px-5 lg:py-12 xl:gap-24">
-        {/* Photos: the whole screen on phones, a tall frame on lg+. */}
-        <div className="hero-photos absolute inset-0 lg:relative lg:inset-auto lg:order-2">
+      <div className="flex min-h-0 flex-1 flex-col lg:container lg:mx-auto lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-16 lg:px-5 lg:py-12 xl:gap-24">
+        {/* Photos. Phones: everything above the text (so the photo's middle
+            shows above the mountains, not behind the text). lg+: a tall frame. */}
+        <div
+          ref={photosRef}
+          className="relative min-h-0 flex-1 will-change-transform lg:order-2 lg:flex-none lg:will-change-auto"
+        >
           {/* lg+: the next photo waits behind, tilted, like a stack of prints.
               Same URLs as the front, so the browser fetches nothing extra. */}
           {slides.length > 1 && (
@@ -318,8 +377,10 @@ const HeroSection = () => {
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-forest-dark/55 to-transparent lg:hidden"
             />
+            {/* Place of the photo: under the logo on phones (like the
+                location on a story), bottom-left of the frame on lg+. */}
             {current.place && (
-              <p className="absolute bottom-5 left-5 hidden items-center gap-1.5 rounded-full bg-forest-dark/75 px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm lg:inline-flex">
+              <p className="absolute left-5 top-[88px] inline-flex sm:top-[100px] items-center gap-1.5 rounded-full bg-forest-dark/70 px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm lg:bottom-5 lg:top-auto lg:bg-forest-dark/75">
                 <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span key={current.key} className="hero-place">
                   {current.place}
@@ -347,27 +408,14 @@ const HeroSection = () => {
               its front hills. Anchored to the text, so it follows the copy on
               any screen height. */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 lg:hidden">
-            <div className="hero-range absolute inset-0">
+            <div ref={rangeRef} className="hero-range absolute inset-0 will-change-transform">
               <div className="hero-ridge hero-ridge-back" style={RIDGE_BACK} />
               <div className="hero-mist" style={{ animationPlayState: onScreen ? "running" : "paused" }} />
             </div>
-            <div className="hero-ridge hero-ridge-mid" style={RIDGE_MID} />
+            <div ref={midRef} className="hero-ridge hero-ridge-mid will-change-transform" style={RIDGE_MID} />
             <div className="hero-ridge hero-ridge-front" style={RIDGE_FRONT} />
           </div>
           <div className="container relative mx-auto px-5 pb-10 sm:pb-14 lg:mx-0 lg:max-w-none lg:p-0 [text-shadow:0_1px_12px_rgba(20,32,26,0.5)] lg:[text-shadow:none]">
-            {/* Place of the photo on phones. Its row keeps its height when a
-                photo has no place, so the text never jumps. */}
-            <div className="mb-3 h-[30px] lg:hidden">
-              {current.place && (
-                <p className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.08em] text-white ring-1 ring-white/20 backdrop-blur-sm [text-shadow:none]">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span key={current.key} className="hero-place">
-                    {current.place}
-                  </span>
-                </p>
-              )}
-            </div>
-
             {/* H1 + subtitle paint with the first commit: no entrance animation
                 (PR #194: LCP text waiting on Framer). */}
             <h1 className="font-serif text-[2rem] font-bold leading-[1.12] text-white sm:text-5xl lg:text-ink xl:text-6xl">

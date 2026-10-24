@@ -771,7 +771,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-048 — La foto del hero termina en una cordillera (celular)
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente. Reemplaza el punto 2 de ADR-047.
+- **Estado:** Vigente, salvo el efecto de scroll del punto 3, que reemplaza ADR-049. Reemplaza el punto 2 de ADR-047.
 - **Contexto:** al ver la foto a pantalla completa, Frank extrañó la cresta que separaba la foto del texto (ADR-045): «no quiero que se pierda esa división, me gusta mucho, o algo más montañoso o un efecto estaría genial». Un primer intento con cordilleras de `forest-dark` translúcido no se distinguía sobre las fotos.
 - **Decisión:**
   1. Debajo de 1024 px la foto termina en tres capas planas, al estilo de la escena de `/destinos` (ADR-043): picos lejanos en verde pino (`#2F5E4A`, 0.86), una cordillera media más oscura (`#1E3D30`, 0.95) y lomas al frente en `forest-dark` con pinos, donde se para el texto. Siluetas en `src/lib/hero-ridges.ts` (1024 de ancho, 1 unidad = 1 px, recortadas desde el centro con `xMidYMax slice`, así los picos no se aplastan en ningún celular).
@@ -779,6 +779,17 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   3. Efectos, todos apagados con «reducir movimiento»: la cordillera lejana y la media suben al cargar (1.1 s); una neblina pasa despacio entre ellas (70 s por vuelta, en pausa fuera de pantalla); y donde el navegador tiene animaciones ligadas al scroll (`animation-timeline: scroll()`), la cordillera lejana baja más despacio que la página y la foto un poco más, como profundidad. Sin JavaScript para el scroll; donde no hay soporte, simplemente no se mueven.
   4. Contraste medido sin sombra de texto sobre una foto blanca pura: H1 16.8, fogata 5.3, subtítulo 13.8, confianza 11.1, etiqueta 12.5. Detrás del texto ya no se ve la foto.
 - **Consecuencias:** en celular la foto se ve en la parte de arriba (unos 45 % de la pantalla en un iPhone 14; menos en un iPhone SE). Las cordilleras son decoración; cambiar su forma = editar `hero-ridges.ts` (las pruebas revisan que cada silueta quede dentro de su franja y que la lejana quede más alta que la media y esta que el frente). Escritorio sin cambios.
+
+### ADR-049 — Hero en celular: la foto arriba del texto y profundidad al hacer scroll
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente. Completa ADR-048.
+- **Contexto:** en su iPhone, con fotos de la Galería, Frank veía casi solo cielo: la foto llenaba la pantalla detrás del texto, así que su centro quedaba tapado por las montañas y el texto. Pidió «sube más la foto» y un efecto de scroll como el de Save.design (en Mobbin: un paisaje que una ventana oscura va cubriendo al bajar).
+- **Decisión:**
+  1. Debajo de 1024 px la foto ocupa solo el espacio arriba del texto (`flex-1`), no la pantalla entera: su centro queda arriba de las montañas. La etiqueta del lugar pasa a la foto, debajo del logo, como la ubicación de una historia; se va la fila vacía que quedaba cuando una foto no tenía lugar.
+  2. Cordilleras más bajas (136, 92 y 52 px en vez de 160, 104 y 60) para dejar más foto.
+  3. Profundidad al hacer scroll, en JavaScript para que funcione en cualquier iPhone (la versión anterior con `animation-timeline` solo corría en iOS 26): la foto va al 40 % de la velocidad de la página y se acerca un poco (hasta 6 %), la cordillera lejana se queda atrás un 16 %, la media un 7 %, y las lomas con el texto van con la página. Resultado: la tierra sube sobre la foto, como la ventana de Save.design, y las cordilleras cercanas tapan a las lejanas. Un solo listener pasivo de scroll y una escritura de `transform` por capa por cuadro; deja de escribir cuando el hero sale de pantalla. Apagado con «reducir movimiento» y desde `lg`.
+  4. Sin Framer Motion en el hero: cargarlo haría esperar al H1 (lección de PR #194).
+- **Consecuencias:** el botón sigue en la primera pantalla (579 px de 667 en iPhone SE; 756 de 844 en iPhone 14). Ajustar el efecto = cambiar las tres velocidades en `parallaxLayers` de `HeroSection.tsx`. Escritorio sin cambios.
 
 ## Lecciones técnicas (bugs no obvios)
 
