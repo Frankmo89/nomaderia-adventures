@@ -8,16 +8,18 @@ import { cn } from "@/lib/utils";
  * CanyonPassage (ADR-052) — a wordless stretch between the travel insurance
  * block and the FAQ where you fly into a canyon. Flat silhouettes in the same
  * greens as the hero's range and the promise forest: pale far rim, sage
- * buttes, a mist-coloured river, pine-green middle walls, dark near walls and,
- * in front, the canyon mouth, with pines on the ledges. The sky starts in the
- * insurance block's green-wash; the scene ends in a cloud-coloured rim, so the
- * FAQ below follows with no seam.
+ * buttes, a mist-coloured river, pine-green middle walls and dark near walls
+ * with pines on their ledges. The sky starts in the insurance block's
+ * green-wash; the scene ends in a cloud-coloured rim, so the FAQ below
+ * follows with no seam.
  *
  * The scene is a full-screen stage that stays put (sticky) while the page
- * scrolls about one more screen. Over that scroll the mouth opens, the near
- * walls fly past you, the middle walls part and the buttes and river come
- * closer: you go into the canyon. With "reduce motion" it is a still 400–520
- * px band instead.
+ * scrolls most of one more screen. The near walls rise the full height of
+ * the screen; the rest of the canyon keeps its drawn proportions at the
+ * bottom (at most 165vw tall), so it is never squeezed into a slit. Over the
+ * pinned scroll the near walls fly past you, the middle walls part and the
+ * buttes and river come closer. With "reduce motion" it is a still 400–520 px
+ * band instead.
  */
 
 const mask = (s: CanyonShape) => ({ "--canyon": canyonMaskUrl(s) }) as CSSProperties;
@@ -25,14 +27,13 @@ const FAR_RIM = mask(CANYON.farRim);
 const BUTTES = mask(CANYON.buttes);
 const RIVER = mask(CANYON.river);
 
-type WallKind = "mid" | "near" | "gate";
+type WallKind = "mid" | "near";
 
 /* Same greens as the other scenes: forest far #8DB09C and middle #4F7F66,
-   hero middle range #1E3D30, forest-dark in front. */
+   hero middle range #1E3D30. */
 const WALLS: Record<WallKind, { l: CSSProperties; r: CSSProperties; fill: string; width: string }> = {
   mid: { l: mask(CANYON.midWall), r: mask(mirrorShape(CANYON.midWall)), fill: "#4F7F66", width: "w-1/2 lg:w-[44%]" },
   near: { l: mask(CANYON.nearWall), r: mask(mirrorShape(CANYON.nearWall)), fill: "#1E3D30", width: "w-1/2 lg:w-[36%]" },
-  gate: { l: mask(CANYON.gate), r: mask(mirrorShape(CANYON.gate)), fill: "#14201A", width: "w-1/2" },
 };
 
 const CANYON_CSS = `
@@ -65,12 +66,6 @@ const PINES: Record<WallKind, readonly { x: number; y: number; size: string }[]>
     { x: 21, y: 41, size: "h-6 w-[15px] lg:h-8 lg:w-[19px]" },
     { x: 45, y: 97, size: "h-7 w-[18px] lg:h-9 lg:w-[22px]" },
     { x: 67, y: 172, size: "h-5 w-3 lg:h-7 lg:w-4" },
-  ],
-  gate: [
-    { x: 24, y: 30, size: "h-10 w-6 lg:h-14 lg:w-8" },
-    { x: 86, y: 24, size: "h-8 w-5 lg:h-11 lg:w-[26px]" },
-    { x: 110, y: 18, size: "h-12 w-7 lg:h-16 lg:w-10" },
-    { x: 158, y: 20, size: "h-9 w-[22px] lg:h-12 lg:w-7" },
   ],
 };
 
@@ -117,8 +112,6 @@ const CanyonPassage = () => {
   const midRRef = useRef<HTMLDivElement>(null);
   const nearLRef = useRef<HTMLDivElement>(null);
   const nearRRef = useRef<HTMLDivElement>(null);
-  const gateLRef = useRef<HTMLDivElement>(null);
-  const gateRRef = useRef<HTMLDivElement>(null);
 
   const layers = useMemo<readonly DepthLayer[]>(() => {
     const move = (x: number, y: number, s: number) =>
@@ -140,16 +133,14 @@ const CanyonPassage = () => {
       { ref: riverRef, transform: centre(0, 1.5) },
       { ref: midLRef, transform: wall(-1, 48, 0.65) },
       { ref: midRRef, transform: wall(1, 48, 0.65) },
-      { ref: nearLRef, transform: wall(-1, 150, 1.1, 0.12, 1) },
-      { ref: nearRRef, transform: wall(1, 150, 1.1, 0.12, 1) },
-      { ref: gateLRef, transform: wall(-1, 175, 0.6, 0, 0.38) },
-      { ref: gateRRef, transform: wall(1, 175, 0.6, 0, 0.38) },
+      { ref: nearLRef, transform: wall(-1, 150, 1.1, 0.1, 1) },
+      { ref: nearRRef, transform: wall(1, 150, 1.1, 0.1, 1) },
     ];
   }, []);
   useScrollDepth(sectionRef, layers, { enabled: !reducedMotion });
 
   return (
-    <div ref={sectionRef} aria-hidden="true" className={cn("relative", !reducedMotion && "h-[190svh] lg:h-[180vh]")}>
+    <div ref={sectionRef} aria-hidden="true" className={cn("relative", !reducedMotion && "h-[180svh] lg:h-[170vh]")}>
       <style>{CANYON_CSS}</style>
       <div
         className={cn(
@@ -157,22 +148,24 @@ const CanyonPassage = () => {
           reducedMotion ? "relative h-[400px] sm:h-[460px] lg:h-[520px]" : "sticky top-0 h-[100svh]",
         )}
       >
-        <div ref={farRef} className="absolute inset-0 origin-bottom will-change-transform">
-          <div className="canyon-shape bg-[#B3CBBD]" style={FAR_RIM} />
+        {/* The canyon keeps its drawn proportions at the bottom of the stage. */}
+        <div className="absolute inset-x-0 bottom-0 h-full max-h-[165vw]">
+          <div ref={farRef} className="absolute inset-0 origin-bottom will-change-transform">
+            <div className="canyon-shape bg-[#B3CBBD]" style={FAR_RIM} />
+          </div>
+          <div ref={buttesRef} className="absolute inset-0 origin-bottom will-change-transform">
+            <div className="canyon-shape bg-[#8DB09C]" style={BUTTES} />
+          </div>
+          <div className="canyon-haze absolute inset-x-0 top-[36%] h-[30%]" />
+          <div ref={riverRef} className="absolute inset-0 origin-bottom will-change-transform">
+            <div className="canyon-shape bg-mist" style={RIVER} />
+          </div>
+          <Wall side="l" kind="mid" innerRef={midLRef} />
+          <Wall side="r" kind="mid" innerRef={midRRef} />
         </div>
-        <div ref={buttesRef} className="absolute inset-0 origin-bottom will-change-transform">
-          <div className="canyon-shape bg-[#8DB09C]" style={BUTTES} />
-        </div>
-        <div className="canyon-haze absolute inset-x-0 top-[36%] h-[30%]" />
-        <div ref={riverRef} className="absolute inset-0 origin-bottom will-change-transform">
-          <div className="canyon-shape bg-mist" style={RIVER} />
-        </div>
-        <Wall side="l" kind="mid" innerRef={midLRef} />
-        <Wall side="r" kind="mid" innerRef={midRRef} />
+        {/* The near walls rise the full height: you stand between them. */}
         <Wall side="l" kind="near" innerRef={nearLRef} />
         <Wall side="r" kind="near" innerRef={nearRRef} />
-        {!reducedMotion && <Wall side="l" kind="gate" innerRef={gateLRef} />}
-        {!reducedMotion && <Wall side="r" kind="gate" innerRef={gateRRef} />}
         {/* The cloud ground the FAQ stands on. */}
         <svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 h-10 w-full" focusable="false">
           <path d={RIM_PATH} fill="#FBFAF7" />
