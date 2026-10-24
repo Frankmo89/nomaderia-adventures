@@ -793,7 +793,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-050 — «La promesa» como bosque claro con profundidad al hacer scroll
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente.
+- **Estado:** Vigente el bosque claro, las hileras de pinos y el sol; el movimiento y los pinos de las esquinas los reemplaza ADR-055.
 - **Contexto:** con el hero nuevo (ADR-047 a ADR-049), «La promesa» quedaba pegada a él: las dos oscuras, sin corte. Frank: «tenemos que diferenciar esta parte… otro efecto de scroll de árboles de siluetas o algo así, pero que se vea que es una sección aparte». Entre «La promesa» y las tarjetas de parques había además una franja clara rara (dos divisores encimados de cuando la sección siguiente era clara).
 - **Decisión:**
   1. «La promesa» pasa a ser clara entre dos secciones oscuras: cielo de neblina (`#E9F0EB` → `#C3D8CB`), un sol pálido, tres hileras de pinos planos (lejana `#8DB09C`, media `#4F7F66`, suelo `forest-dark`) y dos pinos grandes en las esquinas. Cita en `ink` con «cómo llegar» en `green`, y una etiqueta «Nuestra promesa» en Oswald verde para que se lea como sección propia.
@@ -856,6 +856,22 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   6. **Borde de arriba ondulado**, como el de abajo (Frank: «no me gusta cómo se ve la separación recta al principio»): el `green-wash` del seguro termina en dos ondas sobre el cielo del cañón, que ahora arranca un poco más oscuro (`#D8E6DC`) para que se lean. Las ondas van en la sección, no en el escenario fijo, así que se van bajo el navbar al empezar el recorrido. Los rayos de sol aparecen poco a poco, sin un borde recto arriba.
   7. Ideas de Gemini (video e imágenes): el río como camino, las paredes que se oscurecen, las caras iluminadas, el mirador, los rayos, los pájaros, la neblina plana, las rayitas de agua, las piedras y la nube final. Descartado: el «valle verde» de Grok (un cañón no tiene pradera, y el río ancho ya resuelve el final) y unas terrazas internas junto al río (se veían como huecos oscuros entre las paredes medias).
 - **Consecuencias:** unas 30 capas compuestas más que la v1 (sombras, ciclos, bandas de neblina); hay que revisar la fluidez en un iPhone real. Ajustar = cambiar tramos y velocidades en `layers` y `onFrame` de `CanyonPassage.tsx`.
+
+### ADR-055 — «La promesa» como bosque de secuoyas gigantes
+- **Fecha:** 2026-10-24
+- **Estado:** Vigente. Reemplaza el movimiento de ADR-050.
+- **Contexto:** Frank: «hacer lo mismo con el efecto de los pinos, debe ser más inmersivo… que se sientan los pinos gigantes de secuoya». El efecto se sentía mínimo: movimientos de 26 a 120 px, una sección de una pantalla y árboles que nunca eran más grandes que la pantalla. Ideas de Gemini (PDF con capas, tiempos y cuadros) y de Grok (ventana del texto, etapas), con el mismo prompt que el cañón.
+- **Decisión:**
+  1. **Escenario fijo** como el cañón: la sección mide `220svh` (`200vh` desde `lg`), el escenario `100svh` se queda fijo 1.2 pantallas. Tres momentos: el claro, entre gigantes y bajo las copas.
+  2. **Troncos gigantes** (`src/lib/sequoia-silhouettes.ts`): columnas con la base ensanchada y vetas, con la cara que mira al claro iluminada (la misma técnica que el cañón). Un par al frente en los bordes desde el inicio (`#1E3D30`), un par medio (`#3E6E57`) que espera fuera de la pantalla y entra cuando se va la frase, y troncos lejanos pálidos (`#6E9A82`) que suben de la neblina y se desvanecen hacia el cielo.
+  3. **Copas**: ramas de conífera (borde de abajo con mechones que cuelgan) en dos niveles desde las esquinas superiores; primero asoman, luego cierran arriba como una catedral.
+  4. **Luz**: rayos entre los troncos con agujitas que caen (ciclo que se pausa fuera de pantalla); al final un velo verde oscurece el cielo y el sol baja y se apaga.
+  5. **La frase** se queda fija en el claro, sobre cielo abierto: mientras se ve, los troncos solo ocupan los bordes (en celular la frase mide `17rem` de ancho). Sube y se desvanece entre el 28 % y el 40 % del tramo fijo, antes de que entren los troncos medios y las copas. Con «reducir movimiento» se ve un solo cuadro (22 %) con la frase.
+  6. **Entrega**: el suelo `#14201A` sube del 65 % al 100 % hasta cubrir la mitad de abajo, así las tarjetas de parques siguen sin corte. Se quitaron los pinos de las esquinas: tapaban las raíces de los troncos.
+  7. Descartado: que la frase aparezca hasta el 14 % del tramo (Gemini). La frase ya está a la vista mientras el bosque entra a la pantalla.
+  8. **Revisión de Gemini sobre el video** (Frank: «¿qué opinas?»): las ramas con dientes parejos parecían palmeras o helechos, así que ahora son ramas gruesas casi horizontales con racimos de follaje redondeados e irregulares (cada racimo, varios lóbulos encimados), iluminados por abajo. Al final se veía un «código de barras» de líneas verticales: las vetas quedan solo en los troncos de enfrente, los troncos se angostan hacia arriba y tienen raíces más anchas, y los troncos lejanos se desvanecen al final. Los rayos se veían del lado contrario al sol: ahora salen de arriba a la derecha, junto al sol. Los troncos lejanos pasaban detrás de «cómo llegar» y terminaban en un corte recto: ahora esperan detrás de los pinos hasta que se va la frase, y su caja llega abajo de la pantalla.
+  9. **Segunda revisión de Gemini:** el sol estaba abajo y los rayos bajaban del techo; ahora los rayos salen del sol (un abanico de cuñas que lo sigue al bajar) y pasan entre los troncos. Al soltarse el escenario, las copas se iban por arriba y quedaban troncos pelones: ahora el nivel de enfrente baja hasta arriba del todo y el suelo cubre 56 %, así que el hueco entre copas y suelo es corto. Se quitó una tira clara en el centro de arriba (las dos esquinas ahora se juntan) y un racimo que flotaba sin rama.
+- **Consecuencias:** como el cañón, unas cuantas capas compuestas más; revisar fluidez en un iPhone real. Ajustar = cambiar tramos en `scene` de `PromiseSection.tsx`.
 
 ## Lecciones técnicas (bugs no obvios)
 
