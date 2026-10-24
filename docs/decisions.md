@@ -791,6 +791,18 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   4. Sin Framer Motion en el hero: cargarlo haría esperar al H1 (lección de PR #194).
 - **Consecuencias:** el botón sigue en la primera pantalla (579 px de 667 en iPhone SE; 756 de 844 en iPhone 14). Ajustar el efecto = cambiar las tres velocidades en `parallaxLayers` de `HeroSection.tsx`. Escritorio sin cambios.
 
+### ADR-050 — «La promesa» como bosque claro con profundidad al hacer scroll
+- **Fecha:** 2026-10-23
+- **Estado:** Vigente.
+- **Contexto:** con el hero nuevo (ADR-047 a ADR-049), «La promesa» quedaba pegada a él: las dos oscuras, sin corte. Frank: «tenemos que diferenciar esta parte… otro efecto de scroll de árboles de siluetas o algo así, pero que se vea que es una sección aparte». Entre «La promesa» y las tarjetas de parques había además una franja clara rara (dos divisores encimados de cuando la sección siguiente era clara).
+- **Decisión:**
+  1. «La promesa» pasa a ser clara entre dos secciones oscuras: cielo de neblina (`#E9F0EB` → `#C3D8CB`), un sol pálido, tres hileras de pinos planos (lejana `#8DB09C`, media `#4F7F66`, suelo `forest-dark`) y dos pinos grandes en las esquinas. Cita en `ink` con «cómo llegar» en `green`, y una etiqueta «Nuestra promesa» en Oswald verde para que se lea como sección propia.
+  2. Siluetas en `src/lib/forest-silhouettes.ts`: hileras de 1024 px que se repiten a lo ancho sin costura (las pruebas lo revisan) y un grupo de esquina que se refleja para el otro lado. Mismo truco que la cordillera: color plano + `mask` con la silueta arriba y sólido abajo.
+  3. Efecto de scroll con el hook nuevo `useScrollDepth` (`src/hooks/use-scroll-depth.ts`), que ahora usa también el hero: el sol se mete detrás de los árboles, las hileras lejana y media se quedan atrás de la página, y los pinos de las esquinas empiezan un poco hacia adentro y se abren al avanzar, como al entrar a un claro. Neblina lenta entre hileras. Todo apagado con «reducir movimiento»; en celular y en computadora.
+  4. Bordes: en celular entra la cresta oscura del hero (`SectionDivider layered #14201A`); desde `lg`, la cresta `cloud`. Al final no hay divisor: el suelo del bosque ya es `forest-dark`, igual que las tarjetas de parques. Se quitaron el divisor `simple #1C1917` y el `layered #FBFAF7` que hacían la franja clara.
+- **Lección:** los troncos de los pinos a tamaño chico, con un fondo de otro color detrás, se leen como una línea punteada. El último piso de ramas va casi al ras del suelo (3 % de la altura).
+- **Consecuencias:** cambiar el bosque = regenerar las siluetas (el generador en Python está en el PR #224) o mover las velocidades en `PromiseSection.tsx`.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
