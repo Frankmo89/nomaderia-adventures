@@ -47,13 +47,17 @@ const rand = (i: number, n: number) => {
   return x - Math.floor(x);
 };
 
-/** Stars: fixed positions in the upper sky (no randomness at render); each comes out at its own point of the scroll. */
+/**
+ * Stars: fixed positions in the upper sky (no randomness at render). The
+ * first 16 are already out at dusk (the night began under the newsletter
+ * form); the rest come out one by one as night falls.
+ */
 const STARS = Array.from({ length: 54 }, (_, i) => ({
   left: rand(i, 1) * 100,
-  top: 4 + rand(i, 2) * 48,
+  top: 4 + rand(i, 2) * (i < 16 ? 36 : 48),
   size: rand(i, 3) > 0.85 ? 3 : rand(i, 3) > 0.5 ? 2 : 1.5,
   delay: rand(i, 4) * 4,
-  at: 0.15 + rand(i, 5) * 0.65,
+  at: i < 16 ? -0.2 : 0.08 + rand(i, 5) * 0.65,
 }));
 
 /** Fireflies around the camp (% of the stage). */
@@ -261,7 +265,7 @@ const NightCamp = ({ children }: { children: ReactNode }) => {
                 key={i}
                 ref={(el) => (starRefs.current[i] = el)}
                 className="night-star"
-                style={{ left: `${s.left}%`, top: `${s.top}%`, width: s.size, height: s.size, opacity: 0 }}
+                style={{ left: `${s.left}%`, top: `${s.top}%`, width: s.size, height: s.size, opacity: s.at < 0 ? 1 : 0 }}
               >
                 <span style={{ animationDelay: `${s.delay}s` }} />
               </span>

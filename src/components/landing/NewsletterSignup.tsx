@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import {
   type NewsletterSliderImage,
 } from "@/hooks/use-newsletter-slider-images";
 import { resizedImageUrl } from "@/lib/resized-image";
+import { cn } from "@/lib/utils";
 
 const UNIQUE_VIOLATION = "23505";
 const SLIDE_DURATION = 5000;
@@ -21,7 +22,28 @@ const KEN_BURNS_CSS = `
   from { transform: scale(1.0) translateX(0px); }
   to   { transform: scale(1.08) translateX(-12px); }
 }
+.newsletter-star { position: absolute; border-radius: 9999px; background: #eaf0ec; }
+@media (prefers-reduced-motion: no-preference) {
+  .newsletter-star { animation: newsletter-twinkle 3.6s ease-in-out infinite; }
+  .newsletter-paused .newsletter-star { animation-play-state: paused; }
+}
+@keyframes newsletter-twinkle { 0%, 100% { opacity: var(--o); } 50% { opacity: calc(var(--o) * 0.35); } }
 `;
+
+/* The newsletter is where night begins (ADR-056): the photo melts into the
+   night sky of the camp below, and the first stars come out under the form.
+   The top edge is a wave of the blog section's cream. */
+const STARS = Array.from({ length: 22 }, (_, i) => {
+  const r = (n: number) => {
+    const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  // Mostly in the dark lower part, fainter higher up.
+  const top = 55 + r(1) * 43;
+  return { left: r(2) * 100, top, size: r(3) > 0.8 ? 2.5 : 1.5, o: 0.35 + 0.55 * ((top - 55) / 43), delay: r(4) * 4 };
+});
+const TOP_WAVE =
+  "M0,0 L400,0 L400,16 C370,26 336,22 300,18 C262,14 232,28 198,26 C166,24 150,10 112,12 C74,14 40,28 0,20 Z";
 
 const NewsletterSignup = () => {
   const [email, setEmail] = useState("");
@@ -31,6 +53,16 @@ const NewsletterSignup = () => {
   const [previousSlide, setPreviousSlide] = useState<number | null>(null);
   const [loadedUrls, setLoadedUrls] = useState<Record<string, true>>({});
   const { toast } = useToast();
+  const sectionRef = useRef<HTMLElement>(null);
+  // The stars twinkle only while the section is on screen.
+  const [onScreen, setOnScreen] = useState(false);
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const {
     data: newsletterImages = EMPTY_IMAGES,
     isLoading: imagesLoading,
@@ -123,7 +155,13 @@ const NewsletterSignup = () => {
   };
 
   return (
-    <section className="relative overflow-hidden py-16 sm:py-20 bg-wash-to-footer">
+    <section
+      ref={sectionRef}
+      className={cn(
+        "relative overflow-hidden bg-[linear-gradient(to_bottom,#2F5E4A_0%,#1E3D30_45%,#14201A_100%)] pb-32 pt-24 sm:pb-36 sm:pt-28",
+        !onScreen && "newsletter-paused",
+      )}
+    >
       <style>{KEN_BURNS_CSS}</style>
 
       {hasPhotoBackground ? (
@@ -152,9 +190,39 @@ const NewsletterSignup = () => {
               </div>
             );
           })}
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(20,32,26,0.18)_10%,rgba(20,32,26,0.68)_48%,rgba(20,32,26,0.94)_100%)]" />
+          {/* The photo melts into the night sky of the camp below: solid forest-dark at the bottom, no seam. */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(20,32,26,0.22)_0%,rgba(20,32,26,0.6)_42%,rgba(20,32,26,0.9)_70%,#14201A_90%)]" />
         </div>
       ) : null}
+
+      {/* The first stars of the night, under the form. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        {STARS.map((s, i) => (
+          <span
+            key={i}
+            className="newsletter-star"
+            style={{
+              left: `${s.left}%`,
+              top: `${s.top}%`,
+              width: s.size,
+              height: s.size,
+              opacity: s.o,
+              animationDelay: `${s.delay}s`,
+              ["--o" as string]: s.o.toFixed(2),
+            }}
+          />
+        ))}
+      </div>
+      {/* The blog section's cream comes down in a wave over the top of the photo. */}
+      <svg
+        viewBox="0 0 400 40"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 w-full sm:h-14"
+        focusable="false"
+      >
+        <path d={TOP_WAVE} fill="#FFFBEB" />
+      </svg>
 
       <div className="container relative z-10 mx-auto px-5 max-w-xl text-center">
         <Reveal className="mb-6 sm:mb-8">
