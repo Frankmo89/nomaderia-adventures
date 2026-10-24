@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CANYON, canyonMaskUrl, mirrorShape } from "./canyon-silhouettes";
+import { CANYON, canyonMaskUrl, mirrorShape, riverAt } from "./canyon-silhouettes";
 
 const pairs = (path: string) => (path.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/g) ?? []).map((p) => p.split(",").map(Number));
 
@@ -19,6 +19,18 @@ describe("canyon silhouettes", () => {
     expect(top(CANYON.nearWall.path)).toBeLessThan(top(CANYON.farRim.path));
     expect(top(CANYON.farRim.path)).toBeLessThan(top(CANYON.midWall.path));
     expect(top(CANYON.midWall.path)).toBeLessThan(top(CANYON.buttes.path));
+  });
+
+  it("the river runs from the buttes to the bottom edge, widening as it comes closer", () => {
+    expect(riverAt(0).y).toBe(262);
+    expect(riverAt(1).y).toBe(400);
+    expect(riverAt(1).half).toBeGreaterThan(riverAt(0.5).half * 3);
+    // Its glow is a wider band around it.
+    const xs = (path: string) => pairs(path).filter(([, y]) => y === 400).map(([x]) => x);
+    const [rl, rr] = [Math.min(...xs(CANYON.river.path)), Math.max(...xs(CANYON.river.path))];
+    const [gl, gr] = [Math.min(...xs(CANYON.riverGlow.path)), Math.max(...xs(CANYON.riverGlow.path))];
+    expect(gl).toBeLessThan(rl);
+    expect(gr).toBeGreaterThan(rr);
   });
 
   it("mirrors a wall across its box", () => {

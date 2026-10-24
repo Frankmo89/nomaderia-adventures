@@ -152,7 +152,7 @@ src/
 │   ├── hero-slides.ts        # Fotos del hero: portada local + Galería achicada por Supabase (ADR-046)
 │   ├── hero-ridges.ts        # Siluetas de la cordillera donde termina la foto del hero en celular (ADR-048)
 │   ├── forest-silhouettes.ts # Siluetas de pinos del bosque de «La promesa» (ADR-050)
-│   ├── canyon-silhouettes.ts # Formas del paso por el cañón antes de las preguntas frecuentes (ADR-052)
+│   ├── canyon-silhouettes.ts # Formas del paso por el cañón antes de las preguntas frecuentes: mirador, paredes, río (ADR-052, ADR-054)
 │   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
 └── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts
