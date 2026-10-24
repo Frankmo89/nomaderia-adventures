@@ -1007,3 +1007,10 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   punto de snap es el nodo «San Diego» (chico) y la tarjeta final usa
   `snap-end` con `scroll-px-5`. Lección: probar el snap con `scrollTo` y leer
   `scrollLeft`; a ojo parece bien.
+- **`scrollYProgress` de Framer vale 1 si la página crece después de montar:**
+  `useScroll()` mide el largo de scroll al montar y solo vuelve a medir con
+  scroll o resize. En el home, al montar aún no estaban las secciones lazy, no
+  había nada que scrollear y el progreso daba 1: la barra verde de arriba se
+  veía llena hasta el primer scroll. Fix: `ScrollProgressBar` calcula el
+  progreso con `scrollY` y el alto de la página leído en cada scroll. Lección:
+  con secciones lazy, no confiar en medidas de layout tomadas al montar.
