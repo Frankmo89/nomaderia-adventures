@@ -1,14 +1,17 @@
-import { useMemo, useRef, type CSSProperties } from "react";
+import { useMemo, useRef, type CSSProperties, type RefObject } from "react";
 import { useReducedMotion } from "framer-motion";
 import { useScrollDepth, type DepthLayer, type ScrollDepth } from "@/hooks/use-scroll-depth";
 import { CANYON, canyonMaskUrl, mirrorShape, type CanyonShape } from "@/lib/canyon-silhouettes";
+import { cn } from "@/lib/utils";
 
 /**
  * CanyonPassage (ADR-052) — a short, wordless band between the travel
- * insurance block and the FAQ: the Grand Canyon seen from inside. Sky that
- * starts in the insurance block's green-wash, a far rim of mesas, two buttes,
- * a river, and two pairs of stepped walls in banded red rock; it ends in a
- * cloud-coloured rim, so the FAQ below follows with no seam.
+ * insurance block and the FAQ: a canyon seen from inside, drawn as flat
+ * silhouettes in the same greens as the hero's range and the promise forest
+ * (pale far rim, sage buttes, pine-green middle walls, dark near walls with a
+ * few pines on their ledges, a mist-coloured river). The sky starts in the
+ * insurance block's green-wash; the band ends in a cloud-coloured rim, so the
+ * FAQ below follows with no seam.
  *
  * Scroll effect (useScrollDepth, off with "reduce motion"): as the band
  * crosses the screen the walls part and grow, the near ones most, the far
@@ -19,43 +22,73 @@ const mask = (s: CanyonShape) => ({ "--canyon": canyonMaskUrl(s) }) as CSSProper
 const FAR_RIM = mask(CANYON.farRim);
 const BUTTES = mask(CANYON.buttes);
 const RIVER = mask(CANYON.river);
-const MID_L = mask(CANYON.midWall);
-const MID_R = mask(mirrorShape(CANYON.midWall));
-const NEAR_L = mask(CANYON.nearWall);
-const NEAR_R = mask(mirrorShape(CANYON.nearWall));
+const MID = { l: mask(CANYON.midWall), r: mask(mirrorShape(CANYON.midWall)) };
+const NEAR = { l: mask(CANYON.nearWall), r: mask(mirrorShape(CANYON.nearWall)) };
 
-/* Rock is flat colour in horizontal bands (the strata), cut by each shape.
-   Illustration colours only: no UI here uses them. */
+/* Same greens as the other scenes: forest far #8DB09C and middle #4F7F66,
+   hero middle range #1E3D30. */
 const CANYON_CSS = `
 .canyon-sky {
-  background: linear-gradient(to bottom, #e8f1ea 0%, #f1eadf 38%, #f2dcc6 70%, #efcdb0 100%);
+  background: linear-gradient(to bottom, #e8f1ea 0%, #dce8e0 45%, #c3d8cb 100%);
 }
-.canyon-layer {
+.canyon-shape {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  inset: 0;
   -webkit-mask: var(--canyon) 0 0 / 100% 100% no-repeat;
   mask: var(--canyon) 0 0 / 100% 100% no-repeat;
 }
-.canyon-far { background: repeating-linear-gradient(#ebd3c6 0 8px, #e3c5b5 8px 12px); }
-.canyon-buttes { background: repeating-linear-gradient(#e2ac8a 0 10px, #d99c79 10px 16px, #e8b898 16px 26px); }
-.canyon-river { background: linear-gradient(#a9d0c6, #4e8c86); }
-.canyon-mid {
-  background: repeating-linear-gradient(#cb7e54 0 13px, #bd6f47 13px 20px, #d58e63 20px 34px, #b4653f 34px 40px);
-}
-.canyon-near {
-  background: repeating-linear-gradient(
-    #a6492b 0 18px, #913f25 18px 28px, #b3573a 28px 50px, #7e3620 50px 58px, #9a4429 58px 74px
-  );
-}
 .canyon-haze {
-  background: linear-gradient(rgba(246, 236, 226, 0), rgba(246, 236, 226, 0.6) 50%, rgba(246, 236, 226, 0));
+  background: linear-gradient(rgba(251, 250, 247, 0), rgba(251, 250, 247, 0.55) 50%, rgba(251, 250, 247, 0));
 }
 `;
 
 /** Cloud ground the canyon ends in (matches the FAQ's background). */
 const RIM_PATH =
   "M0,40 L0,16 C40,6 80,10 120,14 C160,18 180,8 200,6 C230,4 260,12 300,14 C340,16 370,6 400,10 L400,40 Z";
+
+/** A three-tier pine, same shape family as the forest's. */
+const PINE_PATH = "M15,0 L22,15 L19,15 L26,29 L21,29 L30,46 L17,46 L17,50 L13,50 L13,46 L0,46 L9,29 L4,29 L11,15 L8,15 Z";
+
+/** Pines standing on the near wall's ledges: x and ledge height in the wall's 200 × 400 box. */
+const LEDGE_PINES = [
+  { x: 9, y: 40, size: "h-9 w-[22px] lg:h-11 lg:w-[26px]" },
+  { x: 21, y: 41, size: "h-6 w-[15px] lg:h-8 lg:w-[19px]" },
+  { x: 45, y: 97, size: "h-7 w-[18px] lg:h-9 lg:w-[22px]" },
+  { x: 67, y: 172, size: "h-5 w-3 lg:h-7 lg:w-4" },
+] as const;
+
+const Wall = ({
+  side,
+  near,
+  innerRef,
+}: {
+  side: "l" | "r";
+  near: boolean;
+  innerRef: RefObject<HTMLDivElement>;
+}) => (
+  <div
+    ref={innerRef}
+    className={cn(
+      "absolute inset-y-0 w-1/2 will-change-transform",
+      side === "l" ? "left-0 origin-bottom-left" : "right-0 origin-bottom-right",
+      near ? "lg:w-[36%]" : "lg:w-[44%]",
+    )}
+  >
+    <div className={cn("canyon-shape", near ? "bg-[#1E3D30]" : "bg-[#4F7F66]")} style={(near ? NEAR : MID)[side]} />
+    {near &&
+      LEDGE_PINES.map((p) => (
+        <svg
+          key={`${p.x}-${p.y}`}
+          viewBox="0 0 30 50"
+          className={cn("absolute fill-[#1E3D30]", p.size, side === "l" ? "-translate-x-1/2" : "translate-x-1/2")}
+          style={{ [side === "l" ? "left" : "right"]: `${p.x / 2}%`, bottom: `${((400 - p.y) / 400) * 100}%` }}
+          focusable="false"
+        >
+          <path d={PINE_PATH} />
+        </svg>
+      ))}
+  </div>
+);
 
 const CanyonPassage = () => {
   const reducedMotion = useReducedMotion() ?? false;
@@ -96,14 +129,20 @@ const CanyonPassage = () => {
   return (
     <div ref={sectionRef} aria-hidden="true" className="canyon-sky relative h-[400px] overflow-hidden sm:h-[460px] lg:h-[520px]">
       <style>{CANYON_CSS}</style>
-      <div ref={farRef} className="canyon-layer canyon-far inset-x-0 origin-bottom will-change-transform" style={FAR_RIM} />
-      <div ref={buttesRef} className="canyon-layer canyon-buttes inset-x-0 origin-bottom will-change-transform" style={BUTTES} />
+      <div ref={farRef} className="absolute inset-0 origin-bottom will-change-transform">
+        <div className="canyon-shape bg-[#B3CBBD]" style={FAR_RIM} />
+      </div>
+      <div ref={buttesRef} className="absolute inset-0 origin-bottom will-change-transform">
+        <div className="canyon-shape bg-[#8DB09C]" style={BUTTES} />
+      </div>
       <div className="canyon-haze absolute inset-x-0 top-[36%] h-[30%]" />
-      <div ref={riverRef} className="canyon-layer canyon-river inset-x-0 origin-bottom will-change-transform" style={RIVER} />
-      <div ref={midLRef} className="canyon-layer canyon-mid left-0 w-1/2 origin-bottom-left will-change-transform lg:w-[44%]" style={MID_L} />
-      <div ref={midRRef} className="canyon-layer canyon-mid right-0 w-1/2 origin-bottom-right will-change-transform lg:w-[44%]" style={MID_R} />
-      <div ref={nearLRef} className="canyon-layer canyon-near left-0 w-1/2 origin-bottom-left will-change-transform lg:w-[36%]" style={NEAR_L} />
-      <div ref={nearRRef} className="canyon-layer canyon-near right-0 w-1/2 origin-bottom-right will-change-transform lg:w-[36%]" style={NEAR_R} />
+      <div ref={riverRef} className="absolute inset-0 origin-bottom will-change-transform">
+        <div className="canyon-shape bg-mist" style={RIVER} />
+      </div>
+      <Wall side="l" near={false} innerRef={midLRef} />
+      <Wall side="r" near={false} innerRef={midRRef} />
+      <Wall side="l" near innerRef={nearLRef} />
+      <Wall side="r" near innerRef={nearRRef} />
       {/* The cloud ground the FAQ stands on. */}
       <svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 h-10 w-full" focusable="false">
         <path d={RIM_PATH} fill="#FBFAF7" />

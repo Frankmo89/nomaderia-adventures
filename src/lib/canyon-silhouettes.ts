@@ -1,7 +1,8 @@
 /**
  * Silhouettes for the canyon passage between the travel insurance block and
- * the FAQ (ADR-052): a Grand Canyon seen from inside, in the same flat poster
- * style as the hero's range (ADR-048) and the promise forest (ADR-050).
+ * the FAQ (ADR-052): a canyon seen from inside, drawn as flat silhouettes in
+ * the brand greens, like the hero's range (ADR-048) and the promise forest
+ * (ADR-050).
  * Coordinates: y 0 (top) → 400 (bottom) of the band; x 0 → 400 across the
  * whole band for the far layers, 0 (screen edge) → 200 (centre) for the side
  * walls, mirrored for the right side. Drawn with straight segments only, so
