@@ -83,10 +83,12 @@ const HERO_CSS = `
   background: linear-gradient(to bottom, rgba(47, 94, 74, 0.96) 0, rgba(47, 94, 74, 0.96) 5rem, rgba(78, 122, 100, 0.96) 10rem);
 }
 .hero-ridge-mid { top: calc(-5rem * var(--ridge-k, 1)); background: rgba(30, 61, 48, 0.96); }
-/* Short phones (iPhone SE): the valley at 80 %, so the photo keeps its room.
-   With "slice", a shorter mask scales the whole drawing down evenly. */
+/* The valley at 90 % (75 % on short phones, iPhone SE), so the photo keeps
+   its room next to the space above the headline. With "slice", a shorter
+   mask scales the whole drawing down evenly. */
+.hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.9; }
 @media (max-height: 720px) {
-  .hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.8; }
+  .hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.75; }
 }
 .hero-ridge-front {
   top: -2rem;
@@ -134,7 +136,7 @@ const ridgeStyle = (ridge: HeroRidge) =>
 const RIDGE_FAR = ridgeStyle(HERO_RIDGES.valleyFar);
 const RIDGE_BACK = ridgeStyle(HERO_RIDGES.valleyWalls);
 const RIDGE_MID = ridgeStyle(HERO_RIDGES.valleyPines);
-const RIDGE_FRONT = ridgeStyle(HERO_RIDGES.front);
+const RIDGE_FRONT = ridgeStyle(HERO_RIDGES.frontHills);
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -405,7 +407,7 @@ const HeroSection = () => {
             <div ref={midRef} className="hero-ridge hero-ridge-mid will-change-transform" style={RIDGE_MID} />
             <div className="hero-ridge hero-ridge-front" style={RIDGE_FRONT} />
           </div>
-          <div className="container relative mx-auto px-5 pb-10 sm:pb-14 lg:mx-0 lg:max-w-none lg:p-0 [text-shadow:0_1px_12px_rgba(20,32,26,0.5)] lg:[text-shadow:none]">
+          <div className="container relative mx-auto px-5 pb-10 pt-10 sm:pb-14 lg:mx-0 [@media(max-height:720px)_and_(max-width:1023px)]:pt-7 lg:max-w-none lg:p-0 [text-shadow:0_1px_12px_rgba(20,32,26,0.5)] lg:[text-shadow:none]">
             {/* H1 + subtitle paint with the first commit: no entrance animation
                 (PR #194: LCP text waiting on Framer). */}
             <h1 className="font-serif text-[2rem] font-bold leading-[1.12] text-white sm:text-5xl lg:text-ink xl:text-6xl">
@@ -413,7 +415,7 @@ const HeroSection = () => {
               <em className="block text-hero-accent lg:text-green">nomás se encuentra.</em>
             </h1>
 
-            <p className="mt-3 max-w-xl font-sans text-base leading-relaxed text-white/90 sm:mt-4 sm:text-lg md:text-xl lg:text-slate">
+            <p className="mt-4 max-w-xl font-sans text-base leading-relaxed text-white/90 sm:text-lg md:text-xl lg:text-slate">
               Te armo tu viaje a un parque nacional: ruta día por día, equipo y presupuesto, a tu nivel. $49.
             </p>
 
@@ -422,7 +424,7 @@ const HeroSection = () => {
                 (VITE_CONCIERGE_ENABLED), so doubts go to the FAQ. On phones the
                 FAQ link is left out to keep the photo clear; the FAQ section
                 is further down the page. */}
-            <div className="mt-5 flex flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:items-center sm:gap-6">
+            <div className="mt-7 flex flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:items-center sm:gap-6">
               <Link
                 to="/#quiz"
                 onClick={() => logEvent("hero_cta_click", { cta: "quiz" })}
@@ -439,7 +441,7 @@ const HeroSection = () => {
               </Link>
             </div>
 
-            <p className="mt-4 flex items-start gap-2 font-sans text-xs text-white/80 sm:text-sm lg:text-slate">
+            <p className="mt-5 flex items-start gap-2 font-sans text-xs text-white/80 lg:mt-4 sm:text-sm lg:text-slate">
               <ShieldCheck className="mt-px h-4 w-4 shrink-0 lg:text-green" aria-hidden="true" />
               <span>Agente de Viajes Certificado (TAP) · Itinerario en menos de 48 h</span>
             </p>
