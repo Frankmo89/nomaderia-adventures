@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
  * block and the FAQ where you drop into a canyon and follow its river. Flat
  * silhouettes in the same greens as the hero's range and the promise forest.
  *
+ * It opens with the insurance block's green-wash ending in waves over the
+ * canyon sky, as it closes with the cloud ground.
+ *
  * The scene is a full-screen stage that stays put (sticky) while the page
  * scrolls one more screen. You start on a lookout ledge: sun rays, birds
  * soaring, bands of mist between the buttes, the river far below. As you
@@ -75,7 +78,7 @@ const WALLS: Record<
 
 const CANYON_CSS = `
 .canyon-sky {
-  background: linear-gradient(to bottom, #e8f1ea 0%, #dce8e0 45%, #c3d8cb 100%);
+  background: linear-gradient(to bottom, #d8e6dc 0%, #d0e1d6 45%, #c3d8cb 100%);
 }
 .canyon-shape {
   position: absolute;
@@ -89,7 +92,13 @@ const CANYON_CSS = `
   height: 140%;
   transform-origin: top center;
   transform: rotate(34deg);
-  background: linear-gradient(to bottom, rgba(251, 250, 247, 0.45) 50%, rgba(251, 250, 247, 0));
+  background: linear-gradient(
+    to bottom,
+    rgba(251, 250, 247, 0),
+    rgba(251, 250, 247, 0.45) 22%,
+    rgba(251, 250, 247, 0.45) 50%,
+    rgba(251, 250, 247, 0)
+  );
 }
 /* Flat mist bands, twice the width of their box so they can drift. */
 .canyon-band {
@@ -130,6 +139,12 @@ const CANYON_CSS = `
   100% { opacity: 0; translate: 0 5px; }
 }
 `;
+
+/** The insurance block's green-wash ends in two waves over the canyon sky (as the cloud ground does at the bottom). */
+const TOP_FRONT =
+  "M0,0 L400,0 L400,16 C370,28 336,24 300,20 C262,16 232,30 198,28 C166,26 150,10 112,12 C74,14 40,30 0,22 Z";
+const TOP_BACK =
+  "M0,0 L400,0 L400,30 C362,40 330,30 290,30 C250,30 228,40 188,38 C150,36 130,24 90,26 C52,28 28,40 0,34 Z";
 
 /** Cloud ground the canyon ends in (matches the FAQ's background). */
 const RIM_PATH =
@@ -505,6 +520,17 @@ const CanyonPassage = () => {
           <path d={RIM_PATH} fill="#FBFAF7" />
         </svg>
       </div>
+      {/* The top edge: waves from the insurance block, at the top of the
+          section (not the stage), so they scroll away under the navbar. */}
+      <svg
+        viewBox="0 0 400 40"
+        preserveAspectRatio="none"
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-14 w-full sm:h-16"
+        focusable="false"
+      >
+        <path d={TOP_BACK} fill="#E0ECE4" />
+        <path d={TOP_FRONT} fill="#E8F1EA" />
+      </svg>
     </div>
   );
 };
