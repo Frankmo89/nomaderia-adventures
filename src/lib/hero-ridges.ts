@@ -1,6 +1,6 @@
 /**
- * The mountain range the home hero's photo ends in on phones (ADR-048).
- * Three silhouettes, 1024 units wide, drawn at 1 unit = 1 CSS px and cut to
+ * The mountain range the home hero's photo ends in on phones (ADR-048); the
+ * night camp reuses `back` and `mid` (ADR-056). Silhouettes 1024 units wide, drawn at 1 unit = 1 CSS px and cut to
  * the screen width from the middle (`xMidYMax slice`), so peaks keep their
  * shape on any phone instead of being squeezed. Each is used as a CSS mask
  * over a flat forest-dark layer; the mask's lower part is solid, so a layer
@@ -14,7 +14,18 @@ export interface HeroRidge {
 }
 
 export const HERO_RIDGES = {
-  /** Far range: sharp granite peaks, the highest just right of center. */
+  /**
+   * The hero's far range (ADR-058): Half Dome, Yosemite, as seen from the
+   * valley's west end: its sheer face on the left, the top close to it, the
+   * dome rounding down to the right. It is the only landmark, right of
+   * center and inside the middle 1024 − 2 × 335 units, so a 375 px phone
+   * shows it whole; low rounded ridges around it.
+   */
+  yosemite: {
+    height: 132,
+    path: "M0,132 L0,84 L36,76 L70,80 L104,68 L132,72 L168,62 L196,67 L228,58 L258,64 L290,56 L318,60 L346,50 L372,54 L398,46 L424,52 L452,48 L480,58 L506,66 L524,72 L540,82 L546,78 L545,40 L546,12 C556,7 572,7 586,11 C604,16 624,28 640,42 C650,51 660,58 672,62 L690,64 L710,62 L730,58 L760,64 L790,60 L822,65 L850,59 L884,64 L916,58 L948,63 L980,59 L1024,64 L1024,132 Z",
+  },
+  /** Far range: sharp granite peaks, the highest just right of center. Now only the night camp's. */
   back: { height: 104, path: "M0,104 L0,60 L40,51 L84,62 L140,38 L170,46 L214,22 L246,34 L290,26 L330,48 L372,40 L404,57 L450,39 L486,20 L512,27 L560,4 L600,23 L628,18 L668,42 L700,35 L742,55 L786,32 L818,40 L860,16 L900,34 L944,30 L990,52 L1024,46 L1024,104 Z" },
   /** Middle range: rounder shoulders. */
   mid: { height: 72, path: "M0,72 L0,43 C12,40 48,28 70,28 C92,28 109,41 130,40 C151,39 174,20 196,21 C218,22 240,42 262,44 C284,46 310,35 330,30 C350,25 365,15 380,14 C395,13 405,19 420,24 C435,29 452,44 470,46 C488,48 510,35 530,36 C550,37 570,52 590,50 C610,48 632,32 650,26 C668,20 684,12 700,12 C716,12 727,22 744,28 C761,34 781,47 800,48 C819,49 840,38 860,33 C880,28 900,18 920,18 C940,18 963,33 980,35 C997,37 1017,31 1024,30 L1024,72 Z" },

@@ -61,7 +61,7 @@ const HERO_CSS = `
   mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
     linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
 }
-.hero-ridge-back { top: -5.75rem; background: rgba(47, 94, 74, 0.86); }
+.hero-ridge-back { top: -7.5rem; background: rgba(47, 94, 74, 0.86); }
 .hero-ridge-mid { top: -3.75rem; background: rgba(30, 61, 48, 0.95); }
 .hero-ridge-front {
   top: -2rem;
@@ -104,7 +104,8 @@ const HERO_CSS = `
 
 const ridgeStyle = (ridge: HeroRidge) =>
   ({ "--ridge": ridgeMaskUrl(ridge), "--ridge-h": `${ridge.height / 16}rem` }) as CSSProperties;
-const RIDGE_BACK = ridgeStyle(HERO_RIDGES.back);
+// Far range: Yosemite Valley, El Capitan and Half Dome (ADR-058).
+const RIDGE_BACK = ridgeStyle(HERO_RIDGES.yosemite);
 const RIDGE_MID = ridgeStyle(HERO_RIDGES.mid);
 const RIDGE_FRONT = ridgeStyle(HERO_RIDGES.front);
 
