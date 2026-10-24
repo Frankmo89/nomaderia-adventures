@@ -143,7 +143,7 @@ const Index = () => {
         <GearPreview />
         <BlogPreview />
         <NewsletterSignup />
-        {/* The trip ends at camp (ADR-053): the footer sits on the night sky. */}
+        {/* The trip ends at camp as night falls (ADR-053, ADR-056); the footer follows on forest-dark. */}
         <NightCamp>
           <Footer flush />
         </NightCamp>
