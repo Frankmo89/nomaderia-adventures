@@ -31,7 +31,8 @@ export function riverAt(s: number): { x: number; y: number; half: number } {
   return {
     x: 203 - 10 * s + swing * Math.sin(2.35 * Math.PI * s + 0.25),
     y: RIVER_TOP + (400 - RIVER_TOP) * s,
-    half: 1.2 + 62 * s ** 2.3,
+    // Tapers to a point at its source, far away between the buttes.
+    half: 1.4 * Math.min(1, s * 6) + 62 * s ** 2.3,
   };
 }
 

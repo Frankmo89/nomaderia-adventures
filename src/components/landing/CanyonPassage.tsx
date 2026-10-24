@@ -181,11 +181,15 @@ const RAYS = [
   { right: 44, width: 16 },
 ] as const;
 
-/** Birds: position in the sky (% of the stage), size and where in their loop they start. */
+/**
+ * Birds: position in the sky (% of the stage), size, where in their loop
+ * they start, and how they drift as you go down: each rises out of view at
+ * its own pace (share of the screen) and glides a little sideways (px).
+ */
 const BIRDS = [
-  { left: 60, top: 19, size: "w-6", delay: 0 },
-  { left: 70, top: 24, size: "w-[18px]", delay: -7 },
-  { left: 54, top: 26, size: "w-4", delay: -15 },
+  { left: 60, top: 19, size: "w-6", delay: 0, rise: 0.3, drift: -40 },
+  { left: 70, top: 24, size: "w-[18px]", delay: -7, rise: 0.22, drift: -26 },
+  { left: 54, top: 26, size: "w-4", delay: -15, rise: 0.26, drift: -18 },
 ] as const;
 
 /** Streaks on the water, placed along the river (fixed, no randomness). */
@@ -307,7 +311,8 @@ const span = (d: ScrollDepth, from: number, to: number) => smooth(clamp01((pinne
 const CanyonPassage = () => {
   const reducedMotion = useReducedMotion() ?? false;
   const sectionRef = useRef<HTMLDivElement>(null);
-  const birdsRef = useRef<HTMLDivElement>(null);
+  const birdRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)];
+  const birdsRef = useRef(birdRefs).current;
   const farRef = useRef<HTMLDivElement>(null);
   const buttesRef = useRef<HTMLDivElement>(null);
   const raysRef = useRef<HTMLDivElement>(null);
@@ -350,9 +355,16 @@ const CanyonPassage = () => {
     };
     const bank = (d: ScrollDepth) => `translate3d(0, ${((1 - span(d, 0.6, 1)) * 105).toFixed(1)}%, 0)`;
     // Buttes and river share a window and zoom, so the river stays on the canyon floor.
-    const floor = (d: ScrollDepth) => move(0, 0, 1 + span(d, 0.12, 1) * 0.9);
+    // At most 1.65×, so the tops of the buttes keep some sky above them.
+    const floor = (d: ScrollDepth) => move(0, 0, 1 + span(d, 0.12, 1) * 0.65);
     return [
-      { ref: birdsRef, transform: (d) => `translate3d(0, ${(-span(d, 0, 1) * 0.35 * d.viewport).toFixed(1)}px, 0)` },
+      ...BIRDS.map((b, i) => ({
+        ref: birdsRef[i],
+        transform: (d: ScrollDepth) => {
+          const t = span(d, 0, 1);
+          return `translate3d(${(t * b.drift).toFixed(1)}px, ${(-t * b.rise * d.viewport).toFixed(1)}px, 0)`;
+        },
+      })),
       { ref: farRef, transform: (d) => move(0, 0, 1 + span(d, 0.25, 1) * 0.3) },
       { ref: buttesRef, transform: floor },
       { ref: riverRef, transform: floor },
@@ -378,7 +390,7 @@ const CanyonPassage = () => {
       },
       { ref: cloudRef, transform: (d) => `translate3d(0, ${((1 - span(d, 0.7, 1)) * 100).toFixed(1)}%, 0)` },
     ];
-  }, []);
+  }, [birdsRef]);
 
   // Light and colour: the sun fades, the walls darken, the mist comes and goes.
   const onFrame = useCallback((d: ScrollDepth) => {
@@ -406,14 +418,15 @@ const CanyonPassage = () => {
           !onScreen && "canyon-paused",
         )}
       >
-        {/* Birds soaring high over the canyon; they rise out of view as you go down. */}
-        <div ref={birdsRef} className="absolute inset-0 will-change-transform">
-          {BIRDS.map((b) => (
-            <div
-              key={b.left}
-              className={cn("canyon-soar absolute", b.size)}
-              style={{ left: `${b.left}%`, top: `${b.top}%`, animationDelay: `${b.delay}s` }}
-            >
+        {/* Birds soaring high over the canyon; each glides away and rises out of view at its own pace as you go down. */}
+        {BIRDS.map((b, i) => (
+          <div
+            key={b.left}
+            ref={birdsRef[i]}
+            className={cn("absolute will-change-transform", b.size)}
+            style={{ left: `${b.left}%`, top: `${b.top}%` }}
+          >
+            <div className="canyon-soar" style={{ animationDelay: `${b.delay}s` }}>
               <svg
                 viewBox="0 0 24 10"
                 className="canyon-flap w-full fill-[#1E3D30]"
@@ -423,8 +436,8 @@ const CanyonPassage = () => {
                 <path d={BIRD_PATH} />
               </svg>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
 
         {/* The canyon keeps its drawn proportions at the bottom of the stage. */}
         <div className="absolute inset-x-0 bottom-0 h-full max-h-[185vw]">
@@ -436,9 +449,6 @@ const CanyonPassage = () => {
           </div>
           <div ref={buttesRef} className="absolute inset-0 origin-bottom will-change-transform">
             <div className="canyon-shape bg-[#8DB09C]" style={BUTTES} />
-            <div className="absolute inset-x-0 top-[57%] h-[7%] overflow-hidden">
-              <div className="canyon-band canyon-drift inset-y-0 bg-[rgba(251,250,247,0.62)]" style={MIST} />
-            </div>
           </div>
           {/* Sun rays from the top right, over the whole stage. */}
           <div
@@ -452,6 +462,10 @@ const CanyonPassage = () => {
           <div ref={riverRef} className="absolute inset-0 origin-bottom will-change-transform">
             <div className="canyon-shape bg-[rgba(251,250,247,0.3)]" style={RIVER_GLOW} />
             <div className="canyon-shape bg-mist" style={RIVER} />
+            {/* Mist at the feet of the buttes, over the river's source, so the river does not start at a cut. */}
+            <div className="absolute inset-x-0 top-[62%] h-[7%] overflow-hidden">
+              <div className="canyon-band canyon-drift inset-y-0 bg-[rgba(251,250,247,0.66)]" style={MIST} />
+            </div>
             {STREAKS.map((s, i) => (
               <span
                 key={i}
