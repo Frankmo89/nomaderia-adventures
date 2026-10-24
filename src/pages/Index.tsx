@@ -20,6 +20,7 @@ const FaqSection = lazyWithRetry(() => import("@/components/landing/FaqSection")
 const GearPreview = lazyWithRetry(() => import("@/components/landing/GearPreview"));
 const BlogPreview = lazyWithRetry(() => import("@/components/landing/BlogPreview"));
 const TravelInsuranceSection = lazyWithRetry(() => import("@/components/landing/TravelInsuranceSection"));
+const CanyonPassage = lazyWithRetry(() => import("@/components/landing/CanyonPassage"));
 const PremiumItinerarySection = lazyWithRetry(() => import("@/components/landing/PremiumItinerarySection"));
 const NewsletterSignup = lazyWithRetry(() => import("@/components/landing/NewsletterSignup"));
 const Footer = lazyWithRetry(() => import("@/components/landing/Footer"));
@@ -129,7 +130,9 @@ const Index = () => {
         <TravelInsuranceSection />
       </LazyBlock>
       <LazyBlock>
-        <SectionDivider variant="layered" fill="#E8F1EA" />
+        {/* From the insurance block's green-wash sky down a canyon to the
+            FAQ's cloud ground (ADR-052); no divider needed on either side. */}
+        <CanyonPassage />
         <FaqSection />
         <SectionDivider variant="layered" fill="#F4EFE7" />
         <PremiumItinerarySection />
