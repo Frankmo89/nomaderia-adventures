@@ -817,7 +817,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-052 — Paso por el cañón entre el seguro de viaje y las preguntas frecuentes
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente.
+- **Estado:** Vigente, salvo el punto 4 (qué se mueve y cuánto dura), que reemplaza ADR-054.
 - **Contexto:** Frank, sobre la cresta entre el bloque del seguro y «Preguntas frecuentes»: «¿puedes poner un efecto de scroll como un cañón, como adentro del Gran Cañón, como que vas pasando por un cañón?».
 - **Decisión:**
   1. `CanyonPassage` reemplaza el divisor `layered #E8F1EA`, sin texto (`aria-hidden`). El cielo arranca en el `green-wash` del seguro, así que no hay corte arriba. Abajo termina en un borde ondulado color `cloud`, el fondo de las preguntas frecuentes.
@@ -842,6 +842,19 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   6. Sin fogata naranja: el ámbar sigue solo en el hero. (El punto naranja del logo es «la fogata al final del día»; poner una fogata aquí pediría el OK de Frank para romper esa regla.) El logo tampoco se usa como luna: `docs/brand.md` prohíbe sombras o brillos en el pin.
 - **Lección:** el atardecer se ponía detrás de la cordillera y ya se había apagado cuando el paisaje entraba a la pantalla. La franja cálida va justo arriba de los picos y el efecto se mide en los últimos píxeles de la página, no en la pantalla entera.
 - **Consecuencias:** sin fotos en la Galería, el boletín termina claro y la noche empezaría con un corte; hoy la Galería tiene fotos activas.
+
+### ADR-054 — Cañón v2: mirador → bajada → río
+- **Fecha:** 2026-10-24
+- **Estado:** Vigente. Reemplaza el punto 4 de ADR-052.
+- **Contexto:** Frank: «este efecto inmersivo lo quiero perfecto… siento que le podemos sacar provecho». Se pidieron ideas a Grok y Gemini con un prompt que traía la paleta, el stack y los límites del iPhone. Fallas de la v1: al final, una mancha verde lisa y el río en punta (las paredes medias crecían más de lo que se abrían y se juntaban abajo); al inicio, media pantalla de cielo vacío; nada se movía solo, todo era zoom.
+- **Decisión:**
+  1. **Historia.** Empiezas en un mirador: una roca `#14201A` con la cima iluminada y dos pinos, rayos de sol, tres pájaros planeando y bandas planas de neblina entre las mesetas. Al bajar, dejas el mirador; las paredes cercanas pasan junto a ti y suben (tú bajas); atraviesas un banco de neblina; el sol se apaga y las paredes se oscurecen. Al final, el río corre ancho entre piedras, suben dos orillas con pinos y una nube se une al fondo `cloud` de las preguntas frecuentes.
+  2. **El río es el camino.** Una S que se ensancha hacia ti (`riverAt()` en `canyon-silhouettes.ts`), con un brillo plano alrededor y rayitas de agua. Las paredes medias se abren 80 % de su ancho (antes 48 %) y crecen 1.65×: se abren más de lo que crecen, así que el fondo queda abierto. El río y las mesetas comparten zoom, para que el río no se suba a ellas.
+  3. **Caras iluminadas** (componente `Lit`): cada pared, el mirador y las orillas se dibujan dos veces, primero en color claro y encima la misma forma movida unos píxeles hacia afuera y abajo. Queda una banda de luz en la cima de cada escalón y en los lados que miran al río. Al bajar solo se oscurece la parte oscura (una capa con opacidad), así que el contraste crece.
+  4. **Tiempos escalonados** (de Grok), como parte del tramo con el escenario fijo: mirador 0–40 %; paredes cercanas 0–100 %, que además suben 20 % de la pantalla (su caja llega 25 % abajo de la pantalla para no dejar hueco); paredes medias 15–100 %; fondo 12–100 %; neblina 28–88 %; orillas 60–100 %; nube 70–100 %. La sección mide `200svh` (`190vh` desde `lg`): una pantalla entera de scroll con el escenario fijo.
+  5. Solo cambian `transform` y `opacity` al hacer scroll. Los ciclos (pájaros, neblina, agua) se pausan con `IntersectionObserver` fuera de pantalla y no corren con «reducir movimiento», que muestra el mirador quieto en una franja de 400–520 px.
+  6. Ideas de Gemini (video e imágenes): el río como camino, las paredes que se oscurecen, las caras iluminadas, el mirador, los rayos, los pájaros, la neblina plana, las rayitas de agua, las piedras y la nube final. Descartado: el «valle verde» de Grok (un cañón no tiene pradera, y el río ancho ya resuelve el final) y unas terrazas internas junto al río (se veían como huecos oscuros entre las paredes medias).
+- **Consecuencias:** unas 30 capas compuestas más que la v1 (sombras, ciclos, bandas de neblina); hay que revisar la fluidez en un iPhone real. Ajustar = cambiar tramos y velocidades en `layers` y `onFrame` de `CanyonPassage.tsx`.
 
 ## Lecciones técnicas (bugs no obvios)
 

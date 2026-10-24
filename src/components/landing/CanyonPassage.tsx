@@ -1,39 +1,76 @@
-import { useMemo, useRef, type CSSProperties, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { useReducedMotion } from "framer-motion";
 import { useScrollDepth, type DepthLayer, type ScrollDepth } from "@/hooks/use-scroll-depth";
-import { CANYON, canyonMaskUrl, mirrorShape, type CanyonShape } from "@/lib/canyon-silhouettes";
+import { CANYON, canyonMaskUrl, mirrorShape, riverAt, type CanyonShape } from "@/lib/canyon-silhouettes";
 import { cn } from "@/lib/utils";
 
 /**
  * CanyonPassage (ADR-052) — a wordless stretch between the travel insurance
- * block and the FAQ where you fly into a canyon. Flat silhouettes in the same
- * greens as the hero's range and the promise forest: pale far rim, sage
- * buttes, a mist-coloured river, pine-green middle walls and dark near walls
- * with pines on their ledges. The sky starts in the insurance block's
- * green-wash; the scene ends in a cloud-coloured rim, so the FAQ below
- * follows with no seam.
+ * block and the FAQ where you drop into a canyon and follow its river. Flat
+ * silhouettes in the same greens as the hero's range and the promise forest.
  *
  * The scene is a full-screen stage that stays put (sticky) while the page
- * scrolls most of one more screen. The near walls rise the full height of
- * the screen; the rest of the canyon keeps its drawn proportions at the
- * bottom (at most 165vw tall), so it is never squeezed into a slit. Over the
- * pinned scroll the near walls fly past you, the middle walls part and the
- * buttes and river come closer. With "reduce motion" it is a still 400–520 px
- * band instead.
+ * scrolls one more screen. You start on a lookout ledge: sun rays, birds
+ * soaring, bands of mist between the buttes, the river far below. As you
+ * scroll you leave the ledge, the near walls fly past, you go through a bank
+ * of mist, the sun fades and the walls darken as you go deeper (their lit
+ * faces stay light). At the end the river runs wide past rocks to the bottom
+ * of the screen, and clouds rise into the cloud ground the FAQ stands on.
+ * Ideas from Gemini (video and stills: the river as the path, darker walls
+ * deeper in, lit faces, ledge, rays, birds, flat mist, water streaks, rocks,
+ * rising clouds) and Grok (staggered timing).
+ *
+ * Only transform and opacity change on scroll. The small loops (birds, mist,
+ * water) stop when the canyon is off screen. With "reduce motion" it is a
+ * still 400–520 px band at the lookout.
  */
 
 const mask = (s: CanyonShape) => ({ "--canyon": canyonMaskUrl(s) }) as CSSProperties;
 const FAR_RIM = mask(CANYON.farRim);
 const BUTTES = mask(CANYON.buttes);
 const RIVER = mask(CANYON.river);
+const RIVER_GLOW = mask(CANYON.riverGlow);
+const LEDGE = mask(CANYON.ledge);
+const BANK_L = mask(CANYON.bank);
+const BANK_R = mask(mirrorShape(CANYON.bank));
+
+/** A flat band of mist with wavy edges, tiled across (`--band`). */
+const MIST_PATH =
+  "M0,26 C30,22 50,15 80,17 C110,19 122,24 152,23 C186,22 202,11 236,12 C270,13 286,22 320,22 C350,22 372,18 400,26 L400,31 C360,33 320,29 280,31 C230,34 170,30 120,32 C70,34 30,30 0,31 Z";
+const MIST = {
+  "--band": `url("data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 40" preserveAspectRatio="none"><path d="${MIST_PATH}"/></svg>`,
+  )}")`,
+} as CSSProperties;
 
 type WallKind = "mid" | "near";
 
 /* Same greens as the other scenes: forest far #8DB09C and middle #4F7F66,
-   hero middle range #1E3D30. */
-const WALLS: Record<WallKind, { l: CSSProperties; r: CSSProperties; fill: string; width: string }> = {
-  mid: { l: mask(CANYON.midWall), r: mask(mirrorShape(CANYON.midWall)), fill: "#4F7F66", width: "w-1/2 lg:w-[44%]" },
-  near: { l: mask(CANYON.nearWall), r: mask(mirrorShape(CANYON.nearWall)), fill: "#1E3D30", width: "w-1/2 lg:w-[36%]" },
+   hero ranges #2F5E4A and #1E3D30. `lit` is the colour of the faces that
+   catch the light (the tops of the ledges, the sides facing the river);
+   `shade` the colour the rest of the wall turns as you go deeper. */
+const WALLS: Record<
+  WallKind,
+  { l: CSSProperties; r: CSSProperties; fill: string; lit: string; shade: string; width: string; face: [number, number] }
+> = {
+  mid: {
+    l: mask(CANYON.midWall),
+    r: mask(mirrorShape(CANYON.midWall)),
+    fill: "#4F7F66",
+    lit: "#6E9A82",
+    shade: "#2F5E4A",
+    width: "w-1/2 lg:w-[44%]",
+    face: [4, 5],
+  },
+  near: {
+    l: mask(CANYON.nearWall),
+    r: mask(mirrorShape(CANYON.nearWall)),
+    fill: "#1E3D30",
+    lit: "#3E6E57",
+    shade: "#14201A",
+    width: "w-1/2 lg:w-[36%]",
+    face: [6, 8],
+  },
 };
 
 const CANYON_CSS = `
@@ -46,17 +83,70 @@ const CANYON_CSS = `
   -webkit-mask: var(--canyon) 0 0 / 100% 100% no-repeat;
   mask: var(--canyon) 0 0 / 100% 100% no-repeat;
 }
-.canyon-haze {
-  background: linear-gradient(rgba(251, 250, 247, 0), rgba(251, 250, 247, 0.55) 50%, rgba(251, 250, 247, 0));
+.canyon-ray {
+  position: absolute;
+  top: -10%;
+  height: 140%;
+  transform-origin: top center;
+  transform: rotate(34deg);
+  background: linear-gradient(to bottom, rgba(251, 250, 247, 0.45) 50%, rgba(251, 250, 247, 0));
+}
+/* Flat mist bands, twice the width of their box so they can drift. */
+.canyon-band {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  -webkit-mask: var(--band) 0 0 / 50% 100% repeat-x;
+  mask: var(--band) 0 0 / 50% 100% repeat-x;
+}
+.canyon-streak { position: absolute; height: 1.5px; border-radius: 9999px; background: #fbfaf7; opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .canyon-drift { animation: canyon-drift 70s linear infinite; }
+  .canyon-drift-slow { animation: canyon-drift 110s linear infinite reverse; }
+  .canyon-soar { animation: canyon-soar 24s ease-in-out infinite; }
+  .canyon-flap { animation: canyon-flap 6s ease-in-out infinite; }
+  .canyon-streak { animation: canyon-flow 2.8s ease-in-out infinite; }
+  .canyon-paused :is(.canyon-drift, .canyon-drift-slow, .canyon-soar, .canyon-flap, .canyon-streak) {
+    animation-play-state: paused;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .canyon-streak { opacity: 0.7; }
+}
+@keyframes canyon-drift { to { transform: translateX(-50%); } }
+@keyframes canyon-soar {
+  0%, 100% { translate: 0 0; }
+  25% { translate: 34px -10px; }
+  50% { translate: 66px 2px; }
+  75% { translate: 30px 12px; }
+}
+@keyframes canyon-flap {
+  0%, 70%, 82%, 94%, 100% { transform: scaleY(1); }
+  76%, 88% { transform: scaleY(0.4); }
+}
+@keyframes canyon-flow {
+  0% { opacity: 0; translate: 0 -3px; }
+  45% { opacity: 0.9; }
+  100% { opacity: 0; translate: 0 5px; }
 }
 `;
 
 /** Cloud ground the canyon ends in (matches the FAQ's background). */
 const RIM_PATH =
   "M0,40 L0,16 C40,6 80,10 120,14 C160,18 180,8 200,6 C230,4 260,12 300,14 C340,16 370,6 400,10 L400,40 Z";
+/** The clouds that rise at the end: a back and a front layer. */
+const CLOUD_BACK = "M0,100 L0,30 C30,12 60,10 90,22 C120,34 150,8 190,10 C230,12 250,30 290,26 C330,22 360,6 400,14 L400,100 Z";
+const CLOUD_FRONT = "M0,100 L0,52 C40,34 80,40 110,50 C140,60 170,36 210,38 C250,40 270,58 310,54 C350,50 370,36 400,40 L400,100 Z";
 
 /** A three-tier pine, same shape family as the forest's. */
 const PINE_PATH = "M15,0 L22,15 L19,15 L26,29 L21,29 L30,46 L17,46 L17,50 L13,50 L13,46 L0,46 L9,29 L4,29 L11,15 L8,15 Z";
+
+/** A soaring bird, wings out. */
+const BIRD_PATH = "M0,7 C5,1 9,1 12,6 C15,1 19,1 24,7 C19,4 15,4 12,9 C9,4 5,4 0,7 Z";
+
+/** A rock by the water, with its lit top. */
+const ROCK_PATH = "M0,10 L2,4 L6,1 L12,0 L16,3 L18,10 Z";
+const ROCK_TOP = "M2,4 L6,1 L12,0 L16,3 L11,4 L5,5 Z";
 
 /** Pines on ledges: x and ledge height in the wall's 200 × 400 box. */
 const PINES: Record<WallKind, readonly { x: number; y: number; size: string }[]> = {
@@ -69,29 +159,124 @@ const PINES: Record<WallKind, readonly { x: number; y: number; size: string }[]>
   ],
 };
 
-const Wall = ({ side, kind, innerRef }: { side: "l" | "r"; kind: WallKind; innerRef: RefObject<HTMLDivElement> }) => {
+/** Sun rays from the top right: where each starts (% from the right) and its width. */
+const RAYS = [
+  { right: 4, width: 22 },
+  { right: 30, width: 9 },
+  { right: 44, width: 16 },
+] as const;
+
+/** Birds: position in the sky (% of the stage), size and where in their loop they start. */
+const BIRDS = [
+  { left: 60, top: 19, size: "w-6", delay: 0 },
+  { left: 70, top: 24, size: "w-[18px]", delay: -7 },
+  { left: 54, top: 26, size: "w-4", delay: -15 },
+] as const;
+
+/** Streaks on the water, placed along the river (fixed, no randomness). */
+const STREAKS = Array.from({ length: 14 }, (_, i) => {
+  const at = riverAt(0.22 + i * 0.055);
+  const off = ((i % 3) - 1) * 0.45 * at.half;
+  const w = Math.max(at.half * 0.55, 2.5);
+  return { left: (at.x + off - w / 2) / 4, top: at.y / 4, width: w / 4, delay: (i * 0.61) % 2.8 };
+});
+
+/** Rocks on the banks near the bottom: where along the river, which bank, size. */
+const ROCKS = [
+  { s: 0.72, side: -1, w: 3.2 },
+  { s: 0.8, side: 1, w: 2.6 },
+  { s: 0.9, side: -1, w: 4 },
+  { s: 0.94, side: 1, w: 4.6 },
+  { s: 0.86, side: 1, w: 2 },
+].map(({ s, side, w }) => {
+  const at = riverAt(s);
+  return { left: (at.x + side * at.half * 1.15) / 4 - (side < 0 ? w : 0), top: at.y / 4, width: w };
+});
+
+/** A pine standing at (x, bottom) of its box, in % (`side` says which edge x counts from). */
+const Pine = ({ at, bottom, size, fill, side = "l" }: { at: string; bottom: string; size: string; fill: string; side?: "l" | "r" }) => (
+  <svg
+    viewBox="0 0 30 50"
+    className={cn("absolute", size, side === "l" ? "-translate-x-1/2" : "translate-x-1/2")}
+    style={{ [side === "l" ? "left" : "right"]: at, bottom, fill }}
+    focusable="false"
+  >
+    <path d={PINE_PATH} />
+  </svg>
+);
+
+/**
+ * A flat shape with lit faces: the shape in its light colour, then the shape
+ * itself moved by (dx, dy) on top, so a band of light stays on the edges
+ * that face the light (the tops of ledges, the sides that face the river).
+ */
+const Lit = ({
+  shape,
+  fill,
+  lit,
+  dx,
+  dy,
+  children,
+}: {
+  shape: CSSProperties;
+  fill: string;
+  lit: string;
+  dx: number;
+  dy: number;
+  children?: ReactNode;
+}) => (
+  <>
+    <div className="canyon-shape" style={{ ...shape, backgroundColor: lit }} />
+    <div className="absolute inset-0" style={{ transform: `translate(${dx}px, ${dy}px)` }}>
+      <div className="canyon-shape" style={{ ...shape, backgroundColor: fill }} />
+      {children}
+    </div>
+  </>
+);
+
+const Wall = ({
+  side,
+  kind,
+  innerRef,
+  shadeRef,
+}: {
+  side: "l" | "r";
+  kind: WallKind;
+  innerRef: RefObject<HTMLDivElement>;
+  shadeRef: RefObject<HTMLDivElement>;
+}) => {
   const wall = WALLS[kind];
+  const [dx, dy] = wall.face;
+  const pines = (fill: string) =>
+    PINES[kind].map((p) => (
+      <Pine
+        key={`${p.x}-${p.y}`}
+        at={`${p.x / 2}%`}
+        bottom={`${((400 - p.y) / 400) * 100}%`}
+        size={p.size}
+        fill={fill}
+        side={side}
+      />
+    ));
   return (
     <div
       ref={innerRef}
       className={cn(
-        "absolute inset-y-0 will-change-transform",
+        "absolute will-change-transform",
+        // The near walls reach a quarter screen below the stage, so they can rise as you go down.
+        kind === "near" ? "-bottom-[25%] top-0" : "inset-y-0",
         wall.width,
         side === "l" ? "left-0 origin-bottom-left" : "right-0 origin-bottom-right",
       )}
     >
-      <div className="canyon-shape" style={{ ...wall[side], backgroundColor: wall.fill }} />
-      {PINES[kind].map((p) => (
-        <svg
-          key={`${p.x}-${p.y}`}
-          viewBox="0 0 30 50"
-          className={cn("absolute", p.size, side === "l" ? "-translate-x-1/2" : "translate-x-1/2")}
-          style={{ [side === "l" ? "left" : "right"]: `${p.x / 2}%`, bottom: `${((400 - p.y) / 400) * 100}%`, fill: wall.fill }}
-          focusable="false"
-        >
-          <path d={PINE_PATH} />
-        </svg>
-      ))}
+      <Lit shape={wall[side]} fill={wall.fill} lit={wall.lit} dx={side === "l" ? -dx : dx} dy={dy}>
+        {pines(wall.fill)}
+        {/* Deeper in, the wall darkens (opacity set on scroll). */}
+        <div ref={shadeRef} className="absolute inset-0 opacity-0 will-change-[opacity]">
+          <div className="canyon-shape" style={{ ...wall[side], backgroundColor: wall.shade }} />
+          {pines(wall.shade)}
+        </div>
+      </Lit>
     </div>
   );
 };
@@ -101,71 +286,220 @@ const smooth = (t: number) => t * t * (3 - 2 * t);
 /** 0 → 1 while the stage is pinned (the section's top has reached the top of the screen). */
 const pinned = ({ entered, viewport, height }: ScrollDepth) =>
   height > viewport ? clamp01((entered - viewport) / (height - viewport)) : 0;
+/** 0 → 1 (eased) over the part `from`–`to` of the pinned scroll. */
+const span = (d: ScrollDepth, from: number, to: number) => smooth(clamp01((pinned(d) - from) / (to - from)));
 
 const CanyonPassage = () => {
   const reducedMotion = useReducedMotion() ?? false;
   const sectionRef = useRef<HTMLDivElement>(null);
+  const birdsRef = useRef<HTMLDivElement>(null);
   const farRef = useRef<HTMLDivElement>(null);
   const buttesRef = useRef<HTMLDivElement>(null);
+  const raysRef = useRef<HTMLDivElement>(null);
   const riverRef = useRef<HTMLDivElement>(null);
   const midLRef = useRef<HTMLDivElement>(null);
   const midRRef = useRef<HTMLDivElement>(null);
   const nearLRef = useRef<HTMLDivElement>(null);
   const nearRRef = useRef<HTMLDivElement>(null);
+  const midShadeLRef = useRef<HTMLDivElement>(null);
+  const midShadeRRef = useRef<HTMLDivElement>(null);
+  const nearShadeLRef = useRef<HTMLDivElement>(null);
+  const nearShadeRRef = useRef<HTMLDivElement>(null);
+  const ledgeRef = useRef<HTMLDivElement>(null);
+  const mistRef = useRef<HTMLDivElement>(null);
+  const cloudRef = useRef<HTMLDivElement>(null);
+  const bankLRef = useRef<HTMLDivElement>(null);
+  const bankRRef = useRef<HTMLDivElement>(null);
+
+  // The loops stop while the canyon is off screen.
+  const [onScreen, setOnScreen] = useState(false);
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const layers = useMemo<readonly DepthLayer[]>(() => {
     const move = (x: number, y: number, s: number) =>
       `translate3d(${x.toFixed(2)}%, ${y.toFixed(1)}px, 0) scale(${s.toFixed(3)})`;
-    // Each wall pair parts by `spread` % of its width and grows by `zoom`,
-    // over the part of the pinned scroll given by `from`–`to`. To leave the
-    // screen, a wall must move more than it grows (spread ≥ zoomed width).
-    const wall = (side: -1 | 1, spread: number, zoom: number, from = 0, to = 1) => (d: ScrollDepth) => {
-      const t = smooth(clamp01((pinned(d) - from) / (to - from)));
-      return move(side * t * spread, 0, 1 + t * zoom);
+    // Each wall pair parts by `spread` % of its width and grows by `zoom`.
+    // To leave the screen (or open the floor), a wall must move more than it
+    // grows: spread ≥ zoomed width.
+    // `rise` lifts the pair by that share of the screen: near walls pass up
+    // past you as you go down.
+    const wall = (side: -1 | 1, spread: number, zoom: number, from: number, rise = 0) => (d: ScrollDepth) => {
+      const t = span(d, from, 1);
+      return move(side * t * spread, -t * rise * d.viewport, 1 + t * zoom);
     };
-    const centre = (sink: number, zoom: number) => (d: ScrollDepth) => {
-      const t = smooth(pinned(d));
-      return move(0, t * sink, 1 + t * zoom);
-    };
+    const bank = (d: ScrollDepth) => `translate3d(0, ${((1 - span(d, 0.6, 1)) * 105).toFixed(1)}%, 0)`;
+    // Buttes and river share a window and zoom, so the river stays on the canyon floor.
+    const floor = (d: ScrollDepth) => move(0, 0, 1 + span(d, 0.12, 1) * 0.9);
     return [
-      { ref: farRef, transform: centre(0, 0.3) },
-      { ref: buttesRef, transform: centre(24, 0.9) },
-      { ref: riverRef, transform: centre(0, 1.5) },
-      { ref: midLRef, transform: wall(-1, 48, 0.65) },
-      { ref: midRRef, transform: wall(1, 48, 0.65) },
-      { ref: nearLRef, transform: wall(-1, 150, 1.1, 0.1, 1) },
-      { ref: nearRRef, transform: wall(1, 150, 1.1, 0.1, 1) },
+      { ref: birdsRef, transform: (d) => `translate3d(0, ${(-span(d, 0, 1) * 0.35 * d.viewport).toFixed(1)}px, 0)` },
+      { ref: farRef, transform: (d) => move(0, 0, 1 + span(d, 0.25, 1) * 0.3) },
+      { ref: buttesRef, transform: floor },
+      { ref: riverRef, transform: floor },
+      { ref: midLRef, transform: wall(-1, 80, 0.65, 0.15) },
+      { ref: midRRef, transform: wall(1, 80, 0.65, 0.15) },
+      { ref: nearLRef, transform: wall(-1, 150, 1.1, 0, 0.2) },
+      { ref: nearRRef, transform: wall(1, 150, 1.1, 0, 0.2) },
+      { ref: bankLRef, transform: bank },
+      { ref: bankRRef, transform: bank },
+      {
+        ref: ledgeRef,
+        transform: (d) => {
+          const t = span(d, 0, 0.4);
+          return `translate3d(0, ${(t * 115).toFixed(1)}%, 0) scale(${(1 + t * 0.25).toFixed(3)})`;
+        },
+      },
+      {
+        ref: mistRef,
+        transform: (d) => {
+          const t = clamp01((pinned(d) - 0.28) / 0.6);
+          return `translate3d(0, ${(-t * 0.95 * d.viewport).toFixed(1)}px, 0) scale(${(1 + t * 0.6).toFixed(3)})`;
+        },
+      },
+      { ref: cloudRef, transform: (d) => `translate3d(0, ${((1 - span(d, 0.7, 1)) * 100).toFixed(1)}%, 0)` },
     ];
   }, []);
-  useScrollDepth(sectionRef, layers, { enabled: !reducedMotion });
+
+  // Light and colour: the sun fades, the walls darken, the mist comes and goes.
+  const onFrame = useCallback((d: ScrollDepth) => {
+    const set = (ref: RefObject<HTMLDivElement>, v: number) => {
+      if (ref.current) ref.current.style.opacity = v.toFixed(3);
+    };
+    set(raysRef, 1 - span(d, 0.08, 0.55));
+    const near = span(d, 0.15, 0.85);
+    set(nearShadeLRef, near);
+    set(nearShadeRRef, near);
+    const mid = 0.85 * span(d, 0.3, 1);
+    set(midShadeLRef, mid);
+    set(midShadeRRef, mid);
+    set(mistRef, Math.sin(Math.PI * clamp01((pinned(d) - 0.28) / 0.6)));
+  }, []);
+  useScrollDepth(sectionRef, layers, { enabled: !reducedMotion, onFrame });
 
   return (
-    <div ref={sectionRef} aria-hidden="true" className={cn("relative", !reducedMotion && "h-[180svh] lg:h-[170vh]")}>
+    <div ref={sectionRef} aria-hidden="true" className={cn("relative", !reducedMotion && "h-[200svh] lg:h-[190vh]")}>
       <style>{CANYON_CSS}</style>
       <div
         className={cn(
           "canyon-sky overflow-hidden",
           reducedMotion ? "relative h-[400px] sm:h-[460px] lg:h-[520px]" : "sticky top-0 h-[100svh]",
+          !onScreen && "canyon-paused",
         )}
       >
+        {/* Birds soaring high over the canyon; they rise out of view as you go down. */}
+        <div ref={birdsRef} className="absolute inset-0 will-change-transform">
+          {BIRDS.map((b) => (
+            <div
+              key={b.left}
+              className={cn("canyon-soar absolute", b.size)}
+              style={{ left: `${b.left}%`, top: `${b.top}%`, animationDelay: `${b.delay}s` }}
+            >
+              <svg
+                viewBox="0 0 24 10"
+                className="canyon-flap w-full fill-[#1E3D30]"
+                style={{ animationDelay: `${b.delay * 0.4}s` }}
+                focusable="false"
+              >
+                <path d={BIRD_PATH} />
+              </svg>
+            </div>
+          ))}
+        </div>
+
         {/* The canyon keeps its drawn proportions at the bottom of the stage. */}
-        <div className="absolute inset-x-0 bottom-0 h-full max-h-[165vw]">
+        <div className="absolute inset-x-0 bottom-0 h-full max-h-[185vw]">
           <div ref={farRef} className="absolute inset-0 origin-bottom will-change-transform">
             <div className="canyon-shape bg-[#B3CBBD]" style={FAR_RIM} />
+            <div className="absolute inset-x-0 top-[41%] h-[5%] overflow-hidden">
+              <div className="canyon-band canyon-drift-slow inset-y-0 bg-[rgba(251,250,247,0.5)]" style={MIST} />
+            </div>
           </div>
           <div ref={buttesRef} className="absolute inset-0 origin-bottom will-change-transform">
             <div className="canyon-shape bg-[#8DB09C]" style={BUTTES} />
+            <div className="absolute inset-x-0 top-[57%] h-[7%] overflow-hidden">
+              <div className="canyon-band canyon-drift inset-y-0 bg-[rgba(251,250,247,0.62)]" style={MIST} />
+            </div>
           </div>
-          <div className="canyon-haze absolute inset-x-0 top-[36%] h-[30%]" />
+          {/* Sun rays from the top right, over the whole stage. */}
+          <div
+            ref={raysRef}
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[100svh] overflow-hidden will-change-[opacity]"
+          >
+            {RAYS.map((r) => (
+              <span key={r.right} className="canyon-ray" style={{ right: `${r.right}%`, width: `${r.width}%` }} />
+            ))}
+          </div>
           <div ref={riverRef} className="absolute inset-0 origin-bottom will-change-transform">
+            <div className="canyon-shape bg-[rgba(251,250,247,0.3)]" style={RIVER_GLOW} />
             <div className="canyon-shape bg-mist" style={RIVER} />
+            {STREAKS.map((s, i) => (
+              <span
+                key={i}
+                className="canyon-streak"
+                style={{ left: `${s.left}%`, top: `${s.top}%`, width: `${s.width}%`, animationDelay: `${s.delay}s` }}
+              />
+            ))}
+            {ROCKS.map((r) => (
+              <svg
+                key={`${r.left}-${r.top}`}
+                viewBox="0 0 18 10"
+                className="absolute max-w-[26px] -translate-y-full"
+                style={{ left: `${r.left}%`, top: `${r.top}%`, width: `${r.width}%` }}
+                focusable="false"
+              >
+                <path d={ROCK_PATH} fill="#1E3D30" />
+                <path d={ROCK_TOP} fill="#3E6E57" />
+              </svg>
+            ))}
           </div>
-          <Wall side="l" kind="mid" innerRef={midLRef} />
-          <Wall side="r" kind="mid" innerRef={midRRef} />
+          <Wall side="l" kind="mid" innerRef={midLRef} shadeRef={midShadeLRef} />
+          <Wall side="r" kind="mid" innerRef={midRRef} shadeRef={midShadeRRef} />
         </div>
         {/* The near walls rise the full height: you stand between them. */}
-        <Wall side="l" kind="near" innerRef={nearLRef} />
-        <Wall side="r" kind="near" innerRef={nearRRef} />
+        <Wall side="l" kind="near" innerRef={nearLRef} shadeRef={nearShadeLRef} />
+        <Wall side="r" kind="near" innerRef={nearRRef} shadeRef={nearShadeRRef} />
+        {/* The banks you land by at the end, with pines; they rise from the bottom corners. */}
+        <div ref={bankLRef} className="absolute bottom-0 left-0 h-[30%] w-[48%] translate-y-full will-change-transform lg:w-[34%]">
+          <Lit shape={BANK_L} fill="#1E3D30" lit="#3E6E57" dx={-4} dy={6} />
+          <Pine at="10%" bottom="72%" size="h-12 w-7" fill="#1E3D30" />
+          <Pine at="19%" bottom="73%" size="h-9 w-[22px]" fill="#1E3D30" />
+          <Pine at="27%" bottom="73%" size="h-7 w-4" fill="#1E3D30" />
+        </div>
+        <div ref={bankRRef} className="absolute bottom-0 right-0 h-[30%] w-[44%] translate-y-full will-change-transform lg:w-[30%]">
+          <Lit shape={BANK_R} fill="#1E3D30" lit="#3E6E57" dx={4} dy={6} />
+          <Pine at="9%" bottom="72%" size="h-11 w-[26px]" fill="#1E3D30" side="r" />
+          <Pine at="18%" bottom="73%" size="h-8 w-5" fill="#1E3D30" side="r" />
+        </div>
+        {/* The lookout you start on, with its lit top; it drops away as you leave it. */}
+        <div
+          ref={ledgeRef}
+          className="absolute bottom-0 left-0 h-[16%] w-[78%] origin-bottom-left will-change-transform lg:h-[22%] lg:w-[52%]"
+        >
+          <Lit shape={LEDGE} fill="#14201A" lit="#2F5E4A" dx={-5} dy={7} />
+          <Pine at="5%" bottom="66%" size="h-10 w-6" fill="#14201A" />
+          <Pine at="10%" bottom="67%" size="h-7 w-[17px]" fill="#14201A" />
+        </div>
+        {/* The bank of mist you go through (opacity and position set on scroll). */}
+        <div ref={mistRef} className="pointer-events-none absolute inset-x-0 top-[50%] h-[50%] opacity-0 will-change-transform">
+          <div className="absolute inset-x-0 top-0 h-[36%] overflow-hidden">
+            <div className="canyon-band canyon-drift-slow inset-y-0 bg-[rgba(251,250,247,0.85)]" style={MIST} />
+          </div>
+          <div className="absolute inset-x-0 top-[40%] h-[28%] overflow-hidden">
+            <div className="canyon-band canyon-drift inset-y-0 bg-[rgba(251,250,247,0.7)]" style={MIST} />
+          </div>
+        </div>
+        {/* Clouds that rise at the end, into the FAQ's cloud ground. */}
+        <div ref={cloudRef} className="absolute inset-x-0 bottom-0 h-[22%] translate-y-full will-change-transform">
+          <svg viewBox="0 0 400 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" focusable="false">
+            <path d={CLOUD_BACK} fill="#EAF0EC" />
+            <path d={CLOUD_FRONT} fill="#FBFAF7" />
+          </svg>
+        </div>
         {/* The cloud ground the FAQ stands on. */}
         <svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 h-10 w-full" focusable="false">
           <path d={RIM_PATH} fill="#FBFAF7" />
