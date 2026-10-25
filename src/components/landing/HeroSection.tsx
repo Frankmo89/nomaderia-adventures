@@ -22,9 +22,10 @@ import { useFeaturedHeroPark } from "@/hooks/use-destinations";
 /**
  * Home hero (ADR-047): the photo is the screen.
  *  - Phones and tablets: story-style. The photo fills the whole screen behind
- *    the transparent navbar and ends in a mountain range (ADR-048): far peaks,
- *    a middle range with drifting mist, then front hills with pines that the
- *    text stands on. They darken to solid forest-dark at the bottom, so the
+ *    the transparent navbar and ends in Yosemite Valley (ADR-048): Half Dome
+ *    far away with mist, El Capitan and Cathedral Rocks, the valley's forest,
+ *    then front hills, and dark ground under the text. They darken to solid
+ *    forest-dark at the bottom, so the
  *    dark promise band below follows with no seam. The top stays clear except
  *    a faint shade for the white logo.
  *  - lg+: text on the left on the light ground, the photo in a tall frame on
@@ -77,13 +78,43 @@ const HERO_CSS = `
   left: 0;
   right: 0;
   bottom: 0;
-  -webkit-mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
-  mask: var(--ridge) top / 100% var(--ridge-h) no-repeat,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) + 1px) no-repeat;
+  -webkit-mask: var(--ridge) top / 100% calc(var(--ridge-h) * var(--ridge-k, 1)) no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) * var(--ridge-k, 1) + 1px) no-repeat;
+  mask: var(--ridge) top / 100% calc(var(--ridge-h) * var(--ridge-k, 1)) no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--ridge-h) * var(--ridge-k, 1) + 1px) no-repeat;
 }
-.hero-ridge-back { top: -5.75rem; background: rgba(47, 94, 74, 0.86); }
-.hero-ridge-mid { top: -3.75rem; background: rgba(30, 61, 48, 0.95); }
+/* Haze in the valley: each far layer gets lighter toward its foot. The
+   walls and Half Dome are lit from the left (late sun): a lighter copy sits
+   behind each, and the layer itself is moved 3 px right and 2 px down, so a
+   thin lit edge shows on the faces turned to the sun. The moved layer is
+   8 px wider each side so no lit strip shows at the screen edges. */
+/* The valley sits low (Gemini's review): the walls rise about 45 px over
+   the forest and Half Dome only peeks out of the V, so the photo keeps its
+   lower third. Their feet go behind the forest and the front hills. */
+.hero-ridge-far, .hero-ridge-far-lit { top: calc(-6.0625rem * var(--ridge-k, 1)); }
+.hero-ridge-far-lit { background: rgba(150, 182, 163, 0.9); }
+.hero-ridge-far {
+  left: -8px;
+  right: -8px;
+  translate: 3px 2px;
+  background: linear-gradient(to bottom, rgba(88, 132, 109, 0.92) 0, rgba(118, 156, 135, 0.92) 6.5rem);
+}
+.hero-ridge-back, .hero-ridge-back-lit { top: calc(-7.375rem * var(--ridge-k, 1)); }
+.hero-ridge-back-lit { background: rgba(108, 150, 127, 0.96); }
+.hero-ridge-back {
+  left: -8px;
+  right: -8px;
+  translate: 3px 2px;
+  background: linear-gradient(to bottom, rgba(47, 94, 74, 0.96) 0, rgba(47, 94, 74, 0.96) 5rem, rgba(78, 122, 100, 0.96) 10rem);
+}
+.hero-ridge-mid { top: calc(-5rem * var(--ridge-k, 1)); background: rgba(30, 61, 48, 0.96); }
+/* The valley at 75 % (65 % on short phones, iPhone SE), so the photo keeps
+   its room next to the space above the headline. With "slice", a shorter
+   mask scales the whole drawing down evenly. */
+.hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.75; }
+@media (max-height: 720px) {
+  .hero-ridge-far, .hero-ridge-far-lit, .hero-ridge-back, .hero-ridge-back-lit, .hero-ridge-mid { --ridge-k: 0.65; }
+}
 .hero-ridge-front {
   top: -2rem;
   background: linear-gradient(to bottom, rgba(20, 32, 26, 0.96) 0, #14201a 3rem);
@@ -162,9 +193,12 @@ const HERO_CSS = `
 
 const ridgeStyle = (ridge: HeroRidge) =>
   ({ "--ridge": ridgeMaskUrl(ridge), "--ridge-h": `${ridge.height / 16}rem` }) as CSSProperties;
-const RIDGE_BACK = ridgeStyle(HERO_RIDGES.back);
-const RIDGE_MID = ridgeStyle(HERO_RIDGES.mid);
-const RIDGE_FRONT = ridgeStyle(HERO_RIDGES.front);
+// Yosemite Valley from Tunnel View (ADR-048 point 5): Half Dome far, El
+// Capitan and Cathedral Rocks as the walls, a pine forest in front.
+const RIDGE_FAR = ridgeStyle(HERO_RIDGES.valleyFar);
+const RIDGE_BACK = ridgeStyle(HERO_RIDGES.valleyWalls);
+const RIDGE_MID = ridgeStyle(HERO_RIDGES.valleyCanopy);
+const RIDGE_FRONT = ridgeStyle(HERO_RIDGES.frontHills);
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -250,13 +284,14 @@ const HeroSection = () => {
   const frameRef = useRef<HTMLDivElement>(null);
   const currentKey = useRef(slides[0].key);
   const photosRef = useRef<HTMLDivElement>(null);
+  const farRef = useRef<HTMLDivElement>(null);
   const rangeRef = useRef<HTMLDivElement>(null);
   const midRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   // Phones: scroll depth (ADR-049). While the hero scrolls away, the photo
-  // lags at 40 % of the scroll and zooms in a little, the far range lags 16 %,
-  // the middle range 7 %, and the front hills with the text move with the
-  // page, so the land climbs over the photo and the near ranges over the far
+  // lags at 40 % of the scroll and zooms in a little, Half Dome lags 24 %, the
+  // valley walls 16 %, the forest 7 %, and the front hills with the text move
+  // with the page, so the land climbs over the photo and the near ranges over the far
   // ones. Off with "reduce motion" and from lg up (no range on desktop).
   const depthLayers = useMemo<readonly DepthLayer[]>(() => {
     const scrolled = ({ entered, viewport }: ScrollDepth) => Math.min(Math.max(entered - viewport, 0), viewport * 1.2);
@@ -266,6 +301,7 @@ const HeroSection = () => {
         ref: photosRef,
         transform: (d) => `${lag(0.4)(d)} scale(${(1 + (0.06 * scrolled(d)) / d.viewport).toFixed(4)})`,
       },
+      { ref: farRef, transform: lag(0.24) },
       { ref: rangeRef, transform: lag(0.16) },
       { ref: midRef, transform: lag(0.07) },
     ];
@@ -533,14 +569,21 @@ const HeroSection = () => {
               its front hills. Anchored to the text, so it follows the copy on
               any screen height. */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 lg:hidden">
-            <div ref={rangeRef} className="hero-range absolute inset-0 will-change-transform">
-              <div className="hero-ridge hero-ridge-back" style={RIDGE_BACK} />
+            {/* Half Dome far away, with the mist in the valley in front of it. */}
+            <div ref={farRef} className="hero-range absolute inset-0 will-change-transform">
+              <div className="hero-ridge hero-ridge-far-lit" style={RIDGE_FAR} />
+              <div className="hero-ridge hero-ridge-far" style={RIDGE_FAR} />
               <div className="hero-mist" style={{ animationPlayState: onScreen ? "running" : "paused" }} />
+            </div>
+            {/* El Capitan and Cathedral Rocks. */}
+            <div ref={rangeRef} className="hero-range absolute inset-0 will-change-transform">
+              <div className="hero-ridge hero-ridge-back-lit" style={RIDGE_BACK} />
+              <div className="hero-ridge hero-ridge-back" style={RIDGE_BACK} />
             </div>
             <div ref={midRef} className="hero-ridge hero-ridge-mid will-change-transform" style={RIDGE_MID} />
             <div className="hero-ridge hero-ridge-front" style={RIDGE_FRONT} />
           </div>
-          <div className="container relative mx-auto px-5 pb-10 sm:pb-14 lg:mx-0 lg:max-w-none lg:p-0 [text-shadow:0_1px_12px_rgba(20,32,26,0.5)] lg:[text-shadow:none]">
+          <div className="container relative mx-auto px-5 pb-10 pt-10 sm:pb-14 lg:mx-0 [@media(max-height:720px)_and_(max-width:1023px)]:pt-7 lg:max-w-none lg:p-0 [text-shadow:0_1px_12px_rgba(20,32,26,0.5)] lg:[text-shadow:none]">
             {/* H1 + subtitle paint with the first commit: no entrance animation
                 (PR #194: LCP text waiting on Framer). */}
             <h1 className="font-serif text-[2rem] font-bold leading-[1.12] text-white sm:text-5xl lg:text-ink xl:text-6xl">
@@ -548,7 +591,7 @@ const HeroSection = () => {
               <em className="block text-hero-accent lg:text-green">nomás se encuentra.</em>
             </h1>
 
-            <p className="mt-3 max-w-xl font-sans text-base leading-relaxed text-white/90 sm:mt-4 sm:text-lg md:text-xl lg:text-slate">
+            <p className="mt-4 max-w-xl font-sans text-base leading-relaxed text-white/90 sm:text-lg md:text-xl lg:text-slate">
               Te armo tu viaje a un parque nacional: ruta día por día, equipo y presupuesto, a tu nivel. $49.
             </p>
 
@@ -557,7 +600,7 @@ const HeroSection = () => {
                 (VITE_CONCIERGE_ENABLED), so doubts go to the FAQ. On phones the
                 FAQ link is left out to keep the photo clear; the FAQ section
                 is further down the page. */}
-            <div className="mt-5 flex flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:items-center sm:gap-6">
+            <div className="mt-7 flex flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:items-center sm:gap-6">
               <Link
                 to="/#quiz"
                 onClick={() => logEvent("hero_cta_click", { cta: "quiz", photos_seen: seen.size })}
@@ -574,7 +617,7 @@ const HeroSection = () => {
               </Link>
             </div>
 
-            <p className="mt-4 flex items-start gap-2 font-sans text-xs text-white/80 sm:text-sm lg:text-slate">
+            <p className="mt-5 flex items-start gap-2 font-sans text-xs text-white/80 lg:mt-4 sm:text-sm lg:text-slate">
               <ShieldCheck className="mt-px h-4 w-4 shrink-0 lg:text-green" aria-hidden="true" />
               <span>Agente de Viajes Certificado (TAP) · Itinerario en menos de 48 h</span>
             </p>
