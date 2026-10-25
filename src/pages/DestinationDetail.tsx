@@ -31,6 +31,7 @@ import { useDestinationBySlug, useRelatedDestinations } from "@/hooks/use-destin
 import type { Tables } from "@/integrations/supabase/types";
 import QuickFactsRow from "@/components/destinations/QuickFactsRow";
 import { CardImage } from "@/components/shared/CardImage";
+import { resizedImageUrl } from "@/lib/resized-image";
 import DifficultyBadge from "@/components/destinations/DifficultyBadge";
 import HowToGetThere, { type LodgingOption } from "@/components/destinations/HowToGetThere";
 import CredibilityBar from "@/components/destinations/CredibilityBar";
@@ -366,7 +367,9 @@ const DestinationDetail = () => {
               {heroImages.length > 0 ? heroImages.map((src, i) => (
                 <div key={i} className="relative flex-none w-full h-full">
                   <img
-                    src={src}
+                    src={resizedImageUrl(src, 1080)}
+                    srcSet={[640, 1080, 1440].map((w) => `${resizedImageUrl(src, w)} ${w}w`).join(", ")}
+                    sizes="100vw"
                     alt={i === 0 ? `Vista de ${dest.title}` : `${dest.title} — imagen ${i + 1}`}
                     loading={i === 0 ? "eager" : "lazy"}
                     className="w-full h-full object-cover object-top img-warm transition-opacity duration-700"
@@ -1068,7 +1071,7 @@ const DestinationDetail = () => {
                   onClick={() => { setLightboxIndex(i); setLightboxOpen(true); }}
                 >
                   <img
-                    src={src}
+                    src={resizedImageUrl(src, i === 0 ? 1080 : 720)}
                     alt={`${dest.title} — galería ${i + 1}`}
                     loading="lazy"
                     decoding="async"
@@ -1086,7 +1089,7 @@ const DestinationDetail = () => {
         <DialogContent className="max-w-5xl w-full bg-black/95 border-0 p-0 overflow-hidden">
           <div className="relative flex items-center justify-center min-h-[60vh]">
             <img
-              src={galleryImages[lightboxIndex]}
+              src={resizedImageUrl(galleryImages[lightboxIndex], 1600)}
               alt={`${dest.title} — imagen ${lightboxIndex + 1}`}
               loading="lazy"
               className="max-h-[80vh] max-w-full object-contain"
@@ -1145,7 +1148,7 @@ const DestinationDetail = () => {
                 <Link key={r.id} to={`/destinos/${r.slug}`} className="bg-card rounded-xl overflow-hidden hover:scale-[1.03] transition-transform shadow-lg group">
                   <div className="h-40 overflow-hidden relative">
                     {r.hero_image_url ? (
-                      <CardImage src={r.hero_image_url} alt={`Vista de ${r.title}`} loading="lazy" decoding="async" width={400} height={160} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <CardImage src={resizedImageUrl(r.hero_image_url, 640)} alt={`Vista de ${r.title}`} loading="lazy" decoding="async" width={640} height={160} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20" />
                     )}
