@@ -911,6 +911,19 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   6. No se adoptó de Grok: texto centrado, botón de play, otro subtítulo ni «miles de viajeros». Más adelante, si las fotos tienen «Lugar»: distancia en la etiqueta («Joshua Tree · 2 h 30»).
 - **Consecuencias:** cambiar cuántas fotos salen = `STORY_MAX` en `HeroSection.tsx`. En iPhone, el clic largo no abre «Guardar imagen» sobre el hero (`-webkit-touch-callout: none`) porque es la pausa.
 
+### ADR-059 — Encabezado sobre las fotos: más aire y menú en círculo de cristal
+- **Fecha:** 2026-10-24
+- **Estado:** Vigente.
+- **Contexto:** con las historias (ADR-058) en producción, a Frank no le convencían el logo ni el menú. Se probaron tres opciones sobre tres fotos (hoy / más aire + menú en círculo / «IA» en verde) y se pidió opinión a Gemini y Grok. Los tres coincidieron: el problema no era el color, sino el encabezado: el logo casi pegado a las barras, y el menú eran tres rayitas finas sin fondo que se perdían sobre cielo claro o ramas y se veían débiles junto al título.
+- **Decisión:**
+  1. Sobre el hero del home (celular y tablet), la fila del logo queda 14 px debajo de las barras (`pt-[25px]`); al bajar y ponerse crema, vuelve a 16 px con una transición de 300 ms.
+  2. El menú en celular es un círculo de 44 px: sobre fotos, `#14201A` al 45 % con desenfoque de 8 px y borde blanco al 16 %; en la barra crema, un aro tenue (`#14201A` al 4 %, borde al 10 %) con el ícono en tinta. Ícono propio de 18 × 12 con trazo de 2 px. Al tocarlo se hunde un poco (`scale(0.93)`, solo sin «reducir movimiento»).
+  3. La etiqueta del lugar usa el mismo vidrio (desenfoque de 8 px, borde blanco al 16 %), pero se queda al 70 % porque lleva texto chico y necesita contraste. Queda a 84 px, 15 px debajo de la fila del logo.
+  4. Logo a 30 px en celular (32 antes; 36 desde `md`), dentro del rango de `docs/brand.md`.
+  5. **No se cambia el color de «IA».** En verde desaparece sobre fotos de bosque, y `docs/brand.md` dice que «IA» y el punto del sol siempre van en fogata.
+  6. No se hizo el cambio de hamburguesa a X que propuso Gemini: el menú abre una pantalla completa que tapa el botón, así que no se vería.
+- **Consecuencias:** el mismo botón de vidrio aparece en las otras páginas con foto o banda oscura arriba (`/destinos`, etc.). Si se agrega otro botón sobre fotos, usar este mismo vidrio.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
