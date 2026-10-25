@@ -745,7 +745,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-046 — El hero del home pasa las fotos activas de la Galería del panel
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente, salvo el punto 5 (fotos completas sobre copia desenfocada), que reemplaza ADR-047, y el orden y temporizador del punto 1, que reemplaza ADR-057 (historias, 6 fotos al azar por visita). Completa ADR-045.
+- **Estado:** Vigente, salvo el punto 5 (fotos completas sobre copia desenfocada), que reemplaza ADR-047, y el orden y temporizador del punto 1, que reemplaza ADR-058 (historias, 6 fotos al azar por visita). Completa ADR-045.
 - **Contexto:** Frank quiere que el hero muestre «las que yo elijo desde la administración en galería» (`media_slider`, `/admin/galeria`): 11 imágenes activas, originales del iPhone de 0.2 a 3.4 MB.
 - **Decisión:**
   1. El hero arranca con la foto local 02 (la LCP, con preload; abre igual de rápido) y luego pasa las imágenes activas de la Galería en el orden del panel; la portada no se repite. Si la Galería no tiene imágenes activas o la consulta falla, pasa el set local de `public/hero/v2/`.
@@ -886,7 +886,18 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   5. **El boletín es donde empieza la noche** (Frank: «que ese cuadro del correo se sienta más incorporado… que no se vea la división tan fea»; «que las estrellas empiecen un poco antes, al principio se ve muy plano»): la foto se funde en `#14201A` sólido abajo, salen las primeras estrellas debajo del formulario y el escenario sigue con el mismo cielo, sin corte. Arriba, el crema del blog baja en una onda sobre la foto. Sin fotos en la Galería, el fondo es un degradado verde oscuro (antes era claro y el texto blanco no se leía). En el escenario, 16 estrellas ya están afuera desde el inicio; las demás salen al anochecer.
 - **Consecuencias:** el home termina con el footer, no con el paisaje; el paisaje queda justo arriba. Ajustar = cambiar tramos en `scene` de `NightCamp.tsx`.
 
-### ADR-057 — Las fotos del hero como historias de Instagram
+### ADR-057 — Las fotos de parques viven en nuestro Storage, no en nps.gov
+- **Fecha:** 2026-10-24
+- **Estado:** Vigente
+- **Contexto:** 61 de 63 filas en `destinations` apuntaban `hero_image_url` y `gallery_images` a `www.nps.gov/common/uploads/structured_data/`. NPS mueve y borra esos archivos; las tarjetas caen al fallback oscuro (visto en vivo 2026-10-24: Channel Islands, Shenandoah, Yellowstone, Acadia y ~15 más). En julio, `scripts/fix-dead-images.ts` cambió NPS muerto por NPS nuevo; volvieron a morir. Solo kings-canyon y redwood se mantienen porque sus fotos viven en nuestro Storage (a menudo bucket `destinations_media`, no solo `destinations`).
+- **Decisión:**
+  1. Copiar fotos de parque a nuestro Storage bucket `destinations` en `nps/{slug}/{index}.jpg` (upsert, `cacheControl: 31536000`). URL pública: `{SUPABASE_URL}/storage/v1/object/public/destinations/nps/{slug}/{index}.jpg`.
+  2. Edge Function admin-only `mirror-park-images` (vía `_shared/admin-auth.ts`): body `{ slug, dry_run? }`, un parque por llamada. Fuente: NPS API `/parks?parkCode=` (`NPS_API_KEY`). Hasta 6 imágenes. Skip si falla el download, content-type no es `image/*`, < 20 KB, o el `credit` contiene `©` / `copyright`. **«Nuestra» URL** = cualquier objeto public/sign en el host del proyecto (`isOurStorageUrl`), sin importar el bucket. Nunca reemplaza esas URLs. Si hero ya es nuestra y la galería no tiene nps.gov → noop idempotente (sin download/upload/DB). Si hero es nuestra pero hay nps.gov en galería → reemplazar solo esos slots; nunca meter el hero en `gallery_images`. Si no queda ninguna foto usable → dejar la fila y reportar `needs manual photo`.
+  3. Guard en `ingest-national-parks`: no sobrescribir `hero_image_url` / `gallery_images` cuando ya hay URL de nuestro Storage (cualquier bucket). Otros writers: form admin (`AdminDestinationForm` + `ImageUpload`) y el one-off `scripts/fix-dead-images.ts` (no volver a usarlo para reintroducir nps.gov).
+  4. Diagnóstico admin (`/admin/audit`): marca URLs fuera de nuestro Storage en ámbar («depende de nps.gov») y las muertas en rojo; «Copiar fotos a Nomaderia» solo corre parques con al menos una URL nps.gov (ámbar/rojo).
+- **Consecuencias:** Tras merge, Frank despliega con `deploy-edge-functions.yml` (`workflow_dispatch` o push a `main`), corre dry-run desde `/admin`, luego el run real, y revisa `/destinos` en iPhone. No hace falta migración de Storage si el bucket `destinations` ya es público (como hoy). Nunca volver a escribir URLs de nps.gov en esos campos.
+
+### ADR-058 — Las fotos del hero como historias de Instagram
 - **Fecha:** 2026-10-24
 - **Estado:** Vigente. Reemplaza el temporizador y el orden del panel de ADR-046 (punto 1); lo demás de ADR-046/047/048/049 sigue.
 - **Contexto:** con el bosque y el cañón listos, faltaba el primer efecto, el que hace que alguien se quede, sin quitarle la atención a las fotos ni saturar la pantalla. Grok propuso un «aterrizaje suave» (la foto se acomoda mientras suben las cordilleras) e historias con barras. Frank eligió las historias; tiene ~30 fotos propias en la Galería y va a subir más.

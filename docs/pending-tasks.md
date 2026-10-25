@@ -12,6 +12,28 @@
 
 ---
 
+## Pendiente humano — Fotos de parques en Storage (ADR-057)
+
+- [ ] **FRANK: desplegar** `mirror-park-images` vía Actions → `deploy-edge-functions.yml` (`workflow_dispatch`) **después** de mergear el PR de la función a `main`. El token de `gh` del agente no tiene scope `workflow`, así que no puede dispararlo.
+- [ ] **FRANK: dry-run desde `/admin` → Diagnóstico** → «Copiar fotos a Nomaderia» (solo parques con URL nps.gov; primero dry_run; revisar el reporte).
+- [ ] **FRANK: run real** tras confirmar el dry-run (mismo botón, o por parque en filas ámbar/rojas).
+- [ ] **FRANK: verificar `/destinos` en iPhone** — las tarjetas no deben caer al fallback oscuro.
+- [ ] Confirmar que el secret `NPS_API_KEY` sigue en Supabase Edge Functions → Secrets (ya lo usa `ingest-national-parks`).
+- [ ] No volver a correr `scripts/fix-dead-images.ts` para reintroducir URLs de nps.gov.
+
+## Changelog 2026-10-24 (b) — Fix Storage detection + idempotencia mirror
+
+- [x] `isOurStorageUrl`: cualquier bucket en el host del proyecto (p. ej. `destinations_media` de Kings Canyon / Redwood).
+- [x] Mirror idempotente: hero nuestra + galería sin nps.gov → noop; si hay nps.gov en galería → solo esos slots; nunca hero en `gallery_images`.
+- [x] Ingest guard usa el mismo check «cualquier Storage nuestro».
+
+## Changelog 2026-10-24 — Fotos de parques → Storage (ADR-057, Draft PR1)
+
+- [x] Edge Function `mirror-park-images` (admin-only) + helpers `_shared/mirror-park-images.ts` + tests Vitest.
+- [x] Guard en `ingest-national-parks`: no pisa URLs de Storage en `hero_image_url` / `gallery_images`.
+- [x] ADR-057 en `docs/decisions.md`.
+- [ ] Admin Diagnóstico (PR2): chequeo hero + gallery; ámbar/rojo; «Copiar fotos a Nomaderia».
+
 ## Changelog 2026-10-16 — Hero del home: slogan + CTA al quiz (rama `feat/hero-slogan`)
 
 - [x] **[2026-10-16] Hero con el slogan de marca.** Solo `src/components/landing/HeroSection.tsx`. H1 «Aquí nadie se pierde… / *nomás se encuentra.*» (U+2026; misma tipografía, la 2.ª línea en el ámbar itálico que tenía «Aventura»). Subtítulo: «Te armo tu viaje a un parque nacional: ruta día por día, equipo y presupuesto, a tu nivel. $49.» (sin «Todo en español.»).
@@ -724,7 +746,7 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
-- [2026-10-24] **Las fotos del hero como historias (ADR-057).** Frank eligió la variante de historias de Grok. Barras arriba (3 px, con degradado oscuro arriba para que se lean) que se llenan en 6 s; toque a la derecha o deslizar = siguiente, toque a la izquierda = anterior, mantener presionado = pausa; el scroll vertical sigue normal. Por visita salen 7 fotos: la portada y 6 de la Galería al azar. Al cargar, la foto se acomoda de un leve acercamiento mientras suben las cordilleras; cada foto se acerca despacio mientras se ve. Eventos `hero_story_step` y `photos_seen` en `hero_cta_click`. **Verificación:** `npm run typecheck` ✅ · `npm test` ✅ · build ✅ · eslint ✅ · Playwright con toques reales a 390×844 y 375×667 (toque, deslizar, mantener, arrastre vertical que hace scroll sin cambiar foto, avance solo), 1280×800 con clic, y con «reducir movimiento»; el botón cabe en la primera pantalla. Pendiente: probarlo en un iPhone real.
+- [2026-10-24] **Las fotos del hero como historias (ADR-058).** Frank eligió la variante de historias de Grok. Barras arriba (3 px, con degradado oscuro arriba para que se lean) que se llenan en 6 s; toque a la derecha o deslizar = siguiente, toque a la izquierda = anterior, mantener presionado = pausa; el scroll vertical sigue normal. Por visita salen 7 fotos: la portada y 6 de la Galería al azar. Al cargar, la foto se acomoda de un leve acercamiento mientras suben las cordilleras; cada foto se acerca despacio mientras se ve. Eventos `hero_story_step` y `photos_seen` en `hero_cta_click`. **Verificación:** `npm run typecheck` ✅ · `npm test` ✅ · build ✅ · eslint ✅ · Playwright con toques reales a 390×844 y 375×667 (toque, deslizar, mantener, arrastre vertical que hace scroll sin cambiar foto, avance solo), 1280×800 con clic, y con «reducir movimiento»; el botón cabe en la primera pantalla. Pendiente: probarlo en un iPhone real.
 - [2026-10-24] **Cañón: ajustes de la revisión de Gemini (ADR-054 punto 8).** El río nace en punta bajo una banda de neblina al pie de las mesetas (ya no en un corte recto); mesetas y río crecen hasta 1.65× para que las cimas no choquen arriba; cada pájaro sube a su ritmo y planea a un lado. **Verificación:** `npm run typecheck` ✅ · `npm test` ✅ · build ✅ · eslint ✅ · Playwright a 390×844 en siete puntos del scroll; sin errores.
 - [2026-10-24] **«La promesa» como bosque de secuoyas gigantes (ADR-055).** Frank: «debe ser más inmersivo… que se sientan los pinos gigantes de secuoya». Con ideas de Gemini y Grok: la sección se queda fija 1.2 pantallas; empiezas en el claro con la frase entre dos troncos gigantes; la frase sube y se va, entra un segundo par de troncos, suben troncos lejanos de la neblina, rayos de luz con agujitas, ramas que bajan de las esquinas y cierran arriba; al final se oscurece y el suelo sube hasta las tarjetas de parques. Formas nuevas en `src/lib/sequoia-silhouettes.ts` con pruebas. Después, por la revisión de Gemini: follaje en racimos (no ramas tipo palmera), menos líneas verticales al final, rayos del lado del sol y troncos lejanos lejos de la frase. Segunda revisión: los rayos salen del sol, las copas cierran hasta el final y se quitaron una tira clara y un racimo suelto. **Verificación:** `npm run typecheck` ✅ · `npm test` ✅ · build ✅ · eslint ✅ · Playwright a 390×844, 375×667 y 1280×800 en siete puntos del scroll, y con «reducir movimiento»: la frase nunca toca los troncos, sin errores. Pendiente: revisar fluidez en un iPhone real.
 - [2026-10-24] **El final como escena: llegar al campamento al anochecer (ADR-056).** Con ideas de Grok y Gemini: primero una escena fija de pantalla completa (atardecer que se apaga, dos cordilleras con cimas iluminadas por la luna, la luna que sale, estrellas, pinos, la loma con la tienda y el farol que se prenden, luciérnagas y al final «Encuentra tu parque →» al quiz) y después el footer sobre verde oscuro liso, sin nada moviéndose detrás de los enlaces. Después, por Frank: el boletín se funde en la noche (foto que termina en `#14201A`, primeras estrellas bajo el formulario, onda crema arriba; sin fotos, fondo oscuro legible) y 16 estrellas ya están afuera al empezar la escena. **Verificación:** `npm run typecheck` ✅ · `npm test` ✅ · build ✅ · eslint ✅ · Playwright a 390×844 y 1280×800 en siete puntos del scroll (incluido el fondo de la página) y con «reducir movimiento»; sin errores.

@@ -33,7 +33,7 @@ import { useFeaturedHeroPark } from "@/hooks/use-destinations";
  * Photos fill their frame (object-cover). The frame has the shape of the
  * phone shots Frank uploads, so they lose only a thin edge.
  *
- * Photos play as stories (ADR-057, after ADR-046): thin bars at the top fill
+ * Photos play as stories (ADR-058, after ADR-046): thin bars at the top fill
  * over 6 s each, then the photo cross-fades to the next while it zooms in
  * slowly. Tap the right side or swipe left for the next one, tap the left
  * side or swipe right to go back, press and hold to pause; scrolling works
@@ -58,7 +58,7 @@ const HERO_SIZES = "(min-width: 1024px) 420px, 100vw";
 const SLIDE_MS = 6000;
 /** Cross-fade between photos; keep in sync with `duration-[1200ms]` below. */
 const FADE_MS = 1200;
-/** Photos per visit: the cover and six from the gallery (ADR-057). */
+/** Photos per visit: the cover and six from the gallery (ADR-058). */
 const STORY_MAX = 7;
 /** A press this long pauses the photos instead of stepping. */
 const HOLD_MS = 220;
@@ -121,7 +121,7 @@ const HERO_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .hero-place { animation: none; }
 }
-/* Stories (ADR-057). Bars: a track per photo, 3 px so a visitor from
+/* Stories (ADR-058). Bars: a track per photo, 3 px so a visitor from
    Instagram sees them in the first second; the current one fills
    (it ends the photo: see onAnimationEnd), the ones before stay full. */
 .hero-story-bar {

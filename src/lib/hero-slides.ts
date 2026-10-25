@@ -1,7 +1,7 @@
 import { resizedImageUrl } from "@/lib/resized-image";
 
 /**
- * Slides for the home hero (ADR-046, ADR-057). The first slide is always the
+ * Slides for the home hero (ADR-046, ADR-058). The first slide is always the
  * local, preloaded cover, so the page paints fast; after it come photos Frank
  * keeps active in /admin/galeria, a few drawn at random per visit. With no
  * gallery photos (still loading, none active, or the query failed) the local
@@ -64,7 +64,7 @@ export function gallerySlide(photo: GalleryHeroPhoto): HeroSlide {
 }
 
 /**
- * How many gallery photos one visit shows (ADR-057). `random` returns [0, 1);
+ * How many gallery photos one visit shows (ADR-058). `random` returns [0, 1);
  * the hero passes a seeded one, so a visit keeps its pick when the list
  * refetches.
  */
