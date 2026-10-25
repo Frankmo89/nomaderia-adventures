@@ -25,6 +25,7 @@ import { useDestinationsDirectory, type ParkCard } from "@/hooks/use-destination
 import { haversineKm, getDistanceBucket, SAN_DIEGO_ORIGIN } from "@/lib/distance";
 import { formatRegionDisplay, getRegionCodes, STATE_NAMES } from "@/lib/regions";
 import { cn } from "@/lib/utils";
+import { resizedImageUrl } from "@/lib/resized-image";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -89,11 +90,11 @@ function ParkListCard({ park }: { park: ParkCard }) {
       <div className="relative h-28 overflow-hidden">
         {park.hero_image_url ? (
           <CardImage
-            src={park.hero_image_url}
+            src={resizedImageUrl(park.hero_image_url, 720)}
             alt={park.title}
             loading="lazy"
             decoding="async"
-            width={400}
+            width={720}
             height={112}
             className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
           />

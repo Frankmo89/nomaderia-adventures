@@ -21,6 +21,18 @@
 - [ ] Confirmar que el secret `NPS_API_KEY` sigue en Supabase Edge Functions → Secrets (ya lo usa `ingest-national-parks`).
 - [ ] No volver a correr `scripts/fix-dead-images.ts` para reintroducir URLs de nps.gov.
 
+## Changelog 2026-10-24 (c) — Park photos vía resizedImageUrl (render/image)
+
+- [x] `src/pages/Destinations.tsx`: card → `resizedImageUrl(url, 720)` (mismo patrón que `DestinationsCatalog.tsx`).
+- [x] `src/pages/DestinationDetail.tsx`:
+  - hero carousel → 1080 + `srcSet` 640/1080/1440, `sizes="100vw"`;
+  - gallery grid → 1080 primer tile, 720 resto;
+  - lightbox → 1600;
+  - related-park cards → 640.
+- [x] `loading="lazy"` en todos salvo el primer slide del hero (`eager`).
+- [x] Sin tocar auth, `has_role`, routing, Stripe, hero/`media_slider`, ni SELECTs en hooks.
+- **Verificación:** `npx tsc --noEmit` + `npm test` + `npm run build`; Playwright 390×844 en `/destinos` y `/destinos/yosemite-national-park` — toda request de foto de parque a `/storage/v1/render/image/`; bytes before/after en el cuerpo del Draft PR.
+
 ## Changelog 2026-10-24 (b) — Fix Storage detection + idempotencia mirror
 
 - [x] `isOurStorageUrl`: cualquier bucket en el host del proyecto (p. ej. `destinations_media` de Kings Canyon / Redwood).
