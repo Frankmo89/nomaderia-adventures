@@ -26,13 +26,14 @@
 - [x] `isOurStorageUrl`: cualquier bucket en el host del proyecto (p. ej. `destinations_media` de Kings Canyon / Redwood).
 - [x] Mirror idempotente: hero nuestra + galería sin nps.gov → noop; si hay nps.gov en galería → solo esos slots; nunca hero en `gallery_images`.
 - [x] Ingest guard usa el mismo check «cualquier Storage nuestro».
+- [x] Bulk «Copiar fotos a Nomaderia» solo parques ámbar/rojo (PR2).
 
-## Changelog 2026-10-24 — Fotos de parques → Storage (ADR-057, Draft PR1)
+## Changelog 2026-10-24 — Fotos de parques → Storage (ADR-057, Draft PRs)
 
 - [x] Edge Function `mirror-park-images` (admin-only) + helpers `_shared/mirror-park-images.ts` + tests Vitest.
 - [x] Guard en `ingest-national-parks`: no pisa URLs de Storage en `hero_image_url` / `gallery_images`.
 - [x] ADR-057 en `docs/decisions.md`.
-- [ ] Admin Diagnóstico (PR2): chequeo hero + gallery; ámbar/rojo; «Copiar fotos a Nomaderia».
+- [x] Admin Diagnóstico (PR2): chequeo hero + gallery con nombre del parque; ámbar nps.gov / rojo muerto; «Copiar fotos a Nomaderia» (dry run → confirmar → real) + botón por parque.
 
 ## Changelog 2026-10-16 — Hero del home: slogan + CTA al quiz (rama `feat/hero-slogan`)
 
