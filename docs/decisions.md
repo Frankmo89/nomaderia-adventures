@@ -745,7 +745,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-046 — El hero del home pasa las fotos activas de la Galería del panel
 - **Fecha:** 2026-10-23
-- **Estado:** Vigente, salvo el punto 5 (fotos completas sobre copia desenfocada), que reemplaza ADR-047. Completa ADR-045.
+- **Estado:** Vigente, salvo el punto 5 (fotos completas sobre copia desenfocada), que reemplaza ADR-047, y el orden y temporizador del punto 1, que reemplaza ADR-058 (historias, 6 fotos al azar por visita). Completa ADR-045.
 - **Contexto:** Frank quiere que el hero muestre «las que yo elijo desde la administración en galería» (`media_slider`, `/admin/galeria`): 11 imágenes activas, originales del iPhone de 0.2 a 3.4 MB.
 - **Decisión:**
   1. El hero arranca con la foto local 02 (la LCP, con preload; abre igual de rápido) y luego pasa las imágenes activas de la Galería en el orden del panel; la portada no se repite. Si la Galería no tiene imágenes activas o la consulta falla, pasa el set local de `public/hero/v2/`.
@@ -896,6 +896,19 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   3. Guard en `ingest-national-parks`: no sobrescribir `hero_image_url` / `gallery_images` cuando ya hay URL de nuestro Storage (cualquier bucket). Otros writers: form admin (`AdminDestinationForm` + `ImageUpload`) y el one-off `scripts/fix-dead-images.ts` (no volver a usarlo para reintroducir nps.gov).
   4. Diagnóstico admin (`/admin/audit`): marca URLs fuera de nuestro Storage en ámbar («depende de nps.gov») y las muertas en rojo; «Copiar fotos a Nomaderia» solo corre parques con al menos una URL nps.gov (ámbar/rojo).
 - **Consecuencias:** Tras merge, Frank despliega con `deploy-edge-functions.yml` (`workflow_dispatch` o push a `main`), corre dry-run desde `/admin`, luego el run real, y revisa `/destinos` en iPhone. No hace falta migración de Storage si el bucket `destinations` ya es público (como hoy). Nunca volver a escribir URLs de nps.gov en esos campos.
+
+### ADR-058 — Las fotos del hero como historias de Instagram
+- **Fecha:** 2026-10-24
+- **Estado:** Vigente. Reemplaza el temporizador y el orden del panel de ADR-046 (punto 1); lo demás de ADR-046/047/048/049 sigue.
+- **Contexto:** con el bosque y el cañón listos, faltaba el primer efecto, el que hace que alguien se quede, sin quitarle la atención a las fotos ni saturar la pantalla. Grok propuso un «aterrizaje suave» (la foto se acomoda mientras suben las cordilleras) e historias con barras. Frank eligió las historias; tiene ~30 fotos propias en la Galería y va a subir más.
+- **Decisión:**
+  1. **Historias.** Barras arriba (una por foto, 3 px tras la revisión de Gemini, para que se vean en el primer segundo; el degradado oscuro de arriba subió a 65 % para que barras, logo y menú se lean sobre cielos claros y ramas): la actual se llena en 6 s y al terminar pasa la siguiente. El llenado de la barra *es* el temporizador (`onAnimationEnd`), así que pausar la barra pausa la foto sin desfase. Toque a la derecha o deslizar a la izquierda = siguiente; toque en el 30 % izquierdo o deslizar a la derecha = anterior (en la primera, vuelve a empezar); mantener presionado = pausa. El scroll vertical sigue normal (`touch-action: pan-y pinch-zoom`; el navegador cancela el toque cuando hace scroll). En escritorio: clic igual, y el mouse encima pausa.
+  2. **7 fotos por visita:** la portada local (LCP, con preload) y 6 de la Galería al azar (semilla por visita, `seededRandom`), para que las barras se lean y no se bajen 30 fotos. Baja solo la actual y la siguiente. El orden del panel ya no cuenta en el hero.
+  3. **Movimiento, solo dos cosas:** al cargar, la foto se acomoda de `scale 1.06` a 1 en 0.75 s mientras suben las cordilleras de siempre; y cada foto se acerca despacio (1 → 1.04) mientras se ve y se desvanece. El H1 y el botón pintan sin animación.
+  4. Las barras aparecen cuando ya se sabe la lista de la Galería, para que su número no cambie a la vista. Con «reducir movimiento»: sin aterrizaje, sin acercamiento, sin avance solo; las barras quietas y los toques siguen funcionando.
+  5. **Medición:** `hero_story_step` (`direction`, `via`: tap/swipe/click, `from`, `count`) y `photos_seen` en `hero_cta_click`.
+  6. No se adoptó de Grok: texto centrado, botón de play, otro subtítulo ni «miles de viajeros». Más adelante, si las fotos tienen «Lugar»: distancia en la etiqueta («Joshua Tree · 2 h 30»).
+- **Consecuencias:** cambiar cuántas fotos salen = `STORY_MAX` en `HeroSection.tsx`. En iPhone, el clic largo no abre «Guardar imagen» sobre el hero (`-webkit-touch-callout: none`) porque es la pausa.
 
 ## Lecciones técnicas (bugs no obvios)
 

@@ -149,7 +149,7 @@ src/
 │   ├── landing-parks.ts      # Etiquetas de las tarjetas de parques del home (ADR-040)
 │   ├── landing-origin.ts     # Origen de la ruta del home: San Diego (horas reales) o código postal (≈ motor) (ADR-041)
 │   ├── park-scene-tiles.ts   # Teselas SVG de la escena del excursionista en /destinos (ADR-043)
-│   ├── hero-slides.ts        # Fotos del hero: portada local + Galería achicada por Supabase (ADR-046)
+│   ├── hero-slides.ts        # Fotos del hero: portada local + 6 de la Galería al azar, achicadas por Supabase; gestos de historia (ADR-046, ADR-058)
 │   ├── hero-ridges.ts        # Siluetas de la cordillera donde termina la foto del hero en celular (ADR-048)
 │   ├── forest-silhouettes.ts # Siluetas de pinos del bosque de «La promesa» (ADR-050)
 │   ├── sequoia-silhouettes.ts # Troncos, vetas y copas de las secuoyas de «La promesa» (ADR-055)

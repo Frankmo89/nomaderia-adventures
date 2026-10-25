@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { gallerySlide, heroSlides, nextHeroSlide, type LocalHeroPhoto } from "./hero-slides";
+import {
+  gallerySlide,
+  heroSlides,
+  nextHeroSlide,
+  prevHeroSlide,
+  seededRandom,
+  storyStep,
+  type GalleryHeroPhoto,
+  type LocalHeroPhoto,
+} from "./hero-slides";
 
 const LOCAL: LocalHeroPhoto[] = [
   { id: "02", place: "Joshua Tree · California", alt: "a" },
@@ -19,6 +28,70 @@ describe("heroSlides", () => {
       { id: "g2", public_url: SUPA, caption: null },
     ]);
     expect(slides.map((s) => s.key)).toEqual(["local-02", "gallery-g1", "gallery-g2"]);
+  });
+
+  const GALLERY: GalleryHeroPhoto[] = Array.from({ length: 30 }, (_, i) => ({
+    id: `g${i}`,
+    public_url: SUPA,
+    caption: null,
+  }));
+
+  it("draws a few gallery photos per visit, after the cover", () => {
+    const slides = heroSlides(LOCAL, GALLERY, { max: 7, random: seededRandom(42) });
+    const keys = slides.map((s) => s.key);
+    expect(keys).toHaveLength(7);
+    expect(keys[0]).toBe("local-02");
+    expect(new Set(keys).size).toBe(7);
+    expect(keys.slice(1).every((k) => k.startsWith("gallery-"))).toBe(true);
+  });
+
+  it("keeps the same pick for the same seed and varies across seeds", () => {
+    const pick = (seed: number) =>
+      heroSlides(LOCAL, GALLERY, { max: 7, random: seededRandom(seed) }).map((s) => s.key).join();
+    expect(pick(7)).toBe(pick(7));
+    const seeds = [1, 2, 3, 4, 5].map(pick);
+    expect(new Set(seeds).size).toBeGreaterThan(1);
+  });
+
+  it("shows every gallery photo when there are fewer than the cap", () => {
+    const slides = heroSlides(LOCAL, GALLERY.slice(0, 3), { max: 7, random: seededRandom(1) });
+    expect(slides).toHaveLength(4);
+  });
+});
+
+describe("seededRandom", () => {
+  it("stays in [0, 1)", () => {
+    const r = seededRandom(123);
+    for (let i = 0; i < 1000; i++) {
+      const v = r();
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+    }
+  });
+});
+
+describe("storyStep", () => {
+  const W = 390;
+  it("taps on the left 30 % go back, elsewhere forward", () => {
+    expect(storyStep({ dx: 0, dy: 0, x: 50, width: W })).toEqual({ direction: "prev", kind: "tap" });
+    expect(storyStep({ dx: 3, dy: -4, x: 300, width: W })).toEqual({ direction: "next", kind: "tap" });
+  });
+
+  it("a sideways swipe steps the other way from the finger", () => {
+    expect(storyStep({ dx: -80, dy: 10, x: 100, width: W })).toEqual({ direction: "next", kind: "swipe" });
+    expect(storyStep({ dx: 80, dy: -10, x: 300, width: W })).toEqual({ direction: "prev", kind: "swipe" });
+  });
+
+  it("a scroll or a diagonal drag does nothing", () => {
+    expect(storyStep({ dx: 5, dy: 120, x: 200, width: W })).toBeNull();
+    expect(storyStep({ dx: 60, dy: 55, x: 200, width: W })).toBeNull();
+    expect(storyStep({ dx: 20, dy: 0, x: 200, width: W })).toBeNull();
+  });
+});
+
+describe("prevHeroSlide", () => {
+  it("steps back and stays on the first", () => {
+    expect([0, 1, 4].map(prevHeroSlide)).toEqual([0, 0, 3]);
   });
 });
 
