@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, ArrowUp, X } from "lucide-react";
+import { ArrowUp, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
@@ -44,6 +44,15 @@ function useIsDesktop(): boolean {
     return () => mq.removeEventListener?.("change", onChange);
   }, []);
   return desktop;
+}
+
+/** Hamburger glyph, 18 × 12 with 2 px strokes: bolder than lucide's so it reads over photos. */
+function MenuGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 18 12" fill="none" aria-hidden="true" className={className}>
+      <path d="M1 1h16M1 6h16M1 11h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 function hiddenZoneUnderButton(): boolean {
@@ -156,11 +165,18 @@ const Navbar = () => {
           transition={{ duration: 0.35, ease: "easeOut" }}
         />
 
-        <div className="container mx-auto flex items-center justify-between px-5 py-4">
+        {/* Over the home hero (phones and tablets) the row sits 14 px under
+            the story bars (8 px + 3 px), so the logo doesn't touch them. */}
+        <div
+          className={cn(
+            "container mx-auto flex items-center justify-between px-5 py-4 transition-[padding] duration-300",
+            isHomepage && !scrolled && "max-lg:pt-[25px]",
+          )}
+        >
           <Link to="/" className="relative z-10 flex items-center gap-2">
             <Logo
               variant={scrolled ? "default" : "onDark"}
-              className="h-8 w-auto md:h-9"
+              className="h-[30px] w-auto md:h-9"
             />
           </Link>
 
@@ -214,19 +230,24 @@ const Navbar = () => {
             )}
           </nav>
 
-          {/* Mobile hamburger */}
+          {/* Mobile menu: a round glass button over photos (same glass as the
+              hero's place pill), a quiet ring on the cream bar. It dips a
+              little when pressed. */}
           <Button
             variant="ghost"
             size="icon"
-            className="relative z-10 md:hidden min-h-[44px] min-w-[44px]"
+            className={cn(
+              "relative z-10 h-11 w-11 rounded-full border md:hidden",
+              "transition-colors duration-300 motion-safe:transition-[transform,background-color,border-color] motion-safe:active:scale-[0.93]",
+              scrolled
+                ? "border-forest-dark/10 bg-forest-dark/[0.04] text-foreground hover:bg-forest-dark/[0.08] hover:text-foreground"
+                : "border-white/[0.16] bg-forest-dark/45 text-white backdrop-blur-[8px] hover:bg-forest-dark/55 hover:text-white",
+            )}
             aria-label="Abrir menú de navegación"
             title="Abrir menú de navegación"
             onClick={() => setOpen(true)}
           >
-            <Menu className={cn(
-              "h-6 w-6 transition-colors duration-300",
-              scrolled ? "text-foreground" : "text-white"
-            )} />
+            <MenuGlyph className="h-3 w-[18px]" />
           </Button>
         </div>
       </motion.header>

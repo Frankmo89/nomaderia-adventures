@@ -541,7 +541,7 @@ const HeroSection = () => {
             {/* Place of the photo: under the logo on phones (like the
                 location on a story), bottom-left of the frame on lg+. */}
             {current.place && (
-              <p className="absolute left-5 top-[88px] inline-flex sm:top-[100px] items-center gap-1.5 rounded-full bg-forest-dark/70 px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm lg:bottom-5 lg:top-auto lg:bg-forest-dark/75">
+              <p className="absolute left-5 top-[84px] inline-flex items-center gap-1.5 rounded-full border border-white/[0.16] bg-forest-dark/70 px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-[8px] lg:bottom-5 lg:top-auto lg:bg-forest-dark/75">
                 <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span key={current.key} className="hero-place">
                   {current.place}
