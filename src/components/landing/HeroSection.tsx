@@ -121,15 +121,16 @@ const HERO_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .hero-place { animation: none; }
 }
-/* Stories (ADR-057). Bars: a faint track per photo; the current one fills
+/* Stories (ADR-057). Bars: a track per photo, 3 px so a visitor from
+   Instagram sees them in the first second; the current one fills
    (it ends the photo: see onAnimationEnd), the ones before stay full. */
 .hero-story-bar {
   position: relative;
   flex: 1 1 0;
-  height: 2px;
+  height: 3px;
   overflow: hidden;
   border-radius: 9999px;
-  background: rgba(251, 250, 247, 0.3);
+  background: rgba(251, 250, 247, 0.38);
   box-shadow: 0 0 2px rgba(20, 32, 26, 0.3);
 }
 .hero-story-fill {
@@ -470,10 +471,11 @@ const HeroSection = () => {
                 );
               })}
             </div>
-            {/* Keeps the white logo and menu readable over the sky (phones). */}
+            {/* Keeps the story bars, the white logo and the menu readable over bright
+                skies and branches (phones). */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-forest-dark/55 to-transparent lg:hidden"
+              className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-forest-dark/65 to-transparent lg:hidden"
             />
             {/* Story bars, one per photo. Hidden until the gallery list is
                 known, so their number does not change in view. */}
