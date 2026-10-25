@@ -12,6 +12,28 @@
 
 ---
 
+## Pendiente humano — Fotos de parques en Storage (ADR-057)
+
+- [ ] **FRANK: desplegar** `mirror-park-images` vía Actions → `deploy-edge-functions.yml` (`workflow_dispatch`) **después** de mergear el PR de la función a `main`. El token de `gh` del agente no tiene scope `workflow`, así que no puede dispararlo.
+- [ ] **FRANK: dry-run desde `/admin` → Diagnóstico** → «Copiar fotos a Nomaderia» (solo parques con URL nps.gov; primero dry_run; revisar el reporte).
+- [ ] **FRANK: run real** tras confirmar el dry-run (mismo botón, o por parque en filas ámbar/rojas).
+- [ ] **FRANK: verificar `/destinos` en iPhone** — las tarjetas no deben caer al fallback oscuro.
+- [ ] Confirmar que el secret `NPS_API_KEY` sigue en Supabase Edge Functions → Secrets (ya lo usa `ingest-national-parks`).
+- [ ] No volver a correr `scripts/fix-dead-images.ts` para reintroducir URLs de nps.gov.
+
+## Changelog 2026-10-24 (b) — Fix Storage detection + idempotencia mirror
+
+- [x] `isOurStorageUrl`: cualquier bucket en el host del proyecto (p. ej. `destinations_media` de Kings Canyon / Redwood).
+- [x] Mirror idempotente: hero nuestra + galería sin nps.gov → noop; si hay nps.gov en galería → solo esos slots; nunca hero en `gallery_images`.
+- [x] Ingest guard usa el mismo check «cualquier Storage nuestro».
+
+## Changelog 2026-10-24 — Fotos de parques → Storage (ADR-057, Draft PR1)
+
+- [x] Edge Function `mirror-park-images` (admin-only) + helpers `_shared/mirror-park-images.ts` + tests Vitest.
+- [x] Guard en `ingest-national-parks`: no pisa URLs de Storage en `hero_image_url` / `gallery_images`.
+- [x] ADR-057 en `docs/decisions.md`.
+- [ ] Admin Diagnóstico (PR2): chequeo hero + gallery; ámbar/rojo; «Copiar fotos a Nomaderia».
+
 ## Changelog 2026-10-16 — Hero del home: slogan + CTA al quiz (rama `feat/hero-slogan`)
 
 - [x] **[2026-10-16] Hero con el slogan de marca.** Solo `src/components/landing/HeroSection.tsx`. H1 «Aquí nadie se pierde… / *nomás se encuentra.*» (U+2026; misma tipografía, la 2.ª línea en el ámbar itálico que tenía «Aventura»). Subtítulo: «Te armo tu viaje a un parque nacional: ruta día por día, equipo y presupuesto, a tu nivel. $49.» (sin «Todo en español.»).

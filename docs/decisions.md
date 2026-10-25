@@ -886,6 +886,17 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   5. **El boletín es donde empieza la noche** (Frank: «que ese cuadro del correo se sienta más incorporado… que no se vea la división tan fea»; «que las estrellas empiecen un poco antes, al principio se ve muy plano»): la foto se funde en `#14201A` sólido abajo, salen las primeras estrellas debajo del formulario y el escenario sigue con el mismo cielo, sin corte. Arriba, el crema del blog baja en una onda sobre la foto. Sin fotos en la Galería, el fondo es un degradado verde oscuro (antes era claro y el texto blanco no se leía). En el escenario, 16 estrellas ya están afuera desde el inicio; las demás salen al anochecer.
 - **Consecuencias:** el home termina con el footer, no con el paisaje; el paisaje queda justo arriba. Ajustar = cambiar tramos en `scene` de `NightCamp.tsx`.
 
+### ADR-057 — Las fotos de parques viven en nuestro Storage, no en nps.gov
+- **Fecha:** 2026-10-24
+- **Estado:** Vigente
+- **Contexto:** 61 de 63 filas en `destinations` apuntaban `hero_image_url` y `gallery_images` a `www.nps.gov/common/uploads/structured_data/`. NPS mueve y borra esos archivos; las tarjetas caen al fallback oscuro (visto en vivo 2026-10-24: Channel Islands, Shenandoah, Yellowstone, Acadia y ~15 más). En julio, `scripts/fix-dead-images.ts` cambió NPS muerto por NPS nuevo; volvieron a morir. Solo kings-canyon y redwood se mantienen porque sus fotos viven en nuestro Storage (a menudo bucket `destinations_media`, no solo `destinations`).
+- **Decisión:**
+  1. Copiar fotos de parque a nuestro Storage bucket `destinations` en `nps/{slug}/{index}.jpg` (upsert, `cacheControl: 31536000`). URL pública: `{SUPABASE_URL}/storage/v1/object/public/destinations/nps/{slug}/{index}.jpg`.
+  2. Edge Function admin-only `mirror-park-images` (vía `_shared/admin-auth.ts`): body `{ slug, dry_run? }`, un parque por llamada. Fuente: NPS API `/parks?parkCode=` (`NPS_API_KEY`). Hasta 6 imágenes. Skip si falla el download, content-type no es `image/*`, < 20 KB, o el `credit` contiene `©` / `copyright`. **«Nuestra» URL** = cualquier objeto public/sign en el host del proyecto (`isOurStorageUrl`), sin importar el bucket. Nunca reemplaza esas URLs. Si hero ya es nuestra y la galería no tiene nps.gov → noop idempotente (sin download/upload/DB). Si hero es nuestra pero hay nps.gov en galería → reemplazar solo esos slots; nunca meter el hero en `gallery_images`. Si no queda ninguna foto usable → dejar la fila y reportar `needs manual photo`.
+  3. Guard en `ingest-national-parks`: no sobrescribir `hero_image_url` / `gallery_images` cuando ya hay URL de nuestro Storage (cualquier bucket). Otros writers: form admin (`AdminDestinationForm` + `ImageUpload`) y el one-off `scripts/fix-dead-images.ts` (no volver a usarlo para reintroducir nps.gov).
+  4. Diagnóstico admin (`/admin/audit`): marca URLs fuera de nuestro Storage en ámbar («depende de nps.gov») y las muertas en rojo; «Copiar fotos a Nomaderia» solo corre parques con al menos una URL nps.gov (ámbar/rojo).
+- **Consecuencias:** Tras merge, Frank despliega con `deploy-edge-functions.yml` (`workflow_dispatch` o push a `main`), corre dry-run desde `/admin`, luego el run real, y revisa `/destinos` en iPhone. No hace falta migración de Storage si el bucket `destinations` ya es público (como hoy). Nunca volver a escribir URLs de nps.gov en esos campos.
+
 ## Lecciones técnicas (bugs no obvios)
 
 > Entradas cortas. Una lección por viñeta. Sirven para que un agente no repita un
