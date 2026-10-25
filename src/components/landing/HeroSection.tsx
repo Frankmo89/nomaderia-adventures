@@ -67,15 +67,18 @@ const HERO_CSS = `
    behind each, and the layer itself is moved 3 px right and 2 px down, so a
    thin lit edge shows on the faces turned to the sun. The moved layer is
    8 px wider each side so no lit strip shows at the screen edges. */
-.hero-ridge-far, .hero-ridge-far-lit { top: calc(-9.375rem * var(--ridge-k, 1)); }
-.hero-ridge-far-lit { background: rgba(176, 202, 186, 0.95); }
+/* The valley sits low (Gemini's review): the walls rise about 45 px over
+   the forest and Half Dome only peeks out of the V, so the photo keeps its
+   lower third. Their feet go behind the forest and the front hills. */
+.hero-ridge-far, .hero-ridge-far-lit { top: calc(-6.0625rem * var(--ridge-k, 1)); }
+.hero-ridge-far-lit { background: rgba(150, 182, 163, 0.9); }
 .hero-ridge-far {
   left: -8px;
   right: -8px;
   translate: 3px 2px;
   background: linear-gradient(to bottom, rgba(88, 132, 109, 0.92) 0, rgba(118, 156, 135, 0.92) 6.5rem);
 }
-.hero-ridge-back, .hero-ridge-back-lit { top: calc(-10.625rem * var(--ridge-k, 1)); }
+.hero-ridge-back, .hero-ridge-back-lit { top: calc(-7.375rem * var(--ridge-k, 1)); }
 .hero-ridge-back-lit { background: rgba(108, 150, 127, 0.96); }
 .hero-ridge-back {
   left: -8px;
