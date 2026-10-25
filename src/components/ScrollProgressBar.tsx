@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
-import { motion, useScroll, useSpring } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 
+/**
+ * Thin green line at the top: how far down the page you are.
+ * Progress comes from scrollY and the page height read on each scroll, not
+ * from `scrollYProgress`: Framer measures the page once on mount, when the
+ * lazy sections are not there yet, finds nothing to scroll and reports 1, so
+ * the line started full on the home until the first scroll.
+ */
 export const ScrollProgressBar = () => {
   const [reducedMotion, setReducedMotion] = useState(false);
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30, restDelta: 0.001 });
+  const { scrollY } = useScroll();
+  const progress = useTransform(scrollY, (y) => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    return max > 0 ? Math.min(Math.max(y / max, 0), 1) : 0;
+  });
+  const scaleX = useSpring(progress, { stiffness: 200, damping: 30, restDelta: 0.001 });
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
