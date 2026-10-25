@@ -21,6 +21,46 @@ describe("hero ridges", () => {
     expect(peak(HERO_RIDGES.mid)).toBeLessThan(peak(HERO_RIDGES.front));
   });
 
+  // x,y pairs of a path, curve handles included (they bound the curve).
+  const points = (path: string) => {
+    const nums = numbers(path);
+    const out: [number, number][] = [];
+    for (let i = 0; i < nums.length; i += 2) out.push([nums[i], nums[i + 1]]);
+    return out;
+  };
+  // The phone shows the middle 375 of the 1024 units.
+  const [left, right] = [(1024 - 375) / 2, (1024 + 375) / 2];
+
+  it("Half Dome rises in the middle of the valley, whole on a 375 px phone", () => {
+    const far = points(HERO_RIDGES.valleyFar.path);
+    const top = Math.min(...far.map(([, y]) => y));
+    const summit = far.filter(([, y]) => y === top).map(([x]) => x);
+    expect(Math.min(...summit)).toBeGreaterThan(left + 100);
+    expect(Math.max(...summit)).toBeLessThan(right - 100);
+    // The valley walls leave the V open in front of it (only the floor there).
+    const walls = points(HERO_RIDGES.valleyWalls.path).filter(([x]) => x > 485 && x < 565);
+    expect(walls.length).toBeGreaterThan(0);
+    expect(Math.min(...walls.map(([, y]) => y))).toBeGreaterThanOrEqual(186);
+  });
+
+  it("El Capitan and Cathedral Rocks frame the V on a 375 px phone", () => {
+    const walls = points(HERO_RIDGES.valleyWalls.path);
+    const highest = (from: number, to: number) => Math.min(...walls.filter(([x]) => x >= from && x <= to).map(([, y]) => y));
+    expect(highest(left, 445)).toBeLessThan(20); // El Capitan
+    expect(highest(600, right)).toBeLessThan(40); // Cathedral Rocks and spires
+  });
+
+  it("the valley floor is one low canopy line, no single trees", () => {
+    const { path, height } = HERO_RIDGES.valleyCanopy;
+    const line = points(path).slice(1, -1);
+    // No spikes: neighbouring treetops never differ by more than a few units.
+    for (let i = 1; i < line.length; i++) expect(Math.abs(line[i][1] - line[i - 1][1])).toBeLessThan(8);
+    // It dips in the middle of the V so Half Dome's base shows.
+    const y = (from: number, to: number) => line.filter(([x]) => x >= from && x <= to).map(([, v]) => v);
+    expect(Math.min(...y(520, 570))).toBeGreaterThan(Math.max(...y(300, 360)));
+    expect(Math.min(...ys(path))).toBeGreaterThan(height / 3);
+  });
+
   it("builds a CSS url with an encoded SVG", () => {
     const url = ridgeMaskUrl(HERO_RIDGES.mid);
     expect(url.startsWith('url("data:image/svg+xml,')).toBe(true);
