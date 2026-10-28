@@ -586,7 +586,7 @@ referenciar esta lista primero.
 
 ## 🛠️ Pendientes de Código (un agente puede ejecutarlos)
 
-> **2026-10-27 — Calculadora reconstruida (SoCal drivers):** `/calculadora` usa fórmula nueva en `src/lib/budget-calc.ts` (gas RT = hours×65×2, entrada NPS × autos, hospedaje/comida/equipo por estilo). Tarifas en `src/config/calculator-rates.ts` (`RATES_UPDATED=2026-10-27`). **Frank:** revisar gasolina mensualmente (AAA / gasprices.aaa.com) antes de bump de `RATES_UPDATED`. Ver ADR-060.
+> **2026-10-27 — Calculadora reconstruida (SoCal drivers):** `/calculadora` usa fórmula nueva en `src/lib/budget-calc.ts` (gas RT = hours×65×2, entrada NPS por `entrance_fee_type`, hospedaje/comida/equipo por estilo). Tarifas en `src/config/calculator-rates.ts` (`RATES_UPDATED=2026-10-27`). Follow-up: ferry parks (Channel Islands), off-route ZIPs, ZIP no encontrado, plural "habitaciones". **Frank:** revisar gasolina mensualmente (AAA / gasprices.aaa.com) antes de bump de `RATES_UPDATED`. Ver ADR-060.
 
 
 
@@ -763,6 +763,7 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-10-27] **Calculadora follow-up (PR #243):** ferry parks vía `parseDriveToPort` (Channel Islands → Manejando + Ferry "Por cotizar"); `entrance_fee_type` (por persona / por vehículo / gratis); ZIPs off-route (`isOffRouteZip`) fuerzan Volando; ZIP no encontrado oculta resultados; fix "habitaciónes" → "habitaciones". ADR-060 extendido.
 - [2026-10-27] **Calculadora de presupuesto reconstruida para conductores SoCal.** Fórmula honest: gasolina (ZIP CA 900–961 vs US), vuelos opcionales, renta de carro al volar, entrada NPS × autos, hospedaje (noches=max(días−1,1)), comida, equipo. Tarifas centralizadas en `src/config/calculator-rates.ts`. Eliminadas líneas Actividades/Seguro. CTA Stripe $49. ADR-060. Gates: typecheck + typecheck:functions + test + build.
 
 

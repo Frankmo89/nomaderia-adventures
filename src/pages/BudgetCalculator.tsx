@@ -24,14 +24,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { STRIPE_LINK_ITINERARIO_49 } from "@/config/pricing";
 import {
   calculateBudget,
-  resolveTransport,
+  resolveCalculatorTransport,
+  resolveDriveHoursForCalc,
   STYLE_LABELS,
   type ComfortLevel,
   type TransportMode,
   type BudgetLine,
 } from "@/lib/budget-calc";
 import {
-  driveFromOrigin,
   originFromZip,
   readSavedOrigin,
   saveOrigin,
@@ -49,6 +49,7 @@ const BAR_COLORS: Record<string, string> = {
   gas: "#1F6F43",
   flights: "#2E6F9E",
   car_rental: "#166534",
+  ferry: "#2E6F9E",
   entrance: "#6E7A74",
   lodging: "#14201A",
   food: "#C2562F",
@@ -105,6 +106,8 @@ export default function BudgetCalculator() {
 
   const { data: destinations = [], isLoading } = useDestinations();
   const [origin, setOrigin] = useState<RouteOrigin>(initialOrigin);
+  /** True when lookupZip returned null for the current 5-digit ZIP. */
+  const [zipLookupFailed, setZipLookupFailed] = useState(false);
 
   const {
     register,
@@ -137,19 +140,27 @@ export default function BudgetCalculator() {
   // Resolve + persist origin whenever ZIP is a valid 5-digit code.
   useEffect(() => {
     const zip = values.zip;
-    if (!isValidZipFormat(zip)) return;
+    if (!isValidZipFormat(zip)) {
+      setZipLookupFailed(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
         const point = await lookupZip(zip);
-        if (cancelled || !point) return;
-        const next = originFromZip(zip, point);
-        if (!cancelled) {
-          setOrigin(next);
-          saveOrigin(next);
+        if (cancelled) return;
+        if (!point) {
+          // Unknown ZIP: keep prior origin untouched, hide results, show error.
+          setZipLookupFailed(true);
+          return;
         }
+        setZipLookupFailed(false);
+        const next = originFromZip(zip, point);
+        setOrigin(next);
+        saveOrigin(next);
       } catch {
         // Table fetch failed — keep prior origin; calc still works from San Diego hours.
+        if (!cancelled) setZipLookupFailed(false);
       }
     })();
     return () => {
@@ -159,22 +170,22 @@ export default function BudgetCalculator() {
 
   const drive = useMemo(() => {
     if (!destination) return null;
-    return driveFromOrigin(origin, {
+    return resolveDriveHoursForCalc(origin, {
       latitude: destination.latitude,
       longitude: destination.longitude,
       drive_time_from_san_diego: destination.drive_time_from_san_diego,
     });
   }, [destination, origin]);
 
-  // When no destination yet, don't force flying.
+  // When no destination yet, don't force flying. Off-route ZIPs force Volando.
   const activeChoice = destination
-    ? resolveTransport(drive ? drive.hours : null)
+    ? resolveCalculatorTransport(drive ? drive.hours : null, values.zip)
     : { mode: "driving" as const, forcedFlying: false, message: null };
 
   const lastSeedKey = useRef<string>("");
   useEffect(() => {
     if (!destination) return;
-    const key = `${destination.id}:${drive?.hours ?? "null"}`;
+    const key = `${destination.id}:${drive?.hours ?? "null"}:${values.zip}`;
     if (activeChoice.forcedFlying) {
       setValue("transport", "flying", { shouldValidate: true });
       lastSeedKey.current = key;
@@ -184,7 +195,7 @@ export default function BudgetCalculator() {
       setValue("transport", activeChoice.mode, { shouldValidate: true });
       lastSeedKey.current = key;
     }
-  }, [destination, drive, activeChoice, setValue]);
+  }, [destination, drive, activeChoice, setValue, values.zip]);
 
   const flightRaw = values.flightPricePerPerson;
   const flightPrice =
@@ -198,7 +209,7 @@ export default function BudgetCalculator() {
 
   const budget = useMemo(() => {
     if (!destination) return null;
-    if (!isValidZipFormat(values.zip)) return null;
+    if (!isValidZipFormat(values.zip) || zipLookupFailed) return null;
     const people = Number(values.people);
     const days = Number(values.days);
     if (!Number.isFinite(people) || !Number.isFinite(days) || people < 1 || days < 1) {
@@ -213,9 +224,11 @@ export default function BudgetCalculator() {
         driveHours: drive ? drive.hours : null,
         zip: values.zip,
         entranceFeeUsd: destination.entrance_fee_usd,
+        entranceFeeType: destination.entrance_fee_type,
         flightPricePerPerson:
           Number.isFinite(flightPrice as number) ? (flightPrice as number) : null,
         hasGear: Boolean(values.hasGear),
+        needsFerry: Boolean(drive?.needsFerry),
       });
     } catch {
       return null;
@@ -230,6 +243,7 @@ export default function BudgetCalculator() {
     drive,
     effectiveTransport,
     flightPrice,
+    zipLookupFailed,
   ]);
 
   const [email, setEmail] = useState("");
@@ -344,6 +358,9 @@ export default function BudgetCalculator() {
               />
               {errors.zip && (
                 <p className="text-sm text-destructive">{errors.zip.message}</p>
+              )}
+              {!errors.zip && zipLookupFailed && (
+                <p className="text-sm text-destructive">No encontramos ese código postal</p>
               )}
             </div>
 

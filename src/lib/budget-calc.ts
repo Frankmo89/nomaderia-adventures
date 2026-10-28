@@ -1,4 +1,10 @@
 import { CALCULATOR_RATES } from "@/config/calculator-rates";
+import {
+  driveFromOrigin,
+  estimateDriveHours,
+  isOffRouteZip,
+  type RouteOrigin,
+} from "@/lib/landing-origin";
 
 export type ComfortLevel = "budget" | "mid" | "premium";
 export type TransportMode = "driving" | "flying";
@@ -20,7 +26,7 @@ const NO_ROAD_MESSAGE =
 
 export interface TransportChoice {
   mode: TransportMode;
-  /** True when driveFromOrigin() is null — UI must lock to Volando. */
+  /** True when the UI must lock to Volando (no road, or off-route ZIP). */
   forcedFlying: boolean;
   message: string | null;
 }
@@ -38,6 +44,73 @@ export function resolveTransport(driveHours: number | null): TransportChoice {
     return { mode: "driving", forcedFlying: false, message: null };
   }
   return { mode: "flying", forcedFlying: false, message: null };
+}
+
+/**
+ * Same as resolveTransport, but Hawaiʻi / Alaska / territories force Volando
+ * (no road trip from home to the parks on this route).
+ */
+export function resolveCalculatorTransport(
+  driveHours: number | null,
+  zip: string,
+): TransportChoice {
+  if (isOffRouteZip(zip)) {
+    return resolveTransport(null);
+  }
+  return resolveTransport(driveHours);
+}
+
+/**
+ * "3 horas en coche a Ventura" → 3.
+ * Only drive-to-port strings (boat parks). Plain "3 horas en coche" returns null
+ * (that is parseDriveFromSanDiego / driveFromOrigin territory).
+ */
+export function parseDriveToPort(raw: string | null | undefined): number | null {
+  if (!raw) return null;
+  const m = raw
+    .trim()
+    .match(/^(\d+(?:\.\d+)?)\s+horas?\s+en\s+coche\s+a\s+.+/i);
+  if (!m) return null;
+  return Number(m[1]);
+}
+
+export interface DriveHoursForCalc {
+  hours: number | null;
+  /** True when the San Diego column is a drive-to-port (ferry) park. */
+  needsFerry: boolean;
+}
+
+interface CalcPark {
+  latitude: number | null;
+  longitude: number | null;
+  drive_time_from_san_diego: string | null;
+}
+
+/**
+ * Effective drive hours for the calculator.
+ * Road parks → driveFromOrigin(). Ferry (drive-to-port) parks → San Diego
+ * port hours, or estimateDriveHours from any other ZIP. Pure no-road → null.
+ */
+export function resolveDriveHoursForCalc(
+  origin: RouteOrigin,
+  park: CalcPark,
+): DriveHoursForCalc {
+  const road = driveFromOrigin(origin, park);
+  if (road) return { hours: road.hours, needsFerry: false };
+
+  const portHours = parseDriveToPort(park.drive_time_from_san_diego);
+  if (portHours == null) return { hours: null, needsFerry: false };
+
+  if (origin.kind === "san-diego") {
+    return { hours: portHours, needsFerry: true };
+  }
+  if (park.latitude == null || park.longitude == null) {
+    return { hours: portHours, needsFerry: true };
+  }
+  return {
+    hours: estimateDriveHours(origin, { lat: park.latitude, lon: park.longitude }),
+    needsFerry: true,
+  };
 }
 
 /** CA gas price for ZIP prefixes 900–961 (inclusive); US price otherwise. */
@@ -69,10 +142,12 @@ export interface BudgetCalcInput {
   days: number;
   style: ComfortLevel;
   transport: TransportMode;
-  /** Hours from driveFromOrigin(); null = no road (must fly). */
+  /** Hours from resolveDriveHoursForCalc(); null = no road (must fly). */
   driveHours: number | null;
   zip: string;
   entranceFeeUsd: number | null | undefined;
+  /** 'por persona' | 'por vehículo' | 'gratis' (destinations.entrance_fee_type). */
+  entranceFeeType?: string | null;
   /**
    * USD per person. null/undefined = "Por definir" (excluded from total).
    * Negatives are rejected.
@@ -80,17 +155,19 @@ export interface BudgetCalcInput {
   flightPricePerPerson?: number | null;
   /** When true, gear line is omitted. */
   hasGear: boolean;
+  /** Drive-to-port (ferry) park — add Ferry "Por cotizar" outside the total. */
+  needsFerry?: boolean;
 }
 
 export interface BudgetLine {
-  id: "gas" | "flights" | "car_rental" | "entrance" | "lodging" | "food" | "gear";
+  id: "gas" | "flights" | "car_rental" | "ferry" | "entrance" | "lodging" | "food" | "gear";
   label: string;
   amount: number;
   /** Shown even when amount is 0 (Entrada → "Gratis"). */
   alwaysShow?: boolean;
-  /** Leave out of the total (empty flight price). */
+  /** Leave out of the total (empty flight price / ferry quote). */
   excludeFromTotal?: boolean;
-  /** Display "Por definir" / "Gratis" instead of $0. */
+  /** Display "Por definir" / "Gratis" / "Por cotizar" instead of $0. */
   displayAmount?: string;
   subtext?: string;
   tag?: string;
@@ -110,6 +187,48 @@ export interface BudgetCalcResult {
   forcedFlying: boolean;
 }
 
+function entranceLine(
+  feeUsd: number | null | undefined,
+  feeType: string | null | undefined,
+  people: number,
+  cars: number,
+): BudgetLine {
+  const type = (feeType ?? "").trim().toLowerCase();
+  const raw = feeUsd ?? 0;
+
+  if (type === "gratis" || raw === 0) {
+    return {
+      id: "entrance",
+      label: "Entrada al parque",
+      amount: 0,
+      alwaysShow: true,
+      displayAmount: "Gratis",
+      tag: "dato oficial NPS",
+    };
+  }
+
+  if (type === "por persona") {
+    return {
+      id: "entrance",
+      label: "Entrada al parque",
+      amount: Math.round(raw * people),
+      alwaysShow: true,
+      subtext: "por persona",
+      tag: "dato oficial NPS",
+    };
+  }
+
+  // 'por vehículo' or unknown → per car (historical default)
+  return {
+    id: "entrance",
+    label: "Entrada al parque",
+    amount: Math.round(raw * cars),
+    alwaysShow: true,
+    subtext: "por carro",
+    tag: "dato oficial NPS",
+  };
+}
+
 export function calculateBudget(input: BudgetCalcInput): BudgetCalcResult {
   const {
     people,
@@ -119,8 +238,10 @@ export function calculateBudget(input: BudgetCalcInput): BudgetCalcResult {
     driveHours,
     zip,
     entranceFeeUsd,
+    entranceFeeType,
     flightPricePerPerson,
     hasGear,
+    needsFerry = false,
   } = input;
 
   if (
@@ -131,7 +252,7 @@ export function calculateBudget(input: BudgetCalcInput): BudgetCalcResult {
     throw new RangeError("El precio del vuelo no puede ser negativo");
   }
 
-  const transportChoice = resolveTransport(driveHours);
+  const transportChoice = resolveCalculatorTransport(driveHours, zip);
   const transport: TransportMode = transportChoice.forcedFlying
     ? "flying"
     : requestedTransport;
@@ -181,26 +302,30 @@ export function calculateBudget(input: BudgetCalcInput): BudgetCalcResult {
     });
   }
 
-  const entranceRaw = entranceFeeUsd ?? 0;
-  const entranceAmount = Math.round(entranceRaw * cars);
-  lines.push({
-    id: "entrance",
-    label: "Entrada al parque",
-    amount: entranceAmount,
-    alwaysShow: true,
-    displayAmount: entranceAmount === 0 ? "Gratis" : undefined,
-    tag: "dato oficial NPS",
-  });
+  if (needsFerry) {
+    lines.push({
+      id: "ferry",
+      label: "Ferry",
+      amount: 0,
+      excludeFromTotal: true,
+      displayAmount: "Por cotizar",
+      alwaysShow: true,
+      subtext: "El ferry a la isla lo cotizamos en tu itinerario.",
+    });
+  }
+
+  lines.push(entranceLine(entranceFeeUsd, entranceFeeType, people, cars));
 
   const lodgingRate = CALCULATOR_RATES.LODGING_PER_NIGHT[style];
+  const lodgingUnitLabel =
+    style === "budget"
+      ? `${units} sitio${units === 1 ? "" : "s"}`
+      : `${units} ${units === 1 ? "habitación" : "habitaciones"}`;
   lines.push({
     id: "lodging",
     label: "Hospedaje",
     amount: Math.round(lodgingRate * nights * units),
-    subtext:
-      style === "budget"
-        ? `${nights} noche${nights === 1 ? "" : "s"} · ${units} sitio${units === 1 ? "" : "s"}`
-        : `${nights} noche${nights === 1 ? "" : "s"} · ${units} habitación${units === 1 ? "" : "es"}`,
+    subtext: `${nights} noche${nights === 1 ? "" : "s"} · ${lodgingUnitLabel}`,
   });
 
   const foodRate = CALCULATOR_RATES.FOOD_PER_PERSON_DAY[style];
@@ -236,4 +361,3 @@ export function calculateBudget(input: BudgetCalcInput): BudgetCalcResult {
     forcedFlying: transportChoice.forcedFlying,
   };
 }
-

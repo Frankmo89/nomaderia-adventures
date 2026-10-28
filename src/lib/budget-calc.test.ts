@@ -6,9 +6,13 @@ import {
   gasPriceForZip,
   lodgingUnits,
   nightsForTrip,
+  parseDriveToPort,
+  resolveCalculatorTransport,
+  resolveDriveHoursForCalc,
   resolveTransport,
   type BudgetCalcInput,
 } from "@/lib/budget-calc";
+import { SAN_DIEGO_ORIGIN } from "@/lib/landing-origin";
 
 /** Real San Diego → Joshua Tree hours from destinations.drive_time_from_san_diego. */
 const JOSHUA_TREE = {
@@ -16,6 +20,13 @@ const JOSHUA_TREE = {
   entranceFeeUsd: 30,
   latitude: 33.91418525,
   longitude: -115.8398125,
+};
+
+const CHANNEL_ISLANDS = {
+  drive_time_from_san_diego: "3 horas en coche a Ventura",
+  latitude: 33.98680093,
+  longitude: -119.9112735,
+  entranceFeeUsd: 0,
 };
 
 const base = (overrides: Partial<BudgetCalcInput> = {}): BudgetCalcInput => ({
@@ -26,6 +37,7 @@ const base = (overrides: Partial<BudgetCalcInput> = {}): BudgetCalcInput => ({
   driveHours: JOSHUA_TREE.driveHours,
   zip: "92101",
   entranceFeeUsd: JOSHUA_TREE.entranceFeeUsd,
+  entranceFeeType: "por vehículo",
   flightPricePerPerson: null,
   hasGear: false,
   ...overrides,
@@ -50,6 +62,57 @@ describe("resolveTransport", () => {
     expect(choice.mode).toBe("flying");
     expect(choice.forcedFlying).toBe(true);
     expect(choice.message).toMatch(/no tiene acceso por carretera/);
+  });
+});
+
+describe("resolveCalculatorTransport — off-route ZIPs", () => {
+  it("Honolulu ZIP forces flying even when the park has road hours", () => {
+    const choice = resolveCalculatorTransport(3, "96813");
+    expect(choice.mode).toBe("flying");
+    expect(choice.forcedFlying).toBe(true);
+    expect(choice.message).toMatch(/no tiene acceso por carretera/);
+  });
+
+  it("Alaska ZIP forces flying", () => {
+    expect(resolveCalculatorTransport(5, "99501").forcedFlying).toBe(true);
+  });
+
+  it("San Diego ZIP keeps driving under 10 h", () => {
+    expect(resolveCalculatorTransport(3, "92101")).toEqual({
+      mode: "driving",
+      forcedFlying: false,
+      message: null,
+    });
+  });
+});
+
+describe("parseDriveToPort", () => {
+  it("parses Channel Islands drive-to-port hours", () => {
+    expect(parseDriveToPort("3 horas en coche a Ventura")).toBe(3);
+  });
+
+  it("rejects plain road drives and flight strings", () => {
+    expect(parseDriveToPort("3 horas en coche")).toBeNull();
+    expect(parseDriveToPort("7.5-8 horas en coche (South Rim)")).toBeNull();
+    expect(parseDriveToPort("Vuelo vía LAX")).toBeNull();
+    expect(parseDriveToPort(null)).toBeNull();
+  });
+});
+
+describe("resolveDriveHoursForCalc — ferry parks", () => {
+  it("Channel Islands from San Diego → 3 h drive to port + needsFerry", () => {
+    const resolved = resolveDriveHoursForCalc(SAN_DIEGO_ORIGIN, CHANNEL_ISLANDS);
+    expect(resolved).toEqual({ hours: 3, needsFerry: true });
+  });
+
+  it("Joshua Tree from San Diego → road hours, no ferry", () => {
+    const resolved = resolveDriveHoursForCalc(SAN_DIEGO_ORIGIN, {
+      drive_time_from_san_diego: "3 horas en coche",
+      latitude: JOSHUA_TREE.latitude,
+      longitude: JOSHUA_TREE.longitude,
+    });
+    expect(resolved.needsFerry).toBe(false);
+    expect(resolved.hours).toBe(3);
   });
 });
 
@@ -91,6 +154,7 @@ describe("calculateBudget — Joshua Tree from San Diego", () => {
 
     const entrance = result.lines.find((l) => l.id === "entrance");
     expect(entrance?.amount).toBe(30);
+    expect(entrance?.subtext).toBe("por carro");
     expect(entrance?.tag).toBe("dato oficial NPS");
 
     expect(result.nights).toBe(2);
@@ -108,6 +172,92 @@ describe("calculateBudget — Joshua Tree from San Diego", () => {
   it("omits gear when Ya tengo equipo is on", () => {
     const result = calculateBudget(base({ hasGear: true }));
     expect(result.lines.find((l) => l.id === "gear")).toBeUndefined();
+  });
+});
+
+describe("calculateBudget — Channel Islands ferry", () => {
+  it("from San Diego → driving, gas for 3 h, Ferry Por cotizar left out of total", () => {
+    const driveHours = 3;
+    const result = calculateBudget(
+      base({
+        driveHours,
+        transport: "driving",
+        entranceFeeUsd: 0,
+        entranceFeeType: "gratis",
+        needsFerry: true,
+      }),
+    );
+
+    expect(result.forcedFlying).toBe(false);
+    const miles = driveHours * CALCULATOR_RATES.DRIVE_MPH * 2;
+    const gallons = miles / CALCULATOR_RATES.MPG;
+    const gas = Math.round(gallons * CALCULATOR_RATES.GAS_PRICE_CA * 1);
+    expect(result.lines.find((l) => l.id === "gas")?.amount).toBe(gas);
+
+    const ferry = result.lines.find((l) => l.id === "ferry");
+    expect(ferry?.displayAmount).toBe("Por cotizar");
+    expect(ferry?.excludeFromTotal).toBe(true);
+    expect(ferry?.subtext).toMatch(/ferry a la isla/i);
+
+    expect(result.lines.find((l) => l.id === "flights")).toBeUndefined();
+    const withoutExcluded = result.lines
+      .filter((l) => !l.excludeFromTotal)
+      .reduce((s, l) => s + l.amount, 0);
+    expect(result.total).toBe(withoutExcluded);
+    expect(result.total).toBe(gas + 0 + 300 + 270 + 100);
+  });
+});
+
+describe("calculateBudget — entrance fee type", () => {
+  it("por persona → fee × people", () => {
+    const result = calculateBudget(
+      base({
+        people: 4,
+        entranceFeeUsd: 15,
+        entranceFeeType: "por persona",
+      }),
+    );
+    const entrance = result.lines.find((l) => l.id === "entrance");
+    expect(entrance?.amount).toBe(60);
+    expect(entrance?.subtext).toBe("por persona");
+  });
+
+  it("por vehículo → fee × cars", () => {
+    const result = calculateBudget(
+      base({
+        people: 6,
+        entranceFeeUsd: 30,
+        entranceFeeType: "por vehículo",
+      }),
+    );
+    expect(result.cars).toBe(2);
+    const entrance = result.lines.find((l) => l.id === "entrance");
+    expect(entrance?.amount).toBe(60);
+    expect(entrance?.subtext).toBe("por carro");
+  });
+
+  it("gratis or 0 → Gratis", () => {
+    const freeType = calculateBudget(
+      base({ entranceFeeUsd: 30, entranceFeeType: "gratis" }),
+    );
+    expect(freeType.lines.find((l) => l.id === "entrance")?.displayAmount).toBe("Gratis");
+
+    const zeroFee = calculateBudget(
+      base({ entranceFeeUsd: 0, entranceFeeType: "por vehículo" }),
+    );
+    expect(zeroFee.lines.find((l) => l.id === "entrance")?.displayAmount).toBe("Gratis");
+  });
+});
+
+describe("calculateBudget — lodging copy", () => {
+  it("5 people, Cómodo → 2 habitaciones (no accent on plural)", () => {
+    const result = calculateBudget(
+      base({ people: 5, style: "mid" }),
+    );
+    expect(result.lodgingUnits).toBe(2);
+    const lodging = result.lines.find((l) => l.id === "lodging");
+    expect(lodging?.subtext).toContain("2 habitaciones");
+    expect(lodging?.subtext).not.toContain("habitaciónes");
   });
 });
 
@@ -154,6 +304,7 @@ describe("calculateBudget — flights and capacity", () => {
         transport: "driving",
         flightPricePerPerson: null,
         entranceFeeUsd: 0,
+        entranceFeeType: "gratis",
       }),
     );
     expect(result.forcedFlying).toBe(true);
@@ -167,6 +318,20 @@ describe("calculateBudget — flights and capacity", () => {
       .filter((l) => !l.excludeFromTotal)
       .reduce((s, l) => s + l.amount, 0);
     expect(result.total).toBe(withoutFlights);
+  });
+
+  it("Honolulu ZIP forces flying via calculateBudget", () => {
+    const result = calculateBudget(
+      base({
+        zip: "96813",
+        driveHours: 3,
+        transport: "driving",
+        flightPricePerPerson: null,
+      }),
+    );
+    expect(result.forcedFlying).toBe(true);
+    expect(result.lines.find((l) => l.id === "gas")).toBeUndefined();
+    expect(result.lines.find((l) => l.id === "flights")?.displayAmount).toBe("Por definir");
   });
 
   it("shows Gratis entrance at $0 and always includes the line", () => {
