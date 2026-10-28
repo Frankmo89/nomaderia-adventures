@@ -10,6 +10,7 @@ import {
   resolveCalculatorTransport,
   resolveDriveHoursForCalc,
   resolveTransport,
+  transportToSeed,
   type BudgetCalcInput,
 } from "@/lib/budget-calc";
 import { SAN_DIEGO_ORIGIN } from "@/lib/landing-origin";
@@ -340,5 +341,31 @@ describe("calculateBudget — flights and capacity", () => {
     expect(entrance?.alwaysShow).toBe(true);
     expect(entrance?.displayAmount).toBe("Gratis");
     expect(entrance?.amount).toBe(0);
+  });
+});
+
+describe("transportToSeed", () => {
+  const forced = { mode: "flying" as const, forcedFlying: true, message: "x" };
+  const drive = { mode: "driving" as const, forcedFlying: false, message: null };
+  const fly = { mode: "flying" as const, forcedFlying: false, message: null };
+
+  it("writes nothing when a no-road park already shows Volando (the freeze)", () => {
+    expect(transportToSeed("flying", forced, false)).toBeNull();
+    expect(transportToSeed("flying", forced, true)).toBeNull();
+  });
+
+  it("forces Volando when the form still says Manejando", () => {
+    expect(transportToSeed("driving", forced, false)).toBe("flying");
+  });
+
+  it("re-seeds the default only when park, origin or ZIP changed", () => {
+    expect(transportToSeed("driving", fly, true)).toBe("flying");
+    expect(transportToSeed("flying", drive, true)).toBe("driving");
+    expect(transportToSeed("driving", drive, true)).toBeNull();
+  });
+
+  it("keeps the visitor's own pick while nothing changed", () => {
+    expect(transportToSeed("flying", drive, false)).toBeNull();
+    expect(transportToSeed("driving", fly, false)).toBeNull();
   });
 });

@@ -27,6 +27,7 @@ import {
   resolveCalculatorTransport,
   resolveDriveHoursForCalc,
   STYLE_LABELS,
+  transportToSeed,
   type ComfortLevel,
   type TransportMode,
   type BudgetLine,
@@ -182,20 +183,24 @@ export default function BudgetCalculator() {
     ? resolveCalculatorTransport(drive ? drive.hours : null, values.zip)
     : { mode: "driving" as const, forcedFlying: false, message: null };
 
+  // Seed the transport default. Deps are primitives on purpose: activeChoice
+  // is a new object every render, and setValue re-renders the form, so an
+  // unguarded write loops forever (transportToSeed).
   const lastSeedKey = useRef<string>("");
+  const destinationId = destination?.id ?? null;
+  const driveHours = drive?.hours ?? null;
+  const { forcedFlying, mode: defaultMode } = activeChoice;
   useEffect(() => {
-    if (!destination) return;
-    const key = `${destination.id}:${drive?.hours ?? "null"}:${values.zip}`;
-    if (activeChoice.forcedFlying) {
-      setValue("transport", "flying", { shouldValidate: true });
-      lastSeedKey.current = key;
-      return;
-    }
-    if (lastSeedKey.current !== key) {
-      setValue("transport", activeChoice.mode, { shouldValidate: true });
-      lastSeedKey.current = key;
-    }
-  }, [destination, drive, activeChoice, setValue, values.zip]);
+    if (!destinationId) return;
+    const key = `${destinationId}:${driveHours ?? "null"}:${values.zip}`;
+    const next = transportToSeed(
+      getValues("transport"),
+      { mode: defaultMode, forcedFlying, message: null },
+      lastSeedKey.current !== key,
+    );
+    lastSeedKey.current = key;
+    if (next) setValue("transport", next, { shouldValidate: true });
+  }, [destinationId, driveHours, values.zip, forcedFlying, defaultMode, getValues, setValue]);
 
   const flightRaw = values.flightPricePerPerson;
   const flightPrice =
