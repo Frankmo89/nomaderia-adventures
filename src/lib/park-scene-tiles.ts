@@ -96,6 +96,27 @@ export function scenePhaseForHour(hour: number): ScenePhase {
   return "night";
 }
 
+const PHASE_PARAM: Record<string, ScenePhase> = {
+  amanecer: "dawn",
+  dia: "day",
+  atardecer: "dusk",
+  noche: "night",
+};
+
+/**
+ * The visitor's phase from their clock. For previews,
+ * `?escena=amanecer|dia|atardecer|noche` forces one.
+ */
+export function currentScenePhase(): ScenePhase {
+  try {
+    const forced = new URLSearchParams(window.location.search).get("escena");
+    if (forced && PHASE_PARAM[forced]) return PHASE_PARAM[forced];
+  } catch {
+    // No URL access: fall back to the clock.
+  }
+  return scenePhaseForHour(new Date().getHours());
+}
+
 /** Tile sizes in SVG units; width / height is each layer's repeat ratio. */
 export const SCENE_TILES = {
   clouds: { width: 2400, height: 60 },
@@ -301,7 +322,8 @@ function landmarksTile(C: ScenePalette): string {
 export const treeHillY = (x: number) =>
   116 + 6 * Math.sin((2 * Math.PI * x) / 800) + 4 * Math.sin((2 * Math.PI * x) / 300 + 1);
 
-function pine(x: number, base: number, h: number, w: number): string {
+/** A pine at x on `base`, h tall and w wide (also used by the calculator scene). */
+export function pine(x: number, base: number, h: number, w: number): string {
   const p = (dx: number, dy: number) => `${round(x + dx * w)},${round(base - dy * h)}`;
   const pts = [
     p(0, 1), p(0.2, 0.7), p(0.1, 0.7), p(0.34, 0.42), p(0.2, 0.42), p(0.5, 0.12), p(0.06, 0.12), p(0.06, 0),

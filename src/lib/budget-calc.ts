@@ -379,3 +379,24 @@ export function transportToSeed(
   if (!seedChanged) return null;
   return current === choice.mode ? null : choice.mode;
 }
+
+function usd(n: number): string {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+}
+
+/**
+ * The message the "Compártelo por WhatsApp" button sends (ADR-061): the
+ * numbers a family needs to decide, what is still missing, and a link to run
+ * their own.
+ */
+export function budgetShareText(result: BudgetCalcResult, parkTitle: string, url: string): string {
+  const pending = result.lines.filter((l) => l.excludeFromTotal).map((l) => l.label.toLowerCase());
+  const missing = pending.length > 0 ? ` Sin contar ${pending.join(" ni ")}.` : "";
+  const people = `${result.people} ${result.people === 1 ? "persona" : "personas"}`;
+  const days = `${result.days} ${result.days === 1 ? "día" : "días"}`;
+  return (
+    `¿Vamos a ${parkTitle}? 🏞️ Calculé ≈ ${usd(result.total)} en total ` +
+    `(≈ ${usd(result.perPerson)} por persona) para ${people}, ${days}.${missing} ` +
+    `Haz tu cálculo aquí: ${url}`
+  );
+}
