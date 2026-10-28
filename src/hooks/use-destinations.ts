@@ -18,6 +18,11 @@ export interface DestinationCard {
   hero_image_url: string;
   tags: string[];
   affiliate_links: Record<string, string> | null;
+  entrance_fee_usd: number | null;
+  entrance_fee_type: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  drive_time_from_san_diego: string | null;
 }
 
 export function useDestinations() {
@@ -28,7 +33,7 @@ export function useDestinations() {
       const { data, error } = await supabase
         .from("destinations")
         .select(
-          "id, title, slug, country, region, short_description, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, tags, affiliate_links"
+          "id, title, slug, country, region, short_description, difficulty_level, days_needed, estimated_budget_usd, hero_image_url, tags, affiliate_links, entrance_fee_usd, entrance_fee_type, latitude, longitude, drive_time_from_san_diego"
         )
         .eq("is_published", true);
       if (error) throw error;

@@ -1052,3 +1052,18 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
   veía llena hasta el primer scroll. Fix: `ScrollProgressBar` calcula el
   progreso con `scrollY` y el alto de la página leído en cada scroll. Lección:
   con secciones lazy, no confiar en medidas de layout tomadas al montar.
+
+### ADR-060 — Fórmula de la calculadora para conductores SoCal
+- **Fecha:** 2026-10-27
+- **Estado:** Vigente (extendido 2026-10-27 — ferry, fee type, off-route)
+- **Contexto:** La calculadora anterior partía de `estimated_budget_usd` del destino y repartía con multiplicadores de confort (vuelos/hospedaje/comida/actividades/equipo/seguro). Eso no refleja cómo viaja nuestra audiencia (hispanos en el Sur de California que casi siempre manejan) ni usa la tarifa oficial de entrada del NPS.
+- **Decisión:**
+  1. Motor puro en `src/lib/budget-calc.ts`; tarifas editables en `src/config/calculator-rates.ts` (`RATES_UPDATED`).
+  2. Transporte: `resolveDriveHoursForCalc()` < 10 h → Manejando por defecto; ≥ 10 h → Volando; `null` (sin carretera) fuerza Volando con aviso de ferry/avioneta.
+  3. **Parques con ferry (drive-to-port):** `driveFromOrigin()` es `null` a propósito (ADR-041: la ruta home salta boat parks). `parseDriveToPort("N horas en coche a <lugar>")` recupera las horas al puerto. Desde San Diego se usan esas horas; desde otro ZIP, `estimateDriveHours(origin, park lat/lon)`. Default **Manejando**; línea **Ferry** "Por cotizar" fuera del total (`excludeFromTotal`); no se muestra el aviso de "sin acceso por carretera".
+  4. **ZIPs off-route** (Hawái, Alaska, territorios vía `isOffRouteZip()` de `landing-origin.ts`): fuerzan Volando y deshabilitan Manejando, mismo UX que un parque sin carretera. ZIP desconocido (`lookupZip` = null): mensaje "No encontramos ese código postal" y se ocultan los resultados (no se reutiliza el origen anterior con el gas del ZIP nuevo).
+  5. Gasolina: millas RT = horas × 65 × 2; galones = millas / MPG; precio CA si ZIP 900–961, si no US; autos = ceil(personas/5).
+  6. Entrada según `entrance_fee_type`: `'por persona'` → fee × personas; `'por vehículo'` → fee × autos; `'gratis'` o 0 → "Gratis". Subtexto "por persona" / "por carro". Hospedaje: noches = max(días−1, 1); camping ceil(personas/6), hotel ceil(personas/4); plural "habitaciones" (sin acento). Comida = tarifa × personas × días. Equipo una vez si no marcan "Ya tengo equipo".
+  7. Sin líneas de Actividades ni Seguro. Vuelo vacío → "Por definir" fuera del total (+ vuelos).
+- **Consecuencias:** Frank debe refrescar gasolina en `calculator-rates.ts` ~mensual. La página reutiliza `lookupZip` / `landing-origin` (import only; no editar esos archivos). Tests en `budget-calc.test.ts` (Joshua Tree, Channel Islands ferry, fee types, Honolulu off-route, 5 personas → "2 habitaciones").
+

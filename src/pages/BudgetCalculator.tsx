@@ -1,488 +1,674 @@
-import { useState, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Calculator, Mail, CheckCircle2, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { Plane, Hotel, UtensilsCrossed, Compass, Backpack, ShieldCheck, ArrowRight, Mail, Tent, Star } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { calculateBudget } from "@/lib/budget-calc";
-import type { ComfortLevel } from "@/lib/budget-calc";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useDestinations } from "@/hooks/use-destinations";
-import type { DestinationCard } from "@/hooks/use-destinations";
 import { useCanonical, usePageMeta } from "@/hooks/use-seo";
+import { supabase } from "@/integrations/supabase/client";
+import { STRIPE_LINK_ITINERARIO_49 } from "@/config/pricing";
+import {
+  calculateBudget,
+  resolveCalculatorTransport,
+  resolveDriveHoursForCalc,
+  STYLE_LABELS,
+  type ComfortLevel,
+  type TransportMode,
+  type BudgetLine,
+} from "@/lib/budget-calc";
+import {
+  originFromZip,
+  readSavedOrigin,
+  saveOrigin,
+  SAN_DIEGO_ORIGIN,
+  isSanDiegoArea,
+  type RouteOrigin,
+} from "@/lib/landing-origin";
+import { isValidZipFormat, lookupZip, preloadZipTable } from "@/lib/zip-centroids";
+import { trackEvent } from "@/lib/analytics";
 
-const comfortOptions: { value: ComfortLevel; label: string; icon: LucideIcon }[] = [
-  { value: "budget", label: "Mochilero", icon: Tent },
-  { value: "mid", label: "Cómodo", icon: Hotel },
-  { value: "premium", label: "Premium", icon: Star },
-];
+const UNIQUE_VIOLATION = "23505";
 
-const HeroSlider = ({ images }: { images: string[] }) => {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (images.length <= 1) return;
-    const id = setInterval(() => {
-      setIndex((prev) => (prev + 1) % images.length);
-    }, 5000);
-    return () => clearInterval(id);
-  }, [images.length]);
-
-  if (images.length === 0) {
-    return <div className="absolute inset-0 bg-neutral-800" />;
-  }
-
-  return (
-    <AnimatePresence mode="wait">
-      <motion.img
-        key={images[index]}
-        src={images[index]}
-        alt=""
-        role="presentation"
-        className="absolute inset-0 w-full h-full object-cover"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 1, ease: "easeInOut" }}
-        loading="eager"
-        decoding="async"
-      />
-    </AnimatePresence>
-  );
+/** Design-system hex tokens (no --accent / --sunset). */
+const BAR_COLORS: Record<string, string> = {
+  gas: "#1F6F43",
+  flights: "#2E6F9E",
+  car_rental: "#166534",
+  ferry: "#2E6F9E",
+  entrance: "#6E7A74",
+  lodging: "#14201A",
+  food: "#C2562F",
+  gear: "#13211A",
 };
 
-const BudgetCalculator = () => {
+const formSchema = z.object({
+  destinationId: z.string().min(1, "Elige un destino"),
+  zip: z.string().regex(/^\d{5}$/, "Código postal de 5 dígitos"),
+  people: z.coerce.number().int().min(1).max(8),
+  days: z.coerce.number().int().min(1).max(14),
+  style: z.enum(["budget", "mid", "premium"]),
+  transport: z.enum(["driving", "flying"]),
+  flightPricePerPerson: z
+    .union([
+      z.literal(""),
+      z.coerce.number().min(0, "No se aceptan precios negativos"),
+    ])
+    .optional(),
+  hasGear: z.boolean(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+function formatUsd(n: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+function initialOrigin(): RouteOrigin {
+  const saved = readSavedOrigin();
+  if (!saved || saved.kind !== "zip" || isSanDiegoArea(saved)) {
+    return SAN_DIEGO_ORIGIN;
+  }
+  return saved;
+}
+
+function initialZip(): string {
+  const saved = readSavedOrigin();
+  if (saved?.kind === "zip") return saved.zip;
+  return "92101";
+}
+
+export default function BudgetCalculator() {
   useCanonical();
   usePageMeta({
-    title: "Calculadora de Presupuesto para tu Aventura | Nomaderia",
-    description: "Calcula cuánto cuesta tu viaje a los parques nacionales. Estimados reales en dólares para viajeros hispanos en EE. UU.",
+    title: "Calculadora de Presupuesto para tu Aventura",
+    description:
+      "Estima gasolina, entrada NPS, hospedaje y comida para tu próximo parque nacional desde California.",
   });
-  const { data: destinations = [] } = useDestinations();
-  const [selectedSlug, setSelectedSlug] = useState("");
-  const [days, setDays] = useState(5);
-  const [comfort, setComfort] = useState<ComfortLevel>("mid");
-  // Texto crudo del input controlado — permite vaciarlo mientras se escribe
-  // (ver flightCostValue abajo para el número usado en el cálculo).
-  const [flightCost, setFlightCost] = useState("");
-  const [calculated, setCalculated] = useState(false);
-  const [email, setEmail] = useState("");
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [emailDone, setEmailDone] = useState(false);
-  const { toast } = useToast();
 
-  /* ---------- Hero image slider ---------- */
-  const heroImages = useMemo(
-    () =>
-      destinations
-        .filter(
-          (d): d is DestinationCard & { hero_image_url: string } =>
-            !!d.hero_image_url,
-        )
-        .slice(0, 5)
-        .map((d) => d.hero_image_url),
-    [destinations],
+  const { data: destinations = [], isLoading } = useDestinations();
+  const [origin, setOrigin] = useState<RouteOrigin>(initialOrigin);
+  /** True when lookupZip returned null for the current 5-digit ZIP. */
+  const [zipLookupFailed, setZipLookupFailed] = useState(false);
+
+  const {
+    register,
+    control,
+    watch,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      destinationId: "",
+      zip: initialZip(),
+      people: 2,
+      days: 3,
+      style: "mid",
+      transport: "driving",
+      flightPricePerPerson: "",
+      hasGear: false,
+    },
+    mode: "onChange",
+  });
+
+  const values = watch();
+  const destination = useMemo(
+    () => destinations.find((d) => d.id === values.destinationId) ?? null,
+    [destinations, values.destinationId],
   );
 
+  // Resolve + persist origin whenever ZIP is a valid 5-digit code.
   useEffect(() => {
-    document.title = "Calculadora de Presupuesto | Nomaderia";
-  }, []);
-
-  const selectedDest = useMemo(
-    () => destinations.find((d) => d.slug === selectedSlug),
-    [destinations, selectedSlug]
-  );
-
-  // Input vacío = 0 al calcular; nunca se fuerza "0" de vuelta al campo mientras se escribe.
-  const flightCostValue = flightCost === "" ? 0 : Number(flightCost) || 0;
-
-  const breakdown = useMemo(() => {
-    if (!calculated || !selectedDest) return null;
-
-    const b = calculateBudget(selectedDest.estimated_budget_usd, comfort, days, flightCostValue);
-
-    return {
-      items: [
-        { label: "Vuelos", icon: Plane, amount: b.flights, color: "hsl(var(--sky))" },
-        { label: "Hospedaje", icon: Hotel, amount: b.accommodation, color: "hsl(var(--trail))" },
-        { label: "Alimentación", icon: UtensilsCrossed, amount: b.food, color: "hsl(var(--sunset))" },
-        { label: "Actividades", icon: Compass, amount: b.activities, color: "hsl(var(--primary))" },
-        { label: "Equipo", icon: Backpack, amount: b.gear, color: "hsl(var(--accent))" },
-        { label: "Seguro de Viaje", icon: ShieldCheck, amount: b.insurance, color: "hsl(var(--secondary))" },
-      ],
-      total: b.total,
-    };
-  }, [calculated, days, comfort, selectedDest, flightCostValue]);
-
-  const handleCalculate = () => {
-    if (selectedSlug && days > 0) setCalculated(true);
-  };
-
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setEmailLoading(true);
-    try {
-      const { error } = await supabase
-        .from("newsletter_subscribers")
-        .insert({ email, source: "calculator" });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description:
-            error.message ||
-            "No pudimos registrar tu correo. Por favor, intenta de nuevo.",
-          variant: "destructive",
-        });
-        return;
+    const zip = values.zip;
+    if (!isValidZipFormat(zip)) {
+      setZipLookupFailed(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const point = await lookupZip(zip);
+        if (cancelled) return;
+        if (!point) {
+          // Unknown ZIP: keep prior origin untouched, hide results, show error.
+          setZipLookupFailed(true);
+          return;
+        }
+        setZipLookupFailed(false);
+        const next = originFromZip(zip, point);
+        setOrigin(next);
+        saveOrigin(next);
+      } catch {
+        // Table fetch failed — keep prior origin; calc still works from San Diego hours.
+        if (!cancelled) setZipLookupFailed(false);
       }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [values.zip]);
 
-      setEmailDone(true);
-      toast({
-        title: "¡Listo! 🎉",
-        description: "Te enviaremos tips para ahorrar en tu aventura.",
+  const drive = useMemo(() => {
+    if (!destination) return null;
+    return resolveDriveHoursForCalc(origin, {
+      latitude: destination.latitude,
+      longitude: destination.longitude,
+      drive_time_from_san_diego: destination.drive_time_from_san_diego,
+    });
+  }, [destination, origin]);
+
+  // When no destination yet, don't force flying. Off-route ZIPs force Volando.
+  const activeChoice = destination
+    ? resolveCalculatorTransport(drive ? drive.hours : null, values.zip)
+    : { mode: "driving" as const, forcedFlying: false, message: null };
+
+  const lastSeedKey = useRef<string>("");
+  useEffect(() => {
+    if (!destination) return;
+    const key = `${destination.id}:${drive?.hours ?? "null"}:${values.zip}`;
+    if (activeChoice.forcedFlying) {
+      setValue("transport", "flying", { shouldValidate: true });
+      lastSeedKey.current = key;
+      return;
+    }
+    if (lastSeedKey.current !== key) {
+      setValue("transport", activeChoice.mode, { shouldValidate: true });
+      lastSeedKey.current = key;
+    }
+  }, [destination, drive, activeChoice, setValue, values.zip]);
+
+  const flightRaw = values.flightPricePerPerson;
+  const flightPrice =
+    flightRaw === "" || flightRaw === undefined || flightRaw === null
+      ? null
+      : Number(flightRaw);
+
+  const effectiveTransport: TransportMode = activeChoice.forcedFlying
+    ? "flying"
+    : ((values.transport as TransportMode) || "driving");
+
+  const budget = useMemo(() => {
+    if (!destination) return null;
+    if (!isValidZipFormat(values.zip) || zipLookupFailed) return null;
+    const people = Number(values.people);
+    const days = Number(values.days);
+    if (!Number.isFinite(people) || !Number.isFinite(days) || people < 1 || days < 1) {
+      return null;
+    }
+    try {
+      return calculateBudget({
+        people,
+        days,
+        style: values.style as ComfortLevel,
+        transport: effectiveTransport,
+        driveHours: drive ? drive.hours : null,
+        zip: values.zip,
+        entranceFeeUsd: destination.entrance_fee_usd,
+        entranceFeeType: destination.entrance_fee_type,
+        flightPricePerPerson:
+          Number.isFinite(flightPrice as number) ? (flightPrice as number) : null,
+        hasGear: Boolean(values.hasGear),
+        needsFerry: Boolean(drive?.needsFerry),
       });
     } catch {
-      toast({
-        title: "Error",
-        description: "No pudimos registrar tu correo. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setEmailLoading(false);
+      return null;
     }
-  };
+  }, [
+    destination,
+    values.zip,
+    values.people,
+    values.days,
+    values.style,
+    values.hasGear,
+    drive,
+    effectiveTransport,
+    flightPrice,
+    zipLookupFailed,
+  ]);
+
+  const [email, setEmail] = useState("");
+  const [emailStatus, setEmailStatus] = useState<"idle" | "loading" | "success">("idle");
+
+  const handleEmailSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!email.trim()) return;
+      setEmailStatus("loading");
+      const { error } = await supabase.from("newsletter_subscribers").insert({
+        email: email.trim().toLowerCase(),
+        source: "calculator",
+      });
+      if (error) {
+        if (error.code === UNIQUE_VIOLATION) {
+          setEmailStatus("success");
+          toast.success("Ya estás suscrito 🙌");
+          return;
+        }
+        setEmailStatus("idle");
+        toast.error("No pudimos guardar tu correo. Intenta de nuevo.");
+        return;
+      }
+      setEmailStatus("success");
+      trackEvent("calculator_email_submit", destination?.slug ? { destination: destination.slug } : undefined);
+      toast.success("¡Listo! Te avisamos cuando publiquemos más guías.");
+    },
+    [email, destination?.slug],
+  );
+
+  const visibleLines: BudgetLine[] = budget
+    ? budget.lines.filter((l) => l.alwaysShow || l.amount > 0 || l.excludeFromTotal)
+    : [];
+  const maxAmount = Math.max(...visibleLines.map((l) => l.amount), 1);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
 
-      <main className="flex-1 pb-24">
-        {/* Hero Section */}
-        <section className="relative h-[45vh] min-h-[380px] flex items-center justify-center overflow-hidden bg-neutral-900">
-          <HeroSlider images={heroImages} />
-
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-neutral-50 dark:to-background pointer-events-none" />
-
-          {/* Content */}
-          <div className="relative z-10 text-center px-4 w-full max-w-4xl mx-auto -mt-10">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="mx-auto"
-            >
-              <h1
-                className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight drop-shadow-xl"
-              >
-                Calculadora de Presupuesto
-              </h1>
-              <p
-                className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-sans font-light drop-shadow-md"
-              >
-                Planifica tu próxima aventura con estimaciones reales para tu viaje.
-              </p>
-            </motion.div>
+      <main className="flex-1">
+        {/* Dark band so Navbar (hasHero for /calculadora) stays readable. */}
+        <section className="relative bg-forest-dark pt-24 pb-12 md:pb-16">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cloud/10">
+                <Calculator className="h-5 w-5 text-cloud" aria-hidden />
+              </div>
+              <p className="text-sm font-medium text-cloud/80">Herramienta gratis</p>
+            </div>
+            <h1 className="font-serif text-3xl md:text-4xl font-bold text-cloud mb-3">
+              Calculadora de presupuesto
+            </h1>
+            <p className="text-cloud/80 text-base md:text-lg max-w-2xl">
+              Números honestos para viajar a parques nacionales desde el Sur de California:
+              gasolina, entrada oficial del NPS, hospedaje y comida.
+            </p>
           </div>
         </section>
 
-        {/* Main Content Layout */}
-        <section className="max-w-6xl mx-auto px-4 -mt-20 relative z-20">
-          <div className="grid lg:grid-cols-12 gap-6 items-start">
-            
-            {/* Left: Form */}
-            <div className="lg:col-span-5 xl:col-span-4 bg-card border border-border/50 rounded-2xl shadow-xl p-6 sm:p-8 backdrop-blur-xl">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold font-serif mb-1 text-foreground">Configura tu Viaje</h2>
-                <p className="text-sm text-muted-foreground">Ajusta los detalles para obtener un estimado preciso.</p>
-              </div>
-
-              <div className="space-y-5">
-                {/* Destination */}
-                <div className="space-y-2">
-                  <label htmlFor="destination-select" className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-green" /> Destino
-                  </label>
-                  <Select value={selectedSlug} onValueChange={(v) => { setSelectedSlug(v); setCalculated(false); }}>
-                    <SelectTrigger id="destination-select" aria-label="Seleccionar destino" className="bg-background border-border shadow-sm h-11">
-                      <SelectValue placeholder="¿A dónde quieres ir?" />
+        <section className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
+          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            {/* 1 Destino */}
+            <div className="space-y-2">
+              <Label htmlFor="destinationId">Destino</Label>
+              <Controller
+                name="destinationId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger id="destinationId" className="w-full h-11">
+                      <SelectValue
+                        placeholder={isLoading ? "Cargando destinos…" : "Elige un parque"}
+                      />
                     </SelectTrigger>
-                    <SelectContent className="bg-popover border-border z-50">
+                    <SelectContent>
                       {destinations.map((d) => (
-                        <SelectItem key={d.id} value={d.slug}>{d.title}</SelectItem>
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.title}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
+                )}
+              />
+              {errors.destinationId && (
+                <p className="text-sm text-destructive">{errors.destinationId.message}</p>
+              )}
+            </div>
 
-                {/* Days */}
-                <div className="space-y-2">
-                  <label htmlFor="days-input" className="text-sm font-medium text-foreground">Duración (días)</label>
+            {/* 2 ZIP */}
+            <div className="space-y-2">
+              <Label htmlFor="zip">Código postal</Label>
+              <Input
+                id="zip"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                maxLength={5}
+                placeholder="92101"
+                className="h-11 tracking-widest"
+                onFocus={preloadZipTable}
+                {...register("zip", {
+                  onChange: (e) => {
+                    const digits = String(e.target.value).replace(/\D/g, "").slice(0, 5);
+                    setValue("zip", digits, { shouldValidate: true });
+                  },
+                })}
+              />
+              {errors.zip && (
+                <p className="text-sm text-destructive">{errors.zip.message}</p>
+              )}
+              {!errors.zip && zipLookupFailed && (
+                <p className="text-sm text-destructive">No encontramos ese código postal</p>
+              )}
+            </div>
+
+            {/* 3 People */}
+            <div className="space-y-2">
+              <Label htmlFor="people">¿Cuántos viajan?</Label>
+              <Input
+                id="people"
+                type="number"
+                min={1}
+                max={8}
+                className="h-11"
+                {...register("people")}
+              />
+              {errors.people && (
+                <p className="text-sm text-destructive">Entre 1 y 8 personas</p>
+              )}
+            </div>
+
+            {/* 4 Days — clearable while typing; clamp on blur */}
+            <div className="space-y-2">
+              <Label htmlFor="days">Días</Label>
+              <Controller
+                name="days"
+                control={control}
+                render={({ field }) => (
                   <Input
-                    id="days-input"
+                    id="days"
                     type="number"
+                    inputMode="numeric"
                     min={1}
-                    max={60}
-                    value={days}
-                    onChange={(e) => { setDays(Number(e.target.value) || 1); setCalculated(false); }}
-                    className="bg-background border-border shadow-sm h-11 text-base"
-                  />
-                </div>
-
-                {/* Flight Cost */}
-                <div className="space-y-2">
-                  <label htmlFor="flight-cost-input" className="text-sm font-medium text-foreground">Costo de vuelos (USD)</label>
-                  <Input
-                    id="flight-cost-input"
-                    type="number"
-                    min={0}
-                    value={flightCost}
+                    max={14}
+                    className="h-11"
+                    value={
+                      field.value === undefined ||
+                      field.value === null ||
+                      (field.value as unknown) === ""
+                        ? ""
+                        : field.value
+                    }
                     onChange={(e) => {
-                      // Deja vaciar el campo mientras se escribe y quita ceros
-                      // a la izquierda (evita el bug de "0" atorado al inicio).
-                      const raw = e.target.value.replace(/^0+(?=\d)/, "");
-                      setFlightCost(raw);
-                      setCalculated(false);
+                      const raw = e.target.value;
+                      if (raw === "") {
+                        field.onChange("" as unknown as number);
+                        return;
+                      }
+                      field.onChange(Number(raw));
                     }}
-                    className="bg-background border-border shadow-sm h-11 text-base"
-                    placeholder="0"
+                    onBlur={() => {
+                      const current = getValues("days");
+                      const n = Number(current);
+                      if (!Number.isFinite(n) || n < 1) {
+                        setValue("days", 1, { shouldValidate: true });
+                      } else if (n > 14) {
+                        setValue("days", 14, { shouldValidate: true });
+                      } else {
+                        setValue("days", Math.round(n), { shouldValidate: true });
+                      }
+                      field.onBlur();
+                    }}
                   />
-                  <p className="text-xs text-muted-foreground">Si ya conoces el costo, ingrésalo aquí.</p>
-                </div>
+                )}
+              />
+              {errors.days && (
+                <p className="text-sm text-destructive">Entre 1 y 14 días</p>
+              )}
+            </div>
 
-                {/* Comfort */}
-                <div className="space-y-3 pt-2">
-                  <label className="text-sm font-medium text-foreground">Estilo de viaje</label>
+            {/* 5 Style */}
+            <div className="space-y-2">
+              <Label>Estilo</Label>
+              <Controller
+                name="style"
+                control={control}
+                render={({ field }) => (
                   <div className="grid grid-cols-3 gap-2">
-                    {comfortOptions.map((opt) => {
-                      const Icon = opt.icon;
-                      const isSelected = comfort === opt.value;
+                    {(Object.keys(STYLE_LABELS) as ComfortLevel[]).map((key) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => field.onChange(key)}
+                        className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
+                          field.value === key
+                            ? "border-green bg-green-wash text-foreground ring-1 ring-green"
+                            : "border-border bg-card text-foreground/80 hover:border-green/40"
+                        }`}
+                      >
+                        {STYLE_LABELS[key]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              />
+            </div>
+
+            {/* 6 Transport */}
+            <div className="space-y-2">
+              <Label>¿Cómo llegas?</Label>
+              <Controller
+                name="transport"
+                control={control}
+                render={({ field }) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    {(
+                      [
+                        ["driving", "Manejando"],
+                        ["flying", "Volando"],
+                      ] as const
+                    ).map(([mode, label]) => {
+                      const disabled =
+                        activeChoice.forcedFlying && mode === "driving";
                       return (
                         <button
-                          key={opt.value}
+                          key={mode}
                           type="button"
-                          aria-label={`Seleccionar estilo de viaje: ${opt.label}`}
-                          aria-pressed={isSelected}
-                          onClick={() => { setComfort(opt.value); setCalculated(false); }}
-                          className={`flex flex-col items-center justify-center rounded-xl border p-3 transition-all duration-200 ${
-                            isSelected
-                              ? "border-green bg-green-wash text-foreground shadow-sm ring-1 ring-green"
-                              : "border-border bg-background text-foreground/80 hover:border-green/40 hover:bg-muted hover:text-foreground"
+                          disabled={disabled}
+                          onClick={() => field.onChange(mode)}
+                          className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            field.value === mode
+                              ? "border-green bg-green-wash text-foreground ring-1 ring-green"
+                              : "border-border bg-card text-foreground/80 hover:border-green/40"
                           }`}
                         >
-                          <Icon className={`h-5 w-5 mb-1.5 ${isSelected ? "text-green-dark" : "text-foreground/80"}`} />
-                          <span className="text-xs font-semibold w-full text-center truncate">{opt.label}</span>
+                          {label}
                         </button>
                       );
                     })}
                   </div>
-                </div>
-              </div>
-
-              <Button
-                size="lg"
-                className="w-full text-base h-12 mt-8 rounded-xl font-medium shadow-md transition-all hover:shadow-lg active:scale-[0.98]"
-                disabled={!selectedSlug || days < 1}
-                onClick={handleCalculate}
-              >
-                Calcular Presupuesto
-              </Button>
+                )}
+              />
+              {activeChoice.message && (
+                <p className="text-sm text-muted-foreground">{activeChoice.message}</p>
+              )}
             </div>
 
-            {/* Right: Results + Image */}
-            <div className="lg:col-span-7 xl:col-span-8 lg:sticky lg:top-24">
-              <AnimatePresence mode="wait">
-                {!calculated ? (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="h-full min-h-[400px] flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border/60 rounded-2xl bg-card/50"
-                  >
-                    <div className="w-20 h-20 rounded-full bg-green/10 flex items-center justify-center mb-6">
-                      <Compass className="h-10 w-10 text-green/60" />
-                    </div>
-                    <h3 className="text-2xl font-serif font-medium text-foreground mb-3">Descubre tu presupuesto ideal</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto text-sm">
-                      Completa la información en el panel izquierdo y haz clic en calcular para ver un desglose detallado de los costos de tu viaje.
-                    </p>
-                  </motion.div>
-                ) : breakdown && (
-                  <motion.div
-                    key="results"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.5 }}
-                    className="bg-card border border-border/50 rounded-2xl shadow-xl overflow-hidden"
-                  >
-                    {/* Destination Image Header */}
-                    {selectedDest?.hero_image_url && (
-                      <div className="relative h-48 sm:h-56 w-full">
-                        <img
-                          src={selectedDest.hero_image_url}
-                          alt={selectedDest.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-                        <div className="absolute bottom-4 left-6 right-6 text-white">
-                          <p className="text-white/80 text-sm font-medium mb-1 drop-shadow-sm">Presupuesto estimado para {days} días</p>
-                          <h2 className="text-3xl sm:text-4xl font-bold drop-shadow-md">
-                            ${breakdown.total.toLocaleString()} <span className="text-xl font-normal opacity-80">USD</span>
-                          </h2>
-                        </div>
-                      </div>
-                    )}
+            {/* 7 Flight price */}
+            {effectiveTransport === "flying" && (
+              <div className="space-y-2">
+                <Label htmlFor="flightPricePerPerson">
+                  Precio del vuelo por persona (USD){" "}
+                  <span className="text-muted-foreground font-normal">(opcional)</span>
+                </Label>
+                <Input
+                  id="flightPricePerPerson"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="1"
+                  placeholder="Ej. 180"
+                  className="h-11"
+                  {...register("flightPricePerPerson")}
+                />
+                {errors.flightPricePerPerson && (
+                  <p className="text-sm text-destructive">
+                    {errors.flightPricePerPerson.message}
+                  </p>
+                )}
+              </div>
+            )}
 
-                    <div className="p-6 sm:p-8">
-                      {/* Destination Summary */}
-                      <div className="mb-8 pb-6 border-b border-border/50 flex flex-wrap gap-y-2 justify-between items-end">
-                        <div>
-                          <h3 className="text-xl font-bold text-foreground">
-                            {selectedDest?.title}, {selectedDest?.country}
-                          </h3>
-                        </div>
-                        <div className="text-right">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-wash text-green text-xs font-semibold">
-                            <Star className="w-3.5 h-3.5" />
-                            {comfortOptions.find((c) => c.value === comfort)?.label}
+            {/* 8 Gear */}
+            <div className="flex items-start gap-3">
+              <Controller
+                name="hasGear"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    id="hasGear"
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                  />
+                )}
+              />
+              <Label htmlFor="hasGear" className="font-normal leading-snug cursor-pointer">
+                Ya tengo equipo
+              </Label>
+            </div>
+          </form>
+
+          {budget && destination && (
+            <div className="mt-10 rounded-2xl border border-border bg-card p-5 md:p-7 shadow-sm">
+              <h2 className="font-serif text-xl font-bold text-foreground mb-1">
+                Estimado para {destination.title}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                {budget.people} {budget.people === 1 ? "persona" : "personas"} ·{" "}
+                {budget.days} {budget.days === 1 ? "día" : "días"} ·{" "}
+                {STYLE_LABELS[budget.style]} ·{" "}
+                {effectiveTransport === "driving" ? "Manejando" : "Volando"}
+              </p>
+
+              <ul className="space-y-4 mb-6">
+                {visibleLines.map((line) => {
+                  const widthPct =
+                    line.amount <= 0 ? 0 : Math.round((line.amount / maxAmount) * 100);
+                  const color = BAR_COLORS[line.id] ?? "#1F6F43";
+                  return (
+                    <li key={line.id}>
+                      <div className="flex items-baseline justify-between gap-3 mb-1">
+                        <div className="min-w-0">
+                          <span className="text-sm font-medium text-foreground">
+                            {line.label}
                           </span>
+                          {line.tag && (
+                            <span className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              {line.tag}
+                            </span>
+                          )}
+                          {line.subtext && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {line.subtext}
+                            </p>
+                          )}
                         </div>
+                        <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">
+                          {line.displayAmount ?? formatUsd(line.amount)}
+                        </span>
                       </div>
-
-                      {/* Visual bar breakdown */}
-                      <div className="space-y-5 mb-8">
-                        {breakdown.items.map((item, i) => {
-                          const maxVal = breakdown.total;
-                          const widthPct = maxVal > 0 ? Math.max((item.amount / maxVal) * 100, 4) : 4;
-                          const Icon = item.icon;
-                          return (
-                            <motion.div
-                              key={item.label}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.1 * i, duration: 0.4 }}
-                              className="group"
-                            >
-                              <div className="flex justify-between text-sm mb-2">
-                                <span className="text-foreground font-medium flex items-center gap-2">
-                                  <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" style={{ color: item.color }} />
-                                  {item.label}
-                                </span>
-                                <span className="font-semibold text-foreground">
-                                  ${item.amount.toLocaleString()}
-                                </span>
-                              </div>
-                              <div className="h-2.5 rounded-full bg-muted overflow-hidden relative">
-                                <motion.div
-                                  className="absolute top-0 left-0 h-full rounded-full"
-                                  style={{ backgroundColor: item.color }}
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${widthPct}%` }}
-                                  transition={{ delay: 0.2 + 0.1 * i, duration: 0.7, ease: "easeOut" }}
-                                />
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-
-                      <p className="text-xs text-muted-foreground text-center mb-8 bg-muted/30 py-3 rounded-lg">
-                        Estimaciones basadas en costos reales de mercado. Vuelos calculados según tu entrada.
-                      </p>
-
-                      {/* CTAs */}
-                      <div className="grid sm:grid-cols-2 gap-3 mb-8">
-                        {selectedDest?.affiliate_links?.flights_url &&
-                          /^https?:\/\//i.test(selectedDest.affiliate_links.flights_url) && (
-                            <a href={selectedDest.affiliate_links.flights_url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-green-wash hover:text-green transition-colors">
-                                <Plane className="h-4 w-4" /> Buscar Vuelos <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
-                              </Button>
-                            </a>
-                          )}
-                        {selectedDest?.affiliate_links?.hotels_url &&
-                          /^https?:\/\//i.test(selectedDest.affiliate_links.hotels_url) && (
-                            <a href={selectedDest.affiliate_links.hotels_url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-green-wash hover:text-green transition-colors">
-                                <Hotel className="h-4 w-4" /> Buscar Hoteles <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
-                              </Button>
-                            </a>
-                          )}
-                        {selectedDest?.affiliate_links?.tours_url &&
-                          /^https?:\/\//i.test(selectedDest.affiliate_links.tours_url) && (
-                            <a href={selectedDest.affiliate_links.tours_url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-green-wash hover:text-green transition-colors">
-                                <Compass className="h-4 w-4" /> Tours y Actividades <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
-                              </Button>
-                            </a>
-                          )}
-                        {selectedDest?.affiliate_links?.insurance_url &&
-                          /^https?:\/\//i.test(selectedDest.affiliate_links.insurance_url) && (
-                            <a href={selectedDest.affiliate_links.insurance_url} target="_blank" rel="noopener noreferrer">
-                              <Button variant="outline" className="w-full gap-2 h-11 hover:bg-green-wash hover:text-green transition-colors">
-                                <ShieldCheck className="h-4 w-4" /> Seguro de Viaje <ArrowRight className="h-4 w-4 ml-auto opacity-50" />
-                              </Button>
-                            </a>
-                          )}
-                        {selectedDest && (
-                          <Link to={`/destinos/${selectedDest.slug}`} className="sm:col-span-2 mt-2">
-                            <Button className="w-full gap-2 h-12 text-base">
-                              <Compass className="h-5 w-5" /> Ver Guía del Destino <ArrowRight className="h-5 w-5 ml-auto" />
-                            </Button>
-                          </Link>
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        {widthPct > 0 && (
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${widthPct}%`, backgroundColor: color }}
+                          />
                         )}
                       </div>
+                    </li>
+                  );
+                })}
+              </ul>
 
-                      {/* Email capture */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6, duration: 0.4 }}
-                        className="rounded-xl border border-green/20 bg-green-wash p-6 text-center relative overflow-hidden"
-                      >
-                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-green/10 rounded-full blur-2xl pointer-events-none" />
-                        <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-green/10 rounded-full blur-2xl pointer-events-none" />
-                        
-                        <div className="relative z-10">
-                          <Mail className="mx-auto h-8 w-8 text-green mb-3" />
-                          <h3 className="font-semibold text-lg mb-1 text-foreground">¿Quieres tips para ahorrar en tu viaje?</h3>
-                          <p className="text-muted-foreground text-sm mb-5">
-                            Recibe consejos de presupuesto, ofertas de vuelos y guías exclusivas.
-                          </p>
-                          {emailDone ? (
-                            <div className="bg-green-500/10 text-green-600 dark:text-green-400 p-3 rounded-lg font-medium inline-flex items-center gap-2">
-                              ¡Gracias! Te mantendremos al tanto 🏔️
-                            </div>
-                          ) : (
-                            <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-                              <Input aria-label="Correo electrónico" type="email" placeholder="tu@email.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="bg-background border-border shadow-sm h-11 flex-1"
-                              />
-                              <Button type="submit" disabled={emailLoading} className="whitespace-nowrap h-11 shadow-sm">
-                                {emailLoading ? "Suscribiendo..." : "Suscribirme"}
-                              </Button>
-                            </form>
-                          )}
-                        </div>
-                      </motion.div>
-                    </div>
-                  </motion.div>
+              <div className="border-t border-border pt-4 mb-2">
+                <div className="flex items-baseline justify-between">
+                  <span className="font-serif text-lg font-bold text-foreground">Total</span>
+                  <span className="font-serif text-2xl font-bold text-foreground tabular-nums">
+                    {formatUsd(budget.total)}
+                  </span>
+                </div>
+                {budget.flightsPending && (
+                  <p className="text-right text-sm text-muted-foreground">+ vuelos</p>
                 )}
-              </AnimatePresence>
+                <p className="text-right text-sm text-muted-foreground mt-1">
+                  ≈ {formatUsd(budget.perPerson)} por persona
+                </p>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-4 mb-6 leading-relaxed">
+                La entrada es dato oficial del NPS. Gasolina, hospedaje y comida son estimados;
+                tu itinerario trae precios exactos.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <Button asChild size="lg" className="w-full">
+                  <a
+                    href={STRIPE_LINK_ITINERARIO_49}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() =>
+                      trackEvent("calculator_stripe_cta", {
+                        destination: destination.slug,
+                        total: budget.total,
+                      })
+                    }
+                  >
+                    Quiero mi itinerario completo – $49
+                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                  </a>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="w-full">
+                  <Link to={`/destinos/${destination.slug}`}>Ver guía del destino</Link>
+                </Button>
+              </div>
             </div>
+          )}
+
+          <div className="mt-10 rounded-2xl border border-border bg-muted/30 p-5 md:p-7">
+            <div className="flex items-start gap-3 mb-4">
+              <Mail className="h-5 w-5 text-green mt-0.5 shrink-0" aria-hidden />
+              <div>
+                <h3 className="font-serif text-lg font-bold text-foreground">
+                  Avísame de nuevas guías
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Sin spam. Solo cuando publiquemos un itinerario útil para ti.
+                </p>
+              </div>
+            </div>
+            {emailStatus === "success" ? (
+              <div className="flex items-center gap-2 text-sm text-green">
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
+                Ya estás en la lista. Gracias.
+              </div>
+            ) : (
+              <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  type="email"
+                  required
+                  placeholder="tu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 h-11"
+                  autoComplete="email"
+                />
+                <Button type="submit" disabled={emailStatus === "loading"}>
+                  {emailStatus === "loading" ? "Enviando…" : "Suscribirme"}
+                </Button>
+              </form>
+            )}
           </div>
         </section>
       </main>
@@ -490,7 +676,4 @@ const BudgetCalculator = () => {
       <Footer />
     </div>
   );
-};
-
-export default BudgetCalculator;
-
+}
