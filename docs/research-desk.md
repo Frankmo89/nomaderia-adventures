@@ -55,6 +55,8 @@ Ejemplo:
 - valid_until: 2026-10-15   # o null si evergreen
 - impact: high|medium|low
 - affects_itineraries: true|false
+- evergreen: yes|no   # yes = los hechos centrales siguen vigentes en 6 meses
+- article_query: <frase de búsqueda en español>   # solo si evergreen: yes
 
 ## Resumen
 2–4 frases en español. Qué pasó y por qué importa a un principiante.
@@ -76,6 +78,8 @@ Hook + 3 beats + CTA suave a quiz / itinerario. Sin promesas médicas/legales.
 - URL oficial (nps.gov, weather.gov, recreation.gov, …)
 - Fecha de consulta
 ```
+
+Los reports con `evergreen: yes` alimentan los borradores semanales de blog que escribe el bot de Marketing en Drive > `09 - Artículos/1 - Por revisar`.
 
 ## 4. Tolerancia del parser futuro
 
