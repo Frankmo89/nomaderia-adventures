@@ -361,3 +361,21 @@ export function calculateBudget(input: BudgetCalcInput): BudgetCalcResult {
     forcedFlying: transportChoice.forcedFlying,
   };
 }
+
+/**
+ * Which transport the form should switch to, or null to leave it alone.
+ * Forced flying (no road, or off-route ZIP) always wins; otherwise the default
+ * is re-seeded only when the park, origin or ZIP changed (`seedChanged`), so a
+ * visitor's own pick survives. Returns null when the value is already right:
+ * writing it again re-renders the form, and on a no-road park that render
+ * wrote it again, forever (the page froze on Denali, Hawái, Alaska).
+ */
+export function transportToSeed(
+  current: TransportMode | undefined,
+  choice: TransportChoice,
+  seedChanged: boolean,
+): TransportMode | null {
+  if (choice.forcedFlying) return current === "flying" ? null : "flying";
+  if (!seedChanged) return null;
+  return current === choice.mode ? null : choice.mode;
+}

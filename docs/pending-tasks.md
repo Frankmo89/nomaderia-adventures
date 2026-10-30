@@ -763,6 +763,7 @@ Siempre que hagas cambios al código:
 
 ## Completado
 
+- [2026-10-27] **Fix: la calculadora se congelaba en parques sin carretera (bug en producción tras PR #243).** Elegir Denali, Hawái, Gates of the Arctic o cualquiera de los 13 parques que fuerzan Volando, o escribir un ZIP de Hawái/Alaska, dejaba la página colgada (ciclo infinito `setValue` ↔ render). `transportToSeed()` en `budget-calc.ts` + efecto con dependencias primitivas. Verificado con Playwright a 390×844 (Denali, Hawái, Gates, Joshua Tree; ZIP 96813 → Volando forzado; regreso a 92101 → Manejando; elegir Volando a mano se respeta). Lección en ADR-060.
 - [2026-10-27] **Calculadora follow-up (PR #243):** ferry parks vía `parseDriveToPort` (Channel Islands → Manejando + Ferry "Por cotizar"); `entrance_fee_type` (por persona / por vehículo / gratis); ZIPs off-route (`isOffRouteZip`) fuerzan Volando; ZIP no encontrado oculta resultados; fix "habitaciónes" → "habitaciones". ADR-060 extendido.
 - [2026-10-27] **Calculadora de presupuesto reconstruida para conductores SoCal.** Fórmula honest: gasolina (ZIP CA 900–961 vs US), vuelos opcionales, renta de carro al volar, entrada NPS × autos, hospedaje (noches=max(días−1,1)), comida, equipo. Tarifas centralizadas en `src/config/calculator-rates.ts`. Eliminadas líneas Actividades/Seguro. CTA Stripe $49. ADR-060. Gates: typecheck + typecheck:functions + test + build.
 
