@@ -11,6 +11,7 @@ import {
   resolveDriveHoursForCalc,
   resolveTransport,
   transportToSeed,
+  budgetShareText,
   type BudgetCalcInput,
 } from "@/lib/budget-calc";
 import { SAN_DIEGO_ORIGIN } from "@/lib/landing-origin";
@@ -367,5 +368,36 @@ describe("transportToSeed", () => {
   it("keeps the visitor's own pick while nothing changed", () => {
     expect(transportToSeed("flying", drive, false)).toBeNull();
     expect(transportToSeed("driving", fly, false)).toBeNull();
+  });
+});
+
+describe("budgetShareText", () => {
+  const base: BudgetCalcInput = {
+    people: 2,
+    days: 3,
+    style: "mid",
+    transport: "driving",
+    driveHours: 3,
+    zip: "92101",
+    entranceFeeUsd: 30,
+    entranceFeeType: "por vehículo",
+    hasGear: false,
+  };
+
+  it("says the total, the share per person, the group and the link", () => {
+    const text = budgetShareText(calculateBudget(base), "Parque Nacional Joshua Tree", "https://nomaderia.com/calculadora");
+    expect(text).toContain("¿Vamos a Parque Nacional Joshua Tree?");
+    expect(text).toContain("≈ $767 en total");
+    expect(text).toContain("≈ $384 por persona");
+    expect(text).toContain("2 personas, 3 días.");
+    expect(text).not.toContain("Sin contar");
+    expect(text.endsWith("Haz tu cálculo aquí: https://nomaderia.com/calculadora")).toBe(true);
+  });
+
+  it("says what is left out of the total", () => {
+    const flying = calculateBudget({ ...base, people: 1, days: 1, transport: "flying", driveHours: null });
+    const text = budgetShareText(flying, "Denali", "https://x");
+    expect(text).toContain("1 persona, 1 día.");
+    expect(text).toContain("Sin contar vuelos.");
   });
 });

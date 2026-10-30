@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import {
-  SCENE_PALETTES,
-  scenePhaseForHour,
-  sceneTileUrls,
-  type ScenePhase,
-} from "@/lib/park-scene-tiles";
+import { SCENE_PALETTES, currentScenePhase, sceneTileUrls } from "@/lib/park-scene-tiles";
+import Hiker from "@/components/shared/Hiker";
 
 // Header scene for /destinos (ADR-043), drawn in code: a hiker walks along a
 // ridge while park landmarks drift past in four layers (far ranges,
@@ -19,23 +15,6 @@ import {
 // with "reduce motion". Everything stays below the subtitle, and the sky stays
 // dark behind the title, subtitle and navbar in every palette.
 
-const PHASE_PARAM: Record<string, ScenePhase> = {
-  amanecer: "dawn",
-  dia: "day",
-  atardecer: "dusk",
-  noche: "night",
-};
-
-function currentPhase(): ScenePhase {
-  try {
-    const forced = new URLSearchParams(window.location.search).get("escena");
-    if (forced && PHASE_PARAM[forced]) return PHASE_PARAM[forced];
-  } catch {
-    // No URL access: fall back to the clock.
-  }
-  return scenePhaseForHour(new Date().getHours());
-}
-
 /**
  * Star positions as [left %, top %]. None sits behind the title or subtitle
  * (33–58% down, center): those rows keep stars at the edges.
@@ -45,44 +24,10 @@ const STARS: ReadonlyArray<readonly [number, number]> = [
   [84, 46], [73, 14], [95, 30], [93, 10], [4, 48], [6, 60],
 ];
 
-/** The hiker: legs, arm and pole swing (keyframes in index.css). */
-const Hiker = ({ color }: { color: string }) => (
-  <svg className="trail-scene__hiker" viewBox="0 0 60 100" focusable="false">
-    <g fill={color} stroke={color} strokeLinecap="round" strokeLinejoin="round">
-      <g className="trail-scene__leg trail-scene__leg--back">
-        <path fill="none" strokeWidth="7" d="M30,57 L30,77" />
-        <g className="trail-scene__shin">
-          <path fill="none" strokeWidth="6" d="M30,77 L30,94" />
-          <path strokeWidth="1" d="M26,93 L36,94.5 Q39,99 35.5,99 L26,99 Z" />
-        </g>
-      </g>
-      <g className="trail-scene__upper">
-        <rect x="14" y="29" width="14" height="27" rx="4" transform="rotate(-6 21 42)" />
-        <ellipse cx="20" cy="28" rx="7.5" ry="3.2" />
-        <path strokeWidth="2" d="M25,31 L37,32 L35.5,58 L25,58 Z" />
-        <circle cx="35" cy="21" r="6.4" />
-        <path strokeWidth="1" d="M29.5,16 L30.5,10.5 Q35,8 39.5,10.5 L40.5,16 Z" />
-        <ellipse cx="35" cy="16" rx="9.5" ry="1.9" />
-        <g className="trail-scene__arm">
-          <path fill="none" strokeWidth="5" d="M33,34 L36.5,45 L41,52" />
-          <path fill="none" strokeWidth="1.7" d="M40,49 L47,99" />
-        </g>
-      </g>
-      <g className="trail-scene__leg">
-        <path fill="none" strokeWidth="7" d="M30,57 L30,77" />
-        <g className="trail-scene__shin">
-          <path fill="none" strokeWidth="6" d="M30,77 L30,94" />
-          <path strokeWidth="1" d="M26,93 L36,94.5 Q39,99 35.5,99 L26,99 Z" />
-        </g>
-      </g>
-    </g>
-  </svg>
-);
-
 const ParkTrailScene = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [offscreen, setOffscreen] = useState(false);
-  const [phase] = useState(currentPhase);
+  const [phase] = useState(currentScenePhase);
   const palette = SCENE_PALETTES[phase];
   const tiles = useMemo(() => sceneTileUrls(palette), [palette]);
 

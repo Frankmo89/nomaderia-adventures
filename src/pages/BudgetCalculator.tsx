@@ -3,10 +3,14 @@ import { Link } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Calculator, Mail, CheckCircle2, ArrowRight } from "lucide-react";
+import { Mail, CheckCircle2, ArrowRight, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageHeader from "@/components/shared/PageHeader";
+import CalculatorScene from "@/components/calculator/CalculatorScene";
+import PeopleStepper from "@/components/calculator/PeopleStepper";
+import BudgetPass from "@/components/calculator/BudgetPass";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +27,7 @@ import { useCanonical, usePageMeta } from "@/hooks/use-seo";
 import { supabase } from "@/integrations/supabase/client";
 import { STRIPE_LINK_ITINERARIO_49 } from "@/config/pricing";
 import {
+  budgetShareText,
   calculateBudget,
   resolveCalculatorTransport,
   resolveDriveHoursForCalc,
@@ -30,8 +35,9 @@ import {
   transportToSeed,
   type ComfortLevel,
   type TransportMode,
-  type BudgetLine,
 } from "@/lib/budget-calc";
+import { landmarkForSlug } from "@/lib/calculator-scene";
+import { buildWhatsAppShareLink } from "@/lib/whatsapp";
 import {
   originFromZip,
   readSavedOrigin,
@@ -44,18 +50,6 @@ import { isValidZipFormat, lookupZip, preloadZipTable } from "@/lib/zip-centroid
 import { trackEvent } from "@/lib/analytics";
 
 const UNIQUE_VIOLATION = "23505";
-
-/** Design-system hex tokens (no --accent / --sunset). */
-const BAR_COLORS: Record<string, string> = {
-  gas: "#1F6F43",
-  flights: "#2E6F9E",
-  car_rental: "#166534",
-  ferry: "#2E6F9E",
-  entrance: "#6E7A74",
-  lodging: "#14201A",
-  food: "#C2562F",
-  gear: "#13211A",
-};
 
 const formSchema = z.object({
   destinationId: z.string().min(1, "Elige un destino"),
@@ -74,14 +68,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-function formatUsd(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 function initialOrigin(): RouteOrigin {
   const saved = readSavedOrigin();
@@ -280,34 +266,28 @@ export default function BudgetCalculator() {
     [email, destination?.slug],
   );
 
-  const visibleLines: BudgetLine[] = budget
-    ? budget.lines.filter((l) => l.alwaysShow || l.amount > 0 || l.excludeFromTotal)
-    : [];
-  const maxAmount = Math.max(...visibleLines.map((l) => l.amount), 1);
+  const landmark = destination ? landmarkForSlug(destination.slug) : null;
+  const shareHref =
+    budget && destination
+      ? buildWhatsAppShareLink(
+          budgetShareText(budget, destination.title, `${window.location.origin}/calculadora`),
+        )
+      : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
 
       <main className="flex-1">
-        {/* Dark band so Navbar (hasHero for /calculadora) stays readable. */}
-        <section className="relative bg-forest-dark pt-24 pb-12 md:pb-16">
-          <div className="container mx-auto px-4 max-w-3xl">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cloud/10">
-                <Calculator className="h-5 w-5 text-cloud" aria-hidden />
-              </div>
-              <p className="text-sm font-medium text-cloud/80">Herramienta gratis</p>
-            </div>
-            <h1 className="font-serif text-3xl md:text-4xl font-bold text-cloud mb-3">
-              Calculadora de presupuesto
-            </h1>
-            <p className="text-cloud/80 text-base md:text-lg max-w-2xl">
-              Números honestos para viajar a parques nacionales desde el Sur de California:
-              gasolina, entrada oficial del NPS, hospedaje y comida.
-            </p>
-          </div>
-        </section>
+        {/* Dark band behind the navbar (hasHero for /calculadora): the
+            chosen park rises in and the travelers walk toward it (ADR-061). */}
+        <PageHeader
+          eyebrow="Herramienta gratis"
+          title="Calculadora de presupuesto"
+          subtitle="Números honestos para tu viaje a un parque nacional: gasolina, entrada oficial del NPS, hospedaje y comida."
+        >
+          <CalculatorScene landmark={landmark} people={Number(values.people) || 1} />
+        </PageHeader>
 
         <section className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
           <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
@@ -369,16 +349,19 @@ export default function BudgetCalculator() {
               )}
             </div>
 
-            {/* 3 People */}
+            {/* 3 People — one hiker per traveler */}
             <div className="space-y-2">
-              <Label htmlFor="people">¿Cuántos viajan?</Label>
-              <Input
-                id="people"
-                type="number"
-                min={1}
-                max={8}
-                className="h-11"
-                {...register("people")}
+              <Label htmlFor="people-count">¿Cuántos viajan?</Label>
+              <Controller
+                name="people"
+                control={control}
+                render={({ field }) => (
+                  <PeopleStepper
+                    id="people-count"
+                    value={Number(field.value) || 1}
+                    onChange={(next) => field.onChange(next)}
+                  />
+                )}
               />
               {errors.people && (
                 <p className="text-sm text-destructive">Entre 1 y 8 personas</p>
@@ -545,79 +528,16 @@ export default function BudgetCalculator() {
             </div>
           </form>
 
-          {budget && destination && (
-            <div className="mt-10 rounded-2xl border border-border bg-card p-5 md:p-7 shadow-sm">
-              <h2 className="font-serif text-xl font-bold text-foreground mb-1">
-                Estimado para {destination.title}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-6">
-                {budget.people} {budget.people === 1 ? "persona" : "personas"} ·{" "}
-                {budget.days} {budget.days === 1 ? "día" : "días"} ·{" "}
-                {STYLE_LABELS[budget.style]} ·{" "}
-                {effectiveTransport === "driving" ? "Manejando" : "Volando"}
-              </p>
+          {budget && destination && landmark && (
+            <div className="mt-10">
+              <BudgetPass
+                budget={budget}
+                parkTitle={destination.title}
+                landmark={landmark}
+                driving={effectiveTransport === "driving"}
+              />
 
-              <ul className="space-y-4 mb-6">
-                {visibleLines.map((line) => {
-                  const widthPct =
-                    line.amount <= 0 ? 0 : Math.round((line.amount / maxAmount) * 100);
-                  const color = BAR_COLORS[line.id] ?? "#1F6F43";
-                  return (
-                    <li key={line.id}>
-                      <div className="flex items-baseline justify-between gap-3 mb-1">
-                        <div className="min-w-0">
-                          <span className="text-sm font-medium text-foreground">
-                            {line.label}
-                          </span>
-                          {line.tag && (
-                            <span className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                              {line.tag}
-                            </span>
-                          )}
-                          {line.subtext && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {line.subtext}
-                            </p>
-                          )}
-                        </div>
-                        <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">
-                          {line.displayAmount ?? formatUsd(line.amount)}
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                        {widthPct > 0 && (
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{ width: `${widthPct}%`, backgroundColor: color }}
-                          />
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              <div className="border-t border-border pt-4 mb-2">
-                <div className="flex items-baseline justify-between">
-                  <span className="font-serif text-lg font-bold text-foreground">Total</span>
-                  <span className="font-serif text-2xl font-bold text-foreground tabular-nums">
-                    {formatUsd(budget.total)}
-                  </span>
-                </div>
-                {budget.flightsPending && (
-                  <p className="text-right text-sm text-muted-foreground">+ vuelos</p>
-                )}
-                <p className="text-right text-sm text-muted-foreground mt-1">
-                  ≈ {formatUsd(budget.perPerson)} por persona
-                </p>
-              </div>
-
-              <p className="text-xs text-muted-foreground mt-4 mb-6 leading-relaxed">
-                La entrada es dato oficial del NPS. Gasolina, hospedaje y comida son estimados;
-                tu itinerario trae precios exactos.
-              </p>
-
-              <div className="flex flex-col gap-3">
+              <div className="mt-5 flex flex-col gap-3">
                 <Button asChild size="lg" className="w-full">
                   <a
                     href={STRIPE_LINK_ITINERARIO_49}
@@ -634,7 +554,22 @@ export default function BudgetCalculator() {
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                   </a>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="w-full">
+                {shareHref && (
+                  <Button asChild variant="outline" size="lg" className="w-full">
+                    <a
+                      href={shareHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() =>
+                        trackEvent("calculator_whatsapp_share", { destination: destination.slug })
+                      }
+                    >
+                      <MessageCircle className="mr-2 h-4 w-4" aria-hidden />
+                      Mándaselo a tu familia por WhatsApp
+                    </a>
+                  </Button>
+                )}
+                <Button asChild variant="ghost" size="lg" className="w-full">
                   <Link to={`/destinos/${destination.slug}`}>Ver guía del destino</Link>
                 </Button>
               </div>

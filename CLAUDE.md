@@ -123,6 +123,8 @@ src/
 ├── components/
 │   ├── landing/              # Secciones de homepage (Navbar, Hero, Quiz, Footer, etc.)
 │   ├── destinations/         # Secciones de /destinos/:slug (TrailsSection, ParkAlertsBanner, ParkWeatherCard, HowToGetThere, etc.) + ParkTrailScene (cabecera animada de /destinos, ADR-043)
+│   ├── calculator/           # Escena de /calculadora: CalculatorScene (cabecera), PeopleStepper (excursionistas), BudgetPass (resultado como pase) (ADR-061)
+│   ├── shared/Hiker.tsx      # Excursionista animado (lo usan /destinos y /calculadora)
 │   ├── ConciergeLauncher.tsx # Launcher global del Concierge IA (montado en App.tsx, persiste entre rutas)
 │   └── ui/                   # shadcn/ui — NO editar manualmente
 ├── config/
@@ -149,12 +151,13 @@ src/
 │   ├── landing-parks.ts      # Etiquetas de las tarjetas de parques del home (ADR-040)
 │   ├── landing-origin.ts     # Origen de la ruta del home: San Diego (horas reales) o código postal (≈ motor) (ADR-041)
 │   ├── park-scene-tiles.ts   # Teselas SVG de la escena del excursionista en /destinos (ADR-043)
+│   ├── calculator-scene.ts   # Siluetas de los 63 parques recortadas de esas teselas + paso del grupo (ADR-061)
 │   ├── hero-slides.ts        # Fotos del hero: portada local + 6 de la Galería al azar, achicadas por Supabase; gestos de historia (ADR-046, ADR-058)
 │   ├── hero-ridges.ts        # Siluetas de la cordillera donde termina la foto del hero en celular (ADR-048)
 │   ├── forest-silhouettes.ts # Siluetas de pinos del bosque de «La promesa» (ADR-050)
 │   ├── sequoia-silhouettes.ts # Troncos, vetas y copas de las secuoyas de «La promesa» (ADR-055)
 │   ├── canyon-silhouettes.ts # Formas del paso por el cañón antes de las preguntas frecuentes: mirador, paredes, río (ADR-052, ADR-054)
-│   └── whatsapp.ts           # buildWhatsAppLink() — URL centralizada de WhatsApp
+│   └── whatsapp.ts           # buildWhatsAppLink() (al número de Nomaderia) + buildWhatsAppShareLink() (a cualquier chat, para compartir)
 └── supabase/functions/       # Edge Functions — 21 en total
     ├── _shared/engine/       # Motor us-parks-recommender VENDORIZADO por scripts/sync-engine.ts
     │                         #  (engine.ts byte a byte + engine-data.generated.ts + engine.lock.json).
@@ -200,7 +203,8 @@ src/
 - **Clases condicionales:** `cn()` de `@/lib/utils` siempre.
 - **WhatsApp:** todo enlace pasa por `buildWhatsAppLink(message)` de
   `@/lib/whatsapp` (número `18588996802` hardcodeado en ese archivo — no se lee
-  de ninguna variable de entorno).
+  de ninguna variable de entorno). Para que el visitante comparta algo con su
+  familia (sin nuestro número), `buildWhatsAppShareLink(message)` (ADR-061).
 - **SEO:** toda página pública llama `usePageMeta()` de `@/hooks/use-seo`.
 
 ## Design System

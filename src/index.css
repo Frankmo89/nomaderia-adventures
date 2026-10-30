@@ -391,3 +391,118 @@ html {
 }
 @keyframes trail-arm { 0%, 100% { transform: rotate(16deg); } 50% { transform: rotate(-14deg); } }
 @keyframes trail-bob { 0%, 100% { transform: translateY(1.2px); } 50% { transform: translateY(-0.6px); } }
+
+/* /calculadora header scene (ADR-061, src/components/calculator/CalculatorScene.tsx).
+   Reuses the /destinos sky, glow, stars and orb (.trail-scene*) and its pause
+   and reduce-motion rules, but the land stands still: the chosen park's
+   landmark rises in behind the pines and the group walks across. Each hiker's
+   step lasts 0.8 s × his scale (--step), so short legs step faster and every
+   boot keeps the group's pace. Shapes stop 116 px (phones) / 142 px up. */
+.calc-scene__layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  background-size: auto 100%;
+}
+.calc-scene__far { bottom: 24px; height: 76px; background-position: -260px bottom; }
+.calc-scene__trees { bottom: 10px; height: 34px; }
+.calc-scene__ridge { bottom: 0; height: 28px; }
+.calc-scene__landmark {
+  position: absolute;
+  right: 7%;
+  bottom: 16px;
+  height: 92px;
+  width: auto;
+  max-width: 58%;
+  object-fit: contain;
+  object-position: bottom;
+  animation: calc-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.calc-scene__group {
+  position: absolute;
+  left: 0;
+  bottom: 20px;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gap);
+  /* Start a quarter of the way across, so the group is in view on load. */
+  animation: calc-cross var(--dur) linear calc(var(--dur) * -0.25) infinite;
+}
+.calc-scene__hiker {
+  display: block;
+  flex: none;
+  overflow: visible;
+  filter: drop-shadow(0 0 1px var(--trail-rim));
+}
+.calc-scene__hiker .trail-scene__leg,
+.calc-scene__hiker .trail-scene__shin,
+.calc-scene__hiker .trail-scene__arm {
+  animation-duration: var(--step);
+  animation-delay: var(--d);
+}
+.calc-scene__hiker .trail-scene__upper {
+  animation-duration: calc(var(--step) / 2);
+  animation-delay: var(--d);
+}
+.calc-scene__hiker .trail-scene__leg--back,
+.calc-scene__hiker .trail-scene__leg--back .trail-scene__shin {
+  animation-delay: calc(var(--d) - var(--step) / 2);
+}
+@media (min-width: 640px) {
+  .calc-scene__far { bottom: 30px; height: 104px; }
+  .calc-scene__trees { bottom: 14px; height: 46px; }
+  .calc-scene__ridge { height: 36px; }
+  .calc-scene__landmark { bottom: 20px; height: 122px; right: 16%; max-width: 46%; }
+  .calc-scene__group { bottom: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .calc-scene__group { left: 8%; }
+}
+/* A landmark cut out of a tile ends in straight edges (ground, sea); fade its
+   sides so it sits in the scene instead of in a box. */
+.calc-landmark-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+}
+/* «¿Cuántos viajan?» stepper (PeopleStepper.tsx): the hikers step in place
+   for a moment after each change, then stand (no animation = standing pose). */
+.calc-walker {
+  display: block;
+  overflow: visible;
+}
+.calc-walker .trail-scene__leg,
+.calc-walker .trail-scene__shin,
+.calc-walker .trail-scene__arm,
+.calc-walker .trail-scene__upper {
+  animation: none;
+}
+.calc-walkers[data-walking] .calc-walker .trail-scene__leg,
+.calc-walkers[data-walking] .calc-walker .trail-scene__shin,
+.calc-walkers[data-walking] .calc-walker .trail-scene__arm {
+  animation-duration: var(--step);
+  animation-delay: var(--d);
+  animation-iteration-count: infinite;
+}
+.calc-walkers[data-walking] .calc-walker .trail-scene__leg { animation-name: trail-thigh; animation-timing-function: ease-in-out; }
+.calc-walkers[data-walking] .calc-walker .trail-scene__shin { animation-name: trail-shin; animation-timing-function: linear; }
+.calc-walkers[data-walking] .calc-walker .trail-scene__arm { animation-name: trail-arm; animation-timing-function: ease-in-out; }
+.calc-walkers[data-walking] .calc-walker .trail-scene__upper {
+  animation: trail-bob calc(var(--step) / 2) ease-in-out var(--d) infinite;
+}
+.calc-walkers[data-walking] .calc-walker .trail-scene__leg--back,
+.calc-walkers[data-walking] .calc-walker .trail-scene__leg--back .trail-scene__shin {
+  animation-delay: calc(var(--d) - var(--step) / 2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .calc-walkers .calc-walker * { animation: none !important; }
+}
+@keyframes calc-rise {
+  from { transform: translateY(28px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes calc-cross {
+  from { transform: translateX(var(--from)); }
+  to { transform: translateX(var(--to)); }
+}
