@@ -89,7 +89,7 @@ const Index = () => {
       telephone: `+${WHATSAPP_NUMBER}`,
       image: BRAND_ASSETS.defaultOgImage,
       sameAs: [
-        "https://www.instagram.com/nomaderia.mx",
+        "https://www.instagram.com/nomaderiatrips/",
         "https://www.tiktok.com/@nomaderia.mx",
         "https://www.facebook.com/Nomaderia",
       ],
