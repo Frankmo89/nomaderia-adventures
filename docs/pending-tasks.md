@@ -12,6 +12,12 @@
 
 ---
 
+## Changelog 2026-11-09 — Quiz sin % de compatibilidad (ADR-062)
+
+- [x] `src/lib/quiz-ranking.ts`: `fitLabel(rank, matchPercent)` + `LOW_FIT_PERCENT` (40), con tests.
+- [x] `QuizSection.tsx`: fuera `CompatibilityPill` (umbral 75 % que escondía el número casi siempre). Etiqueta «Tu mejor opción» / «Otra buena opción» (o «Lo más cercano a lo que buscas» / «Otra opción posible» si el ajuste es bajo) y razones del motor como chips.
+- [ ] **FRANK: probar el quiz en el iPhone** después del merge: la tarjeta grande debe decir «Tu mejor opción» y no mostrar ningún %.
+
 ## Pendiente humano — Fotos de parques en Storage (ADR-057)
 
 - [ ] **FRANK: desplegar** `mirror-park-images` vía Actions → `deploy-edge-functions.yml` (`workflow_dispatch`) **después** de mergear el PR de la función a `main`. El token de `gh` del agente no tiene scope `workflow`, así que no puede dispararlo.
