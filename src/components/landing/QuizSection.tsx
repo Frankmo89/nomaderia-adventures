@@ -20,6 +20,7 @@ import { isIslandZip, isValidZipFormat, lookupZip, preloadZipTable } from "@/lib
 import {
   DRIVE_HOUR_OPTIONS,
   MONTH_UNKNOWN,
+  fitLabel,
   originAnswerFields,
   type TravelMode,
 } from "@/lib/quiz-ranking";
@@ -149,47 +150,23 @@ const steps: QuizStep[] = [
   },
 ];
 
-// --- CompatibilityPill: count-up or friendly fallback ---
-const CompatibilityPill = ({
-  percent,
-  size = "md",
-}: {
-  percent: number;
-  size?: "md" | "sm";
-}) => {
-  const reduceMotion = useReducedMotion();
-  const showPercent = percent >= 75;
-  const [displayed, setDisplayed] = useState(0);
-
-  useEffect(() => {
-    if (!showPercent || reduceMotion) {
-      setDisplayed(percent);
-      return;
-    }
-    const duration = 1000;
-    const startTime = performance.now();
-    let raf: number;
-    const tick = (now: number) => {
-      const t = Math.min((now - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setDisplayed(Math.round(eased * percent));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [percent, reduceMotion, showPercent]);
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full bg-secondary/10 text-secondary font-semibold",
-        size === "sm" ? "px-3 py-1 text-xs" : "px-4 py-1.5 text-sm"
-      )}
-    >
-      {showPercent ? `${displayed}% compatible` : "Muy buena opción para ti"}
-    </span>
-  );
-};
+// --- Why it fits: the engine's reasons as chips (no percent, ADR-062) ---
+const ReasonChips = ({ reasons, max, size = "md" }: { reasons: string[]; max: number; size?: "md" | "sm" }) =>
+  reasons.length > 0 ? (
+    <ul className="flex flex-wrap gap-1.5" aria-label="Por qué encaja">
+      {reasons.slice(0, max).map((reason) => (
+        <li
+          key={reason}
+          className={cn(
+            "rounded-full bg-green-wash text-ink",
+            size === "sm" ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs font-medium",
+          )}
+        >
+          {reason}
+        </li>
+      ))}
+    </ul>
+  ) : null;
 
 // --- QuizLoading component ---
 const QuizLoading = () => (
@@ -363,7 +340,7 @@ const HeroResultCard = ({
   onSelect: () => void;
 }) => (
   <div>
-    <p className="text-eyebrow text-secondary mb-3">Tu Destino Ideal</p>
+    <p className="text-eyebrow text-secondary mb-3">{fitLabel(d.rank, d.matchPercent)}</p>
     <h2 className="font-serif font-bold text-4xl md:text-5xl text-foreground leading-tight mb-5">
       {d.title}
     </h2>
@@ -396,10 +373,7 @@ const HeroResultCard = ({
       )}
     </button>
     <div className="space-y-3">
-      <CompatibilityPill percent={d.matchPercent} size="md" />
-      {d.matchReasons.length > 0 && (
-        <p className="text-sm text-stone-500">{d.matchReasons.join(" · ")}</p>
-      )}
+      <ReasonChips reasons={d.matchReasons} max={4} />
       {d.short_description && (
         <p className="text-base text-muted-foreground line-clamp-2">{d.short_description}</p>
       )}
@@ -467,10 +441,8 @@ const AlternativeCard = ({
       </div>
       <div className="p-4 space-y-2">
         <h3 className="font-serif font-bold text-lg text-foreground leading-tight">{d.title}</h3>
-        <CompatibilityPill percent={d.matchPercent} size="sm" />
-        {d.matchReasons.length > 0 && (
-          <p className="text-xs text-stone-500 line-clamp-2">{d.matchReasons.join(" · ")}</p>
-        )}
+        <p className="text-eyebrow text-secondary">{fitLabel(d.rank, d.matchPercent)}</p>
+        <ReasonChips reasons={d.matchReasons} max={2} size="sm" />
         {d.short_description && (
           <p className="text-sm text-muted-foreground line-clamp-2">{d.short_description}</p>
         )}

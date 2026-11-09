@@ -288,3 +288,19 @@ export function rankQuizDestinations(
     candidate_park_codes,
   };
 }
+
+// ─── Result labels (presentation only, ADR-062) ──────────────────────────────
+
+/**
+ * Below this engine `match_percent` a result is a weak fit and its label says
+ * so. The number itself is never shown or remapped (ADR-026); it only picks
+ * the words.
+ */
+export const LOW_FIT_PERCENT = 40;
+
+/** Spanish label for a quiz result card, from its engine rank and fit score. */
+export function fitLabel(rank: number, matchPercent: number): string {
+  const weak = matchPercent < LOW_FIT_PERCENT;
+  if (rank === 1) return weak ? "Lo más cercano a lo que buscas" : "Tu mejor opción";
+  return weak ? "Otra opción posible" : "Otra buena opción";
+}

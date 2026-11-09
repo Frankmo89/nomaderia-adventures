@@ -16,6 +16,8 @@ import {
   answersToRankingProfile,
   buildSpanishReasons,
   engineDataForParkCodes,
+  fitLabel,
+  LOW_FIT_PERCENT,
   originAnswerFields,
   rankQuizDestinations,
   resolveProfileMonth,
@@ -332,5 +334,31 @@ describe("buildSpanishReasons", () => {
     expect(reasons).toContain("empate técnico");
     expect(reasons).toContain("fuera de su mejor temporada");
     expect(reasons).toContain("viaje de 2-3 días");
+  });
+});
+
+describe("fitLabel (ADR-062)", () => {
+  it("names the top result without a number", () => {
+    expect(fitLabel(1, 77)).toBe("Tu mejor opción");
+    expect(fitLabel(1, 51)).toBe("Tu mejor opción");
+  });
+
+  it("names the other results", () => {
+    expect(fitLabel(2, 74)).toBe("Otra buena opción");
+    expect(fitLabel(3, 44)).toBe("Otra buena opción");
+  });
+
+  it("says so when the fit is weak instead of praising it", () => {
+    // Real quiz: Maryland ZIP, 3 h drive limit → Shenandoah at 9 %.
+    expect(fitLabel(1, 9)).toBe("Lo más cercano a lo que buscas");
+    expect(fitLabel(3, 38)).toBe("Otra opción posible");
+    expect(fitLabel(1, LOW_FIT_PERCENT)).toBe("Tu mejor opción");
+    expect(fitLabel(1, LOW_FIT_PERCENT - 1)).toBe("Lo más cercano a lo que buscas");
+  });
+
+  it("never puts a percent in the label", () => {
+    for (const rank of [1, 2, 3]) {
+      for (const pct of [0, 9, 39, 40, 75, 100]) expect(fitLabel(rank, pct)).not.toMatch(/\d|%/);
+    }
   });
 });
