@@ -670,7 +670,7 @@ Pendiente real:
 - [x] **Promesas de tiempo / soporte.** Unificado: entrega 24–48h tras pago; respuesta ≤24h; WhatsApp en viaje = durante el día + disclaimer 911. Quitado “24/7” (TravelInsurance). SocialProof desmontado del home.
 - [x] **Claims AI / números.** ConciergeLauncher desmontado de `App.tsx`; Preview IA oculto en quiz (se conserva ranking top-3 + “% compatible”). “63 parques” se mantiene. SocialProof oculto (sin clientes reales aún). “100%” solo donde dice “100% en español”. TAP / The Travel Institute se mantiene.
 - [ ] **Mercado México en CMS (humano).** SQL listo en `docs/sql/draft-mexico-blog-posts.sql` (4 posts → `is_published=false`). Frank debe correrlo en SQL Editor. Orphan `DidYouKnowSection` aún tiene copy México/CDMX si se remonta.
-- [ ] **Handle redes `@nomaderia.mx`.** Footer/JSON-LD apuntan Instagram/TikTok `.mx` mientras el producto es EE. UU. — confirmar branding intencional.
+- [x] **Handle Instagram → `@nomaderiatrips` (2026-11-06).** Footer + JSON-LD `sameAs` en `Index.tsx` apuntan a `https://www.instagram.com/nomaderiatrips/`. TikTok sigue en `@nomaderia.mx` (intencional). Bio link de Instagram sigue pendiente humano.
 
 - [ ] **Frases viejas fuera del hero (encontradas 2026-10-16, no se tocaron).** Hay que decidir el copy con Frank (`docs/brand.md` §Slogan):
   - Correos (Edge Functions, hay que desplegarlas después): «Tu Primera Aventura Te Está Esperando» en `supabase/functions/send-quiz-email/index.ts:106`, `send-quiz-results/index.ts:91`, `send-welcome-email/index.ts:130` y `send-drip-emails/index.ts:66,166`.
@@ -762,6 +762,8 @@ Siempre que hagas cambios al código:
    añade un ADR en `docs/decisions.md`.
 
 ## Completado
+
+- [2026-11-06] **Instagram handle → `@nomaderiatrips`.** Links en `src/components/landing/Footer.tsx` y `sameAs` de `src/pages/Index.tsx` → `https://www.instagram.com/nomaderiatrips/`. TikTok (`@nomaderia.mx`) sin cambios. Gates: `npm run typecheck` + `npm run build`.
 
 - [2026-10-27] **Fix: la calculadora se congelaba en parques sin carretera (bug en producción tras PR #243).** Elegir Denali, Hawái, Gates of the Arctic o cualquiera de los 13 parques que fuerzan Volando, o escribir un ZIP de Hawái/Alaska, dejaba la página colgada (ciclo infinito `setValue` ↔ render). `transportToSeed()` en `budget-calc.ts` + efecto con dependencias primitivas. Verificado con Playwright a 390×844 (Denali, Hawái, Gates, Joshua Tree; ZIP 96813 → Volando forzado; regreso a 92101 → Manejando; elegir Volando a mano se respeta). Lección en ADR-060.
 - [2026-10-27] **Calculadora con escena (ADR-061).** Cabecera con el cielo de `/destinos`: la silueta del parque elegido sube detrás de los pinos y el grupo (un excursionista por persona, adultos y niños) camina hacia ella. «¿Cuántos viajan?» con − / + y una fila de excursionistas. Resultado como pase con muescas, barra segmentada y sello con fecha. Botón «Mándaselo a tu familia por WhatsApp» (`buildWhatsAppShareLink`, `budgetShareText`). Siluetas recortadas de las teselas existentes (`src/lib/calculator-scene.ts`), las 63 cubiertas. `Hiker` compartido en `src/components/shared/`. Teselas de `/destinos` idénticas byte a byte. Verificado con Playwright a 390×844 y 1280 (noche, día, atardecer; Joshua Tree, Channel Islands, Yosemite, Gates of the Arctic con 8 personas; «reducir movimiento»).

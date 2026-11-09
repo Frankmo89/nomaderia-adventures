@@ -50,7 +50,7 @@ const Footer = forwardRef<HTMLElement, FooterProps>(({ flush = false }, ref) => 
 
           {/* Social */}
           <div className="flex gap-4">
-            <a href="https://www.instagram.com/nomaderia.mx?igsh=cXo4ZGJtNzVlYmg0&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-mist/80 transition-colors hover:text-green"><Instagram className="h-5 w-5" /></a>
+            <a href="https://www.instagram.com/nomaderiatrips/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-mist/80 transition-colors hover:text-green"><Instagram className="h-5 w-5" /></a>
             <a href="https://www.facebook.com/share/18TEHSVdRh/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-mist/80 transition-colors hover:text-green"><Facebook className="h-5 w-5" /></a>
             <a href="https://www.tiktok.com/@nomaderia.mx?_r=1&_t=ZS-942FckLgcsS" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-mist/80 transition-colors hover:text-green">
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
