@@ -10,10 +10,18 @@ name: Deploy Supabase Edge Functions
 # Deploys ALL functions unconditionally rather than diffing changed paths --
 # simpler, and a deploy of unchanged code is a harmless no-op.
 #
-# Each function is retried up to 3x with backoff before being counted as
-# failed -- bundling fetches remote imports (esm.sh) at deploy time, which
-# has been observed to 522 transiently and fail otherwise-good deploys
-# (see 2026-07-27 run: 5/21 functions failed on esm.sh 522s alone).
+# Each function is retried up to 3x with backoff ONLY when the deploy output
+# looks like a network/transient error -- bundling fetches remote imports
+# (esm.sh) at deploy time, which has been observed to 522 transiently and fail
+# otherwise-good deploys (see 2026-07-27 run: 5/21 functions failed on esm.sh
+# 522s alone, ADR-023). Any other failure (config, auth, a CLI prompt, bad
+# code) fails that function immediately: on 2026-11-09 every function retried
+# 3x on a non-transient "Re-run with --yes" error and wasted ~12 min (ADR-063).
+#
+# The CLI version is pinned (not `latest`) so a new CLI release cannot change
+# deploy behavior silently. 3.1.0 is the version `latest` resolved to in the
+# failed 2026-11-09 run and it supports `--yes`. Bump on purpose, after
+# checking `supabase functions deploy --help` for the new version.
 
 on:
   push:
@@ -29,12 +37,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.1.0
+
+      - name: Show Supabase CLI version
+        run: supabase --version
 
       - name: Deploy all Edge Functions
         env:
@@ -43,7 +54,24 @@ jobs:
         run: |
           set -uo pipefail
           failed=""
+          deployed=0
+          total=0
           max_attempts=3
+          log_file="$(mktemp)"
+
+          # Output patterns that mean "the network or an upstream hiccupped,
+          # try again". Anything else is a real error and is NOT retried.
+          # Matched case-insensitively against the deploy command's output.
+          transient_re='(failed: |status( code)?:? |http/[0-9.]+ |error code:? )(429|50[234]|52[0-4])\b'
+          transient_re+='|bad gateway|service unavailable|gateway time-?out|too many requests|rate limit'
+          transient_re+='|timed out|timeout|deadline exceeded|i/o timeout'
+          transient_re+='|connection (reset|refused|closed)|econnreset|econnrefused|etimedout|eai_again'
+          transient_re+='|tls handshake|unexpected eof|broken pipe|failed to connect|network is unreachable'
+          transient_re+='|temporary failure in name resolution|lookup [^ ]+: (no such host|server misbehaving)'
+
+          is_transient() {
+            grep -Eiq -- "$transient_re" "$1"
+          }
 
           for dir in supabase/functions/*/; do
             name="$(basename "$dir")"
@@ -53,39 +81,46 @@ jobs:
             if [ "$name" = "_shared" ]; then
               continue
             fi
+            total=$((total + 1))
 
             echo "::group::Deploying $name"
 
-            # Bundling fetches remote imports (esm.sh) at deploy time, which
-            # occasionally 522s transiently -- retry with backoff before
-            # counting the function as failed, since a bad esm.sh response
-            # is not a real deploy failure.
+            # --yes: since CLI 3.x, hosted changes need explicit confirmation
+            # and CI has no TTY to answer the prompt.
             attempt=1
             ok=false
-            until [ "$attempt" -gt "$max_attempts" ]; do
-              if supabase functions deploy "$name" --project-ref "$PROJECT_REF"; then
+            while :; do
+              if supabase functions deploy "$name" --project-ref "$PROJECT_REF" --yes 2>&1 | tee "$log_file"; then
                 ok=true
                 break
               fi
-              echo "Attempt $attempt/$max_attempts failed for $name"
-              if [ "$attempt" -lt "$max_attempts" ]; then
-                sleep_seconds=$((10 * attempt))
-                echo "Retrying in ${sleep_seconds}s..."
-                sleep "$sleep_seconds"
+              if ! is_transient "$log_file"; then
+                echo "Attempt $attempt/$max_attempts failed for $name with a non-network error -- not retrying"
+                break
               fi
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "Attempt $attempt/$max_attempts failed for $name (network error) -- giving up"
+                break
+              fi
+              sleep_seconds=$((10 * attempt))
+              echo "Attempt $attempt/$max_attempts failed for $name with a network error -- retrying in ${sleep_seconds}s..."
+              sleep "$sleep_seconds"
               attempt=$((attempt + 1))
             done
 
             if [ "$ok" = true ]; then
               echo "✓ $name deployed"
+              deployed=$((deployed + 1))
             else
-              echo "✗ $name FAILED after $max_attempts attempts"
+              echo "✗ $name FAILED"
               failed="$failed $name"
             fi
             echo "::endgroup::"
           done
 
+          rm -f "$log_file"
+          echo "Deployed $deployed/$total functions"
           if [ -n "$failed" ]; then
-            echo "The following functions failed to deploy:$failed"
+            echo "::error::The following functions failed to deploy:$failed"
             exit 1
           fi
