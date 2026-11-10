@@ -12,6 +12,14 @@
 
 ---
 
+## Changelog 2026-11-10 — Deploy de Edge Functions arreglado (ADR-063)
+
+- [x] `.github/workflows/deploy-edge-functions.yml`: `--yes` en `supabase functions deploy` (el CLI 3.1.0 pedía confirmación y sin TTY no desplegó nada en los runs del 2026-11-09).
+- [x] `supabase/setup-cli@v1` fijo en `version: 3.1.0` (la que usó el run fallido `42723776437`) + paso `supabase --version`.
+- [x] Retry solo en errores de red/upstream (429, 5xx de gateway, timeouts, resets, TLS, DNS); cualquier otro error falla al primer intento. Resumen `Deployed N/M functions` al final.
+- [x] `actions/checkout@v5`.
+- [ ] **FRANK: después del merge**, correr Actions → «Deploy Supabase Edge Functions» → *Run workflow* (`workflow_dispatch`) y confirmar `Deployed 23/23 functions` (son 23 carpetas en `supabase/functions/`, sin `_shared`). En producción siguen las funciones del deploy del 2026-10-30 hasta entonces.
+
 ## Changelog 2026-11-09 — Quiz sin % de compatibilidad (ADR-062)
 
 - [x] `src/lib/quiz-ranking.ts`: `fitLabel(rank, matchPercent)` + `LOW_FIT_PERCENT` (40), con tests.

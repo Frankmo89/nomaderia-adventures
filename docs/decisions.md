@@ -257,7 +257,7 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 
 ### ADR-023 — CI: retry en deploy de Edge Functions; retiro del workflow de GitHub Pages
 - **Fecha:** 2026-07-27
-- **Estado:** Vigente
+- **Estado:** Vigente (el retry ahora solo aplica a errores de red: ADR-063)
 - **Contexto:** Dos hallazgos al auditar `.github/workflows/`. (1) `deploy.yml`
   ("Deploy to GitHub Pages") es un remanente de antes de la migración a
   Cloudflare Pages — no referenciado en ningún doc ni otro workflow, y sin
@@ -1087,3 +1087,14 @@ Cada decisión es un **ADR** (Architecture Decision Record) corto:
 - **Contexto:** Frank: «cuando contesto el cuestionario no me da el porcentaje de compatibilidad, ¿lo quitamos?». No se quitó: `CompatibilityPill` solo mostraba el % si era ≥ 75 y si no decía «Muy buena opción para ti». Ese umbral es de junio, cuando el ranking hecho a mano inventaba % entre 40 y 100. Desde ADR-026 el % sale del motor: puntaje ÷ máximo posible, con multitudes, temporada y radio de manejo restando. Con perfiles reales casi nunca llega a 75. Al volver a correr el motor con los 8 quizzes guardados en `events`, el #1 pasó de 75 en 2 de 8, y solo 4 de 22 tarjetas mostraron el %. Peor: un quiz desde Maryland con 3 h de manejo dio Shenandoah con 9 % y la tarjeta decía «Muy buena opción para ti».
 - **Decisión:** las tarjetas del quiz ya no muestran el número. `fitLabel(rank, matchPercent)` en `quiz-ranking.ts` da la etiqueta: #1 «Tu mejor opción», los demás «Otra buena opción». Bajo `LOW_FIT_PERCENT` (40) dice la verdad: #1 «Lo más cercano a lo que buscas», los demás «Otra opción posible». El 40 sale de los datos: el #1 de los quizzes reales va de 51 a 95 salvo el caso de Maryland, y el #1 más bajo de los 26 fixtures del motor es 42. En la tarjeta grande la etiqueta reemplaza a «Tu Destino Ideal»; las razones del motor (`matchReasons`) pasan de texto gris a chips (4 en la grande, 2 en las chicas). Se quita la animación del contador.
 - **Consecuencias:** `matchPercent` sigue en `QuizDestination`, en `events` y en las Edge Functions; el concierge y el preview con IA no cambian (el preview ya tiene prohibido citar números crudos, regla 7). El número nunca se reescala ni se infla: ADR-026 lo prohíbe y la etiqueta solo elige palabras. Si cambian los pesos del motor, revisar `LOW_FIT_PERCENT` con los quizzes de `events` antes de subir `SUPPORTED_ENGINE_VERSION`.
+
+### ADR-063 — Deploy de Edge Functions: CLI fijo, `--yes` y retry solo en errores de red
+- **Fecha:** 2026-11-10
+- **Estado:** Vigente
+- **Contexto:** El 2026-11-09 fallaron los dos runs de `deploy-edge-functions.yml` (`42723749229` y `42723776437`, merges de #247 y #248) y no se desplegó ninguna función. `supabase/setup-cli@v1` con `version: latest` instaló el CLI **3.1.0** (release estable del 2026-11-09 13:14 UTC; el run fue a las 00:03 UTC del 10). Desde 3.x el CLI pide confirmación para cambios en el proyecto hospedado y, sin TTY, sale con `Confirmation required … Re-run with --yes to confirm.` El retry de ADR-023 reintentaba cualquier fallo: 23 funciones × 3 intentos (10 s + 20 s de espera) ≈ 12 min tirados (00:03 → 00:16 UTC en el log) en un error que nunca iba a cambiar.
+- **Decisión:**
+  1. `supabase functions deploy … --yes`.
+  2. `setup-cli` fijo en `version: 3.1.0` (la versión exacta del run fallido; su `functions deploy --help` trae `--yes`). Paso `supabase --version` para que el log diga qué CLI corrió.
+  3. Retry solo si la salida del deploy parece error de red o del upstream: 429/502/503/504/520–524 (`failed: 522` de esm.sh), bad gateway, service unavailable, gateway timeout, rate limit, timeouts, connection reset/refused, ECONNRESET, ETIMEDOUT, EAI_AGAIN, TLS handshake, unexpected EOF, failed to connect, DNS (`lookup …: no such host`). Cualquier otro error falla la función al primer intento.
+  4. `actions/checkout@v5` (Node 24).
+- **Consecuencias:** Subir el CLI es una decisión explícita: cambiar `version:`, revisar `supabase functions deploy --help` de la versión nueva y correr el workflow a mano. `--project-ref` está deprecado en 3.x (se quita en v4, el reemplazo es `--remote=<ref>`); migrar antes de pasar a v4. `supabase/setup-cli@v1` sigue en Node 20 (aviso, no error). Un error nuevo de red que no esté en la lista falla sin retry: si se repite, agregar su patrón en vez de volver a reintentar todo.
